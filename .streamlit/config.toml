@@ -1,0 +1,31 @@
+[theme]
+font = "sans serif"
+
+# Streamlit ofrece ambos temas en ⋮ → Settings → Theme (por defecto sigue al sistema).
+[theme.light]
+primaryColor = "#3B82C4"
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#EEF3F9"
+textColor = "#1F2937"
+
+[theme.dark]
+primaryColor = "#74ACDF"
+backgroundColor = "#0E1420"
+secondaryBackgroundColor = "#161F2E"
+textColor = "#E6EDF6"
+
+[server]
+# La restricción a esta computadora (127.0.0.1) la pone run.bat; así este archivo también sirve al publicar la app.
+# Protecciones contra pedidos falsos desde otros sitios: se dejan activadas explícitamente.
+enableXsrfProtection = true
+enableCORS = true
+# La app no recibe archivos de nadie.
+maxUploadSize = 1
+# El navegador no recibe información sensible de la máquina en los errores.
+headless = true
+
+[client]
+showErrorDetails = "none"
+
+[browser]
+gatherUsageStats = false
