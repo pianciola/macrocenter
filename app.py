@@ -193,6 +193,12 @@ def cargar_fotos() -> dict[str, dict]:
     return presidentes.fotos()
 
 
+@st.cache_resource
+def _estado_actualizar() -> dict:
+    """Estado compartido por todas las sesiones: cuándo se usó por última vez «Actualizar datos»."""
+    return {"ultimo": 0.0}
+
+
 def reintentar_si_fallo(cache_fn, clave: str, fallo: bool, espera: int = 60) -> None:
     """Que una falla pasajera no quede pegada en el caché: si algo falló, se borra el caché para volver a intentarlo
     en la próxima interacción (como máximo una vez cada `espera` segundos, para no martillar a las fuentes)."""
@@ -355,7 +361,14 @@ with st.sidebar:
         st.button(texto, width="stretch", key=f"nav_{clave_vista}", on_click=ir_a, args=(clave_vista,),
                   type="primary" if vista == clave_vista else "secondary")
     st.markdown(style.etiqueta("Datos"), unsafe_allow_html=True)
-    if st.button("Actualizar datos", width="stretch", key="actualizar"):
+    # Los cachés son compartidos entre todas las visitas: vaciarlos obliga a volver a descargar para todos. Publicada, el botón
+    # tiene una espera de 10 minutos entre usos (para cualquiera), así nadie puede forzar descargas en cadena.
+    ESPERA_ACTUALIZAR = 0 if LOCAL else 600
+    _est = _estado_actualizar()
+    faltan = int(ESPERA_ACTUALIZAR - (time.time() - _est["ultimo"]))
+    if st.button("Actualizar datos", width="stretch", key="actualizar", disabled=faltan > 0,
+                 help=None if faltan <= 0 else f"Alguien actualizó hace poco. Podés volver a hacerlo en {faltan // 60 + 1} min."):
+        _est["ultimo"] = time.time()
         borrar_disco()
         cargar_todo.clear()
         cargar_noticias.clear()
