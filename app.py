@@ -441,7 +441,9 @@ def kpi(slot, label: str, valor: float | None, dec: int = 0, pre: str = "", suf:
 
 
 def grafico(fig):
-    st.plotly_chart(fig, width="stretch")
+    # sin la barra de herramientas de Plotly (tapa el gráfico, sobre todo en el celular) y sin zoom accidental al deslizar
+    fig.update_layout(dragmode=False)
+    st.plotly_chart(fig, width="stretch", config={"displayModeBar": False, "scrollZoom": False})
 
 
 # ───────────────────────── carga de series ─────────────────────────
