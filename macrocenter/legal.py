@@ -13,8 +13,8 @@ from __future__ import annotations
 MARCA = "MacroCenter"
 RESPONSABLE = "Juan Manuel Pianciola"
 ACTUALIZACION = "9 de octubre de 2026"
-CONTACTO = ""  # completar con un correo de contacto, por ejemplo "contacto@tudominio.com"
-DOMICILIO = ""  # completar con el domicilio legal del responsable, si corresponde
+CONTACTO = "juanpianciola06@gmail.com"
+DOMICILIO = "Ciudad Autónoma de Buenos Aires"
 
 _CONTACTO_TXT = (f"Podés comunicarte a **{CONTACTO}**." if CONTACTO
                  else "Podés comunicarte por el canal de contacto que el responsable del sitio informe en el lugar donde se publique "
