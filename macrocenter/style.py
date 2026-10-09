@@ -377,6 +377,33 @@ button[data-variant="segmented_control"][aria-checked="true"] p {{ color: #fff !
     background: rgba(128,128,128,.45);
 }}
 h3 {{ font-weight: 700 !important; }}
+
+/* ── Celular y pantallas angostas: más aire, indicadores de a dos y todo legible ── */
+@media (max-width: 640px) {{
+    .block-container {{ padding: 3.2rem .85rem 2rem !important; }}
+    h1 {{ font-size: 1.6rem !important; }}
+    h2, [data-testid="stHeading"] h2 {{ font-size: 1.3rem !important; }}
+    h3 {{ font-size: 1.15rem !important; }}
+    /* indicadores: dos por fila en vez de una tarjeta enorme por fila */
+    [data-testid="stHorizontalBlock"]:has([data-testid="stMetric"]) {{ flex-wrap: wrap !important; gap: .6rem !important; }}
+    [data-testid="stHorizontalBlock"]:has([data-testid="stMetric"]) > [data-testid="stColumn"] {{
+        flex: 1 1 calc(50% - .6rem) !important; min-width: calc(50% - .6rem) !important; width: auto !important;
+    }}
+    [data-testid="stMetric"] {{ padding: .7rem .8rem !important; }}
+    [data-testid="stMetricValue"] {{ font-size: 1.45rem !important; }}
+    [data-testid="stMetricLabel"] p {{ font-size: .8rem !important; }}
+    [data-testid="stMetricDelta"] {{ font-size: .72rem !important; }}
+    /* pestañas y botones más cómodos al tacto */
+    [data-testid="stTab"] {{ height: 3rem; padding: 0 .85rem; }}
+    [data-testid="stTab"] p {{ font-size: 1rem; }}
+    button[data-variant="segmented_control"] {{ padding: .5rem .85rem; }}
+    /* tablas anchas: se deslizan de costado en lugar de apretarse */
+    [data-testid="stTable"], [data-testid="stDataFrame"] {{ overflow-x: auto; }}
+    /* pie de página y fichas en una columna */
+    .mc-foot {{ padding: 20px 18px; margin-top: 32px; }}
+    .mc-foot .legal {{ flex-direction: column; }}
+    .mc-brand h1 {{ font-size: 1.3rem !important; }}
+}}
 </style>
 """
 

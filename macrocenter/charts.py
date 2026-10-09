@@ -21,9 +21,10 @@ def _base(fig: go.Figure, titulo: str, yfmt: str | None, height: int) -> go.Figu
         font=dict(family="Segoe UI Variable Text, Segoe UI, system-ui, -apple-system, Helvetica Neue, Roboto, Arial, sans-serif"),
         title=dict(text=titulo, font=dict(size=16)),
         height=height,
-        margin=dict(l=10, r=10, t=50, b=10),
+        margin=dict(l=10, r=10, t=50, b=45),
         hovermode="x unified",
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+        # la leyenda va abajo (arriba pisaba el título en pantallas angostas)
+        legend=dict(orientation="h", yanchor="top", y=-0.12, xanchor="center", x=0.5),
         xaxis=dict(showgrid=False),
         yaxis=dict(gridcolor="rgba(128,128,128,0.2)", tickformat=yfmt, separatethousands=True),
     )
