@@ -1,0 +1,281 @@
+"""Acceso a fuentes públicas de datos macroeconómicos de Argentina.
+
+Fuentes:
+  - BCRA, API Estadísticas v4.0 (reservas, tipo de cambio, tasas, UVA, CER, inflación, dinero)
+  - Datos Argentina, API de Series de Tiempo (EMAE, PBI, desempleo, comercio exterior)
+  - ArgentinaDatos (cotizaciones del dólar por casa, riesgo país)
+
+Todas las funciones devuelven DataFrames con columna `fecha` (datetime64) ordenada.
+"""
+from __future__ import annotations
+
+import pandas as pd
+import requests
+
+BCRA_URL = "https://api.bcra.gob.ar/estadisticas/v4.0/monetarias"
+SERIES_URL = "https://apis.datos.gob.ar/series/api/series/"
+ARGDATOS_URL = "https://api.argentinadatos.com/v1"
+TIMEOUT = 40
+
+# ids de variables del BCRA
+BCRA_IDS = {
+    "reservas": 1,
+    "tc_minorista": 4,
+    "tc_mayorista": 5,
+    "badlar": 7,
+    "depositos_30d": 12,
+    "prestamos_personales": 14,
+    "pases_1d": 150,  # tasa de pases entre terceros a 1 día (referencia vigente)
+    "tpm": 160,  # tasa de política monetaria, TNA — el BCRA dejó de publicarla el 10/7/2025
+    "base_monetaria": 15,
+    "m2_privado_ia": 25,
+    "prestamos_privados": 26,
+    "inflacion_mensual": 27,
+    "inflacion_interanual": 28,
+    "rem_12m": 29,
+    "cer": 30,
+    "uva": 31,
+    "uvi": 32,
+    "icl": 40,
+    "tamar": 44,
+}
+
+# ids de series de datos.gob.ar
+SERIES_IDS = {
+    "pib": "4.2_OGP_2004_T_17",  # PIB trimestral, millones de pesos de 2004
+    "emae": "143.3_NO_PR_2004_A_21",  # EMAE original, base 2004=100
+    "emae_sa": "143.3_NO_PR_2004_A_31",  # EMAE desestacionalizado
+    "emae_sa_mom": "143.3_ICE_SER_VM_2004_A_34",  # var. % mensual desestacionalizada
+    "desempleo": "42.3_EPH_PUNTUATAL_0_M_30",  # tasa de desocupación (fracción)
+    "salarios": "149.1_TL_INDIIOS_OCTU_0_21",  # índice de salarios total (oct-2016=100)
+    "salarios_privado": "149.1_SOR_PRIADO_OCTU_0_25",  # registrado, sector privado
+    "salarios_publico": "149.1_SOR_PUBICO_OCTU_0_14",  # registrado, sector público
+    "ripte": "158.1_REPTE_0_0_5",  # remuneración imponible promedio, pesos corrientes
+    "smvm": "57.1_SMVMM_0_M_34",  # salario mínimo, vital y móvil mensual (incluye tramos futuros ya fijados)
+    "haber_minimo": "58.1_MP_0_M_13",  # haber mínimo jubilatorio
+    # series largas para la sección de presidentes
+    "pib_1986": "255.1_OTA_TOTTAL_1986_0_12",  # PIB trimestral 1980-1996 (precios de 1986)
+    "pib_1993": "2.2_OGP_1993_T_17",  # PIB trimestral 1993-2013 (precios de 1993)
+    "paro_anual": "42.1_EPDT_0_A_30",  # desocupación anual desde 1982 (EPH), en %
+    "reservas_hist": "174.1_RRVAS_IDOS_0_0_36",  # reservas BCRA, saldo mensual desde 1940
+    "exportaciones": "74.3_IET_0_M_16",  # millones de USD
+    "importaciones": "74.3_IIT_0_M_25",  # millones de USD
+    "pib_corriente": "8.2_PIBPM_2004_T_38",  # PIB a precios de mercado en pesos corrientes, trimestral anualizado (millones)
+    "fiscal_primario": "452.3_RESULTADO_RIO_0_M_18_54",  # resultado primario del sector público nacional, millones de $ corrientes
+    "fiscal_financiero": "452.3_RESULTADO_ERO_0_M_20_25",  # resultado financiero (después de intereses), millones de $
+}
+
+
+def limpiar(df):
+    """Deja una serie lista para usar aunque la fuente venga sucia: fechas ordenadas y sin repetir, infinitos como
+    vacíos y sin filas totalmente vacías. Si no es un DataFrame con columna `fecha`, lo devuelve igual."""
+    if not isinstance(df, pd.DataFrame) or "fecha" not in df.columns:
+        return df
+    d = df.copy()
+    d["fecha"] = pd.to_datetime(d["fecha"], errors="coerce")
+    numericas = [c for c in d.columns if c != "fecha" and pd.api.types.is_numeric_dtype(d[c])]
+    if numericas:
+        d[numericas] = d[numericas].replace([float("inf"), float("-inf")], float("nan"))
+        d = d.dropna(subset=numericas, how="all")
+    d = d.dropna(subset=["fecha"]).sort_values("fecha")
+    return d.drop_duplicates("fecha", keep="last").reset_index(drop=True)
+
+
+def _get(url: str, **params) -> requests.Response:
+    resp = requests.get(url, params=params or None, timeout=TIMEOUT)
+    resp.raise_for_status()
+    return resp
+
+
+def bcra(variable: str, desde: str | None = None) -> pd.DataFrame:
+    """Serie del BCRA por nombre lógico (ver BCRA_IDS). Pagina automáticamente."""
+    var_id = BCRA_IDS[variable]
+    rows: list[dict] = []
+    offset = 0
+    while True:
+        params = {"limit": 3000, "offset": offset}
+        if desde:
+            params["desde"] = desde
+        payload = _get(f"{BCRA_URL}/{var_id}", **params).json()
+        results = payload.get("results") or []
+        detalle = results[0].get("detalle", []) if results else []
+        rows.extend(detalle)
+        total = payload["metadata"]["resultset"]["count"]
+        offset += 3000
+        if offset >= total or not detalle:
+            break
+    df = pd.DataFrame(rows, columns=["fecha", "valor"])
+    df["fecha"] = pd.to_datetime(df["fecha"])
+    return df.sort_values("fecha").reset_index(drop=True)
+
+
+def serie(nombre: str, desde: str | None = None, hasta: str | None = None) -> pd.DataFrame:
+    """Serie de la API de Series de Tiempo por nombre lógico (ver SERIES_IDS). Máximo 5.000 puntos por pedido."""
+    params = {"ids": SERIES_IDS[nombre], "limit": 5000, "format": "json"}
+    if desde:
+        params["start_date"] = desde
+    if hasta:
+        params["end_date"] = hasta
+    payload = _get(SERIES_URL, **params).json()
+    df = pd.DataFrame(payload["data"], columns=["fecha", "valor"])
+    df["fecha"] = pd.to_datetime(df["fecha"])
+    return df.dropna().sort_values("fecha").reset_index(drop=True)
+
+
+def dolar(casa: str) -> pd.DataFrame:
+    """Cotización histórica de una casa: oficial, blue, bolsa, contadoconliqui, mayorista."""
+    df = pd.DataFrame(_get(f"{ARGDATOS_URL}/cotizaciones/dolares/{casa}").json())
+    df["fecha"] = pd.to_datetime(df["fecha"])
+    return df[["fecha", "compra", "venta"]].sort_values("fecha").reset_index(drop=True)
+
+
+CASAS_DOLAR = ("oficial", "mayorista", "blue", "bolsa", "contadoconliqui", "cripto", "tarjeta")
+
+
+def dolares(casas: tuple[str, ...] = CASAS_DOLAR) -> pd.DataFrame:
+    """Un dólar por casa: precio de venta en la columna `<casa>` y de compra en `<casa>_compra`."""
+    wide = None
+    for casa in casas:
+        d = dolar(casa).drop_duplicates("fecha").set_index("fecha")
+        s = d[["venta", "compra"]].rename(columns={"venta": casa, "compra": f"{casa}_compra"})
+        wide = s if wide is None else wide.join(s, how="outer")
+    return wide.sort_index().reset_index()
+
+
+CAMBIARIAS_URL = "https://api.bcra.gob.ar/estadisticascambiarias/v1.0/Cotizaciones"
+
+
+def divisa(codigo: str, desde: str = "2016-01-01") -> pd.DataFrame:
+    """Cotización de referencia del BCRA de una divisa (EUR, GBP, ...) en pesos por unidad.
+    Columnas: fecha, valor (pesos por unidad), pase (dólares por unidad). Pagina automáticamente."""
+    filas: list[tuple] = []
+    offset = 0
+    while True:
+        payload = _get(f"{CAMBIARIAS_URL}/{codigo}", fechadesde=desde, fechahasta=pd.Timestamp.today().strftime("%Y-%m-%d"),
+                       limit=1000, offset=offset).json()
+        resultados = payload.get("results") or []
+        for r in resultados:
+            det = r["detalle"][0]
+            filas.append((r["fecha"], det["tipoCotizacion"], det["tipoPase"]))
+        offset += 1000
+        if not resultados or offset >= payload["metadata"]["resultset"]["count"]:
+            break
+    df = pd.DataFrame(filas, columns=["fecha", "valor", "pase"])
+    df["fecha"] = pd.to_datetime(df["fecha"])
+    return df.sort_values("fecha").reset_index(drop=True)
+
+
+def dolar_historico() -> pd.DataFrame:
+    """Dólar oficial (BCRA, serie 175.1 'Dólar estadounidense') desde 1992 hasta 2010, en pesos por dólar.
+    Son ~7.000 datos diarios, así que se pide en dos tramos (la API entrega hasta 5.000 por pedido).
+    Desde 2011 se usa la serie de ArgentinaDatos (ver `dolares`)."""
+    ids = "175.1_DR_ESTANSE_0_0_20"
+    partes = []
+    for desde, hasta in (("1992-01-01", "2001-12-31"), ("2002-01-01", "2010-12-31")):
+        payload = _get(SERIES_URL, ids=ids, limit=5000, format="json", start_date=desde, end_date=hasta).json()
+        partes.append(pd.DataFrame(payload["data"], columns=["fecha", "valor"]))
+    df = pd.concat(partes, ignore_index=True)
+    df["fecha"] = pd.to_datetime(df["fecha"])
+    return df.dropna().sort_values("fecha").reset_index(drop=True)
+
+
+def inflacion_historica() -> pd.DataFrame:
+    """IPC mensual (%) desde 1943 (ArgentinaDatos). Fecha = fin de mes."""
+    df = pd.DataFrame(_get(f"{ARGDATOS_URL}/finanzas/indices/inflacion").json())
+    df["fecha"] = pd.to_datetime(df["fecha"])
+    return df[["fecha", "valor"]].sort_values("fecha").reset_index(drop=True)
+
+
+# (símbolo en Yahoo Finance, nombre, grupo, unidad)
+INDICES = [
+    ("^MERV", "Merval", "Argentina", "pesos"),
+    ("^GSPC", "S&P 500", "Estados Unidos", "puntos"),
+    ("^DJI", "Dow Jones", "Estados Unidos", "puntos"),
+    ("^IXIC", "Nasdaq", "Estados Unidos", "puntos"),
+    ("^FTSE", "FTSE 100", "Europa", "libras"),
+    ("^GDAXI", "DAX", "Europa", "puntos"),
+    ("^FCHI", "CAC 40", "Europa", "puntos"),
+    ("^STOXX50E", "Euro Stoxx 50", "Europa", "puntos"),
+    ("^N225", "Nikkei 225", "Asia", "yenes"),
+    ("^HSI", "Hang Seng", "Asia", "puntos"),
+    ("000001.SS", "Shanghái", "Asia", "puntos"),
+    ("^BVSP", "Bovespa", "Latinoamérica", "reales"),
+    ("^MXX", "IPC México", "Latinoamérica", "pesos mex."),
+    ("GC=F", "Oro", "Materias primas", "USD/onza"),
+    ("CL=F", "Petróleo WTI", "Materias primas", "USD/barril"),
+    ("ZS=F", "Soja", "Materias primas", "US¢/bushel"),
+]
+YAHOO_URL = "https://query1.finance.yahoo.com/v8/finance/chart"
+
+
+def indice(simbolo: str, rango: str = "5y") -> pd.DataFrame:
+    """Cierre diario de un índice o materia prima (Yahoo Finance, fuente no oficial). Columnas: fecha, valor."""
+    resp = requests.get(f"{YAHOO_URL}/{requests.utils.quote(simbolo)}", params={"range": rango, "interval": "1d"},
+                        headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120 Safari/537.36"},
+                        timeout=TIMEOUT)
+    resp.raise_for_status()
+    res = resp.json()["chart"]["result"][0]
+    df = pd.DataFrame({"fecha": pd.to_datetime(res["timestamp"], unit="s").normalize(),
+                       "valor": res["indicators"]["quote"][0]["close"]})
+    return df.dropna().drop_duplicates("fecha", keep="last").reset_index(drop=True)
+
+
+COINGECKO_URL = "https://api.coingecko.com/api/v3"
+CRIPTOYA_URL = "https://criptoya.com/api"
+
+
+CRIPTOS = ("bitcoin", "ethereum", "tether", "binancecoin", "solana", "ripple", "usd-coin", "cardano", "dogecoin", "tron")
+
+
+def cripto_mercado(ids: tuple[str, ...] = CRIPTOS) -> pd.DataFrame:
+    """Criptomonedas conocidas, de mayor a menor capitalización (CoinGecko), con precio en USD y en pesos, variaciones
+    de 24 h / 7 d / 30 d y la serie de 7 días para el mini-gráfico. Los pesos son opcionales: si fallan, quedan vacíos."""
+    mercado = _get(f"{COINGECKO_URL}/coins/markets", vs_currency="usd", ids=",".join(ids), order="market_cap_desc",
+                   per_page=len(ids), page=1, sparkline="true", price_change_percentage="24h,7d,30d").json()
+    filas = [{
+        "id": c["id"], "simbolo": str(c["symbol"]).upper(), "nombre": c["name"], "usd": c.get("current_price"),
+        "cap": c.get("market_cap"), "volumen": c.get("total_volume"),
+        "cambio_24h": c.get("price_change_percentage_24h_in_currency", c.get("price_change_percentage_24h")),
+        "cambio_7d": c.get("price_change_percentage_7d_in_currency"),
+        "cambio_30d": c.get("price_change_percentage_30d_in_currency"),
+        "spark": ((c.get("sparkline_in_7d") or {}).get("price")) or [],
+    } for c in mercado]
+    df = pd.DataFrame(filas)
+    df["ars"] = float("nan")
+    try:
+        ars = _get(f"{COINGECKO_URL}/coins/markets", vs_currency="ars", ids=",".join(df["id"])).json()
+        precios = {c["id"]: c.get("current_price") for c in ars}
+        df["ars"] = df["id"].map(precios).astype(float)
+    except Exception:  # noqa: BLE001 — el precio en pesos es un extra, no debe tirar abajo todo el panel
+        pass
+    return df
+
+
+def cripto_historia(coin_id: str, dias: int = 365) -> pd.DataFrame:
+    """Precio diario en USD de una criptomoneda (CoinGecko público: hasta 365 días hacia atrás)."""
+    payload = _get(f"{COINGECKO_URL}/coins/{coin_id}/market_chart", vs_currency="usd", days=min(int(dias), 365),
+                   interval="daily").json()
+    df = pd.DataFrame(payload["prices"], columns=["fecha", "valor"])
+    df["fecha"] = pd.to_datetime(df["fecha"], unit="ms").dt.normalize()
+    return df
+
+
+def usdt_exchanges() -> pd.DataFrame:
+    """Precio del USDT en pesos en cada exchange argentino (CriptoYa): `compra` = lo que pagás para comprar USDT (ask),
+    `venta` = lo que recibís si lo vendés (bid)."""
+    payload = _get(f"{CRIPTOYA_URL}/usdt/ars/1").json()
+    filas = [{"exchange": k, "compra": v.get("ask"), "venta": v.get("bid"), "hora": v.get("time")}
+             for k, v in payload.items() if isinstance(v, dict) and v.get("ask") and v.get("bid")]
+    df = pd.DataFrame(filas, columns=["exchange", "compra", "venta", "hora"])
+    df["hora"] = pd.to_datetime(df["hora"], unit="s", errors="coerce")
+    if len(df) >= 5:  # descarta precios absurdos (libros vacíos, errores): más de 8% lejos de la mediana
+        for col in ("compra", "venta"):
+            mediana = df[col].median()
+            df = df[(df[col] - mediana).abs() <= 0.08 * mediana]
+    return df.sort_values("compra").reset_index(drop=True)
+
+
+def riesgo_pais() -> pd.DataFrame:
+    df = pd.DataFrame(_get(f"{ARGDATOS_URL}/finanzas/indices/riesgo-pais").json())
+    df["fecha"] = pd.to_datetime(df["fecha"])
+    return df.sort_values("fecha").reset_index(drop=True)

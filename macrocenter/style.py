@@ -1,0 +1,710 @@
+"""Estilos de MacroCenter. Usa colores translúcidos para verse bien en modo claro y oscuro."""
+from __future__ import annotations
+
+import html
+import math
+import re
+
+import streamlit as st
+
+CELESTE = "#74ACDF"  # celeste de la bandera argentina
+SOL = "#F6B40E"  # amarillo del Sol de Mayo
+AUTOR = "Juan Manuel Pianciola"
+
+#: Tipografía: fuentes del sistema (Segoe UI en Windows, SF en Mac, Roboto en Android…). Se eligen a propósito en
+#: lugar de Google Fonts para que el navegador no le pida nada a terceros (ver la Política de Privacidad).
+FUENTE = '"Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Roboto, Arial, sans-serif'
+
+CSS = f"""
+<style>
+/* ── Tipografía (los íconos de Streamlit conservan su propia fuente) ── */
+.stApp, .stApp *:not([data-testid="stIconMaterial"]):not([class*="material"]) {{ font-family: {FUENTE} !important; }}
+.stApp {{ font-feature-settings: "tnum" 1, "lnum" 1; -webkit-font-smoothing: antialiased; }}
+h1, h2, h3, h4 {{ letter-spacing: -.01em; }}
+/* ── Barra lateral ── */
+section[data-testid="stSidebar"] > div:first-child {{
+    background-image: linear-gradient(180deg, rgba(116,172,223,.25) 0%, rgba(116,172,223,0) 40%);
+    border-right: 1px solid rgba(116,172,223,.25);
+}}
+section[data-testid="stSidebar"] .block-container, section[data-testid="stSidebarUserContent"] {{ padding-top: 1.2rem; }}
+
+.mc-brand {{
+    background: linear-gradient(135deg, {CELESTE} 0%, #4A8FD4 100%);
+    border-radius: 16px; padding: 18px 18px 16px; margin-bottom: 18px;
+    box-shadow: 0 6px 18px rgba(74,143,212,.35); color: #fff;
+}}
+.mc-flagsvg {{ display: block; border-radius: 4px; box-shadow: 0 2px 6px rgba(0,0,0,.28); }}
+.mc-brand .mc-flag {{ line-height: 0; }}
+.mc-brand h1 {{ margin: 6px 0 2px; padding: 0; font-size: 1.55rem; font-weight: 800; letter-spacing: -.5px; color: #fff; }}
+.mc-brand p {{ margin: 0; font-size: .8rem; opacity: .92; line-height: 1.35; }}
+
+.mc-label {{
+    font-size: .68rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
+    opacity: .6; margin: 18px 0 6px;
+}}
+
+/* cotizaciones rápidas */
+.mc-tick {{
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 9px 12px; margin-bottom: 6px; border-radius: 10px;
+    background: rgba(128,128,128,.10); border: 1px solid rgba(128,128,128,.14);
+}}
+.mc-tick .n {{ font-size: .82rem; opacity: .85; }}
+.mc-tick .v {{ font-weight: 700; font-size: .95rem; text-align: right; }}
+.mc-tick .d {{ font-size: .68rem; font-weight: 600; display: block; }}
+.mc-up {{ color: #10AC84; }} .mc-down {{ color: #EE5253; }} .mc-flat {{ opacity: .55; }}
+
+.mc-status {{ font-size: .75rem; opacity: .75; margin-top: 6px; }}
+.mc-status .dot {{ color: #10AC84; }}
+
+.mc-footer {{
+    margin-top: 22px; padding-top: 14px; border-top: 3px double {CELESTE};
+    font-size: .76rem; text-align: center; line-height: 1.5;
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+}}
+.mc-footer b {{ color: {CELESTE}; }}
+.mc-footer .mc-made {{ font-size: .68rem; letter-spacing: .1em; text-transform: uppercase; opacity: .6; }}
+
+/* botón de noticias: dorado (Sol de Mayo), distinto del resto */
+[class*="st-key-btn_noticias"] button {{
+    position: relative; border: none; border-radius: 12px; padding: .75rem 1rem; margin-bottom: 4px;
+    background: linear-gradient(135deg, {SOL} 0%, #F79F1F 100%);
+    box-shadow: 0 6px 16px rgba(246,180,14,.32); transition: transform .15s ease, box-shadow .15s ease;
+}}
+[class*="st-key-btn_noticias"] button p {{ color: #3A2A00 !important; font-weight: 800; font-size: .92rem; }}
+[class*="st-key-btn_noticias"] button:hover {{
+    border: none; transform: translateY(-2px); box-shadow: 0 10px 22px rgba(246,180,14,.5);
+}}
+[class*="st-key-btn_noticias"] button:active {{ transform: translateY(0); }}
+.st-key-btn_noticias_nuevas button::after {{
+    content: ""; position: absolute; top: -5px; right: -5px; width: 13px; height: 13px; border-radius: 50%;
+    background: #EE5253; border: 2px solid #fff; animation: mc-pulso 1.8s infinite;
+}}
+@keyframes mc-pulso {{
+    0% {{ box-shadow: 0 0 0 0 rgba(238,82,83,.65); }}
+    70% {{ box-shadow: 0 0 0 9px rgba(238,82,83,0); }}
+    100% {{ box-shadow: 0 0 0 0 rgba(238,82,83,0); }}
+}}
+
+/* botones y pills de la barra lateral */
+section[data-testid="stSidebar"] .stButton > button {{
+    border-radius: 10px; border: 1px solid rgba(116,172,223,.5); font-weight: 600;
+}}
+section[data-testid="stSidebar"] .stButton > button:hover {{ border-color: {CELESTE}; color: {CELESTE}; }}
+section[data-testid="stSidebar"] [data-testid="stPills"] button {{ border-radius: 999px; font-size: .8rem; }}
+
+/* ── Barra lateral rediseñada: marca compacta, menú de lista, noticias en contorno dorado ── */
+.mc-brand {{
+    display: flex; align-items: center; gap: 12px; background: none; box-shadow: none; border-radius: 0;
+    padding: 4px 2px 16px; margin-bottom: 16px; color: inherit; position: relative;
+}}
+.mc-brand::after {{
+    content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 4px; border-radius: 4px;
+    background: linear-gradient(to bottom, {CELESTE} 0 34%, #FFFFFF 34% 66%, {CELESTE} 66% 100%); opacity: .85;
+}}
+.mc-brand .mc-flag svg {{ width: 46px; height: 46px; }}
+.mc-brand h1 {{ margin: 0; padding: 0; font-size: 1.45rem; font-weight: 800; letter-spacing: -.02em; color: inherit; }}
+.mc-brand h1 span {{ color: {CELESTE}; }}
+
+[class*="st-key-btn_noticias"] button {{
+    background: transparent !important; border: 1.5px solid {SOL} !important; box-shadow: none !important;
+    border-radius: 999px; padding: .5rem 1rem; margin-bottom: 6px;
+}}
+[class*="st-key-btn_noticias"] button p {{ color: {SOL} !important; font-weight: 700; font-size: .88rem; }}
+[class*="st-key-btn_noticias"] button:hover {{
+    background: rgba(246,180,14,.14) !important; transform: translateY(-1px); box-shadow: 0 4px 14px rgba(246,180,14,.25) !important;
+}}
+
+/* menú de navegación: filas planas, la activa con barra celeste a la izquierda */
+section[data-testid="stSidebar"] [class*="st-key-nav_"] button {{
+    justify-content: flex-start; text-align: left; background: transparent; border: none;
+    border-left: 3px solid transparent; border-radius: 0 10px 10px 0; padding: .55rem .9rem; min-height: 0;
+    transition: background-color .15s ease, border-color .15s ease, padding-left .15s ease;
+}}
+section[data-testid="stSidebar"] [class*="st-key-nav_"] button > div,
+section[data-testid="stSidebar"] [class*="st-key-nav_"] button [data-testid="stMarkdownContainer"] {{
+    justify-content: flex-start !important; width: 100%; text-align: left !important;
+}}
+section[data-testid="stSidebar"] [class*="st-key-nav_"] button p {{ font-weight: 600; font-size: .95rem; text-align: left; }}
+section[data-testid="stSidebar"] [class*="st-key-nav_"] button:hover {{
+    background: rgba(116,172,223,.12); border-left-color: rgba(116,172,223,.6); padding-left: 1.1rem; color: inherit;
+}}
+section[data-testid="stSidebar"] [class*="st-key-nav_"] button[data-testid="stBaseButton-primary"] {{
+    background: linear-gradient(90deg, rgba(116,172,223,.28), rgba(116,172,223,.04)); border-left-color: {CELESTE};
+    color: inherit;
+}}
+section[data-testid="stSidebar"] [class*="st-key-nav_"] button[data-testid="stBaseButton-primary"] p {{ font-weight: 800; }}
+
+/* actualizar datos: discreto, al pie */
+section[data-testid="stSidebar"] .st-key-actualizar button {{
+    background: transparent; border: 1px dashed rgba(116,172,223,.5); font-size: .82rem; font-weight: 600;
+}}
+
+/* selector de gráficos (control segmentado): pista celeste suave y opción activa rellena */
+[data-testid="stButtonGroup"] [role="radiogroup"]:has(button[data-variant="segmented_control"]) {{
+    background: rgba(116,172,223,.12); border: 1px solid rgba(116,172,223,.28); border-radius: 14px;
+    padding: 4px; gap: 4px; display: inline-flex; flex-wrap: wrap;
+}}
+button[data-variant="segmented_control"] {{
+    border: none !important; border-radius: 10px !important; background: transparent !important;
+    padding: .45rem 1.1rem; min-height: 0; font-weight: 600;
+    transition: background-color .18s ease, color .18s ease, box-shadow .18s ease, transform .18s ease;
+}}
+button[data-variant="segmented_control"]:hover {{
+    background: rgba(116,172,223,.22) !important; transform: translateY(-1px);
+}}
+button[data-variant="segmented_control"][aria-checked="true"] {{
+    background: linear-gradient(135deg, {CELESTE} 0%, #4A8FD4 100%) !important; color: #fff !important;
+    box-shadow: 0 3px 10px rgba(74,143,212,.4); font-weight: 700;
+}}
+button[data-variant="segmented_control"][aria-checked="true"] p {{ color: #fff !important; }}
+
+/* ── Zona principal ── */
+.mc-hero {{
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;
+    padding: 6px 0 14px;
+}}
+.mc-title {{ display: flex; align-items: center; gap: 16px; padding: 4px 0 6px; }}
+.mc-title .mc-flag {{ line-height: 0; }}
+.mc-sunsvg {{ display: block; filter: drop-shadow(0 2px 4px rgba(246,180,14,.35)); }}
+/* franja celeste - blanca - celeste, como la bandera */
+.mc-stripe {{
+    height: 8px; border-radius: 4px; margin-bottom: 10px;
+    background: linear-gradient(to bottom, {CELESTE} 0 33.4%, #FFFFFF 33.4% 66.6%, {CELESTE} 66.6% 100%);
+    box-shadow: 0 0 0 1px rgba(116,172,223,.55);
+}}
+.mc-title h1 {{ margin: 0; padding: 0; font-size: 1.8rem; font-weight: 800; letter-spacing: -.8px; }}
+.mc-title .sub {{ opacity: .7; font-size: .92rem; }}
+.mc-by {{ font-size: .82rem; opacity: .7; text-align: right; }}
+.mc-by b {{ color: {CELESTE}; opacity: 1; }}
+
+/* ── Línea de tiempo de presidentes ── */
+.mc-tl {{ position: relative; margin: 18px 0 6px; }}
+.mc-tl::before {{
+    content: ""; position: absolute; left: 50%; top: 0; bottom: 0; width: 6px; transform: translateX(-50%);
+    border-radius: 3px; box-shadow: 0 0 0 1px rgba(116,172,223,.5);
+    background: linear-gradient(to right, {CELESTE} 0 33%, #FFFFFF 33% 66%, {CELESTE} 66% 100%);
+}}
+.mc-tl-item {{
+    display: grid; grid-template-columns: 1fr 116px 1fr; align-items: center; margin-bottom: 28px; position: relative;
+}}
+.mc-tl-card {{
+    grid-row: 1; padding: 16px 18px 14px; border-radius: 16px; background: rgba(128,128,128,.09);
+    border: 1px solid rgba(116,172,223,.38); box-shadow: 0 4px 14px rgba(0,0,0,.10);
+}}
+.mc-tl-item.izq .mc-tl-card {{ grid-column: 1; }}
+.mc-tl-item.der .mc-tl-card {{ grid-column: 3; }}
+.mc-tl-dot {{ grid-column: 2; grid-row: 1; justify-self: center; position: relative; z-index: 1; }}
+.mc-foto {{
+    width: 88px; height: 88px; border-radius: 50%; position: relative; overflow: hidden;
+    display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 1.6rem;
+    background: linear-gradient(135deg, {CELESTE}, #4A8FD4); border: 4px solid #FFFFFF;
+    box-shadow: 0 0 0 3px {CELESTE}, 0 6px 16px rgba(0,0,0,.3);
+}}
+.mc-foto img {{ position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: top center; }}
+.mc-tl-item.actual .mc-foto {{ box-shadow: 0 0 0 3px {SOL}, 0 0 20px rgba(246,180,14,.65); }}
+.mc-tl-anio {{ grid-row: 1; font-size: 2rem; font-weight: 800; letter-spacing: -1px; opacity: .28; }}
+.mc-tl-item.izq .mc-tl-anio {{ grid-column: 3; padding-left: 24px; }}
+.mc-tl-item.der .mc-tl-anio {{ grid-column: 1; text-align: right; padding-right: 24px; }}
+.mc-tl-card h4 {{ margin: 0 0 2px; padding: 0; font-size: 1.25rem; font-weight: 800; }}
+.mc-tl-card .per {{ font-size: .74rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: {CELESTE}; }}
+.mc-tl-card .hito {{ font-size: .88rem; opacity: .88; margin: 8px 0 10px; line-height: 1.4; }}
+.mc-fila {{
+    display: flex; justify-content: space-between; gap: 10px; padding: 5px 0;
+    border-top: 1px dashed rgba(128,128,128,.3); font-size: .84rem;
+}}
+.mc-fila .k {{ opacity: .7; }}
+.mc-fila .v {{ font-weight: 600; text-align: right; }}
+.mc-fila .mejor {{ color: #10AC84; }}
+.mc-fila .peor {{ color: #EE5253; }}
+.mc-tl-card .pico {{ margin-top: 8px; font-size: .8rem; opacity: .9; }}
+.mc-tl-card .nota {{ margin-top: 6px; font-size: .74rem; opacity: .6; font-style: italic; }}
+.mc-tl-hoy {{
+    width: max-content; margin: 0 auto; padding: 5px 16px; border-radius: 999px; font-weight: 800; font-size: .8rem;
+    letter-spacing: .14em; color: #3A2A00; background: linear-gradient(135deg, {SOL}, #F79F1F);
+    box-shadow: 0 4px 12px rgba(246,180,14,.4); position: relative; z-index: 1;
+}}
+@media (max-width: 860px) {{
+    .mc-tl::before {{ left: 48px; }}
+    .mc-tl-item {{ grid-template-columns: 96px 1fr; }}
+    .mc-tl-dot {{ grid-column: 1; justify-self: start; }}
+    .mc-tl-item.izq .mc-tl-card, .mc-tl-item.der .mc-tl-card {{ grid-column: 2; }}
+    .mc-tl-anio {{ display: none; }}
+    .mc-foto {{ width: 76px; height: 76px; margin-left: 10px; }}
+    .mc-tl-hoy {{ margin-left: 10px; }}
+}}
+
+/* ── Pie de página: franja celeste de la paleta ── */
+.mc-foot {{
+    margin: 48px 0 0; padding: 28px 30px; border-radius: 18px 18px 0 0; color: inherit;
+    background: rgba(116,172,223,.10); border: 1px solid rgba(116,172,223,.22); border-top: 3px solid {CELESTE};
+}}
+.mc-foot .cols {{ display: grid; grid-template-columns: 1.4fr 1.2fr .8fr; gap: 28px; }}
+.mc-foot h5 {{ margin: 0 0 10px; padding: 0; font-size: .74rem; font-weight: 800; letter-spacing: .14em;
+    text-transform: uppercase; color: {CELESTE}; }}
+.mc-foot ul {{ list-style: none; margin: 0; padding: 0; font-size: .86rem; line-height: 1.75; opacity: .9; }}
+.mc-foot a {{ color: {CELESTE}; font-weight: 700; text-decoration: none; border-bottom: 1px solid rgba(116,172,223,.4); }}
+.mc-foot a:hover {{ border-bottom-color: {CELESTE}; }}
+.mc-foot p {{ margin: 0 0 8px; font-size: .86rem; line-height: 1.55; }}
+.mc-foot .fin {{ text-align: center; display: flex; flex-direction: column; align-items: center; gap: 8px; }}
+.mc-foot .made {{ font-size: .7rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; opacity: .75; }}
+.mc-foot .legal {{ display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; margin-top: 22px;
+    padding-top: 14px; border-top: 1px solid rgba(128,128,128,.28); font-size: .8rem; opacity: .9; }}
+
+/* ── Resultado final: fichas ── */
+.mc-rf {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin: 6px 0 4px; }}
+.mc-rf .f {{
+    border: 1px solid rgba(128,128,128,.25); border-left: 4px solid {CELESTE}; border-radius: 12px;
+    padding: 12px 14px; background: rgba(128,128,128,.07);
+}}
+.mc-rf .f.ok {{ border-left-color: #10AC84; }} .mc-rf .f.mal {{ border-left-color: #EE5253; }}
+.mc-rf .k {{ font-size: .7rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; opacity: .65; }}
+.mc-rf .v {{ font-size: 1.45rem; font-weight: 800; margin: 2px 0; letter-spacing: -.01em; }}
+.mc-rf .d {{ font-size: .8rem; opacity: .75; line-height: 1.35; }}
+@media (max-width: 860px) {{ .mc-foot .cols {{ grid-template-columns: 1fr; }} }}
+
+/* ── Páginas legales ── */
+.mc-legal {{ max-width: 860px; margin: 8px auto 0; }}
+.mc-legal h1 {{ margin: 0; padding: 0; font-size: 2rem; font-weight: 800; letter-spacing: -.5px; }}
+.mc-legal .act {{ opacity: .55; font-size: .88rem; margin: 4px 0 18px; }}
+.mc-legal h3 {{ margin: 26px 0 10px; padding: 0; font-size: 1.1rem; font-weight: 800; color: {CELESTE}; }}
+.mc-legal .card {{ padding: 18px 22px; border-radius: 14px; background: rgba(128,128,128,.09);
+    border: 1px solid rgba(128,128,128,.16); }}
+.mc-legal .card.intro {{ background: rgba(116,172,223,.10); border-color: rgba(116,172,223,.3); }}
+.mc-legal .card p {{ margin: 0 0 10px; line-height: 1.7; font-size: .95rem; }}
+.mc-legal .card p:last-child {{ margin-bottom: 0; }}
+
+/* ── Tarjetas de cotización ── */
+.mc-fxgrid {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 12px; margin: 6px 0 4px; }}
+.mc-fx {{
+    padding: 14px 16px 12px; border-radius: 14px; background: rgba(128,128,128,.09);
+    border: 1px solid rgba(116,172,223,.32); border-top: 4px solid {CELESTE};
+}}
+.mc-fx .n {{ font-weight: 800; font-size: .98rem; }}
+.mc-fx .d {{ font-size: .72rem; opacity: .65; min-height: 1.9em; line-height: 1.3; }}
+.mc-fx .v {{ font-size: 1.55rem; font-weight: 800; letter-spacing: -.5px; margin: 4px 0 0; white-space: nowrap; }}
+.mc-fx .c {{ font-size: .78rem; opacity: .75; margin-bottom: 8px; }}
+.mc-fx .chips {{ display: flex; flex-wrap: wrap; gap: 6px; }}
+.mc-fx .chip {{ font-size: .7rem; font-weight: 700; padding: 3px 8px; border-radius: 999px; background: rgba(128,128,128,.16); }}
+.mc-fx .chip.up, .mc-fx .chip.down {{ background: rgba(116,172,223,.2); }}
+.mc-fx .chip.bien {{ color: #10AC84; background: rgba(16,172,132,.14); }}
+.mc-fx .chip.mal {{ color: #EE5253; background: rgba(238,82,83,.14); }}
+.mc-fx .fila {{ display: flex; align-items: center; justify-content: space-between; gap: 8px; }}
+.mc-fx .spark {{ flex: none; opacity: .95; }}
+
+/* ── Franja superior deslizante (inspirada en los tableros de cotizaciones) ── */
+.mc-ticker {{
+    overflow: hidden; white-space: nowrap; border-radius: 12px; padding: 9px 0; margin: 0 0 6px;
+    background: rgba(128,128,128,.07); border: 1px solid rgba(116,172,223,.28);
+    -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 3%, #000 97%, transparent 100%);
+            mask-image: linear-gradient(90deg, transparent 0, #000 3%, #000 97%, transparent 100%);
+}}
+.mc-ticker .pista {{ display: inline-flex; width: max-content; animation: mc-marquee 120s linear infinite; }}
+.mc-ticker:hover .pista {{ animation-play-state: paused; }}
+.mc-ticker .tk {{ display: inline-flex; align-items: baseline; gap: 8px; padding: 0 22px; border-right: 1px solid rgba(128,128,128,.22); }}
+.mc-ticker .n {{ font-size: .68rem; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; opacity: .6; }}
+.mc-ticker .v {{ font-weight: 800; font-size: .92rem; }}
+.mc-ticker .d {{ font-size: .75rem; font-weight: 700; opacity: .75; }}
+.mc-ticker .d.bien {{ color: #10AC84; opacity: 1; }}
+.mc-ticker .d.mal {{ color: #EE5253; opacity: 1; }}
+@keyframes mc-marquee {{ from {{ transform: translateX(0); }} to {{ transform: translateX(-50%); }} }}
+@media (prefers-reduced-motion: reduce) {{ .mc-ticker .pista {{ animation: none; }} .mc-ticker {{ overflow-x: auto; }} }}
+
+/* ── Interactivo: viaje en el tiempo y comparador ── */
+.mc-viaje {{
+    display: flex; align-items: center; gap: 20px; padding: 16px 20px; margin: 6px 0 14px; border-radius: 16px;
+    background: rgba(128,128,128,.09); border: 1px solid rgba(116,172,223,.38);
+}}
+.mc-viaje h3 {{ margin: 2px 0; padding: 0; font-size: 1.5rem; font-weight: 800; }}
+.mc-viaje .per {{ font-size: .74rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: {CELESTE}; }}
+.mc-viaje .hito {{ font-size: .9rem; opacity: .85; line-height: 1.4; }}
+.mc-cmp {{ width: 100%; border-collapse: separate; border-spacing: 0; margin: 8px 0 12px; font-size: .92rem; }}
+.mc-cmp th {{ text-align: right; padding: 8px 12px; font-size: .74rem; letter-spacing: .08em; text-transform: uppercase;
+    opacity: .7; border-bottom: 2px solid {CELESTE}; }}
+.mc-cmp th:first-child, .mc-cmp td:first-child {{ text-align: left; }}
+.mc-cmp td {{ text-align: right; padding: 9px 12px; border-bottom: 1px dashed rgba(128,128,128,.3); font-weight: 600; }}
+.mc-cmp td:first-child {{ font-weight: 400; opacity: .8; }}
+.mc-cmp .mejor {{ color: #10AC84; }}
+.mc-cmp .peor {{ color: #EE5253; }}
+
+[data-testid="stMetric"] {{ border-radius: 14px; }}
+[role="tablist"] {{
+    gap: 6px; padding-bottom: 8px;
+    scrollbar-width: thin !important; scrollbar-color: {CELESTE} rgba(128,128,128,.18);
+}}
+/* barra deslizante con la forma de la bandera: celeste - blanco - celeste */
+[role="tablist"]::-webkit-scrollbar {{ display: block !important; height: 12px; }}
+[role="tablist"]::-webkit-scrollbar-track {{ background: rgba(116,172,223,.14); border-radius: 12px; }}
+[role="tablist"]::-webkit-scrollbar-thumb {{
+    border-radius: 12px; border: 1px solid rgba(116,172,223,.9);
+    background: linear-gradient(to bottom, {CELESTE} 0 34%, #FFFFFF 34% 66%, {CELESTE} 66% 100%);
+}}
+[role="tablist"]::-webkit-scrollbar-thumb:hover {{
+    background: linear-gradient(to bottom, #4A8FD4 0 34%, #FFFFFF 34% 66%, #4A8FD4 66% 100%);
+}}
+[data-testid="stTab"] {{ height: 3.4rem; padding: 0 1.15rem; }}
+[data-testid="stTab"] p {{ font-size: 1.15rem; font-weight: 600; }}
+/* animación sutil al pasar el cursor por un marcador */
+[data-testid="stTab"] {{
+    border-radius: 10px 10px 0 0;
+    transition: transform .18s ease, background-color .18s ease, box-shadow .18s ease, filter .18s ease;
+}}
+[data-testid="stTab"] p {{ transition: color .18s ease, letter-spacing .18s ease; }}
+[data-testid="stTab"]:hover {{
+    transform: translateY(-2px);
+    background-color: rgba(116,172,223,.14);
+    box-shadow: inset 0 -2px 0 rgba(116,172,223,.8);
+}}
+[data-testid="stTab"]:hover p {{ color: {CELESTE} !important; }}
+[data-testid="stTab"]:active {{ transform: translateY(0); }}
+@media (prefers-reduced-motion: reduce) {{
+    [data-testid="stTab"], [data-testid="stTab"] p {{ transition: none; }}
+    [data-testid="stTab"]:hover {{ transform: none; }}
+}}
+/* "Resumen" (primer marcador): píldora celeste con detalle dorado y separador, distinto del resto */
+[role="tablist"] [data-testid="stTab"]:first-of-type {{
+    margin-right: 1.1rem; position: relative; padding-left: 2.35rem;
+}}
+[role="tablist"] [data-testid="stTab"]:first-of-type::before {{
+    content: ""; position: absolute; left: .75rem; top: 50%; width: 1.3rem; height: 1.3rem; transform: translateY(-50%);
+    background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><g stroke='%23F6B40E' stroke-width='1.6' stroke-linecap='round'><path d='M12 1.5v3M12 19.5v3M1.5 12h3M19.5 12h3M4.6 4.6l2.1 2.1M17.3 17.3l2.1 2.1M4.6 19.4l2.1-2.1M17.3 6.7l2.1-2.1'/></g><circle cx='12' cy='12' r='5' fill='%23F6B40E'/></svg>") center / contain no-repeat;
+    transition: transform .6s ease;
+}}
+[role="tablist"] [data-testid="stTab"]:first-of-type:hover::before {{ transform: translateY(-50%) rotate(90deg); }}
+[role="tablist"] [data-testid="stTab"]:first-of-type p {{ font-weight: 800; letter-spacing: .02em; }}
+[role="tablist"] [data-testid="stTab"]:first-of-type::after {{
+    content: ""; position: absolute; right: -0.65rem; top: 22%; height: 56%; width: 1px;
+    background: rgba(128,128,128,.45);
+}}
+h3 {{ font-weight: 700 !important; }}
+</style>
+"""
+
+
+def aplicar() -> None:
+    st.markdown(CSS, unsafe_allow_html=True)
+
+
+def _sol_svg(cx: float, cy: float, r: float) -> str:
+    """Sol de Mayo: disco con 32 rayos alternando largos y cortos."""
+    partes = []
+    n = 32
+    for i in range(n):
+        a = 2 * math.pi * i / n
+        largo = r * (2.15 if i % 2 == 0 else 1.7)
+        ancho = math.pi / n * 0.55
+        pts = [(cx + r * 1.12 * math.cos(a - ancho), cy + r * 1.12 * math.sin(a - ancho)),
+               (cx + largo * math.cos(a), cy + largo * math.sin(a)),
+               (cx + r * 1.12 * math.cos(a + ancho), cy + r * 1.12 * math.sin(a + ancho))]
+        partes.append('<polygon points="' + " ".join(f"{x:.1f},{y:.1f}" for x, y in pts) + '"/>')
+    return f'<g fill="{SOL}">{"".join(partes)}<circle cx="{cx}" cy="{cy}" r="{r}"/></g>'
+
+
+def sol(tam: int = 52) -> str:
+    """Sol de Mayo solo, sin bandera (para el título)."""
+    return (
+        f'<svg class="mc-sunsvg" width="{tam}" height="{tam}" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg" '
+        f'role="img" aria-label="Sol de Mayo">{_sol_svg(30, 30, 11)}</svg>'
+    )
+
+
+def bandera(ancho: int = 44) -> str:
+    """Bandera argentina en SVG (el emoji se ve como 'AR' en Windows)."""
+    alto = round(ancho * 2 / 3)
+    return (
+        f'<svg class="mc-flagsvg" width="{ancho}" height="{alto}" viewBox="0 0 90 60" xmlns="http://www.w3.org/2000/svg" '
+        f'role="img" aria-label="Bandera argentina"><rect width="90" height="60" fill="{CELESTE}"/>'
+        f'<rect y="20" width="90" height="20" fill="#FFFFFF"/>{_sol_svg(45, 30, 5.2)}</svg>'
+    )
+
+
+FONDO_LOGO = "#0E1A2B"
+
+
+def logo(tam: int = 52) -> str:
+    """Logo de MacroCenter: una «C» abierta (anillo celeste) que encierra una «M» con forma de línea de gráfico, y el Sol
+    de Mayo dorado en la apertura de la C. Cuadrado de esquinas redondeadas, para que sirva como ícono."""
+    return (
+        f'<svg class="mc-logo" width="{tam}" height="{tam}" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" '
+        f'role="img" aria-label="MacroCenter"><rect width="64" height="64" rx="15" fill="{FONDO_LOGO}"/>'
+        f'<path d="M 49 15 A 24 24 0 1 0 49 49" fill="none" stroke="{CELESTE}" stroke-width="6" stroke-linecap="round"/>'
+        '<polyline points="21,42 21,24 32,36 43,24 43,42" fill="none" stroke="#FFFFFF" stroke-width="5" '
+        'stroke-linecap="round" stroke-linejoin="round"/>'
+        f'<circle cx="53" cy="32" r="4.6" fill="{SOL}"/></svg>'
+    )
+
+
+def favicon():
+    """Ícono de la pestaña: el mismo logo, dibujado con PIL (viene incluido con Streamlit) en alta resolución."""
+    from PIL import Image, ImageDraw
+
+    k, final = 16, 256  # se dibuja 16 veces más grande y se reduce para que los bordes salgan suaves
+    s = final * k
+    u = s / 64  # una unidad del SVG
+    img = Image.new("RGBA", (s, s), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    d.rounded_rectangle([0, 0, s - 1, s - 1], radius=15 * u, fill=FONDO_LOGO)
+    caja = [(32 - 27) * u, (32 - 27) * u, (32 + 27) * u, (32 + 27) * u]  # PIL dibuja el trazo hacia adentro: 24 + 3
+    d.arc(caja, start=45, end=315, fill=CELESTE, width=int(6 * u))
+    for ang, (cx, cy) in ((45, (49, 49)), (315, (49, 15))):  # terminaciones redondeadas de la C
+        d.ellipse([(cx - 3) * u, (cy - 3) * u, (cx + 3) * u, (cy + 3) * u], fill=CELESTE)
+    m = [(21, 42), (21, 24), (32, 36), (43, 24), (43, 42)]
+    d.line([(x * u, y * u) for x, y in m], fill="white", width=int(5 * u), joint="curve")
+    for x, y in (m[0], m[-1]):
+        d.ellipse([(x - 2.5) * u, (y - 2.5) * u, (x + 2.5) * u, (y + 2.5) * u], fill="white")
+    d.ellipse([(53 - 4.6) * u, (32 - 4.6) * u, (53 + 4.6) * u, (32 + 4.6) * u], fill=SOL)
+    return img.resize((final, final), Image.LANCZOS)
+
+
+def _favicon_bandera():
+    """Ícono de pestaña: bandera con Sol de Mayo (PIL viene incluido con Streamlit)."""
+    from PIL import Image, ImageDraw
+
+    s = 128
+    img = Image.new("RGBA", (s, s), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    h = int(s * 2 / 3)
+    top = (s - h) // 2
+    d.rounded_rectangle([0, top, s - 1, top + h], radius=10, fill=CELESTE)
+    d.rectangle([0, top + h // 3, s - 1, top + 2 * h // 3], fill="white")
+    cx, cy, r = s / 2, s / 2, 9
+    for i in range(32):
+        a = 2 * math.pi * i / 32
+        largo = r * (2.2 if i % 2 == 0 else 1.7)
+        w = math.pi / 32 * 0.55
+        d.polygon([(cx + r * 1.1 * math.cos(a - w), cy + r * 1.1 * math.sin(a - w)),
+                   (cx + largo * math.cos(a), cy + largo * math.sin(a)),
+                   (cx + r * 1.1 * math.cos(a + w), cy + r * 1.1 * math.sin(a + w))], fill=SOL)
+    d.ellipse([cx - r, cy - r, cx + r, cy + r], fill=SOL)
+    return img
+
+
+def marca() -> str:
+    return (
+        f'<div class="mc-brand"><div class="mc-flag">{logo(46)}</div><h1>Macro<span>Center</span></h1></div>'
+    )
+
+
+def hero() -> str:
+    return (
+        f'<div class="mc-title"><div class="mc-flag">{sol(44)}</div>'
+        '<div><h1>MacroCenter</h1><div class="sub">Tablero macroeconómico de Argentina</div></div></div>'
+    )
+
+
+def creditos() -> str:
+    return f'<div class="mc-by">Creada por <b>{AUTOR}</b></div>'
+
+
+def franja() -> str:
+    return '<div class="mc-stripe"></div>'
+
+def resultado_final(fichas: list[tuple[str, str, str, str]]) -> str:
+    """Fichas (etiqueta, valor, detalle, tono) con tono '', 'ok' o 'mal'. Los textos son propios de la app."""
+    import html
+    return '<div class="mc-rf">' + "".join(
+        f'<div class="f {t}"><div class="k">{html.escape(k)}</div><div class="v">{html.escape(v)}</div>'
+        f'<div class="d">{html.escape(d)}</div></div>' for k, v, d, t in fichas) + "</div>"
+
+
+def etiqueta(texto: str) -> str:
+    return f'<div class="mc-label">{texto}</div>'
+
+
+def cotizacion(nombre: str, valor: str, variacion: float | None) -> str:
+    if variacion is None:
+        d = ""
+    else:
+        clase = "mc-up" if variacion > 0.005 else "mc-down" if variacion < -0.005 else "mc-flat"
+        flecha = "▲" if variacion > 0.005 else "▼" if variacion < -0.005 else "■"
+        d = f'<span class="d {clase}">{flecha} {abs(variacion):.1f}%</span>'.replace(".", ",")
+    return f'<div class="mc-tick"><span class="n">{nombre}</span><span class="v">{valor}{d}</span></div>'
+
+
+def linea_tiempo(items: list[dict]) -> str:
+    """Línea de tiempo vertical de presidentes. Cada item: nombre, periodo, anio, iniciales, hito, filas
+    ([{'k','ini','fin','tend'}]), pico, nota, foto, pagina, actual."""
+    esc = html.escape
+    out = ['<div class="mc-tl">']
+    for i, it in enumerate(items):
+        lado = "izq" if i % 2 == 0 else "der"
+        foto = (f'<img src="{esc(it["foto"])}" alt="{esc(it["nombre"])}" loading="lazy" referrerpolicy="no-referrer">'
+                if it.get("foto") else "")
+        dot = f'<div class="mc-foto"><span>{esc(it["iniciales"])}</span>{foto}</div>'
+        if it.get("pagina"):
+            dot = f'<a href="{esc(it["pagina"])}" target="_blank" rel="noopener noreferrer" title="{esc(it["nombre"])} en Wikipedia">{dot}</a>'
+        filas = ""
+        for f in it["filas"]:
+            if f["ini"] in ("", "s/d") and f["fin"] in ("", "s/d"):
+                continue  # sin datos confiables: no se muestra la fila
+            valor = (f'{esc(f["ini"])} <span style="opacity:.5">→</span> ' if f["ini"] else "") + \
+                    f'<span class="{f["tend"]}">{esc(f["fin"])}</span>'
+            filas += f'<div class="mc-fila"><span class="k">{esc(f["k"])}</span><span class="v">{valor}</span></div>'
+        pico = f'<div class="pico">{esc(it["pico"])}</div>' if it.get("pico") else ""
+        nota = f'<div class="nota">{esc(it["nota"])}</div>' if it.get("nota") else ""
+        out.append(
+            f'<div class="mc-tl-item {lado}{" actual" if it.get("actual") else ""}">'
+            f'<div class="mc-tl-card"><div class="per">{esc(it["periodo"])}</div><h4>{esc(it["nombre"])}</h4>'
+            f'<div class="hito">{esc(it["hito"])}</div>{filas}{pico}{nota}</div>'
+            f'<div class="mc-tl-dot">{dot}</div><div class="mc-tl-anio">{it["anio"]}</div></div>'
+        )
+    out.append('<div class="mc-tl-hoy">HOY</div></div>')
+    return "".join(out)
+
+
+def cotizaciones(tarjetas: list[dict]) -> str:
+    """Grilla de tarjetas de cotización. Cada una: nombre, desc, valor, detalle, var (% o None), chip (texto o None)."""
+    esc = html.escape
+    out = ['<div class="mc-fxgrid">']
+    for t in tarjetas:
+        var = _chip_var(t.get("var"), t.get("var_txt", "30 d"), t.get("sentido", "neutro"))
+        extra = "".join(_chip_var(v, txt, t.get("sentido", "neutro")) for txt, v in t.get("extras", []))
+        chip = f'<span class="chip">{esc(t["chip"])}</span>' if t.get("chip") else ""
+        spark = sparkline(t.get("spark") or [], ancho=76, color=t.get("spark_color")) if t.get("spark") else ""
+        out.append(
+            f'<div class="mc-fx"><div class="n">{esc(t["nombre"])}</div><div class="d">{esc(t["desc"])}</div>'
+            f'<div class="fila"><div class="v">{esc(t["valor"])}</div>{spark}</div><div class="c">{esc(t["detalle"])}</div>'
+            f'<div class="chips">{var}{extra}{chip}</div></div>'
+        )
+    out.append("</div>")
+    return "".join(out)
+
+
+def _chip_var(v, texto: str, sentido: str = "neutro") -> str:
+    """Chip con flecha y variación. sentido: 'neutro' (sin juicio), 'alto' (subir es bueno) o 'bajo' (subir es malo)."""
+    if v is None or v != v:
+        return ""
+    clase = "flat" if abs(v) <= 0.05 else ("up" if v > 0 else "down")
+    if sentido != "neutro" and clase != "flat":
+        clase += " " + ("bien" if (v > 0) == (sentido == "alto") else "mal")
+    flecha = "▲" if v > 0.05 else "▼" if v < -0.05 else "■"
+    return f'<span class="chip {clase}">{flecha} {abs(v):.1f}% · {html.escape(texto)}</span>'.replace(".", ",")
+
+
+def sparkline(valores: list, ancho: int = 92, alto: int = 30, color: str | None = None) -> str:
+    """Mini-gráfico de línea en SVG. Sin color explícito, verde si terminó arriba de donde empezó y rojo si no."""
+    vs = [float(x) for x in valores if x is not None and x == x]
+    if len(vs) < 2:
+        return ""
+    if len(vs) > 48:  # alcanza con ~48 puntos para un mini-gráfico
+        paso = (len(vs) - 1) / 47
+        vs = [vs[round(i * paso)] for i in range(48)]
+    mn, mx = min(vs), max(vs)
+    rango = (mx - mn) or 1.0
+    puntos = " ".join(f"{1 + i * (ancho - 2) / (len(vs) - 1):.1f},{alto - 2 - (v - mn) / rango * (alto - 4):.1f}"
+                      for i, v in enumerate(vs))
+    color = color or ("#10AC84" if vs[-1] >= vs[0] else "#EE5253")
+    return (f'<svg class="spark" width="{ancho}" height="{alto}" viewBox="0 0 {ancho} {alto}" aria-hidden="true">'
+            f'<polyline points="{puntos}" fill="none" stroke="{color}" stroke-width="1.8" stroke-linejoin="round" '
+            f'stroke-linecap="round"/></svg>')
+
+
+def ticker(items: list[dict]) -> str:
+    """Franja superior deslizante con datos clave. item: {n: nombre, v: valor, d: variación % o None, sentido: ...}."""
+    esc = html.escape
+    if not items:
+        return ""
+    celdas = []
+    for it in items:
+        d = it.get("d")
+        if d is None or d != d:
+            var = ""
+        else:
+            clase = "flat" if abs(d) <= 0.05 else ("up" if d > 0 else "down")
+            sentido = it.get("sentido", "neutro")
+            if sentido != "neutro" and clase != "flat":
+                clase += " " + ("bien" if (d > 0) == (sentido == "alto") else "mal")
+            flecha = "▲" if d > 0.05 else "▼" if d < -0.05 else "■"
+            var = f'<span class="d {clase}">{flecha} {abs(d):.1f}%</span>'.replace(".", ",")
+        celdas.append(f'<span class="tk"><span class="n">{esc(it["n"])}</span><span class="v">{esc(it["v"])}</span>{var}</span>')
+    pista = "".join(celdas)
+    return f'<div class="mc-ticker" aria-label="Datos clave"><div class="pista">{pista}{pista}</div></div>'
+
+
+def tabla_simple(cabeceras: list[str], filas: list[list[str]]) -> str:
+    """Tabla HTML simple con el estilo de las demás (primera columna alineada a la izquierda)."""
+    esc = html.escape
+    cab = "".join(f"<th>{esc(c)}</th>" for c in cabeceras)
+    cuerpo = "".join("<tr>" + "".join(f"<td>{esc(str(c))}</td>" for c in f) + "</tr>" for f in filas)
+    return f'<table class="mc-cmp"><thead><tr>{cab}</tr></thead><tbody>{cuerpo}</tbody></table>'
+
+
+def foto_html(nombre: str, iniciales: str, url: str | None, pagina: str | None = None, actual: bool = False) -> str:
+    """Círculo con la foto (o las iniciales si la foto no carga). Reutiliza el estilo de la línea de tiempo."""
+    esc = html.escape
+    img = (f'<img src="{esc(url)}" alt="{esc(nombre)}" loading="lazy" referrerpolicy="no-referrer">' if url else "")
+    estilo = f' style="box-shadow:0 0 0 3px {SOL},0 0 20px rgba(246,180,14,.65)"' if actual else ""
+    nodo = f'<div class="mc-foto"{estilo}><span>{esc(iniciales)}</span>{img}</div>'
+    if pagina:
+        nodo = f'<a href="{esc(pagina)}" target="_blank" rel="noopener noreferrer" title="{esc(nombre)} en Wikipedia">{nodo}</a>'
+    return nodo
+
+
+def viaje(nombre: str, iniciales: str, periodo: str, hito: str, url: str | None, pagina: str | None, actual: bool) -> str:
+    esc = html.escape
+    return (f'<div class="mc-viaje">{foto_html(nombre, iniciales, url, pagina, actual)}<div>'
+            f'<div class="per">{esc(periodo)}</div><h3>{esc(nombre)}</h3><div class="hito">{esc(hito)}</div></div></div>')
+
+
+def comparacion(filas: list[dict], a: str, b: str) -> str:
+    """Tabla A vs B. filas: [{'k', 'a', 'b', 'cambio', 'tend'}]."""
+    esc = html.escape
+    cuerpo = "".join(
+        f'<tr><td>{esc(f["k"])}</td><td>{esc(f["a"])}</td><td>{esc(f["b"])}</td>'
+        f'<td class="{f.get("tend", "")}">{esc(f["cambio"])}</td></tr>' for f in filas)
+    return (f'<table class="mc-cmp"><thead><tr><th></th><th>{esc(a)}</th><th>{esc(b)}</th><th>Cambio</th></tr></thead>'
+            f'<tbody>{cuerpo}</tbody></table>')
+
+
+FUENTES = [
+    ("BCRA", "Estadísticas y cotizaciones cambiarias", "https://www.bcra.gob.ar/"),
+    ("INDEC / Ministerio de Economía", "Series de Tiempo (datos.gob.ar)", "https://datos.gob.ar/series/api/"),
+    ("ArgentinaDatos", "Dólares, inflación histórica y riesgo país", "https://argentinadatos.com/"),
+    ("CoinGecko", "Criptomonedas", "https://www.coingecko.com/"),
+    ("CriptoYa", "USDT por exchange argentino", "https://criptoya.com/"),
+    ("Yahoo Finance", "Bolsas y materias primas (fuente no oficial)", "https://finance.yahoo.com/"),
+    ("Wikipedia / Wikimedia Commons", "Fotos de los presidentes", "https://commons.wikimedia.org/"),
+]
+
+
+def footer() -> str:
+    """Pie de página con color propio (celeste de la paleta): fuentes, aviso y crédito."""
+    esc = html.escape
+    lista = "".join(f'<li><a href="{esc(u)}" target="_blank" rel="noopener noreferrer">{esc(n)}</a> — {esc(d)}</li>'
+                    for n, d, u in FUENTES)
+    return (
+        '<div class="mc-foot"><div class="cols">'
+        f'<div><h5>Fuentes de datos</h5><ul>{lista}</ul></div>'
+        '<div><h5>Importante</h5><p><b>Algunos datos pueden tener un rezago</b> respecto de lo que difunden las fuentes en el día '
+        '(por ejemplo, las reservas del BCRA se publican con 1 o 2 días de demora). '
+        'Los datos vienen de APIs y sitios públicos y pueden tener demoras o revisiones. '
+        'Los valores son de referencia y no constituyen asesoramiento financiero. Las notas y las calificaciones son '
+        'medidas orientativas, con criterios propios.</p></div>'
+        f'<div class="fin">{bandera(46)}<p><b>MacroCenter</b><br>Creada por {esc(AUTOR)}</p>'
+        '<p class="made">Hecho en Argentina</p></div>'
+        '</div>'
+        '<div class="legal"><span>© 2026 MacroCenter — Todos los derechos reservados.</span>'
+        '<span><a href="?legal=terminos" target="_self">Términos y condiciones</a>'
+        ' · <a href="?legal=privacidad" target="_self">Política de privacidad</a></span></div>'
+        '</div>'
+    )
+
+
+def legal_pagina(doc: dict, actualizacion: str) -> str:
+    """Documento legal (términos, privacidad) en tarjetas sobrias. Los textos admiten **negrita**; todo lo demás se escapa."""
+    esc = html.escape
+
+    def texto(t: str) -> str:
+        return re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", esc(t))
+
+    secciones = "".join(
+        f'<h3>{esc(titulo)}</h3><div class="card">' + "".join(f"<p>{texto(p)}</p>" for p in parrafos) + "</div>"
+        for titulo, parrafos in doc["secciones"]
+    )
+    return (f'<div class="mc-legal"><h1>{esc(doc["titulo"])}</h1><div class="act">Última actualización: {esc(actualizacion)}</div>'
+            f'<div class="card intro"><p>{texto(doc["intro"])}</p></div>{secciones}</div>')
+
+
+def pie() -> str:
+    return (f'<div class="mc-footer">{bandera(30)}<div>Creada por<br><b>{AUTOR}</b></div>'
+            '<div class="mc-made">Hecho en Argentina</div></div>')
