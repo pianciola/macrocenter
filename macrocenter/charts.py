@@ -1,6 +1,8 @@
 """Constructores de gráficos Plotly y formateo numérico (es-AR) para MacroCenter."""
 from __future__ import annotations
 
+import math
+
 import pandas as pd
 import plotly.graph_objects as go
 
@@ -158,17 +160,27 @@ def marcar_eventos(fig: go.Figure, eventos: list, desde: pd.Timestamp) -> go.Fig
 
 
 def comparar_mandatos(nombres: list[str], valores: list, titulo: str, sufijo: str = "", dec: int = 1,
-                      actual: str | None = None, height: int = 330) -> go.Figure:
+                      actual: str | None = None, height: int = 330, logaritmica: bool = False) -> go.Figure:
     """Barras por mandato en orden cronológico (no ordenadas por valor, para no sugerir un ranking)."""
     ok = [(n, v) for n, v in zip(nombres, valores) if v is not None and v == v]
     colores = ["#F6B40E" if n == actual else PALETA[0] for n, _ in ok]
+    ys = [v for _, v in ok]
+    if logaritmica:
+        # escala logarítmica que admite ceros y negativos (simétrica): una hiperinflación no aplasta al resto
+        ys = [math.copysign(math.log10(1 + abs(v)), v) for v in ys]
     fig = go.Figure(go.Bar(
-        x=[n for n, _ in ok], y=[v for _, v in ok], marker_color=colores,
+        x=[n for n, _ in ok], y=ys, marker_color=colores,
         text=[num(v, dec, sufijo) for _, v in ok], textposition="outside", cliponaxis=False,
         hovertemplate="%{x}: %{text}<extra></extra>"))
     fig = _base(fig, titulo, None, height)
     fig.update_layout(hovermode="closest", showlegend=False, margin=dict(l=10, r=10, t=50, b=10))
     fig.update_yaxes(zeroline=True, zerolinecolor="rgba(128,128,128,.5)")
+    if logaritmica:
+        marcas = [0, 10, 100, 1000, 10000, 100000, 1000000]
+        tope = max((abs(v) for _, v in ok), default=0)
+        marcas = [m for m in marcas if m == 0 or m <= tope * 10]
+        fig.update_yaxes(tickvals=[math.log10(1 + m) for m in marcas],
+                         ticktext=[num(m, 0, sufijo) for m in marcas], title=dict(text="escala logarítmica", font=dict(size=11)))
     return fig
 
 
