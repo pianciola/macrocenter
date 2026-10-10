@@ -700,6 +700,32 @@ GLOSARIO = [
 ]
 
 
+@st.fragment  # escribir un monto redibuja solo el conversor, no la página entera
+def conversor_lateral() -> None:
+    """Conversor pesos ↔ dólares con las cotizaciones del día. De pesos a dólares usa el precio de venta (lo que se
+    paga por cada dólar); de dólares a pesos, el de compra (lo que se recibe)."""
+    sentido_c = st.segmented_control("Sentido", ["Pesos a dólares", "Dólares a pesos"], default="Pesos a dólares", key="conv_sentido",
+                                     label_visibility="collapsed") or "Pesos a dólares"
+    a_dolares = sentido_c == "Pesos a dólares"
+    monto = interactivo.entrada_monto(st, "Pesos" if a_dolares else "Dólares",
+                                      "conv_pesos" if a_dolares else "conv_usd", 1_000_000 if a_dolares else 1_000)
+    filas = []
+    for col_c, nombre_c in (("oficial", "Oficial"), ("blue", "Blue"), ("bolsa", "MEP"), ("tarjeta", "Tarjeta")):
+        col_p = col_c if a_dolares else f"{col_c}_compra"
+        if col_p not in dol or (col_c == "tarjeta" and not a_dolares):  # con tarjeta se compra, no se vende
+            continue
+        s_c = dol[["fecha", col_p]].dropna()
+        if s_c.empty or not s_c[col_p].iloc[-1]:
+            continue
+        precio = float(s_c[col_p].iloc[-1])
+        res = monto / precio if a_dolares else monto * precio
+        filas.append((nombre_c, charts.num(precio, 0, pre="$"),
+                      charts.num(res, 2 if a_dolares and res < 100 else 0, pre="US$ " if a_dolares else "$")))
+    if filas:
+        st.markdown(style.conversor(filas, "a precio de venta" if a_dolares else "a precio de compra"),
+                    unsafe_allow_html=True)
+
+
 def ir_a_herramienta(nombre: str) -> None:
     """Atajo de la barra lateral: abre Herramientas directo en la herramienta elegida."""
     st.session_state["vista"] = "juegos"
@@ -714,17 +740,9 @@ with st.sidebar:
             ("epocas", "Comparar dos épocas", ":material/compare_arrows:", "Comparador de épocas")):
         st.button(texto_a, key=f"atajo_{clave_a}", icon=icono_a, width="stretch", on_click=ir_a_herramienta,
                   args=(modo_a,))
-    try:
-        nota_hoy = NOTAS.get("Hoy", {}).get("total")
-        if nota_hoy is not None:
-            st.markdown(style.etiqueta("Termómetro"), unsafe_allow_html=True)
-            etq_n, color_n = score.nivel(nota_hoy)
-            st.markdown(style.termometro_lateral(nota_hoy, etq_n, color_n), unsafe_allow_html=True)
-            st.button("Ver la calificación", key="atajo_calificacion", icon=":material/speed:", width="stretch",
-                      on_click=ir_a_herramienta, args=("Calificación macro",),
-                      help="Nota de 0 a 100 de la situación macro de hoy comparada con los últimos años")
-    except Exception:  # noqa: BLE001
-        traceback.print_exc()
+    if dol is not None:
+        st.markdown(style.etiqueta("Conversor"), unsafe_allow_html=True)
+        conversor_lateral()
     termino, definicion = GLOSARIO[HOY.dayofyear % len(GLOSARIO)]
     st.markdown(style.etiqueta("Término del día"), unsafe_allow_html=True)
     st.markdown(style.termino_del_dia(termino, definicion), unsafe_allow_html=True)
