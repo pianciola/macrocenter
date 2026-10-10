@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import math
 
+import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 
@@ -29,8 +30,29 @@ def _base(fig: go.Figure, titulo: str, yfmt: str | None, height: int) -> go.Figu
         legend=dict(orientation="h", yanchor="top", y=-0.12, xanchor="center", x=0.5),
         xaxis=dict(showgrid=False),
         yaxis=dict(gridcolor="rgba(128,128,128,0.2)", tickformat=yfmt, separatethousands=True),
+        separators=",.",  # formato argentino en ejes y etiquetas: 1.600,5
     )
+    if _eje_x_fechas(fig):
+        # fechas en formato numérico argentino (Plotly trae los meses en inglés: «Jan 2025»)
+        fig.update_xaxes(
+            hoverformat="%d/%m/%Y",
+            tickformatstops=[
+                dict(dtickrange=[None, 86_400_000 * 27], value="%d/%m"),        # días o semanas
+                dict(dtickrange=[86_400_000 * 27, 86_400_000 * 360], value="%m/%Y"),  # meses
+                dict(dtickrange=[86_400_000 * 360, None], value="%Y"),          # años
+            ])
     return fig
+
+
+def _eje_x_fechas(fig: go.Figure) -> bool:
+    """¿Alguna serie del gráfico tiene fechas en el eje x?"""
+    for tr in fig.data:
+        x = getattr(tr, "x", None)
+        if x is None or len(x) == 0:
+            continue
+        if pd.api.types.is_datetime64_any_dtype(pd.Series(x)) or isinstance(x[0], (pd.Timestamp, np.datetime64)):
+            return True
+    return False
 
 
 def lineas(
@@ -89,7 +111,7 @@ def medidor(puntaje: float, etiqueta: str, color: str, niveles: list[tuple[int, 
         mode="gauge+number",
         value=puntaje,
         number=dict(suffix="/100", valueformat=".0f", font=dict(size=40)),
-        title=dict(text=f"<b>{etiqueta}</b>", font=dict(size=22, color=color)),
+        title=dict(text=f"<b>{etiqueta}</b>", font=dict(size=17, color=color)),
         gauge=dict(axis=dict(range=[0, 100], tickvals=[0, 25, 40, 60, 75, 100]),
                    bar=dict(color=color, thickness=0.32), steps=pasos, borderwidth=0),
     ))
@@ -127,7 +149,7 @@ def serie_presidentes(df: pd.DataFrame, mandatos: list, cortos: dict[str, str], 
     y = d["valor"].clip(lower=minimo_log) if (log and minimo_log is not None) else d["valor"]
     fig = go.Figure(go.Scatter(
         x=d["fecha"], y=y, mode="lines", line=dict(color=color or PALETA[1], width=2), name=titulo,
-        customdata=d["valor"], hovertemplate="%{x|%b %Y}: %{customdata:,.1f}<extra></extra>"))
+        customdata=d["valor"], hovertemplate="%{x|%m/%Y}: %{customdata:,.1f}<extra></extra>"))
     for i, m in enumerate(mandatos):
         fig.add_vrect(x0=m.desde, x1=m.fin, line_width=0, layer="below",
                       fillcolor=_rgba("#74ACDF", 0.16 if i % 2 == 0 else 0.04))

@@ -33,6 +33,25 @@ def dolar_en(d: dict, f: pd.Timestamp) -> float | None:
     return P.dolar_oficial(d["dolar_hist"], d["dolar_actual"], f)
 
 
+# Períodos de cepo cambiario: al dólar oficial no se podía comprar libremente (para personas).
+CEPOS = [(pd.Timestamp("2011-10-28"), pd.Timestamp("2015-12-16")), (pd.Timestamp("2019-09-01"), pd.Timestamp("2025-04-14"))]
+
+
+def en_cepo(f: pd.Timestamp) -> bool:
+    return any(a <= f < b for a, b in CEPOS)
+
+
+def dolar_accesible(d: dict, f: pd.Timestamp) -> tuple[float | None, str]:
+    """(precio, nombre) del dólar que una persona podía comprar en la fecha `f`: durante el cepo, el blue (si hay dato);
+    el resto del tiempo, el oficial."""
+    blue = d.get("dolar_blue")
+    if en_cepo(f) and isinstance(blue, pd.DataFrame) and not blue.empty and f >= blue["fecha"].min():
+        v = P._antes(blue, f)
+        if v:
+            return v, "blue"
+    return dolar_en(d, f), "oficial"
+
+
 def reservas_en(d: dict, f: pd.Timestamp) -> float | None:
     ra = d["reservas_actual"]
     return P._antes(ra, f) if f >= ra["fecha"].min() else P._mes_previo(d["reservas_hist"], f)
@@ -95,6 +114,11 @@ def indices_base100(d: dict, f: pd.Timestamp, uva: pd.DataFrame | None) -> pd.Da
     base_usd = usd[usd.index <= ini].iloc[-1] if (usd.index <= ini).any() else None
     if base_usd:
         out["Dólar oficial"] = [usd[usd.index <= m].iloc[-1] / base_usd * 100 for m in meses]
+    blue = d.get("dolar_blue")
+    if isinstance(blue, pd.DataFrame) and not blue.empty and ini >= blue["fecha"].min():
+        b = blue.set_index("fecha")["valor"]
+        base_b = b[b.index <= ini].iloc[-1]
+        out["Dólar blue"] = [b[b.index <= min(m, HOY)].iloc[-1] / base_b * 100 for m in meses]
     if uva is not None and ini >= uva["fecha"].min():
         u = uva.set_index("fecha")["valor"]
         base_u = u[u.index <= ini].iloc[-1]
@@ -112,7 +136,8 @@ def pantalla_pesos(d: dict, uva: pd.DataFrame | None) -> None:
 
     fac = factor_precios(d["inflacion"], f)
     equiv = monto * fac
-    usd0, usd_hoy = dolar_en(d, f), dolar_en(d, HOY)
+    usd0, tipo0 = dolar_accesible(d, f)
+    usd_hoy, tipo_hoy = dolar_accesible(d, HOY)
     en_usd = monto / usd0 if usd0 else None
     usd_en_pesos = en_usd * usd_hoy if en_usd and usd_hoy else None
     u0 = u_hoy = None
@@ -127,15 +152,17 @@ def pantalla_pesos(d: dict, uva: pd.DataFrame | None) -> None:
     k[1].metric("Tus pesos de entonces hoy compran", _n(100 / fac, 1, suf="%"), "de lo que compraban", delta_color="off",
                 border=True)
     k[2].metric("Si los hubieras pasado a dólares", _n(usd_en_pesos, 0, "$") if usd_en_pesos else "s/d",
-                f"USD {_n(en_usd, 0)} a ${_n(usd0, 0)}" if en_usd else None, delta_color="off", border=True,
-                help="Dólar oficial; hoy valdrían esos dólares al tipo de cambio oficial actual.")
+                f"USD {_n(en_usd, 0)} a ${_n(usd0, 0)} ({tipo0})" if en_usd else None, delta_color="off", border=True,
+                help="Se usa el dólar que de verdad se podía comprar: durante el cepo (2011-2015 y 2019-2025) el blue, "
+                     "porque al oficial no se accedía libremente; fuera del cepo, el oficial. Hoy se valúan al "
+                     f"dólar {tipo_hoy}.")
     k[3].metric("Si los hubieras puesto en UVA", _n(uva_en_pesos, 0, "$") if uva_en_pesos else "s/d",
                 None if uva_en_pesos else "UVA existe desde 2016", delta_color="off", border=True)
 
     # veredicto en una línea
     opciones = {"la inflación (precios)": equiv}
     if usd_en_pesos:
-        opciones["el dólar oficial"] = usd_en_pesos
+        opciones["el dólar"] = usd_en_pesos
     if uva_en_pesos:
         opciones["la UVA"] = uva_en_pesos
     mejor = max(opciones, key=opciones.get)
@@ -144,10 +171,12 @@ def pantalla_pesos(d: dict, uva: pd.DataFrame | None) -> None:
                 f"Dejar los pesos quietos hubiera sido perder **{_n((1 - 1 / fac) * 100, 0, suf='%')}** de poder de compra.")
 
     graf = indices_base100(d, f, uva)
-    cols = {c: c for c in ("Precios", "Dólar oficial", "UVA") if c in graf}
+    cols = {c: c for c in ("Precios", "Dólar oficial", "Dólar blue", "UVA") if c in graf}
     st.plotly_chart(charts.lineas(graf, cols, "Cómo evolucionó cada cosa (base 100 = la fecha elegida)", yfmt=",.0f",
                                   height=340), width="stretch")
-    st.caption("Valores mes a mes (aproximados). No es una recomendación de inversión: es solo mirar el pasado.")
+    st.caption("Valores mes a mes (aproximados). No es una recomendación de inversión: es solo mirar el pasado."
+               + (" La fecha elegida cae en un período de cepo: al dólar oficial no se podía comprar libremente, así que "
+                  "el cálculo usa el blue." if tipo0 == "blue" else ""))
 
 
 # ───────────────────────── 2) Comparador de épocas ─────────────────────────
@@ -164,7 +193,8 @@ def _elegir_momento(slot, etiqueta: str, clave: str, defecto: str) -> pd.Timesta
     previo = st.session_state.get(clave)  # el estado puede venir alterado: si no es una opción válida, se vuelve al defecto
     if not isinstance(previo, str) or previo not in opciones:
         st.session_state[clave] = defecto
-    nombre = slot.selectbox(etiqueta, list(opciones), index=list(opciones).index(defecto), key=clave)
+    # sin `index=`: el valor inicial ya está en el estado (pasar ambos hace que Streamlit muestre una advertencia)
+    nombre = slot.selectbox(etiqueta, list(opciones), key=clave)
     if opciones[nombre] is None:
         return pd.Timestamp(slot.date_input("Fecha", value=date(2010, 6, 1), min_value=date(1984, 1, 1),
                                             max_value=HOY.date(), format="DD/MM/YYYY", key=clave + "_f"))

@@ -41,12 +41,13 @@ DRIVERS = [
 ]
 PILARES = list(dict.fromkeys(d.pilar for d in DRIVERS))
 
+# Las etiquetas son relativas a propósito: la nota compara contra el pasado reciente, no dice si algo es "bueno".
 NIVELES = [  # (puntaje mínimo, etiqueta, color)
-    (75, "Muy favorable", "#10AC84"),
-    (60, "Favorable", "#7BC96F"),
-    (40, "Neutral", "#F79F1F"),
-    (25, "Adversa", "#EE7752"),
-    (0, "Muy adversa", "#EE5253"),
+    (75, "Mucho mejor que lo reciente", "#10AC84"),
+    (60, "Mejor que lo reciente", "#7BC96F"),
+    (40, "Similar a lo reciente", "#F79F1F"),
+    (25, "Peor que lo reciente", "#EE7752"),
+    (0, "Mucho peor que lo reciente", "#EE5253"),
 ]
 
 
@@ -101,8 +102,9 @@ def calificar(series: dict[str, pd.Series], t: pd.Timestamp, anios: int = ANIOS,
 
 def etiqueta_driver(puntaje: float) -> str:
     """Lectura en palabras de un puntaje individual."""
-    return ("Muy bueno" if puntaje >= 80 else "Bueno" if puntaje >= 60 else "Regular" if puntaje >= 40
-            else "Malo" if puntaje >= 20 else "Muy malo")
+    return ("Mucho mejor que lo reciente" if puntaje >= 80 else "Mejor que lo reciente" if puntaje >= 60
+            else "Similar a lo reciente" if puntaje >= 40 else "Peor que lo reciente" if puntaje >= 20
+            else "Mucho peor que lo reciente")
 
 
 def frase_driver(driver: Driver, valor: str, puntaje: float, anios: int = ANIOS) -> str:
@@ -131,7 +133,7 @@ def lectura(hoy: dict, antes: dict, nombre_antes: str) -> str:
     if hoy["total"] is None:
         return "No hay datos suficientes para calificar."
     etiqueta, _ = nivel(hoy["total"])
-    texto = f"La situación macro hoy es **{etiqueta.lower()}** ({hoy['total']:.0f}/100)"
+    texto = f"La situación macro hoy está **{etiqueta.lower()}** ({hoy['total']:.0f}/100)"
     if antes["total"] is not None:
         dif = hoy["total"] - antes["total"]
         if abs(dif) < 2:

@@ -377,6 +377,21 @@ button[data-variant="segmented_control"][aria-checked="true"] p {{ color: #fff !
     background: rgba(128,128,128,.45);
 }}
 h3 {{ font-weight: 700 !important; }}
+/* la etiqueta de variación de los indicadores no se corta con «…»: si no entra, baja de renglón */
+[data-testid="stMetricDelta"], [data-testid="stMetricDelta"] div, [data-testid="stMetricDelta"] p {{
+    white-space: normal !important; overflow: visible !important; text-overflow: clip !important; height: auto !important;
+}}
+[data-testid="stMetricDelta"] {{ max-width: 100%; line-height: 1.25; word-break: normal; overflow-wrap: normal; }}
+/* pantallas medianas (notebook con la barra lateral abierta): los indicadores van de a tres por fila
+   en vez de apretarse cinco en una, que cortaba los valores con «…» */
+@media (min-width: 641px) and (max-width: 1250px) {{
+    [data-testid="stHorizontalBlock"]:has(> [data-testid="stColumn"]:nth-child(4) [data-testid="stMetric"]) {{
+        flex-wrap: wrap !important; gap: .75rem !important;
+    }}
+    [data-testid="stHorizontalBlock"]:has(> [data-testid="stColumn"]:nth-child(4) [data-testid="stMetric"]) > [data-testid="stColumn"] {{
+        flex: 1 1 calc(33.3% - .75rem) !important; min-width: calc(33.3% - .75rem) !important; width: auto !important;
+    }}
+}}
 
 /* ── Celular y pantallas angostas: más aire, indicadores de a dos y todo legible ── */
 @media (max-width: 640px) {{
@@ -642,7 +657,9 @@ def ticker(items: list[dict]) -> str:
             if sentido != "neutro" and clase != "flat":
                 clase += " " + ("bien" if (d > 0) == (sentido == "alto") else "mal")
             flecha = "▲" if d > 0.05 else "▼" if d < -0.05 else "■"
-            var = f'<span class="d {clase}">{flecha} {abs(d):.1f}%</span>'.replace(".", ",")
+            # la franja muestra la variación del último día (los indicadores clave, la de 30 días): se aclara con «1 d»
+            var = (f'<span class="d {clase}" title="Variación contra el dato anterior (1 día)">{flecha} '
+                   f'{abs(d):.1f}% · 1 d</span>').replace(".", ",")
         celdas.append(f'<span class="tk"><span class="n">{esc(it["n"])}</span><span class="v">{esc(it["v"])}</span>{var}</span>')
     pista = "".join(celdas)
     return f'<div class="mc-ticker" aria-label="Datos clave"><div class="pista">{pista}{pista}</div></div>'

@@ -297,7 +297,9 @@ def pico_texto(m: Mandato, i: dict) -> str:
         return ""
     mes, v = i["inf_pico"]
     meses = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"]
-    primer = " · su primer mes" if (mes.year, mes.month) == (m.desde.year, m.desde.month) else ""
+    # caso discutible: el mes de la asunción. Se aclara el criterio en la propia tarjeta.
+    primer = (" · su primer mes: cada mes se asigna a quien gobernaba al cierre, aunque la suba se haya gestado antes"
+              if (mes.year, mes.month) == (m.desde.year, m.desde.month) else "")
     return f"Pico de inflación mensual: {_pct(v)} ({meses[mes.month - 1]}-{mes.year}{primer})"
 
 
