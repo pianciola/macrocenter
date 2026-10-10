@@ -91,6 +91,42 @@ def _n(x, dec=0, pre="", suf=""):
     return charts.num(x, dec, suf, pre)
 
 
+def _leer_monto(texto) -> float | None:
+    """'600.000' / '600000' / '600.000,50' / '$ 1.200' -> número. None si no se puede leer o no es positivo."""
+    t = str(texto or "").replace("$", "").replace(" ", "").strip()
+    if not t:
+        return None
+    if "," in t:  # formato argentino con decimales
+        t = t.replace(".", "").replace(",", ".")
+    else:
+        t = t.replace(".", "")
+    try:
+        v = float(t)
+    except ValueError:
+        return None
+    return v if 0 < v < 1e15 else None
+
+
+def entrada_monto(slot, etiqueta: str, clave: str, defecto: float) -> float:
+    """Campo de monto con separador de miles (600.000). Al confirmar, se reescribe con los puntos; si lo escrito no es
+    un número válido, avisa y usa el último valor bueno."""
+    bueno = f"{clave}_ok"
+    if clave not in st.session_state:
+        st.session_state[clave] = _n(defecto)
+        st.session_state[bueno] = float(defecto)
+
+    def formatear() -> None:
+        v = _leer_monto(st.session_state[clave])
+        if v is not None:
+            st.session_state[bueno] = v
+            st.session_state[clave] = _n(v, 0 if v == int(v) else 2)
+
+    slot.text_input(etiqueta, key=clave, on_change=formatear, help="Escribilo con o sin puntos: por ejemplo 600.000.")
+    if _leer_monto(st.session_state[clave]) is None:
+        slot.caption(":red[Escribí un monto válido, por ejemplo 600.000.]")
+    return float(st.session_state.get(bueno, defecto))
+
+
 def _md(texto: str) -> str:
     """Escapa el signo $ para que Markdown no lo tome como fórmula matemática."""
     return texto.replace("$", "\\$")
@@ -130,7 +166,7 @@ def pantalla_pesos(d: dict, uva: pd.DataFrame | None) -> None:
     st.markdown("##### ¿Cuánto valían tus pesos?")
     st.caption("Poné un monto y una fecha: te mostramos qué fue de esa plata según la inflación, el dólar oficial y la UVA.")
     c1, c2 = st.columns(2)
-    monto = c1.number_input("Monto en pesos de esa fecha", min_value=1.0, value=100_000.0, step=10_000.0, format="%.0f")
+    monto = entrada_monto(c1, "Monto en pesos de esa fecha", "pesos_monto", 100_000)
     f = pd.Timestamp(c2.date_input("¿En qué fecha lo tenías?", value=date(2019, 12, 10), min_value=FECHA_MIN,
                                    max_value=(HOY - pd.Timedelta(days=60)).date(), format="DD/MM/YYYY"))
 
@@ -258,8 +294,7 @@ def pantalla_alquileres(d: dict) -> None:
         st.warning("No se pudieron cargar los índices de ajuste en este momento.")
         return
     c1, c2, c3 = st.columns(3)
-    monto = c1.number_input("Alquiler inicial ($)", min_value=1.0, value=500_000.0, step=10_000.0, format="%.0f",
-                            key="alq_monto")
+    monto = entrada_monto(c1, "Alquiler inicial ($)", "alq_monto", 500_000)
     inicio = pd.Timestamp(c2.date_input("Inicio del contrato", value=(HOY - pd.DateOffset(months=13)).date(),
                                         min_value=date(2017, 1, 1), max_value=HOY.date(), format="DD/MM/YYYY",
                                         key="alq_inicio"))

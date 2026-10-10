@@ -130,6 +130,14 @@ section[data-testid="stSidebar"] [data-testid="stPills"] button {{ border-radius
 }}
 @media (prefers-reduced-motion: reduce) {{ .st-key-btn_noticias_nuevas button {{ animation: none; }} }}
 
+/* ── Campos de formulario: letra más grande ── */
+[data-testid="stWidgetLabel"] p {{ font-size: 1rem !important; font-weight: 600; }}
+[data-testid="stTextInput"] input, [data-testid="stNumberInput"] input, [data-testid="stDateInput"] input,
+[data-testid="stSelectbox"] div[data-baseweb="select"] > div {{ font-size: 1.08rem !important; }}
+/* el aviso «Press Enter to apply» de Streamlit, en castellano */
+[data-testid="InputInstructions"] {{ font-size: 0 !important; }}
+[data-testid="InputInstructions"]::after {{ content: "Presioná Enter para aplicar"; font-size: .75rem; opacity: .7; }}
+
 /* ── Herramientas: selector en tarjetas ── */
 [class*="st-key-modo_"] button {{
     min-height: 3.4rem; border-radius: 14px !important; justify-content: flex-start; padding: .7rem 1rem;
