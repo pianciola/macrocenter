@@ -408,7 +408,7 @@ def con_periodo(clave: str, df: pd.DataFrame, min_anios: int = 0, defecto: str =
 
 def _grafico_periodo(clave: str, df: pd.DataFrame, armar, min_anios: int = 0, defecto: str = "2 años",
                      mensual: bool = False) -> None:
-    grafico(armar(con_periodo(clave, df, min_anios, defecto, mensual)))
+    grafico(armar(con_periodo(clave, df, min_anios, defecto, mensual)), key=f"graf_{clave}")
 
 
 @st.fragment
@@ -485,11 +485,12 @@ def aligerar(fig) -> None:
         tr.update(**upd)
 
 
-def grafico(fig):
-    # sin la barra de herramientas de Plotly (tapa el gráfico, sobre todo en el celular) y sin zoom accidental al deslizar
+def grafico(fig, key: str | None = None):
+    # sin la barra de herramientas de Plotly (tapa el gráfico, sobre todo en el celular) y sin zoom accidental al deslizar.
+    # `key` hace falta cuando el mismo gráfico aparece en dos pantallas (por ejemplo, en Inicio y en su pestaña).
     fig.update_layout(dragmode=False)
     aligerar(fig)
-    st.plotly_chart(fig, width="stretch", config={"displayModeBar": False, "scrollZoom": False})
+    st.plotly_chart(fig, width="stretch", config={"displayModeBar": False, "scrollZoom": False}, key=key)
 
 
 # ───────────────────────── carga de series ─────────────────────────
@@ -678,6 +679,71 @@ except Exception:  # noqa: BLE001 — sin la calificación el resto del tablero 
     SERIES_NOTA = {}
     NOTAS = {k: {"total": None, "pilares": {}, "drivers": {}} for k in COMPARACIONES}
     HIST_NOTA = pd.DataFrame()
+
+
+# ───────────────────────── barra lateral (segunda parte: necesita los datos) ─────────────────────────
+GLOSARIO = [
+    ("Riesgo país", "Cuánto más que los bonos de EE. UU. tiene que pagar la Argentina para que le presten. 100 puntos "
+                    "son 1 punto porcentual de tasa extra."),
+    ("Brecha cambiaria", "La diferencia, en porcentaje, entre un dólar paralelo (blue, MEP o CCL) y el oficial."),
+    ("Reservas brutas", "Todos los dólares y el oro que tiene el Banco Central, incluidos los que pidió prestados o "
+                        "son de los ahorristas."),
+    ("Reservas netas", "Las reservas brutas menos lo que el Banco Central debe en el corto plazo: lo que de verdad "
+                       "puede usar."),
+    ("Inflación interanual", "Cuánto subieron los precios en los últimos 12 meses, contra el mismo mes del año anterior."),
+    ("Inflación núcleo", "La inflación sin los precios más volátiles o regulados (estacionales y tarifas). Muestra la "
+                         "tendencia de fondo."),
+    ("Salario real", "El sueldo medido en lo que alcanza a comprar: sube si los salarios aumentan más que los precios."),
+    ("UVA", "Unidad de Valor Adquisitivo: un valor en pesos que se ajusta todos los días por inflación (CER). Se usa en "
+            "créditos hipotecarios y plazos fijos."),
+    ("CER", "Coeficiente de Estabilización de Referencia: índice diario del BCRA que sigue a la inflación con unas "
+            "semanas de rezago."),
+    ("Tasa BADLAR", "La tasa que pagan los bancos privados por plazos fijos de más de un millón de pesos. Es la "
+                    "referencia del mercado."),
+    ("Dólar MEP", "Dólar que se obtiene comprando un bono en pesos y vendiéndolo en dólares, de forma legal, en la bolsa."),
+    ("Contado con liquidación", "Como el MEP, pero los dólares quedan en una cuenta del exterior. Lo usan empresas para "
+                                "girar divisas."),
+    ("EMAE", "Estimador Mensual de Actividad Económica del INDEC: el anticipo, mes a mes, de cómo viene el PBI."),
+    ("Superávit primario", "Cuando el Estado recauda más de lo que gasta, sin contar los intereses de la deuda."),
+    ("Déficit financiero", "Cuando el Estado gasta más de lo que recauda, contando también los intereses de la deuda."),
+    ("Base monetaria", "Los billetes y monedas en circulación más el dinero que los bancos tienen depositado en el BCRA."),
+    ("REM", "Relevamiento de Expectativas de Mercado: encuesta mensual del BCRA a consultoras sobre inflación, dólar y "
+            "actividad."),
+    ("ICL", "Índice de Contratos de Locación: combinaba inflación y salarios; se usó para ajustar alquileres."),
+    ("Recesión", "Caída de la actividad económica durante un período sostenido; suele hablarse de dos trimestres "
+                 "seguidos en baja."),
+    ("Devaluación", "Suba del precio del dólar oficial: el peso pasa a valer menos frente a otras monedas."),
+]
+
+
+def ir_a_herramienta(nombre: str) -> None:
+    """Atajo de la barra lateral: abre Herramientas directo en la herramienta elegida."""
+    st.session_state["vista"] = "juegos"
+    st.session_state["inter_modo"] = nombre
+
+
+with st.sidebar:
+    try:
+        nota_hoy = NOTAS.get("Hoy", {}).get("total")
+        if nota_hoy is not None:
+            st.markdown(style.etiqueta("Termómetro"), unsafe_allow_html=True)
+            etq_n, color_n = score.nivel(nota_hoy)
+            st.markdown(style.termometro_lateral(nota_hoy, etq_n, color_n), unsafe_allow_html=True)
+            st.button("Ver la calificación", key="atajo_calificacion", icon=":material/speed:", width="stretch",
+                      on_click=ir_a_herramienta, args=("Calificación macro",),
+                      help="Nota de 0 a 100 de la situación macro de hoy comparada con los últimos años")
+    except Exception:  # noqa: BLE001
+        traceback.print_exc()
+    st.markdown(style.etiqueta("Atajos"), unsafe_allow_html=True)
+    for clave_a, texto_a, icono_a, modo_a in (
+            ("alquiler", "Ajustar un alquiler", ":material/home:", "Ajuste de alquileres"),
+            ("pesos", "¿Cuánto valían tus pesos?", ":material/savings:", "¿Cuánto valían tus pesos?"),
+            ("epocas", "Comparar dos épocas", ":material/compare_arrows:", "Comparador de épocas")):
+        st.button(texto_a, key=f"atajo_{clave_a}", icon=icono_a, width="stretch", on_click=ir_a_herramienta,
+                  args=(modo_a,))
+    termino, definicion = GLOSARIO[HOY.dayofyear % len(GLOSARIO)]
+    st.markdown(style.etiqueta("Término del día"), unsafe_allow_html=True)
+    st.markdown(style.termino_del_dia(termino, definicion), unsafe_allow_html=True)
 
 
 # (las cotizaciones del día van en la franja deslizante de arriba; el crédito y las fuentes, en el pie de la página)
@@ -1293,9 +1359,29 @@ def restablecer_prefs() -> None:
 if "kpis_sel" not in st.session_state:
     st.session_state["kpis_sel"] = cargar_prefs()
 
-def panel_plazo_fijo() -> None:
+def ult_y_ant(df: pd.DataFrame | None, col: str = "valor", atras: int = 1) -> tuple[float | None, float | None]:
+    """Último dato y el de `atras` períodos antes (None si no hay)."""
+    if df is None or col not in df:
+        return None, None
+    s = df[df["fecha"] <= HOY].dropna(subset=[col])[col]
+    if s.empty:
+        return None, None
+    return float(s.iloc[-1]), (float(s.iloc[-1 - atras]) if len(s) > atras else None)
+
+
+def dif(a: float | None, b: float | None) -> float | None:
+    return None if a is None or b is None else a - b
+
+
+def pct(a: float | None, b: float | None) -> float | None:
+    return None if a is None or not b else (a / b - 1) * 100
+
+
+def panel_plazo_fijo(clave: str = "res_real", subtitulo: bool = True) -> None:
     # Rendimiento real de un plazo fijo: lo que rinde la tasa menos lo que subieron los precios, mes a mes.
-    st.subheader("¿Le ganó el plazo fijo a la inflación?")
+    # `clave` distingue los botones de período cuando el panel aparece en más de una pantalla.
+    if subtitulo:
+        st.subheader("¿Le ganó el plazo fijo a la inflación?")
     if badlar is not None and infl_m is not None:
         tasa_m = badlar.set_index("fecha")["valor"].resample("ME").mean().rename("tna").reset_index()
         real = tasa_m.merge(infl_m.rename(columns={"valor": "inflacion"}), on="fecha")
@@ -1310,7 +1396,7 @@ def panel_plazo_fijo() -> None:
             kpi(k[1], "Suben los precios (mensual)", float(ult["inflacion"]), 1, suf="%")
             kpi(k[2], "Rendimiento real del mes", float(ult["real"]), 1, suf="%", color="normal",
                 help="Positivo: la tasa le ganó a la inflación. Negativo: el ahorro perdió poder de compra.")
-            grafico_periodo("res_real", real, lambda d: charts.barras(
+            grafico_periodo(clave, real, lambda d: charts.barras(
                 d, "real", "Rendimiento real mensual de un plazo fijo (%)", yfmt=",.1f", height=300), mensual=True)
             st.caption("Usa la tasa BADLAR (depósitos a plazo de bancos privados) como referencia de un plazo fijo, promedio del "
                        "mes, contra la inflación de ese mes. No incluye impuestos ni comisiones.")
@@ -1318,8 +1404,186 @@ def panel_plazo_fijo() -> None:
         st.info("No se pudieron cargar la tasa o la inflación para este panel.")
 
 
+# ───────────────────────── Inicio: rotación y panorama ─────────────────────────
+@st.cache_resource
+def _contador_visitas() -> dict:
+    return {"n": 0, "lock": threading.Lock()}
+
+
+def turno_de_visita() -> int:
+    """Número de esta visita (una por sesión: cada vez que alguien entra o recarga la página avanza uno). Sirve para que
+    la portada no muestre siempre lo mismo: el gráfico y el análisis destacados van rotando."""
+    if "turno_inicio" not in st.session_state:
+        c = _contador_visitas()
+        with c["lock"]:
+            st.session_state["turno_inicio"] = c["n"]
+            c["n"] += 1
+    return st.session_state["turno_inicio"]
+
+
+def _ult_y_hace(df: pd.DataFrame | None, col: str = "valor", dias: int = 30) -> tuple[float | None, float | None]:
+    """Último dato y el de hace `dias` días (el último publicado hasta esa fecha)."""
+    if df is None or col not in df:
+        return None, None
+    d = df[df["fecha"] <= HOY].dropna(subset=[col])
+    if d.empty:
+        return None, None
+    antes = d[d["fecha"] <= d["fecha"].iloc[-1] - pd.Timedelta(days=dias)]
+    return float(d[col].iloc[-1]), (float(antes[col].iloc[-1]) if not antes.empty else None)
+
+
+def _tono(texto: str, bueno: bool | None) -> str:
+    """Pinta el texto según la regla de la app: verde si es buena noticia, rojo si es mala."""
+    return texto if bueno is None else (f":green[{texto}]" if bueno else f":red[{texto}]")
+
+
+def _mes(fecha: pd.Timestamp) -> str:
+    return MESES_ES[fecha.month - 1]
+
+
+def panorama_inicio() -> list[str]:
+    """Frases que resumen la coyuntura con los últimos datos publicados. Cada una se omite si falta su dato."""
+    frases = []
+    try:
+        of, of_a = _ult_y_hace(dol_rec, "oficial") if dol is not None else (None, None)
+        bl, _ = _ult_y_hace(dol, "blue") if dol is not None else (None, None)
+        if of is not None:
+            f = f"El **dólar oficial** está en **{charts.num(of, 0, pre='$')}**"
+            v = pct(of, of_a)
+            if v is not None:
+                f += (" (sin cambios en 30 días)" if abs(v) < 0.05 else
+                      f" ({_tono(('subió ' if v > 0 else 'bajó ') + charts.num(abs(v), 1, '%'), v < 0)} en 30 días)")
+            if bl is not None:
+                br = (bl / of - 1) * 100
+                f += f" y el **blue**, en **{charts.num(bl, 0, pre='$')}**: una brecha de **{charts.num(br, 1, '%')}**"
+                if abs(br) < 5:
+                    f += ", prácticamente sin diferencia entre los dos"
+            frases.append(f + ".")
+    except Exception:  # noqa: BLE001
+        traceback.print_exc()
+    try:
+        if infl_m is not None:
+            d = infl_m[infl_m["fecha"] <= HOY].dropna(subset=["valor"])
+            if len(d) >= 2:
+                u, a = d.iloc[-1], d.iloc[-2]
+                f = f"La **inflación** de {_mes(u['fecha'])} fue **{charts.num(u['valor'], 1, '%')}**"
+                dd = float(u["valor"] - a["valor"])
+                if abs(dd) < 0.05:
+                    f += f", igual que en {_mes(a['fecha'])}"
+                else:
+                    f += (f", {_tono('más baja' if dd < 0 else 'más alta', dd < 0)} que en {_mes(a['fecha'])} "
+                          f"({charts.num(a['valor'], 1, '%')})")
+                ia = ultimo(infl_ia) if infl_ia is not None else None
+                if ia is not None:
+                    f += f". En los últimos 12 meses los precios subieron **{charts.num(ia, 1, '%')}**"
+                esp = ultimo(rem) if rem is not None else None
+                if esp is not None:
+                    f += f" y las consultoras esperan **{charts.num(esp, 1, '%')}** para los próximos 12 (REM del BCRA)"
+                frases.append(f + ".")
+    except Exception:  # noqa: BLE001
+        traceback.print_exc()
+    try:
+        rs, rs_a = _ult_y_hace(reservas)
+        rp, rp_a = _ult_y_hace(riesgo)
+        partes = []
+        if rs is not None:
+            t_ = f"las **reservas** del Banco Central suman **USD {charts.num(rs, 0)} millones**"
+            v = pct(rs, rs_a)
+            if v is not None and abs(v) >= 0.05:
+                t_ += f" ({_tono(('subieron ' if v > 0 else 'bajaron ') + charts.num(abs(v), 1, '%'), v > 0)} en 30 días)"
+            partes.append(t_)
+        if rp is not None:
+            t_ = f"el **riesgo país** está en **{charts.num(rp, 0)} puntos**"
+            v = dif(rp, rp_a)
+            if v is not None and abs(v) >= 1:
+                t_ += f" ({_tono(('subió ' if v > 0 else 'bajó ') + charts.num(abs(v), 0) + ' puntos', v < 0)} en 30 días)"
+            partes.append(t_)
+        if partes:
+            f = " y ".join(partes)
+            frases.append(f[0].upper() + f[1:] + ".")
+    except Exception:  # noqa: BLE001
+        traceback.print_exc()
+    try:
+        if sal_real_df is not None and not sal_real_df.empty:
+            u = sal_real_df.dropna(subset=["real"]).iloc[-1]
+            r = float(u["real"])
+            gana = r >= 0
+            frases.append(f"Los **salarios** {_tono('le ganan' if gana else 'le pierden', gana)} a la inflación: en "
+                          f"{_mes(u['fecha'])} compraban **{charts.num(abs(r), 1, '%')} {'más' if gana else 'menos'}** "
+                          "que un año antes.")
+    except Exception:  # noqa: BLE001
+        traceback.print_exc()
+    try:
+        if emae is not None:
+            e = emae.assign(ia=emae["valor"].pct_change(12) * 100).dropna(subset=["ia"])
+            e = e[e["fecha"] <= HOY]
+            if not e.empty:
+                u = e.iloc[-1]
+                v = float(u["ia"])
+                frases.append(f"La **actividad económica** (EMAE) de {_mes(u['fecha'])} quedó "
+                              f"**{charts.num(abs(v), 1, '%')}** "
+                              f"{_tono('por encima' if v >= 0 else 'por debajo', v >= 0)} de un año antes.")
+    except Exception:  # noqa: BLE001
+        traceback.print_exc()
+    return frases
+
+
+# Gráficos que rotan arriba: (nombre, por qué importa). El dibujo de cada uno está en grafico_inicio.
+GRAFICOS_INICIO = {
+    "Dólar": "El **oficial** es el que regula el Banco Central y el **blue**, el del mercado informal. Cuando se separan "
+             "mucho suele haber tensión cambiaria.",
+    "Inflación": "Barras: cuánto subieron los precios cada mes. Línea: la suba acumulada en 12 meses. Es lo que más pesa "
+                 "en el poder de compra.",
+    "Reservas": "Los dólares del Banco Central para pagar deuda e intervenir en el mercado. Más reservas, más margen para "
+                "evitar saltos del dólar.",
+    "Riesgo país": "Cuánto más que EE. UU. paga la Argentina para endeudarse (100 puntos = 1 punto porcentual). Más bajo "
+                   "es mejor: abarata el crédito para el Estado y las empresas.",
+    "Brecha": "Cuánto más caros están el blue y el contado con liquidación que el oficial. Una brecha alta suele reflejar "
+              "desconfianza o trabas para comprar dólares.",
+    "Actividad": "El EMAE del INDEC mide mes a mes cuánto produce la economía (es el anticipo del PBI). Si sube, la "
+                 "economía crece.",
+    "Salario real": "Cuánto más o menos compran los sueldos que un año antes. Barras verdes: le ganaron a la inflación; "
+                    "rojas: perdieron.",
+}
+
+
+def bloque_salarios() -> None:
+    sr = sal_real_df
+    if sr is None or sr.empty:
+        st.info("No se pudieron cargar los salarios.")
+        return
+    _grafico_periodo("ini_sal", sr, lambda d: charts.lineas(d, {"Salarios": "salario", "Inflación": "inflacion"},
+                                                            "Salarios vs inflación — variación interanual (%)",
+                                                            yfmt=",.0f", height=340), defecto="5 años", mensual=True)
+    u = sr.dropna(subset=["real"]).iloc[-1]
+    st.caption(f"En {_mes(u['fecha'])} de {u['fecha'].year} los salarios subían {charts.num(u['salario'], 1, '%')} "
+               f"interanual y los precios, {charts.num(u['inflacion'], 1, '%')}. Cuando la línea de salarios va por "
+               "encima de la de inflación, el sueldo alcanza para más. Índice de salarios del INDEC (registrados y no "
+               "registrados), que se publica con unos dos meses de rezago.")
+
+
+def bloque_fiscal() -> None:
+    f = fiscal_df()
+    cols = {n: c for n, c in (("Primario", "primario_12m"), ("Financiero", "financiero_12m")) if c in f}
+    if f.empty or not cols:
+        st.info("No se pudieron cargar las cuentas públicas.")
+        return
+    f12 = f.dropna(subset=list(cols.values()), how="all")
+
+    def fig12(d):
+        fig = charts.lineas(d, cols, "Resultado fiscal acumulado de 12 meses (% del PBI)", yfmt=",.1f", height=340)
+        fig.add_hline(y=0, line_width=1, line_dash="dot", line_color="rgba(128,128,128,.7)")
+        return fig
+
+    _grafico_periodo("ini_fis", f12, fig12, defecto="5 años", mensual=True)
+    st.caption("Arriba de la línea punteada, el Estado nacional gasta menos de lo que recauda (superávit); abajo, más "
+               "(déficit). El **primario** no cuenta los intereses de la deuda; el **financiero** sí. Más detalle en la "
+               "pestaña Resultado fiscal.")
+
+
 # ── Inicio ──
 with t_res, protegido("Inicio"):
+    turno = turno_de_visita()
     # el estado de sesión puede traer claves viejas o inválidas: se filtra antes de dibujar el selector
     previos = st.session_state.get("kpis_sel")
     st.session_state["kpis_sel"] = [k for k in (previos if isinstance(previos, list) else [])
@@ -1345,12 +1609,25 @@ with t_res, protegido("Inicio"):
                 traceback.print_exc()
                 kpi(slot, CATALOGO[clave][1], None)
 
-    # un solo gráfico a la vez (el usuario elige cuál), para que la portada no se llene
+    # Panorama en texto: la coyuntura en cuatro o cinco frases, armadas con los últimos datos
+    frases = panorama_inicio()
+    if frases:
+        with st.container(border=True, key="panorama"):
+            st.markdown("##### En pocas palabras")
+            # el "$" de los precios se escapa: en Markdown de Streamlit abre una fórmula matemática
+            st.markdown("\n".join(f"- {f}".replace("$", "\\$") for f in frases))
+            st.caption("Resumen automático con los últimos datos publicados de cada fuente (algunos tienen semanas de "
+                       "rezago). Verde: buena noticia; rojo: mala.")
+
+    # un solo gráfico a la vez, para que la portada no se llene; cada visita arranca con uno distinto
+    st.markdown("#### Gráfico destacado")
     @st.fragment
     def grafico_inicio() -> None:
         """Selector de gráfico + período: cambiar uno u otro redibuja solo esto."""
-        OPC = ["Dólar", "Inflación", "Reservas", "Riesgo país"]
-        elegido_i = st.segmented_control("Gráfico", OPC, default="Dólar", key="inicio_grafico", label_visibility="collapsed") or "Dólar"
+        OPC = list(GRAFICOS_INICIO)
+        inicial = OPC[turno % len(OPC)]
+        elegido_i = st.segmented_control("Gráfico", OPC, default=inicial, key="inicio_grafico",
+                                         label_visibility="collapsed") or inicial
         if elegido_i == "Dólar" and dol is not None:
             _grafico_periodo("res_dolar", dol_rec, lambda d: charts.lineas(d, {"Oficial": "oficial", "Blue": "blue"}, "Dólar ($)",
                                                                            height=340))
@@ -1365,15 +1642,25 @@ with t_res, protegido("Inicio"):
         elif elegido_i == "Riesgo país" and riesgo is not None:
             _grafico_periodo("res_riesgo", riesgo, lambda d: charts.lineas(d, {"Riesgo país": "valor"},
                                                                            "Riesgo país (puntos básicos)", height=340))
+        elif elegido_i == "Brecha" and dol is not None:
+            _grafico_periodo("ini_brecha", dol.dropna(subset=["brecha_blue"]),
+                             lambda d: charts.lineas(d, {"Blue vs oficial": "brecha_blue", "CCL vs oficial": "brecha_ccl"},
+                                                     "Brecha cambiaria (% sobre el oficial)", yfmt=",.0f", height=340))
+        elif elegido_i == "Actividad" and emae_sa is not None:
+            _grafico_periodo("ini_emae", emae_sa, lambda d: charts.lineas(
+                d, {"EMAE desestacionalizado": "valor"}, "Actividad económica (EMAE desestacionalizado, 2004 = 100)",
+                yfmt=",.0f", height=340), defecto="5 años", mensual=True)
+        elif elegido_i == "Salario real" and sal_real_df is not None and not sal_real_df.empty:
+            _grafico_periodo("ini_salreal", sal_real_df, lambda d: charts.barras(
+                d, "real", "Salario real — variación interanual (%)", yfmt=",.1f", height=340),
+                defecto="5 años", mensual=True)
         else:
             st.info("No se pudo cargar este gráfico.")
+            return
+        st.caption(GRAFICOS_INICIO[elegido_i])
 
     grafico_inicio()
 
-    # ¿Qué le ganó a la inflación? Variación de cada alternativa de ahorro en el mismo período.
-    st.divider()
-    st.subheader("¿Qué le ganó a la inflación?")
-    @st.fragment
     def que_le_gano() -> None:
         """Comparativo contra la inflación: cambiar el período redibuja solo esto."""
         ventanas = {"3 meses": 3, "6 meses": 6, "1 año": 12}
@@ -1427,7 +1714,35 @@ with t_res, protegido("Inicio"):
             traceback.print_exc()
             st.info("No se pudo armar este comparativo.")
 
-    que_le_gano()
+    # Análisis destacado: rota en cada visita y con el botón se pasa al siguiente (solo se redibuja esta parte)
+    ANALISIS = [
+        ("¿Qué le ganó a la inflación?", que_le_gano),
+        ("¿Los salarios le ganan a la inflación?", bloque_salarios),
+        ("¿Le ganó el plazo fijo a la inflación?", lambda: panel_plazo_fijo("ini_real", subtitulo=False)),
+        ("¿Cómo vienen las cuentas públicas?", bloque_fiscal),
+    ]
+
+    def _otro_analisis() -> None:
+        st.session_state["inicio_analisis"] = st.session_state.get("inicio_analisis", 0) + 1
+
+    @st.fragment
+    def analisis_inicio() -> None:
+        if not isinstance(st.session_state.get("inicio_analisis"), int):
+            st.session_state["inicio_analisis"] = turno
+        i = st.session_state["inicio_analisis"] % len(ANALISIS)
+        titulo_a, dibujar = ANALISIS[i]
+        h_, b_ = st.columns([5, 1.5], vertical_alignment="center")
+        h_.subheader(titulo_a)
+        b_.button("Ver otro análisis", icon=":material/autorenew:", key="inicio_otro", width="stretch",
+                  on_click=_otro_analisis)
+        try:
+            dibujar()
+        except Exception:  # noqa: BLE001
+            traceback.print_exc()
+            st.info("No se pudo armar este análisis.")
+
+    st.divider()
+    analisis_inicio()
 
 # ── Criptomonedas ──
 with t_cri, protegido("Criptomonedas"):
@@ -1543,24 +1858,6 @@ with t_res_i, protegido("Reservas"):
         with st.expander("Variación mensual"):
             rm = reservas.set_index("fecha")["valor"].resample("ME").last().diff().rename("var").reset_index()
             grafico(charts.barras(rec(rm.dropna(), 2), "var", "Variación mensual de reservas (USD millones)", yfmt=",.0f"))
-
-def ult_y_ant(df: pd.DataFrame | None, col: str = "valor", atras: int = 1) -> tuple[float | None, float | None]:
-    """Último dato y el de `atras` períodos antes (None si no hay)."""
-    if df is None or col not in df:
-        return None, None
-    s = df[df["fecha"] <= HOY].dropna(subset=[col])[col]
-    if s.empty:
-        return None, None
-    return float(s.iloc[-1]), (float(s.iloc[-1 - atras]) if len(s) > atras else None)
-
-
-def dif(a: float | None, b: float | None) -> float | None:
-    return None if a is None or b is None else a - b
-
-
-def pct(a: float | None, b: float | None) -> float | None:
-    return None if a is None or not b else (a / b - 1) * 100
-
 
 # ── Actividad y PBI ──
 with t_act, protegido("Actividad y PBI"):
