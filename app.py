@@ -21,7 +21,8 @@ from macrocenter import charts, data, interactivo, legal, news, presidentes, sco
 
 st.set_page_config(page_title="MacroCenter", page_icon=style.favicon(), layout="wide")
 
-HOY = pd.Timestamp.today().normalize()
+# fecha argentina: el servidor publicado anda en UTC y desde las 21 h ya estaría en el día siguiente
+HOY = pd.Timestamp(data.hoy_argentina())
 DESDE_BCRA = "2016-01-01"  # el UVA arranca en marzo de 2016
 PERIODOS = {"1 mes": 30, "6 meses": 182, "1 año": 365, "2 años": 730, "5 años": 1825, "Todo": None}
 
@@ -69,11 +70,27 @@ def _guardar_disco(resultado: tuple[dict, datetime]) -> None:
         pass
 
 
-def borrar_disco() -> None:
+def envejecer_disco() -> None:
+    """Marca lo guardado como viejo: la próxima carga descarga todo de nuevo, pero si alguna fuente falla todavía se
+    puede usar su último dato bueno (por eso no se borra)."""
     try:
-        CACHE_DISCO.unlink(missing_ok=True)
+        if CACHE_DISCO.exists():
+            os.utime(CACHE_DISCO, (0, 0))
     except OSError:
         pass
+
+
+def _completar_con_disco(resultado: tuple[dict, datetime]) -> tuple[dict, datetime]:
+    """Si alguna fuente falló, usa para ella el último dato bueno guardado: mejor un dato de hace unas horas que una
+    sección vacía. Así la caída de una sola fuente no deja sin caché a toda la página."""
+    datos, cuando = resultado
+    if not any(isinstance(v, str) for v in datos.values()):
+        return resultado
+    guardado = _leer_disco()
+    if not guardado:
+        return resultado
+    viejos = guardado[0][0]
+    return {k: (viejos.get(k, v) if isinstance(v, str) else v) for k, v in datos.items()}, cuando
 
 
 def _refrescar_en_segundo_plano() -> None:
@@ -83,7 +100,7 @@ def _refrescar_en_segundo_plano() -> None:
 
     def tarea():
         try:
-            _guardar_disco(_descargar_todo())
+            _guardar_disco(_completar_con_disco(_descargar_todo()))
             cargar_todo.clear()
         except Exception:  # noqa: BLE001
             pass
@@ -105,7 +122,7 @@ def cargar_todo() -> tuple[dict[str, pd.DataFrame | str], datetime]:
         if edad < DISCO_VIEJO_MAX:
             _refrescar_en_segundo_plano()
             return resultado
-    resultado = _descargar_todo()
+    resultado = _completar_con_disco(_descargar_todo())
     _guardar_disco(resultado)
     return resultado
 
@@ -181,7 +198,10 @@ def _historia_cripto(coin_id: str, dias: int) -> pd.DataFrame:
     return data.limpiar(data.cripto_historia(coin_id, dias))  # si falla, la excepción no se guarda en el caché
 
 
+@st.cache_data(ttl=60, show_spinner=False)
 def historia_cripto(coin_id: str, dias: int) -> pd.DataFrame | str:
+    """El error también se guarda (1 minuto): si CoinGecko rechaza por exceso de pedidos, no se reintenta en cada
+    clic (cada intento espera unos 10 s entre reintentos y frenaría toda la página)."""
     try:
         return _historia_cripto(coin_id, dias)
     except Exception as e:  # noqa: BLE001
@@ -205,8 +225,6 @@ def reintentar_si_fallo(cache_fn, clave: str, fallo: bool, espera: int = 60) -> 
     en la próxima interacción (como máximo una vez cada `espera` segundos, para no martillar a las fuentes)."""
     if fallo and time.time() - st.session_state.get(f"_reintento_{clave}", 0) > espera:
         st.session_state[f"_reintento_{clave}"] = time.time()
-        if clave == "datos":
-            borrar_disco()
         cache_fn.clear()
 
 
@@ -535,7 +553,8 @@ def fiscal_df() -> pd.DataFrame:
     if w.empty:
         return pd.DataFrame(columns=["fecha"])
     ultimo_q = w.index[-1]
-    inf = infl_m.set_index("fecha")["valor"] if infl_m is not None else pd.Series(dtype=float)
+    # sin inflación, una serie vacía pero con índice de fechas (con uno común, comparar contra fechas falla)
+    inf = infl_m.set_index("fecha")["valor"] if infl_m is not None else pd.Series(dtype=float, index=pd.DatetimeIndex([]))
 
     def pbi_en(m: pd.Timestamp) -> float:
         q = m.to_period("Q").start_time
@@ -565,7 +584,7 @@ def fiscal_anual() -> pd.DataFrame:
     q = pib_corr.dropna(subset=["valor"]).set_index("fecha")["valor"].sort_index()
     if q.empty:
         return pd.DataFrame(columns=["anio"])
-    inf = infl_m.set_index("fecha")["valor"] if infl_m is not None else pd.Series(dtype=float)
+    inf = infl_m.set_index("fecha")["valor"] if infl_m is not None else pd.Series(dtype=float, index=pd.DatetimeIndex([]))
 
     def pbi_trimestre(t: pd.Timestamp) -> float:
         if t in q.index:
@@ -756,7 +775,7 @@ with st.sidebar:
     if st.button("Actualizar datos", width="stretch", key="actualizar", disabled=faltan > 0,
                  help=None if faltan <= 0 else f"Alguien actualizó hace poco. Podés volver a hacerlo en {faltan // 60 + 1} min."):
         _est["ultimo"] = time.time()
-        borrar_disco()
+        envejecer_disco()
         cargar_todo.clear()
         cargar_noticias.clear()
         cargar_cripto.clear()
@@ -839,7 +858,8 @@ def pantalla_historia() -> None:
                 curiosos.append(("El dólar que más se multiplicó", m_usd, f"×{charts.num(v_usd, 1)} en el mandato"))
             if curiosos:
                 for slot, (titulo_c, m_c, dato_c) in zip(st.columns(len(curiosos)), curiosos):
-                    slot.metric(titulo_c, presidentes.CORTO[m_c.clave], dato_c, delta_color="off", border=True)
+                    slot.metric(titulo_c, presidentes.CORTO[m_c.clave], dato_c, delta_color="off", delta_arrow="off",
+                                border=True)
 
             # comparación entre mandatos: orden cronológico, un indicador a la vez
             st.markdown("#### Comparar mandatos")
@@ -980,7 +1000,8 @@ def _calificacion_contenido() -> None:
             k1, k2 = st.columns(2)
             k1.metric("Hoy", f"{hoy_n['total']:.0f}/100", border=True)
             k2.metric(ref_corto, f"{ref_n['total']:.0f}/100",
-                      f"{dif:+d} pts hasta hoy" if dif else "sin cambios", delta_color="off", border=True)
+                      f"{dif:+d} pts hasta hoy" if dif else "sin cambios", delta_color="off",
+                      delta_arrow="auto" if dif else "off", border=True)
 
     # ── 2) Los cuatro pilares ──
     st.subheader("Por área")
@@ -992,7 +1013,7 @@ def _calificacion_contenido() -> None:
         if v is None:
             slot.metric(pilar, "s/d", border=True)
             continue
-        slot.metric(pilar, f"{v:.0f}/100", None if a is None else f"{v - a:+.0f} vs {ref_txt}",
+        slot.metric(pilar, f"{v:.0f}/100", None if a is None else f"{v - a:+.0f} vs {ref_txt.removeprefix('en ')}",
                     delta_color="off", border=True, help=DESC_PILAR.get(pilar))
         slot.caption(f"**{score.nivel(v)[0]}** · {DESC_PILAR.get(pilar, '')}")
 
@@ -1943,7 +1964,8 @@ with t_res_i, protegido("Reservas"):
                      "redes el mismo día es provisoria y puede diferir.")
             if len(r) > 1:
                 ini_r, fin_r = float(r["valor"].iloc[0]), float(r["valor"].iloc[-1])
-                kpi(c[1], f"Variación en {per_res.lower()}", fin_r - ini_r, 0, pre="USD ", suf=" M",
+                kpi(c[1], "Variación en todo el período" if per_res == "Todo" else f"Variación en {per_res.lower()}",
+                    fin_r - ini_r, 0, pre="USD ", suf=" M",
                     d=None if ini_r == 0 else (fin_r / ini_r - 1) * 100, d_txt="", color="normal",
                     help="Verde si las reservas subieron en el período, rojo si bajaron.")
                 maximo = float(r["valor"].max())
@@ -2170,7 +2192,7 @@ with t_din, protegido("Dinero y crédito"):
     k = st.columns(3)
     kpi(k[0], "Base monetaria", ultimo(bm) / 1e6 if bm is not None and ultimo(bm) else None, 1, pre="$", suf=" bill.",
         d=delta(bm) if bm is not None else None, color="off", help="Billones de pesos. Variación contra 30 días atrás.")
-    v, a_ = ult_y_ant(m2, atras=30)
+    v, a_ = _ult_y_hace(m2)  # serie diaria hábil: 30 días corridos, no 30 datos (serían ~6 semanas)
     kpi(k[1], "M2 privado · var. interanual", v, 1, suf="%", d=dif(v, a_), d_suf=" pp", color="off")
     kpi(k[2], "Préstamos al sector privado", ultimo(pr) / 1e6 if pr is not None and ultimo(pr) else None, 1, pre="$",
         suf=" bill.", d=delta(pr) if pr is not None else None,
@@ -2230,6 +2252,9 @@ with t_fis, protegido("Resultado fiscal"):
                 ("Financiero 12 meses", "financiero_12m", "Suma de los últimos 12 meses sobre el PBI de ese período."),
                 ("Primario del mes", "primario", "El resultado del mes sobre 1/12 del PBI. Cambia mucho de mes a mes (aguinaldo, vencimientos)."),
                 ("Financiero del mes", "financiero", "El resultado del mes sobre 1/12 del PBI. Cambia mucho de mes a mes (aguinaldo, vencimientos).")]):
+            if col not in f:  # esa serie no se pudo cargar
+                kpi(slot, nombre, None)
+                continue
             v = ult_f.get(col)
             v = None if pd.isna(v) else float(v)
             hace_un_anio = f[f["fecha"] <= ult_f["fecha"] - pd.DateOffset(months=12)][col].dropna()
