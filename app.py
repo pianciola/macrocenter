@@ -133,7 +133,7 @@ def _descargar_todo() -> tuple[dict[str, pd.DataFrame | str], datetime]:
         except Exception as e:  # noqa: BLE001 — queremos aislar cualquier falla de red/formato
             return nombre, error_corto(e)
 
-    with ThreadPoolExecutor(max_workers=16) as pool:  # son pedidos de red: conviene hacer muchos a la vez
+    with ThreadPoolExecutor(max_workers=10) as pool:  # son pedidos de red: conviene hacer muchos a la vez
         return dict(pool.map(correr, tareas.items())), datetime.now()
 
 
