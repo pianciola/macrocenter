@@ -1016,7 +1016,7 @@ def pantalla_bolsas() -> None:
         tarjetas.append(dict(
             nombre=nombre, desc=grupo, valor=charts.num(ult, 0 if ult >= 1000 else 2), detalle=unidad,
             var=_var_pct(df), var_txt="1 d", extras=[("30 d", _var_pct(df, 30))],
-            sentido="neutro" if grupo == "Materias primas" else "alto", spark=list(df.tail(30)["valor"])))
+            sentido=("alto" if simbolo == "ZS=F" else "neutro") if grupo == "Materias primas" else "alto", spark=list(df.tail(30)["valor"])))
     if not tarjetas:
         st.warning("No se pudieron cargar las cotizaciones de las bolsas ahora. Se reintenta solo en un minuto.")
         return
@@ -1059,11 +1059,11 @@ def construir_ticker() -> list[dict]:
             if clave in dol:
                 s = dol[["fecha", clave]].dropna().rename(columns={clave: "valor"})
                 if not s.empty:
-                    poner(nombre, charts.num(ultimo(s), 0, pre="$"), delta(s, dias=1))
+                    poner(nombre, charts.num(ultimo(s), 0, pre="$"), delta(s, dias=1), "bajo")
     for clave, nombre in (("fx:EUR", "Euro"), ("fx:GBP", "Libra")):
         d_ = DATOS.get(clave)
         if isinstance(d_, pd.DataFrame) and not d_.empty:
-            poner(nombre, charts.num(ultimo(d_), 0, pre="$"), delta(d_, dias=1))
+            poner(nombre, charts.num(ultimo(d_), 0, pre="$"), delta(d_, dias=1), "bajo")
     if riesgo is not None:
         poner("Riesgo país", charts.num(ultimo(riesgo), 0, suf=" pb"), delta(riesgo, dias=1), "bajo")
     if reservas is not None:
@@ -1083,7 +1083,7 @@ def construir_ticker() -> list[dict]:
     mk = cargar_mercados()
     reintentar_si_fallo(cargar_mercados, "mercados", any(isinstance(v, str) for v in mk.values()))
     for simbolo, nombre, sentido in (("^MERV", "Merval", "alto"), ("^GSPC", "S&P 500", "alto"), ("^DJI", "Dow Jones", "alto"),
-                                     ("GC=F", "Oro", "neutro"), ("CL=F", "Petróleo", "neutro"), ("ZS=F", "Soja", "neutro")):
+                                     ("GC=F", "Oro", "neutro"), ("CL=F", "Petróleo", "neutro"), ("ZS=F", "Soja", "alto")):
         df = mk.get(simbolo)
         if isinstance(df, pd.DataFrame) and len(df) >= 2:
             ult = float(df.iloc[-1]["valor"])
@@ -1150,18 +1150,18 @@ _MES = dict(dias=25, modo="abs", d_suf=" pp", d_txt="vs mes ant.")
 
 # clave -> (grupo, nombre, función). El orden de este diccionario es el orden del selector.
 CATALOGO = {
-    "oficial": ("Dólar", "Dólar oficial", _kpi(dol_s.get("oficial"), dec=0, pre="$", help="Precio de venta")),
-    "blue": ("Dólar", "Dólar blue", _kpi(dol_s.get("blue"), dec=0, pre="$", help="Precio de venta")),
-    "mep": ("Dólar", "Dólar MEP", _kpi(dol_s.get("bolsa"), dec=0, pre="$", help="Precio de venta")),
-    "ccl": ("Dólar", "Dólar CCL", _kpi(dol_s.get("contadoconliqui"), dec=0, pre="$", help="Precio de venta")),
-    "brecha": ("Dólar", "Brecha blue / oficial", _kpi(brecha_df, "brecha_blue", modo="abs", dec=1, suf="%", d_suf=" pp")),
+    "oficial": ("Dólar", "Dólar oficial", _kpi(dol_s.get("oficial"), dec=0, pre="$", color="inverse", help="Precio de venta")),
+    "blue": ("Dólar", "Dólar blue", _kpi(dol_s.get("blue"), dec=0, pre="$", color="inverse", help="Precio de venta")),
+    "mep": ("Dólar", "Dólar MEP", _kpi(dol_s.get("bolsa"), dec=0, pre="$", color="inverse", help="Precio de venta")),
+    "ccl": ("Dólar", "Dólar CCL", _kpi(dol_s.get("contadoconliqui"), dec=0, pre="$", color="inverse", help="Precio de venta")),
+    "brecha": ("Dólar", "Brecha blue / oficial", _kpi(brecha_df, "brecha_blue", modo="abs", dec=1, suf="%", d_suf=" pp", color="inverse")),
     "reservas": ("Sector externo", "Reservas (USD M)", _kpi(reservas, dec=0, color="normal")),
     "riesgo": ("Sector externo", "Riesgo país (pb)", _kpi(riesgo, modo="abs", dec=0, d_suf=" pb", color="inverse")),
-    "badlar": ("Tasas", "BADLAR (TNA)", _kpi(badlar, modo="abs", dec=1, suf="%", d_suf=" pp")),
-    "pases": ("Tasas", "Pases 1 día (TNA)", _kpi(pases, modo="abs", dec=1, suf="%", d_suf=" pp",
+    "badlar": ("Tasas", "BADLAR (TNA)", _kpi(badlar, modo="abs", dec=1, suf="%", d_suf=" pp", color="off")),
+    "pases": ("Tasas", "Pases 1 día (TNA)", _kpi(pases, modo="abs", dec=1, suf="%", d_suf=" pp", color="off",
                                                  help="Tasa de referencia vigente. La API del BCRA no registra tasa de "
                                                       "política monetaria después de julio de 2025.")),
-    "uva": ("Tasas", "UVA", _kpi(uva, dec=2, pre="$")),
+    "uva": ("Tasas", "UVA", _kpi(uva, dec=2, pre="$", color="off")),
     "infl_m": ("Precios", "Inflación mensual", _kpi(infl_m, dec=1, suf="%", color="inverse", **_MES)),
     "infl_ia": ("Precios", "Inflación interanual", _kpi(infl_ia, dec=1, suf="%", color="inverse", **_MES)),
     "rem": ("Precios", "Inflación esperada 12 m", _kpi(rem, dec=1, suf="%", color="inverse", **_MES)),
@@ -1360,7 +1360,7 @@ with t_dol, protegido("Dólar"):
             tarjetas_usd.append(dict(
                 nombre=nombre, desc=desc, valor=charts.num(venta, 0, pre="$"),
                 detalle=f"Compra {charts.num(float(compra), 0, pre='$')} · Venta {charts.num(venta, 0, pre='$')}",
-                var=delta(s.rename(columns={clave: "valor"})),
+                var=delta(s.rename(columns={clave: "valor"})), sentido="bajo",  # que suba el dólar es mala noticia
                 spark=list(s.tail(30)[clave]),
                 chip=None if clave == "oficial" or not oficial_hoy else
                 f"{(venta / oficial_hoy - 1) * 100:+.0f}% vs oficial".replace(".", ","),
@@ -1377,7 +1377,7 @@ with t_dol, protegido("Dólar"):
                     nombre=nombre, desc="Cotización de referencia del BCRA",
                     valor=charts.num(float(u["valor"]), 0, pre="$"),
                     detalle=f"1 {simbolo} = US$ {charts.num(float(u['pase']), 2)}",
-                    var=delta(df_), chip=None, spark=list(df_.tail(30)["valor"])))
+                    var=delta(df_), sentido="bajo", chip=None, spark=list(df_.tail(30)["valor"])))
         if tarjetas_fx:
             st.markdown(style.cotizaciones(tarjetas_fx), unsafe_allow_html=True)
             st.caption("Euro y libra: referencia cambiaria del BCRA en pesos por unidad (no es el precio de la casa de cambio).")
@@ -1413,14 +1413,19 @@ with t_res_i, protegido("Reservas"):
         r = rec(reservas, 0, per_res)
         c = st.columns(3)
         f_res = reservas[reservas["fecha"] <= HOY].dropna(subset=["valor"])
+        d_res = delta(reservas, dias=1, modo="abs")
         kpi(c[0], f"Último dato ({f_res['fecha'].iloc[-1]:%d/%m/%Y})" if not f_res.empty else "Último dato",
-            ultimo(reservas), 0, pre="USD ", suf=" M",
+            ultimo(reservas), 0, pre="USD ", suf=" M", d=d_res, d_suf=" M", d_txt="vs día anterior", color="normal",
             help="Serie oficial del BCRA, que se publica con 1 o 2 días de demora. La cifra que el BCRA difunde en sus "
                  "redes el mismo día es provisoria y puede diferir.")
         if len(r) > 1:
-            kpi(c[1], f"Variación en {per_res.lower()}", r["valor"].iloc[-1] - r["valor"].iloc[0], 0,
-                pre="USD ", suf=" M", color="normal")
-            kpi(c[2], "Máximo del período", r["valor"].max(), 0, pre="USD ", suf=" M")
+            ini_r, fin_r = float(r["valor"].iloc[0]), float(r["valor"].iloc[-1])
+            kpi(c[1], f"Variación en {per_res.lower()}", fin_r - ini_r, 0, pre="USD ", suf=" M",
+                d=None if ini_r == 0 else (fin_r / ini_r - 1) * 100, d_txt="", color="normal",
+                help="Verde si las reservas subieron en el período, rojo si bajaron.")
+            maximo = float(r["valor"].max())
+            kpi(c[2], "Máximo del período", maximo, 0, pre="USD ", suf=" M",
+                d=None if maximo == 0 else (fin_r / maximo - 1) * 100, d_txt="hoy vs el máximo", color="normal")
         grafico(charts.lineas(r, {"Reservas brutas": "valor"}, "Reservas internacionales brutas del BCRA (USD millones)",
                               height=460))
         st.caption("Son las reservas **brutas**: incluyen el swap con China, los encajes de los depósitos en dólares y los repos "
@@ -1430,12 +1435,48 @@ with t_res_i, protegido("Reservas"):
             rm = reservas.set_index("fecha")["valor"].resample("ME").last().diff().rename("var").reset_index()
             grafico(charts.barras(rec(rm.dropna(), 2), "var", "Variación mensual de reservas (USD millones)", yfmt=",.0f"))
 
+def ult_y_ant(df: pd.DataFrame | None, col: str = "valor", atras: int = 1) -> tuple[float | None, float | None]:
+    """Último dato y el de `atras` períodos antes (None si no hay)."""
+    if df is None or col not in df:
+        return None, None
+    s = df[df["fecha"] <= HOY].dropna(subset=[col])[col]
+    if s.empty:
+        return None, None
+    return float(s.iloc[-1]), (float(s.iloc[-1 - atras]) if len(s) > atras else None)
+
+
+def dif(a: float | None, b: float | None) -> float | None:
+    return None if a is None or b is None else a - b
+
+
+def pct(a: float | None, b: float | None) -> float | None:
+    return None if a is None or not b else (a / b - 1) * 100
+
+
 # ── Actividad y PBI ──
 with t_act, protegido("Actividad y PBI"):
+    st.caption("Cómo viene la producción: el **PBI** (trimestral, con unos tres meses de demora) y el **EMAE**, el indicador "
+               "mensual del INDEC que lo anticipa. Verde: la actividad mejora; rojo: empeora.")
+    p = None
     if pib is not None:
         p = pib.copy()
         p["interanual"] = p["valor"].pct_change(4) * 100
         p["trimestral"] = p["valor"].pct_change() * 100
+    mom = get("serie:emae_sa_mom")
+    e_ia = emae.assign(interanual=emae["valor"].pct_change(12) * 100).dropna() if emae is not None else None
+    k = st.columns(4)
+    v, a_ = ult_y_ant(p, "interanual")
+    kpi(k[0], "PBI · var. interanual", v, 1, suf="%", d=dif(v, a_), d_suf=" pp", d_txt="vs trim. ant.",
+        help="Último trimestre publicado contra el mismo trimestre del año anterior.")
+    v, a_ = ult_y_ant(mom)
+    kpi(k[1], "EMAE · var. mensual", v, 1, suf="%", d=dif(v, a_), d_suf=" pp", d_txt="vs mes ant.",
+        help="Desestacionalizada: compara con el mes anterior sin el efecto de la época del año.")
+    v, a_ = ult_y_ant(e_ia, "interanual")
+    kpi(k[2], "EMAE · var. interanual", v, 1, suf="%", d=dif(v, a_), d_suf=" pp", d_txt="vs mes ant.")
+    v, a_ = ult_y_ant(paro_pct)
+    kpi(k[3], "Desocupación (EPH)", v, 1, suf="%", d=dif(v, a_), d_suf=" pp", d_txt="vs trim. ant.", color="inverse")
+    if p is not None:
+        st.markdown("#### PBI trimestral")
         a, b = st.columns(2)
         with a:
             grafico(charts.lineas(rec(p, 5), {"PBI real": "valor"}, "PBI trimestral a precios constantes de 2004 (millones de $)"))
@@ -1445,7 +1486,7 @@ with t_act, protegido("Actividad y PBI"):
         st.caption("Serie trimestral sin desestacionalizar de Cuentas Nacionales (INDEC). "
                    f"Último trimestre disponible: {p['fecha'].iloc[-1]:%m/%Y} (inicio de trimestre).")
     if emae_sa is not None:
-        mom = get("serie:emae_sa_mom")
+        st.markdown("#### Actividad mes a mes (EMAE)")
         a, b = st.columns(2)
         with a:
             grafico(charts.lineas(rec(emae_sa, 3), {"EMAE desestacionalizado": "valor"},
@@ -1466,7 +1507,21 @@ with t_act, protegido("Actividad y PBI"):
 
 # ── Salarios ──
 with t_sal, protegido("Salarios"):
+    st.caption("Cuánto suben los sueldos y si le ganan a la inflación (**salario real**). Verde: el poder de compra mejora; "
+               "rojo: empeora.")
+    sr_k = salario_real()
+    k = st.columns(4)
+    v, a_ = ult_y_ant(sal_ia)
+    kpi(k[0], "Salarios · var. interanual", v, 1, suf="%", d=dif(v, a_), d_suf=" pp", d_txt="vs mes ant.")
+    v, a_ = ult_y_ant(sr_k, "real")
+    kpi(k[1], "Salario real · interanual", v, 1, suf="%", d=dif(v, a_), d_suf=" pp", d_txt="vs mes ant.",
+        help="Positivo: los salarios subieron más que los precios en el último año.")
+    v, a_ = ult_y_ant(smvm)
+    kpi(k[2], "Salario mínimo", v, 0, pre="$", d=pct(v, a_), d_txt="vs mes ant.")
+    v, a_ = ult_y_ant(haber_min)
+    kpi(k[3], "Haber mínimo jubilatorio", v, 0, pre="$", d=pct(v, a_), d_txt="vs mes ant.")
     if sal is not None:
+        st.markdown("#### Salarios e inflación")
         base = sal.rename(columns={"valor": "Total"})
         for df_, nombre in ((sal_priv, "Privado registrado"), (sal_pub, "Público")):
             if df_ is not None:
@@ -1503,7 +1558,20 @@ with t_sal, protegido("Salarios"):
 
 # ── Precios y UVA ──
 with t_prec, protegido("Precios y UVA"):
+    st.caption("La inflación (IPC del INDEC), lo que espera el mercado para los próximos 12 meses (REM del BCRA) y la "
+               "**UVA**, la unidad que ajusta créditos y plazos fijos por inflación. Verde: la inflación baja; rojo: sube.")
+    k = st.columns(4)
+    v, a_ = ult_y_ant(infl_m)
+    kpi(k[0], "Inflación mensual", v, 1, suf="%", d=dif(v, a_), d_suf=" pp", d_txt="vs mes ant.", color="inverse")
+    v, a_ = ult_y_ant(infl_ia)
+    kpi(k[1], "Inflación interanual", v, 1, suf="%", d=dif(v, a_), d_suf=" pp", d_txt="vs mes ant.", color="inverse")
+    v, a_ = ult_y_ant(rem)
+    kpi(k[2], "Esperada 12 meses (REM)", v, 1, suf="%", d=dif(v, a_), d_suf=" pp", d_txt="vs mes ant.", color="inverse",
+        help="Mediana de lo que esperan los analistas del Relevamiento de Expectativas de Mercado.")
+    kpi(k[3], "UVA", ultimo(uva) if uva is not None else None, 2, pre="$",
+        d=delta(uva) if uva is not None else None, color="off", help="Sube con la inflación (CER), con unas semanas de rezago.")
     if infl_m is not None and infl_ia is not None:
+        st.markdown("#### Inflación")
         m = infl_m.merge(infl_ia, on="fecha", suffixes=("_m", "_ia"))
         a, b = st.columns(2)
         with a:
@@ -1518,6 +1586,7 @@ with t_prec, protegido("Precios y UVA"):
                                        "Expectativa 12 m (REM)": "Expectativa 12 m (REM)"},
                                       "Inflación interanual vs. expectativas del REM (%)", yfmt=",.0f"))
     if uva is not None and dol is not None:
+        st.markdown("#### UVA contra el dólar")
         comp = pd.merge_asof(rec(dol_rec).dropna(subset=["oficial"])[["fecha", "oficial", "blue"]],
                              uva.rename(columns={"valor": "uva"}), on="fecha")
         comp = base100(comp, ["oficial", "blue", "uva"])
@@ -1570,8 +1639,18 @@ with t_tasas, protegido("Tasas y riesgo país"):
 
 # ── Dinero y crédito ──
 with t_din, protegido("Dinero y crédito"):
-    a, b = st.columns(2)
     bm, pr, m2 = get("bcra:base_monetaria"), get("bcra:prestamos_privados"), get("bcra:m2_privado_ia")
+    st.caption("Cuántos pesos hay en la economía (**base monetaria** y **M2**) y cuánto le prestan los bancos a empresas y "
+               "familias. Verde en el crédito: crece; rojo: cae. El dinero se muestra sin color: crecer no es bueno ni malo en sí.")
+    k = st.columns(3)
+    kpi(k[0], "Base monetaria", ultimo(bm) / 1e6 if bm is not None and ultimo(bm) else None, 1, pre="$", suf=" bill.",
+        d=delta(bm) if bm is not None else None, color="off", help="Billones de pesos. Variación contra 30 días atrás.")
+    v, a_ = ult_y_ant(m2, atras=30)
+    kpi(k[1], "M2 privado · var. interanual", v, 1, suf="%", d=dif(v, a_), d_suf=" pp", color="off")
+    kpi(k[2], "Préstamos al sector privado", ultimo(pr) / 1e6 if pr is not None and ultimo(pr) else None, 1, pre="$",
+        suf=" bill.", d=delta(pr) if pr is not None else None,
+        help="Billones de pesos (nominales). Variación contra 30 días atrás.")
+    a, b = st.columns(2)
     with a:
         if bm is not None:
             grafico(charts.lineas(rec(bm.assign(valor=bm["valor"] / 1e6)), {"Base monetaria": "valor"},
@@ -1586,8 +1665,21 @@ with t_din, protegido("Dinero y crédito"):
 
 # ── Comercio exterior ──
 with t_com, protegido("Comercio exterior"):
+    st.caption("Lo que la Argentina le vende al mundo (**exportaciones**) y le compra (**importaciones**), en dólares. "
+               "El saldo positivo trae dólares al país: verde si mejora, rojo si empeora.")
     if comercio is not None:
         c = comercio
+        k = st.columns(4)
+        v, a_ = ult_y_ant(c, "exp", atras=12)
+        kpi(k[0], "Exportaciones del mes", v, 0, pre="USD ", suf=" M", d=pct(v, a_), d_txt="vs un año antes")
+        v, a_ = ult_y_ant(c, "imp", atras=12)
+        kpi(k[1], "Importaciones del mes", v, 0, pre="USD ", suf=" M", d=pct(v, a_), d_txt="vs un año antes", color="off")
+        v, a_ = ult_y_ant(c, "saldo", atras=12)
+        kpi(k[2], "Saldo del mes", v, 0, pre="USD ", suf=" M", d=dif(v, a_), d_suf=" M", d_txt="vs un año antes")
+        v, a_ = ult_y_ant(c.dropna(subset=["saldo_12m"]), "saldo_12m", atras=12)
+        kpi(k[3], "Saldo 12 meses", v, 0, pre="USD ", suf=" M", d=dif(v, a_), d_suf=" M", d_txt="vs un año antes")
+        ult_c = c.dropna(subset=["exp"])["fecha"].max()
+        st.caption(f"Último dato: {ult_c:%m/%Y} (INDEC, intercambio comercial argentino).")
         a, b = st.columns(2)
         with a:
             grafico(charts.lineas(rec(c, 3), {"Exportaciones": "exp", "Importaciones": "imp"},
@@ -1614,7 +1706,11 @@ with t_fis, protegido("Resultado fiscal"):
                 ("Primario del mes", "primario", "El resultado del mes sobre 1/12 del PBI. Cambia mucho de mes a mes (aguinaldo, vencimientos)."),
                 ("Financiero del mes", "financiero", "El resultado del mes sobre 1/12 del PBI. Cambia mucho de mes a mes (aguinaldo, vencimientos).")]):
             v = ult_f.get(col)
-            kpi(slot, nombre, None if pd.isna(v) else float(v), 1, suf="% del PBI", help=ayuda)
+            v = None if pd.isna(v) else float(v)
+            hace_un_anio = f[f["fecha"] <= ult_f["fecha"] - pd.DateOffset(months=12)][col].dropna()
+            antes = float(hace_un_anio.iloc[-1]) if not hace_un_anio.empty else None
+            kpi(slot, nombre, v, 1, suf="% del PBI", d=dif(v, antes), d_suf=" pp", d_txt="vs un año antes",
+                help=ayuda + " Verde: el resultado mejoró contra un año antes; rojo: empeoró.")
         st.caption("Primario: ingresos menos gastos, sin contar intereses de la deuda. Financiero: lo que queda después de pagar intereses.")
         cols_12 = [c for c in ("primario_12m", "financiero_12m") if c in f and f[c].notna().any()]
         if cols_12:
