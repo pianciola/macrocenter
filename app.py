@@ -706,6 +706,13 @@ def ir_a_herramienta(nombre: str) -> None:
 
 
 with st.sidebar:
+    st.markdown(style.etiqueta("Atajos"), unsafe_allow_html=True)
+    for clave_a, texto_a, icono_a, modo_a in (
+            ("alquiler", "Ajustar un alquiler", ":material/home:", "Ajuste de alquileres"),
+            ("pesos", "¿Cuánto valían tus pesos?", ":material/savings:", "¿Cuánto valían tus pesos?"),
+            ("epocas", "Comparar dos épocas", ":material/compare_arrows:", "Comparador de épocas")):
+        st.button(texto_a, key=f"atajo_{clave_a}", icon=icono_a, width="stretch", on_click=ir_a_herramienta,
+                  args=(modo_a,))
     try:
         nota_hoy = NOTAS.get("Hoy", {}).get("total")
         if nota_hoy is not None:
@@ -717,13 +724,6 @@ with st.sidebar:
                       help="Nota de 0 a 100 de la situación macro de hoy comparada con los últimos años")
     except Exception:  # noqa: BLE001
         traceback.print_exc()
-    st.markdown(style.etiqueta("Atajos"), unsafe_allow_html=True)
-    for clave_a, texto_a, icono_a, modo_a in (
-            ("alquiler", "Ajustar un alquiler", ":material/home:", "Ajuste de alquileres"),
-            ("pesos", "¿Cuánto valían tus pesos?", ":material/savings:", "¿Cuánto valían tus pesos?"),
-            ("epocas", "Comparar dos épocas", ":material/compare_arrows:", "Comparador de épocas")):
-        st.button(texto_a, key=f"atajo_{clave_a}", icon=icono_a, width="stretch", on_click=ir_a_herramienta,
-                  args=(modo_a,))
     termino, definicion = GLOSARIO[HOY.dayofyear % len(GLOSARIO)]
     st.markdown(style.etiqueta("Término del día"), unsafe_allow_html=True)
     st.markdown(style.termino_del_dia(termino, definicion), unsafe_allow_html=True)
