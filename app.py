@@ -673,8 +673,10 @@ def pantalla_historia() -> None:
                 vals_c.append(v_)
             grafico(charts.comparar_mandatos([presidentes.CORTO[m.clave] for m in MS], vals_c, comp,
                                              sufijo=unidad_c, dec=0 if clave_c == "res_fin" else 1,
-                                             actual=presidentes.CORTO[MS[-1].clave] if MS[-1].hasta is None else None))
-            st.caption(ayuda_c + " Barras en orden cronológico; la dorada es el mandato en curso. Los mandatos duraron "
+                                             actual=presidentes.CORTO[MS[-1].clave] if MS[-1].hasta is None else None,
+                                             logaritmica=clave_c in ("inf_fin", "inf_acum")))
+            st.caption(ayuda_c + (" Escala logarítmica: cada marca vale 10 veces la anterior, así la hiperinflación no aplasta al resto."
+                                  if clave_c in ("inf_fin", "inf_acum") else "") + " Barras en orden cronológico; la dorada es el mandato en curso. Los mandatos duraron "
                        "distinto y ocurrieron en contextos muy distintos: es información, no un ranking.")
 
             def iniciales(nombre: str) -> str:
