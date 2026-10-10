@@ -117,6 +117,7 @@ def _tareas() -> dict:
     tareas["riesgo_pais"] = data.riesgo_pais
     tareas["fx:EUR"] = lambda: data.divisa("EUR")
     tareas["fx:GBP"] = lambda: data.divisa("GBP")
+    tareas["fred:ipc_eeuu"] = data.ipc_eeuu
     tareas["dolar_hist"] = data.dolar_historico
     tareas["inflacion_hist"] = data.inflacion_historica
     return tareas
@@ -663,6 +664,12 @@ def pantalla_historia() -> None:
             comp = st.segmented_control("Indicador", list(presidentes.COMPARACIONES), default="Inflación anual al irse",
                             key="hist_comp", label_visibility="collapsed") or "Inflación anual al irse"
             clave_c, unidad_c, ayuda_c = presidentes.COMPARACIONES[comp]
+            # reservas en dólares de hoy: se corrigen por la inflación de EE. UU. (un dólar de 1989 no es un dólar de hoy)
+            cpi = DATOS.get("fred:ipc_eeuu")
+            ajustar = False
+            if clave_c == "res_fin" and isinstance(cpi, pd.DataFrame) and not cpi.empty:
+                ajustar = st.toggle("Ajustar por inflación de EE. UU. (dólares de hoy)", value=True, key="hist_res_real",
+                                    help="Pasa las reservas de cada fecha a su equivalente en dólares actuales, según el IPC de EE. UU.")
             vals_c = []
             for m in MS:
                 i_ = inds[m.clave]
@@ -670,7 +677,17 @@ def pantalla_historia() -> None:
                     v_ = i_["usd_fin"] / i_["usd_ini"] if i_["usd_ini"] and i_["usd_fin"] else None
                 else:
                     v_ = i_.get(clave_c)
+                if ajustar and v_ is not None:
+                    previos = cpi[cpi["fecha"] <= m.fin]
+                    if previos.empty:
+                        v_ = None
+                    else:
+                        v_ = v_ * float(cpi["valor"].iloc[-1]) / float(previos["valor"].iloc[-1])
                 vals_c.append(v_)
+            if ajustar:
+                comp = "Reservas al irse (USD M de hoy)"
+                ayuda_c = ("Reservas brutas del BCRA al final del mandato, expresadas en dólares de hoy con el IPC de EE. UU. "
+                           "(FRED), así se pueden comparar entre épocas.")
             grafico(charts.comparar_mandatos([presidentes.CORTO[m.clave] for m in MS], vals_c, comp,
                                              sufijo=unidad_c, dec=0 if clave_c == "res_fin" else 1,
                                              actual=presidentes.CORTO[MS[-1].clave] if MS[-1].hasta is None else None,
