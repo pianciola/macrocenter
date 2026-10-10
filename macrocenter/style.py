@@ -337,9 +337,9 @@ button[data-variant="segmented_control"][aria-checked="true"] p {{ color: #fff !
 .mc-fx .c {{ font-size: .78rem; opacity: .75; margin-bottom: 8px; }}
 .mc-fx .chips {{ display: flex; flex-wrap: wrap; gap: 6px; }}
 .mc-fx .chip {{ font-size: .7rem; font-weight: 700; padding: 3px 8px; border-radius: 999px; background: rgba(128,128,128,.16); }}
-.mc-fx .chip.up, .mc-fx .chip.down {{ background: rgba(116,172,223,.2); }}
-.mc-fx .chip.bien {{ color: #10AC84; background: rgba(16,172,132,.14); }}
-.mc-fx .chip.mal {{ color: #EE5253; background: rgba(238,82,83,.14); }}
+.mc-fx .chip.bien, .mc-fx .chip.sube {{ color: #10AC84; background: rgba(16,172,132,.16); }}
+.mc-fx .chip.mal, .mc-fx .chip.baja {{ color: #EE5253; background: rgba(238,82,83,.16); }}
+.mc-fx .chip.flat {{ opacity: .8; }}
 .mc-fx .fila {{ display: flex; align-items: center; justify-content: space-between; gap: 8px; }}
 .mc-fx .spark {{ flex: none; opacity: .95; }}
 
@@ -356,8 +356,8 @@ button[data-variant="segmented_control"][aria-checked="true"] p {{ color: #fff !
 .mc-ticker .n {{ font-size: .68rem; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; opacity: .6; }}
 .mc-ticker .v {{ font-weight: 800; font-size: .92rem; }}
 .mc-ticker .d {{ font-size: .75rem; font-weight: 700; opacity: .75; }}
-.mc-ticker .d.bien {{ color: #10AC84; opacity: 1; }}
-.mc-ticker .d.mal {{ color: #EE5253; opacity: 1; }}
+.mc-ticker .d.bien, .mc-ticker .d.sube {{ color: #10AC84; opacity: 1; }}
+.mc-ticker .d.mal, .mc-ticker .d.baja {{ color: #EE5253; opacity: 1; }}
 @keyframes mc-marquee {{ from {{ transform: translateX(0); }} to {{ transform: translateX(-50%); }} }}
 @media (prefers-reduced-motion: reduce) {{ .mc-ticker .pista {{ animation: none; }} .mc-ticker {{ overflow-x: auto; }} }}
 
@@ -696,11 +696,21 @@ def _chip_var(v, texto: str, sentido: str = "neutro") -> str:
     """Chip con flecha y variación. sentido: 'neutro' (sin juicio), 'alto' (subir es bueno) o 'bajo' (subir es malo)."""
     if v is None or v != v:
         return ""
-    clase = "flat" if abs(v) <= 0.05 else ("up" if v > 0 else "down")
-    if sentido != "neutro" and clase != "flat":
-        clase += " " + ("bien" if (v > 0) == (sentido == "alto") else "mal")
-    flecha = "▲" if v > 0.05 else "▼" if v < -0.05 else "■"
-    return f'<span class="chip {clase}">{flecha} {abs(v):.1f}% · {html.escape(texto)}</span>'.replace(".", ",")
+    return f'<span class="chip {_clase_var(v, sentido)}">{_flecha(v)} {abs(v):.1f}% · {html.escape(texto)}</span>'.replace(".", ",")
+
+
+def _flecha(v: float) -> str:
+    return "▲" if v > 0.05 else "▼" if v < -0.05 else "■"
+
+
+def _clase_var(v: float, sentido: str = "neutro") -> str:
+    """Color de una variación. Precios ('neutro'): verde si sube, rojo si baja, como en cualquier pizarra de mercado.
+    Indicadores con juicio ('alto' = subir es bueno, 'bajo' = subir es malo, p. ej. riesgo país): verde si mejora."""
+    if abs(v) <= 0.05:
+        return "flat"
+    if sentido == "neutro":
+        return "sube" if v > 0 else "baja"
+    return "bien" if (v > 0) == (sentido == "alto") else "mal"
 
 
 def sparkline(valores: list, ancho: int = 92, alto: int = 30, color: str | None = None) -> str:
@@ -732,11 +742,8 @@ def ticker(items: list[dict]) -> str:
         if d is None or d != d:
             var = ""
         else:
-            clase = "flat" if abs(d) <= 0.05 else ("up" if d > 0 else "down")
-            sentido = it.get("sentido", "neutro")
-            if sentido != "neutro" and clase != "flat":
-                clase += " " + ("bien" if (d > 0) == (sentido == "alto") else "mal")
-            flecha = "▲" if d > 0.05 else "▼" if d < -0.05 else "■"
+            clase = _clase_var(d, it.get("sentido", "neutro"))
+            flecha = _flecha(d)
             # la franja muestra la variación del último día (los indicadores clave, la de 30 días): se aclara con «1 d»
             var = (f'<span class="d {clase}" title="Variación contra el dato anterior (1 día)">{flecha} '
                    f'{abs(d):.1f}% · 1 d</span>').replace(".", ",")
