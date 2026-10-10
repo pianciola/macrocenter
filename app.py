@@ -429,15 +429,16 @@ def base100(df: pd.DataFrame, cols: list[str]) -> pd.DataFrame:
 
 
 def kpi(slot, label: str, valor: float | None, dec: int = 0, pre: str = "", suf: str = "",
-        d: float | None = None, d_suf: str = "%", d_txt: str = "vs 30 d", color: str = "normal", help: str | None = None):
+        d: float | None = None, d_suf: str = "%", d_txt: str = "vs 30 d", color: str = "normal", help: str | None = None,
+        d_dec: int = 1):
     # color por defecto: verde si sube, rojo si baja (precios). Los indicadores donde subir es malo
     # (inflación, riesgo país, desocupación) pasan color="inverse".
     # una variación que redondeada da 0,0 no lleva flecha (una flecha para arriba con 0,0% confunde)
-    plano = d is not None and abs(d) < 0.05
+    plano = d is not None and abs(d) < 0.5 * 10 ** -d_dec
     slot.metric(
         label,
         charts.num(valor, dec, suf, pre),
-        None if d is None else (f"sin cambios {d_txt}" if plano else f"{charts.num(d, 1, d_suf)} {d_txt}"),
+        None if d is None else (f"sin cambios {d_txt}" if plano else f"{charts.num(d, d_dec, d_suf)} {d_txt}"),
         delta_color="off" if plano else color,
         delta_arrow="off" if plano else "auto",
         help=help,
@@ -1126,11 +1127,13 @@ def pantalla_cripto() -> None:
         st.markdown(style.cotizaciones(tarjetas), unsafe_allow_html=True)
 
         monedas = mercado[~mercado["simbolo"].isin(["USDT", "USDC"])].head(6)  # las estables no tienen qué graficar
-        c1, c2 = st.columns([3, 2])
+        c1, c2 = st.columns([3, 2], vertical_alignment="center")
         elegida = c1.pills("Moneda", list(monedas["simbolo"]), default=monedas["simbolo"].iloc[0], key="cripto_moneda",
                            label_visibility="collapsed") or monedas["simbolo"].iloc[0]
         rangos = {"1 mes": 30, "3 meses": 90, "1 año": 365}
-        rango = c2.pills("Rango", list(rangos), default="1 año", key="cripto_rango", label_visibility="collapsed") or "1 año"
+        with c2.container(horizontal_alignment="right"):
+            rango = st.pills("Rango", list(rangos), default="1 año", key="cripto_rango",
+                             label_visibility="collapsed") or "1 año"
         fila = monedas[monedas["simbolo"] == elegida]
         if not fila.empty:
             hist = historia_cripto(fila.iloc[0]["id"], rangos.get(rango, 365))
@@ -1149,12 +1152,12 @@ def pantalla_cripto() -> None:
         mejor_compra, mejor_venta = usdt.iloc[0], usdt.sort_values("venta", ascending=False).iloc[0]
         k1, k2, k3 = st.columns(3)
         k1.metric("Comprar USDT más barato", charts.num(float(mejor_compra["compra"]), 0, pre="$"),
-                  _nombre_exchange(mejor_compra["exchange"]), delta_color="off", border=True)
+                  f"en {_nombre_exchange(mejor_compra['exchange'])}", delta_color="off", delta_arrow="off", border=True)
         k2.metric("Vender USDT más caro", charts.num(float(mejor_venta["venta"]), 0, pre="$"),
-                  _nombre_exchange(mejor_venta["exchange"]), delta_color="off", border=True)
+                  f"en {_nombre_exchange(mejor_venta['exchange'])}", delta_color="off", delta_arrow="off", border=True)
         if oficial_hoy:
             k3.metric("USDT vs dólar oficial", f"{(mejor_compra['compra'] / oficial_hoy - 1) * 100:+.1f}%".replace(".", ","),
-                      "al comprar en el más barato", delta_color="off", border=True)
+                      "al comprar en el más barato", delta_color="off", delta_arrow="off", border=True)
         filas = [[_nombre_exchange(r["exchange"]), charts.num(float(r["compra"]), 0, pre="$"),
                   charts.num(float(r["venta"]), 0, pre="$"),
                   (f"{(r['compra'] / oficial_hoy - 1) * 100:+.1f}%".replace(".", ",") if oficial_hoy else "s/d")]
@@ -1804,13 +1807,15 @@ with t_bol, protegido("Bolsas"):
 
 # ── Dólar ──
 with t_dol, protegido("Dólar"):
+    st.caption("Todas las cotizaciones del dólar en la Argentina, del oficial a los financieros. Verde: el dólar baja; "
+               "rojo: sube. El chip «vs oficial» muestra cuánto más caro está cada uno que el oficial.")
     if dol is not None:
         TIPOS_DOLAR = [
             ("oficial", "Dólar oficial", "Banco Nación, venta minorista"),
             ("mayorista", "Dólar mayorista", "Entre grandes operadores"),
             ("blue", "Dólar blue", "Mercado informal"),
             ("bolsa", "Dólar MEP", "Compra de bonos en bolsa"),
-            ("contadoconliqui", "Dólar CCL", "Contado con liquidación, giro al exterior"),
+            ("contadoconliqui", "Dólar CCL", "Contado con liquidación"),
             ("cripto", "Dólar cripto", "Vía stablecoins (USDT)"),
             ("tarjeta", "Dólar tarjeta", "Consumos en el exterior: oficial + impuestos"),
         ]
@@ -1843,6 +1848,7 @@ with t_dol, protegido("Dólar"):
                     detalle=f"1 {simbolo} = US$ {charts.num(float(u['pase']), 2)}",
                     var=delta(df_), sentido="bajo", chip=None, spark=list(df_.tail(30)["valor"])))
         if tarjetas_fx:
+            st.markdown("##### Otras monedas")
             st.markdown(style.cotizaciones(tarjetas_fx), unsafe_allow_html=True)
             st.caption("Euro y libra: referencia cambiaria del BCRA en pesos por unidad (no es el precio de la casa de cambio).")
 
@@ -1877,6 +1883,8 @@ with t_dol, protegido("Dólar"):
 
 # ── Reservas ──
 with t_res_i, protegido("Reservas"):
+    st.caption("Los dólares y el oro que tiene el Banco Central para pagar deuda e intervenir en el mercado cambiario. "
+               "Verde: suben; rojo: bajan.")
     if reservas is not None:
         @st.fragment
         def bloque_reservas() -> None:
@@ -1919,6 +1927,8 @@ with t_act, protegido("Actividad y PBI"):
         p["interanual"] = p["valor"].pct_change(4) * 100
         p["trimestral"] = p["valor"].pct_change() * 100
     mom = get("serie:emae_sa_mom")
+    if mom is not None and mom["valor"].abs().max() < 1:  # datos.gob.ar la publica como fracción (-0,029 = -2,9%)
+        mom = mom.assign(valor=mom["valor"] * 100)
     e_ia = emae.assign(interanual=emae["valor"].pct_change(12) * 100).dropna() if emae is not None else None
     k = st.columns(4)
     v, a_ = ult_y_ant(p, "interanual")
@@ -2061,8 +2071,20 @@ with t_prec, protegido("Precios y UVA"):
 
 # ── Tasas y riesgo país ──
 with t_tasas, protegido("Tasas y riesgo país"):
-    panel_plazo_fijo()
-    st.divider()
+    st.caption("Cuánto cuesta el dinero en pesos (**tasas de interés**) y cuánto le cuesta a la Argentina endeudarse "
+               "(**riesgo país**). En el riesgo país, verde: baja; rojo: sube.")
+    k = st.columns(4)
+    v, a_ = _ult_y_hace(riesgo)
+    kpi(k[0], "Riesgo país", v, 0, suf=" pb", d=dif(v, a_), d_suf=" pb", d_dec=0, color="inverse",
+        help="Puntos básicos sobre los bonos de EE. UU. (100 pb = 1 punto porcentual). Variación contra 30 días atrás.")
+    for slot, (clave_t, nombre_t, ayuda_t) in zip(k[1:], (
+            ("bcra:badlar", "Tasa BADLAR", "Plazos fijos de más de $1 millón en bancos privados (TNA)."),
+            ("bcra:depositos_30d", "Plazo fijo a 30 días", "Tasa promedio de plazos fijos a 30 días (TNA)."),
+            ("bcra:prestamos_personales", "Préstamos personales", "Tasa promedio de préstamos personales (TNA)."))):
+        v, a_ = _ult_y_hace(get(clave_t))
+        kpi(slot, nombre_t, v, 1, suf="%", d=dif(v, a_), d_suf=" pp", color="off",
+            help=ayuda_t + " Variación contra 30 días atrás.")
+    st.subheader("Tasas de interés")
     if pases is not None or tpm is not None:
         ref = None
         for df_, nombre in ((tpm, "Tasa de política monetaria"), (pases, "Pases a 1 día")):
@@ -2091,7 +2113,11 @@ with t_tasas, protegido("Tasas y riesgo país"):
         if pp is not None:
             grafico(charts.lineas(rec(pp), {"Préstamos personales": "valor"}, "Tasa de préstamos personales (TNA, %)", yfmt=",.0f"))
     if riesgo is not None:
-        grafico(charts.lineas(rec(riesgo), {"Riesgo país": "valor"}, "Riesgo país — EMBI (puntos básicos)", height=420))
+        st.subheader("Riesgo país")
+        grafico_periodo("tasas_riesgo", riesgo, lambda d: charts.lineas(d, {"Riesgo país": "valor"},
+                                                                          "Riesgo país — EMBI (puntos básicos)", height=380))
+    st.divider()
+    panel_plazo_fijo()
 
 # ── Dinero y crédito ──
 with t_din, protegido("Dinero y crédito"):
@@ -2131,9 +2157,9 @@ with t_com, protegido("Comercio exterior"):
         v, a_ = ult_y_ant(c, "imp", atras=12)
         kpi(k[1], "Importaciones del mes", v, 0, pre="USD ", suf=" M", d=pct(v, a_), d_txt="vs un año antes", color="off")
         v, a_ = ult_y_ant(c, "saldo", atras=12)
-        kpi(k[2], "Saldo del mes", v, 0, pre="USD ", suf=" M", d=dif(v, a_), d_suf=" M", d_txt="vs un año antes")
+        kpi(k[2], "Saldo del mes", v, 0, pre="USD ", suf=" M", d=dif(v, a_), d_suf=" M", d_txt="vs un año antes", d_dec=0)
         v, a_ = ult_y_ant(c.dropna(subset=["saldo_12m"]), "saldo_12m", atras=12)
-        kpi(k[3], "Saldo 12 meses", v, 0, pre="USD ", suf=" M", d=dif(v, a_), d_suf=" M", d_txt="vs un año antes")
+        kpi(k[3], "Saldo 12 meses", v, 0, pre="USD ", suf=" M", d=dif(v, a_), d_suf=" M", d_txt="vs un año antes", d_dec=0)
         ult_c = c.dropna(subset=["exp"])["fecha"].max()
         st.caption(f"Último dato: {ult_c:%m/%Y} (INDEC, intercambio comercial argentino).")
         a, b = st.columns(2)
