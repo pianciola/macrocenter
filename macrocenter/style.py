@@ -130,7 +130,7 @@ section[data-testid="stSidebar"] [data-testid="stPills"] button {{ border-radius
 }}
 @media (prefers-reduced-motion: reduce) {{ .st-key-btn_noticias_nuevas button {{ animation: none; }} }}
 
-/* ── Juegos y herramientas: selector en tarjetas ── */
+/* ── Herramientas: selector en tarjetas ── */
 [class*="st-key-modo_"] button {{
     min-height: 3.4rem; border-radius: 14px !important; justify-content: flex-start; padding: .7rem 1rem;
     border: 1px solid rgba(116,172,223,.35) !important; background: rgba(116,172,223,.06) !important;

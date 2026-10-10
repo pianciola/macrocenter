@@ -179,6 +179,140 @@ def pantalla_pesos(d: dict, uva: pd.DataFrame | None) -> None:
                   "el cálculo usa el blue." if tipo0 == "blue" else ""))
 
 
+# ───────────────────────── Ajuste de alquileres ─────────────────────────
+FRECUENCIAS = {"Mensual": 1, "Trimestral": 3, "Cuatrimestral": 4, "Semestral": 6, "Anual": 12}
+REZAGO_PUBLICACION = pd.Timedelta(days=45)  # un dato mensual del INDEC se conoce ~45 días después de iniciado el mes
+
+
+def _serie_mensual_nivel(df: pd.DataFrame | None, es_variacion: bool = False) -> pd.Series | None:
+    """Serie mensual como nivel de índice. Si viene como variación % mensual (IPC), se acumula."""
+    if df is None or df.empty:
+        return None
+    s = df.dropna(subset=["valor"]).set_index("fecha")["valor"].sort_index()
+    return (1 + s / 100).cumprod() if es_variacion else s
+
+
+def indices_alquiler(d: dict) -> dict[str, tuple[pd.Series, str, str]]:
+    """{nombre: (serie, tipo, descripción)}. tipo 'diario' (se toma el valor de la fecha) o 'mensual' (el último
+    dato publicado a esa fecha: el mes del dato + ~45 días)."""
+    out = {}
+    for clave, nombre, tipo, desc, var in (
+            ("icl", "ICL (BCRA)", "diario",
+             "Índice para Contratos de Locación del BCRA: mitad inflación y mitad salarios. Fue el obligatorio de la "
+             "ley de alquileres de 2020 a 2023.", False),
+            ("infl_m", "IPC nacional (INDEC)", "mensual", "Inflación minorista de todo el país.", True),
+            ("ipc_gba", "IPC GBA (INDEC)", "mensual",
+             "Inflación de Ciudad y Gran Buenos Aires medida por el INDEC (región GBA).", False),
+            ("cer", "CER (BCRA)", "diario", "Coeficiente de Estabilización de Referencia: sigue a la inflación con rezago.", False),
+            ("salarios", "Salarios (INDEC)", "mensual", "Índice de salarios del INDEC (registrados y no registrados).", False)):
+        df = d.get(clave)
+        if tipo == "diario":
+            s = df.dropna(subset=["valor"]).set_index("fecha")["valor"].sort_index() if isinstance(df, pd.DataFrame) and not df.empty else None
+        else:
+            s = _serie_mensual_nivel(df, es_variacion=var)
+        if s is not None and not s.empty:
+            out[nombre] = (s, tipo, desc)
+    return out
+
+
+def _valor_indice(s: pd.Series, tipo: str, f: pd.Timestamp) -> tuple[float | None, pd.Timestamp | None]:
+    """Valor del índice que se usaría en la fecha `f` y la fecha del dato usado."""
+    corte = f if tipo == "diario" else f - REZAGO_PUBLICACION
+    previos = s[s.index <= corte]
+    if previos.empty:
+        return None, None
+    return float(previos.iloc[-1]), previos.index[-1]
+
+
+def calcular_alquiler(monto: float, inicio: pd.Timestamp, meses: int, s: pd.Series, tipo: str,
+                      hasta: pd.Timestamp) -> list[dict]:
+    """Cronograma de ajustes desde `inicio` cada `meses` meses hasta `hasta`. Cada ajuste aplica la variación del índice
+    entre el ajuste anterior y este. Si el dato todavía no existe, el cronograma se corta ahí."""
+    filas = [{"desde": inicio, "alquiler": monto, "variacion": None, "dato": None}]
+    base, f_base = _valor_indice(s, tipo, inicio)
+    if base is None:
+        return []
+    actual = monto
+    k = 1
+    while True:
+        f = inicio + pd.DateOffset(months=meses * k)
+        if f > hasta:
+            break
+        v, f_dato = _valor_indice(s, tipo, f)
+        if v is None or f_dato is None or f_dato <= f_base:
+            break  # todavía no hay un dato nuevo para este ajuste
+        variacion = (v / base - 1) * 100
+        actual *= v / base
+        filas.append({"desde": f, "alquiler": actual, "variacion": variacion, "dato": f_dato})
+        base, f_base = v, f_dato
+        k += 1
+    return filas
+
+
+def pantalla_alquileres(d: dict) -> None:
+    st.markdown("##### Ajuste de alquileres")
+    st.caption("Poné el alquiler inicial, cuándo empezó el contrato y cada cuánto se ajusta: te mostramos cuánto "
+               "corresponde pagar hoy con cada índice. Es una referencia: vale lo que diga tu contrato.")
+    indices = indices_alquiler(d)
+    if not indices:
+        st.warning("No se pudieron cargar los índices de ajuste en este momento.")
+        return
+    c1, c2, c3 = st.columns(3)
+    monto = c1.number_input("Alquiler inicial ($)", min_value=1.0, value=500_000.0, step=10_000.0, format="%.0f",
+                            key="alq_monto")
+    inicio = pd.Timestamp(c2.date_input("Inicio del contrato", value=(HOY - pd.DateOffset(months=13)).date(),
+                                        min_value=date(2017, 1, 1), max_value=HOY.date(), format="DD/MM/YYYY",
+                                        key="alq_inicio"))
+    frecuencia = c3.selectbox("Ajuste", list(FRECUENCIAS), index=1, key="alq_frec")
+    nombres = list(indices)
+    indice = st.segmented_control("Índice", nombres, default=nombres[0], key="alq_indice") or nombres[0]
+    s, tipo, desc = indices[indice]
+    st.caption(desc)
+
+    filas = calcular_alquiler(monto, inicio, FRECUENCIAS[frecuencia], s, tipo, HOY)
+    if not filas:
+        st.info("No hay datos de este índice para la fecha de inicio elegida. Probá con una fecha más reciente.")
+        return
+    vigente = filas[-1]
+    proximo = inicio + pd.DateOffset(months=FRECUENCIAS[frecuencia] * len(filas))
+    k = st.columns(3)
+    k[0].metric("Alquiler que corresponde hoy", _n(vigente["alquiler"], 0, "$"),
+                f"{_n((vigente['alquiler'] / monto - 1) * 100, 1)}% desde el inicio" if len(filas) > 1 else "sin ajustes todavía",
+                delta_color="inverse" if len(filas) > 1 else "off", border=True,
+                help="Rojo: sube lo que se paga (para el inquilino es un costo).")
+    k[1].metric("Último ajuste", _n(vigente["variacion"], 1, suf="%") if vigente["variacion"] is not None else "—",
+                vigente["desde"].strftime("%d/%m/%Y") if vigente["variacion"] is not None else None,
+                delta_color="off", delta_arrow="off", border=True)
+    k[2].metric("Próximo ajuste", proximo.strftime("%d/%m/%Y"), "se calcula con el dato que salga", delta_color="off",
+                delta_arrow="off", border=True)
+
+    tabla = pd.DataFrame([{
+        "Desde": f["desde"].strftime("%d/%m/%Y"),
+        "Ajuste": "—" if f["variacion"] is None else _n(f["variacion"], 1, suf="%"),
+        "Alquiler": _n(f["alquiler"], 0, "$"),
+        "Dato usado": "—" if f["dato"] is None else (f["dato"].strftime("%d/%m/%Y") if tipo == "diario"
+                                                     else MESES[f["dato"].month - 1] + f" {f['dato'].year}"),
+    } for f in filas])
+    st.dataframe(tabla, hide_index=True, width="stretch")
+
+    # comparación: el mismo contrato con cada índice
+    comp = []
+    for nombre, (s_, tipo_, _) in indices.items():
+        fs = calcular_alquiler(monto, inicio, FRECUENCIAS[frecuencia], s_, tipo_, HOY)
+        if fs:
+            comp.append((nombre, fs[-1]["alquiler"]))
+    if len(comp) > 1:
+        st.markdown("###### El mismo contrato con cada índice")
+        st.markdown(style.tabla_simple(
+            ["Índice", "Alquiler hoy", "Aumento desde el inicio"],
+            [[n, _n(v, 0, "$"), _n((v / monto - 1) * 100, 1, suf="%")] for n, v in sorted(comp, key=lambda p: p[1])]),
+            unsafe_allow_html=True)
+    st.caption("Cómo se calcula: en cada ajuste se aplica la variación del índice desde el ajuste anterior. ICL y CER son "
+               "diarios (se toma el valor del día del ajuste); IPC y salarios son mensuales y se usa el último dato "
+               "publicado a esa fecha (el INDEC lo publica unas seis semanas después). El IPCBA de la Ciudad no tiene una "
+               "fuente pública con API: como referencia para CABA se usa el IPC GBA del INDEC. No es asesoramiento legal.")
+
+
 # ───────────────────────── 2) Comparador de épocas ─────────────────────────
 def _momentos() -> dict[str, pd.Timestamp | None]:
     m = {"Hoy": HOY}
@@ -289,9 +423,10 @@ def pantalla_viaje(d: dict, fotos: dict) -> None:
 
 
 # ───────────────────────── entrada ─────────────────────────
-MODOS = ["¿Cuánto valían tus pesos?", "Comparador de épocas", "Viaje en el tiempo"]
+MODOS = ["¿Cuánto valían tus pesos?", "Ajuste de alquileres", "Comparador de épocas", "Viaje en el tiempo"]
 TARJETAS = {  # ícono (Material) y descripción corta de cada herramienta
     "¿Cuánto valían tus pesos?": (":material/savings:", "Qué fue de tu plata según la inflación, el dólar y la UVA."),
+    "Ajuste de alquileres": (":material/home:", "Cuánto queda tu alquiler según ICL, IPC, CER o salarios."),
     "Comparador de épocas": (":material/compare_arrows:", "Dos momentos de la economía, lado a lado."),
     "Viaje en el tiempo": (":material/history:", "Elegí una fecha y mirá cómo estaba el país."),
     "Calificación macro": (":material/speed:", "Una nota de 0 a 100: hoy contra el pasado reciente."),
@@ -320,9 +455,11 @@ def mostrar(d: dict, inds: dict, fotos: dict, uva: pd.DataFrame | None, extra: d
     modo = st.session_state["inter_modo"]
     if modo in extra:
         extra[modo]()
-    elif modo == MODOS[0]:
+    elif modo == "¿Cuánto valían tus pesos?":
         pantalla_pesos(d, uva)
-    elif modo == MODOS[1]:
+    elif modo == "Ajuste de alquileres":
+        pantalla_alquileres(d)
+    elif modo == "Comparador de épocas":
         pantalla_comparador(d)
     else:
         pantalla_viaje(d, fotos)

@@ -62,6 +62,7 @@ SERIES_IDS = {
     "reservas_hist": "174.1_RRVAS_IDOS_0_0_36",  # reservas BCRA, saldo mensual desde 1940
     "exportaciones": "74.3_IET_0_M_16",  # millones de USD
     "importaciones": "74.3_IIT_0_M_25",  # millones de USD
+    "ipc_gba": "145.3_INGGBAGBA_DICI_M_10",  # IPC Gran Buenos Aires (INDEC), nivel general, base dic-2016 = 100
     "pib_corriente": "8.2_PIBPM_2004_T_38",  # PIB a precios de mercado en pesos corrientes, trimestral anualizado (millones)
     "fiscal_primario": "452.3_RESULTADO_RIO_0_M_18_54",  # resultado primario del sector público nacional, millones de $ corrientes
     "fiscal_financiero": "452.3_RESULTADO_ERO_0_M_20_25",  # resultado financiero (después de intereses), millones de $
