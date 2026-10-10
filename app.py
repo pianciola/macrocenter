@@ -362,25 +362,6 @@ with st.sidebar:
                                ("historia", "Historia económica")):
         st.button(texto, width="stretch", key=f"nav_{clave_vista}", on_click=ir_a, args=(clave_vista,),
                   type="primary" if vista == clave_vista else "secondary")
-    st.markdown(style.etiqueta("Datos"), unsafe_allow_html=True)
-    # Los cachés son compartidos entre todas las visitas: vaciarlos obliga a volver a descargar para todos. Publicada, el botón
-    # tiene una espera de 10 minutos entre usos (para cualquiera), así nadie puede forzar descargas en cadena.
-    ESPERA_ACTUALIZAR = 0 if LOCAL else 600
-    _est = _estado_actualizar()
-    faltan = int(ESPERA_ACTUALIZAR - (time.time() - _est["ultimo"]))
-    if st.button("Actualizar datos", width="stretch", key="actualizar", disabled=faltan > 0,
-                 help=None if faltan <= 0 else f"Alguien actualizó hace poco. Podés volver a hacerlo en {faltan // 60 + 1} min."):
-        _est["ultimo"] = time.time()
-        borrar_disco()
-        cargar_todo.clear()
-        cargar_noticias.clear()
-        cargar_cripto.clear()
-        cargar_mercados.clear()
-        st.rerun()
-    st.markdown(
-        f'<div class="mc-status"><span class="dot">●</span> Actualizado {ACTUALIZADO:%d/%m/%Y %H:%M}</div>',
-        unsafe_allow_html=True,
-    )
 
 def rec(df: pd.DataFrame, min_anios: int = 0, periodo: str = "2 años") -> pd.DataFrame:
     """Recorta al `periodo` (por defecto 2 años) y a fechas ya ocurridas (UVA/CER/ICL traen días futuros).
@@ -659,6 +640,8 @@ COMPARACIONES = {
     "Hace 6 meses": HOY - pd.DateOffset(months=6),
     "Hace 1 año": HOY - pd.DateOffset(years=1),
     "Hace 2 años": HOY - pd.DateOffset(years=2),
+    "Hace 3 años": HOY - pd.DateOffset(years=3),
+    "Hace 5 años": HOY - pd.DateOffset(years=5),
 }
 
 
@@ -744,6 +727,26 @@ with st.sidebar:
     termino, definicion = GLOSARIO[HOY.dayofyear % len(GLOSARIO)]
     st.markdown(style.etiqueta("Término del día"), unsafe_allow_html=True)
     st.markdown(style.termino_del_dia(termino, definicion), unsafe_allow_html=True)
+    # al final: actualizar es una acción poco frecuente
+    st.markdown(style.etiqueta("Datos"), unsafe_allow_html=True)
+    # Los cachés son compartidos entre todas las visitas: vaciarlos obliga a volver a descargar para todos. Publicada, el botón
+    # tiene una espera de 10 minutos entre usos (para cualquiera), así nadie puede forzar descargas en cadena.
+    ESPERA_ACTUALIZAR = 0 if LOCAL else 600
+    _est = _estado_actualizar()
+    faltan = int(ESPERA_ACTUALIZAR - (time.time() - _est["ultimo"]))
+    if st.button("Actualizar datos", width="stretch", key="actualizar", disabled=faltan > 0,
+                 help=None if faltan <= 0 else f"Alguien actualizó hace poco. Podés volver a hacerlo en {faltan // 60 + 1} min."):
+        _est["ultimo"] = time.time()
+        borrar_disco()
+        cargar_todo.clear()
+        cargar_noticias.clear()
+        cargar_cripto.clear()
+        cargar_mercados.clear()
+        st.rerun()
+    st.markdown(
+        f'<div class="mc-status"><span class="dot">●</span> Actualizado {ACTUALIZADO:%d/%m/%Y %H:%M}</div>',
+        unsafe_allow_html=True,
+    )
 
 
 # (las cotizaciones del día van en la franja deslizante de arriba; el crédito y las fuentes, en el pie de la página)
@@ -910,7 +913,7 @@ def _calificacion_contenido() -> None:
     anios_sel = int(st.session_state["cal_anios"])
     pesos_sel = {p: int(st.session_state[f"cal_peso_{p}"]) for p in score.PILARES}
     notas_c, hist_c = calcular_notas(SERIES_NOTA, ACTUALIZADO, anios_sel, tuple(pesos_sel.items()))
-    hoy_n, ref_n = notas_c["Hoy"], notas_c["Hace 1 año"]
+    hoy_n = notas_c["Hoy"]
 
     st.markdown(
         f"**Cómo leerla:** es una nota de 0 a 100 que dice si la economía está hoy mejor o peor que en los últimos "
@@ -922,18 +925,42 @@ def _calificacion_contenido() -> None:
         st.warning("Con esta ventana no hay datos suficientes. Probá con otra en «Ajustar el criterio», al final.")
         return
 
+    # ── Contra qué momento se compara ──
+    OTRA = "Otra fecha"
+    opciones_ref = [k for k in COMPARACIONES if k != "Hoy"] + [OTRA]
+    if st.session_state.get("cal_ref") not in opciones_ref:
+        st.session_state["cal_ref"] = "Hace 1 año"
+    c_ref, c_mes = st.columns([3, 1.3], vertical_alignment="bottom")
+    eleccion = c_ref.segmented_control("Comparar con", opciones_ref, key="cal_ref") or "Hace 1 año"
+    if eleccion == OTRA:
+        meses_ref = list(pd.date_range(end=HOY - pd.DateOffset(months=1), periods=12 * 10, freq="MS")[::-1])
+        if st.session_state.get("cal_ref_mes") not in meses_ref:
+            st.session_state["cal_ref_mes"] = meses_ref[11]
+        fecha_ref = c_mes.selectbox("Mes", meses_ref, key="cal_ref_mes",
+                                    format_func=lambda m: f"{MESES_ES[m.month - 1].capitalize()} {m.year}")
+        ref_n = score.calificar(SERIES_NOTA, fecha_ref, anios_sel, pesos_sel)
+        ref_txt = f"en {MESES_ES[fecha_ref.month - 1]} de {fecha_ref.year}"
+        ref_corto = f"{MESES_ES[fecha_ref.month - 1][:3]}-{fecha_ref.year}"
+    else:
+        fecha_ref = COMPARACIONES[eleccion]
+        ref_n = notas_c[eleccion]
+        ref_txt = eleccion.lower()
+        ref_corto = eleccion
+    if ref_n["total"] is None:
+        st.info(f"No hay datos suficientes para calcular la nota {ref_txt}: se muestra solo la de hoy.")
+
     # ── 1) La nota ──
     etq_hoy, color_hoy = score.nivel(hoy_n["total"])
     g, t = st.columns([1.1, 1.4], vertical_alignment="center")
     with g:
         grafico(charts.medidor(hoy_n["total"], etq_hoy, color_hoy, score.NIVELES, height=260))
     with t:
-        st.markdown(score.lectura(hoy_n, ref_n, "hace un año"))
+        st.markdown(score.lectura(hoy_n, ref_n, ref_txt))
         if ref_n["total"] is not None:
             dif = round(hoy_n["total"] - ref_n["total"])
             k1, k2 = st.columns(2)
             k1.metric("Hoy", f"{hoy_n['total']:.0f}/100", border=True)
-            k2.metric("Hace 1 año", f"{ref_n['total']:.0f}/100",
+            k2.metric(ref_corto, f"{ref_n['total']:.0f}/100",
                       f"{dif:+d} pts hasta hoy" if dif else "sin cambios", delta_color="off", border=True)
 
     # ── 2) Los cuatro pilares ──
@@ -946,7 +973,7 @@ def _calificacion_contenido() -> None:
         if v is None:
             slot.metric(pilar, "s/d", border=True)
             continue
-        slot.metric(pilar, f"{v:.0f}/100", None if a is None else f"{v - a:+.0f} vs hace 1 año",
+        slot.metric(pilar, f"{v:.0f}/100", None if a is None else f"{v - a:+.0f} vs {ref_txt}",
                     delta_color="off", border=True, help=DESC_PILAR.get(pilar))
         slot.caption(f"**{score.nivel(v)[0]}** · {DESC_PILAR.get(pilar, '')}")
 
@@ -989,7 +1016,7 @@ def _calificacion_contenido() -> None:
             ahora = hoy_n["drivers"].get(d.clave)
             filas.append({
                 "Área": d.pilar, "Indicador": d.nombre, "Valor hoy": valor_txt(d, HOY),
-                "Hace 1 año": valor_txt(d, COMPARACIONES["Hace 1 año"]),
+                ref_corto: valor_txt(d, fecha_ref),
                 "Conviene": "que suba" if d.mejor == "alto" else "que baje",
                 "Lectura": "s/d" if ahora is None else score.etiqueta_driver(ahora),
                 "Puntaje": ahora,
@@ -1003,15 +1030,15 @@ def _calificacion_contenido() -> None:
         caidas = [m for m in movimientos[:3] if m[0] < -1]
         c_up, c_down = st.columns(2)
         with c_up:
-            st.markdown("##### Lo que más mejoró en el año")
+            st.markdown(f"##### Lo que más mejoró desde {ref_txt.removeprefix('en ')}")
             for dif, d in mejoras:
-                st.markdown(f"- **{d.nombre}:** {valor_txt(d, COMPARACIONES['Hace 1 año'])} → {valor_txt(d, HOY)} ({dif:+.0f} pts)")
+                st.markdown(f"- **{d.nombre}:** {valor_txt(d, fecha_ref)} → {valor_txt(d, HOY)} ({dif:+.0f} pts)")
             if not mejoras:
                 st.caption("Nada relevante.")
         with c_down:
-            st.markdown("##### Lo que más empeoró en el año")
+            st.markdown(f"##### Lo que más empeoró desde {ref_txt.removeprefix('en ')}")
             for dif, d in caidas:
-                st.markdown(f"- **{d.nombre}:** {valor_txt(d, COMPARACIONES['Hace 1 año'])} → {valor_txt(d, HOY)} ({dif:+.0f} pts)")
+                st.markdown(f"- **{d.nombre}:** {valor_txt(d, fecha_ref)} → {valor_txt(d, HOY)} ({dif:+.0f} pts)")
             if not caidas:
                 st.caption("Nada relevante.")
 
@@ -1508,9 +1535,21 @@ def panorama_inicio() -> list[str]:
             u = sal_real_df.dropna(subset=["real"]).iloc[-1]
             r = float(u["real"])
             gana = r >= 0
-            frases.append(f"Los **salarios** {_tono('le ganan' if gana else 'le pierden', gana)} a la inflación: en "
-                          f"{_mes(u['fecha'])} compraban **{charts.num(abs(r), 1, '%')} {'más' if gana else 'menos'}** "
-                          "que un año antes.")
+            f = (f"Los **salarios** {_tono('le ganan' if gana else 'le pierden', gana)} a la inflación: en "
+                 f"{_mes(u['fecha'])} compraban **{charts.num(abs(r), 1, '%')} {'más' if gana else 'menos'}** "
+                 "que un año antes")
+            # contra el mes inmediatamente anterior: suba del salario del mes descontada la inflación de ese mes
+            if sal is not None and infl_m is not None:
+                s_ = sal[sal["fecha"] <= u["fecha"]].dropna(subset=["valor"]).tail(2)
+                i_ = infl_m[infl_m["fecha"].dt.to_period("M") == u["fecha"].to_period("M")]
+                if len(s_) == 2 and not i_.empty and s_["valor"].iloc[0]:
+                    m_ = ((s_["valor"].iloc[1] / s_["valor"].iloc[0]) / (1 + float(i_["valor"].iloc[0]) / 100) - 1) * 100
+                    if abs(m_) < 0.05:
+                        f += f" y lo mismo que en {_mes(s_['fecha'].iloc[0])}"
+                    else:
+                        f += (f" y {_tono(charts.num(abs(m_), 1, '%') + (' más' if m_ > 0 else ' menos'), m_ > 0)} "
+                              f"que en {_mes(s_['fecha'].iloc[0])}")
+            frases.append(f + ".")
     except Exception:  # noqa: BLE001
         traceback.print_exc()
     try:
@@ -1520,9 +1559,20 @@ def panorama_inicio() -> list[str]:
             if not e.empty:
                 u = e.iloc[-1]
                 v = float(u["ia"])
-                frases.append(f"La **actividad económica** (EMAE) de {_mes(u['fecha'])} quedó "
-                              f"**{charts.num(abs(v), 1, '%')}** "
-                              f"{_tono('por encima' if v >= 0 else 'por debajo', v >= 0)} de un año antes.")
+                f = (f"La **actividad económica** (EMAE) de {_mes(u['fecha'])} quedó "
+                     f"**{charts.num(abs(v), 1, '%')}** "
+                     f"{_tono('por encima' if v >= 0 else 'por debajo', v >= 0)} de un año antes")
+                # contra el mes inmediatamente anterior, con la serie sin estacionalidad (la original no se compara así)
+                if emae_sa is not None:
+                    e_ = emae_sa[emae_sa["fecha"] <= u["fecha"]].dropna(subset=["valor"]).tail(2)
+                    if len(e_) == 2 and e_["fecha"].iloc[1] == u["fecha"] and e_["valor"].iloc[0]:
+                        m_ = (e_["valor"].iloc[1] / e_["valor"].iloc[0] - 1) * 100
+                        if abs(m_) < 0.05:
+                            f += f" y quedó igual que en {_mes(e_['fecha'].iloc[0])}"
+                        else:
+                            f += (f" y {_tono(('creció ' if m_ > 0 else 'cayó ') + charts.num(abs(m_), 1, '%'), m_ > 0)} "
+                                  f"frente a {_mes(e_['fecha'].iloc[0])} (sin estacionalidad)")
+                frases.append(f + ".")
     except Exception:  # noqa: BLE001
         traceback.print_exc()
     return frases
