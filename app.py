@@ -306,14 +306,18 @@ def columna_noticias(slot, titulo: str, sitio: str, items: list[news.Noticia] | 
         st.markdown(f"[Ver todas en el sitio oficial ↗]({sitio})")
 
 
-def noticias_recientes(dias: int = 7) -> int:
-    """Cuántas notas de las dos fuentes se publicaron en los últimos `dias` días (0 si no se pudieron leer)."""
+def noticias_recientes(dias: int = 1) -> int:
+    """Cuántas notas sin leer se publicaron hoy o ayer (hora argentina). 0 si no se pudieron leer.
+    Antes contaba toda la semana: como en la versión publicada lo «leído» dura solo la visita, cada vez que alguien
+    entraba aparecían como nuevas notas de hace varios días."""
+    hoy = pd.Timestamp(data.hoy_argentina())
     total = 0
     noticias = cargar_noticias()
     reintentar_si_fallo(cargar_noticias, "noticias", any(isinstance(v, str) for v in noticias.values()))
     for items in noticias.values():
         if isinstance(items, list):
-            total += sum(1 for x in items if 0 <= (datetime.now() - x.fecha).days <= dias and x.url not in leidas())
+            total += sum(1 for x in items
+                         if 0 <= (hoy - pd.Timestamp(x.fecha).normalize()).days <= dias and x.url not in leidas())
     return total
 
 
@@ -354,7 +358,7 @@ with st.sidebar:
     # la clave distinta cuando hay novedades activa el puntito rojo pulsante (ver style.py)
     if st.button(etiqueta_noticias, width="stretch", key="btn_noticias_nuevas" if nuevas else "btn_noticias",
                  help="Últimas novedades del BCRA y del Ministerio de Economía"
-                      + (f" ({nuevas} de los últimos 7 días)" if nuevas else "")):
+                      + (f" ({nuevas} publicadas hoy o ayer, sin leer)" if nuevas else "")):
         ver_noticias()
     st.markdown(style.etiqueta("Explorar"), unsafe_allow_html=True)
     for clave_vista, texto in (("tablero", "Tablero"), ("historia", "Historia económica"),
