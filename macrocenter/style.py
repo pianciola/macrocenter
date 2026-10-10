@@ -422,19 +422,29 @@ button[data-variant="segmented_control"][aria-checked="true"] p {{ color: #fff !
 .mc-cmp .peor {{ color: #EE5253; }}
 
 [data-testid="stMetric"] {{ border-radius: 14px; }}
-[role="tablist"] {{
-    gap: 6px; padding-bottom: 8px;
-    scrollbar-width: thin !important; scrollbar-color: {CELESTE} rgba(128,128,128,.18);
+/* sin barra deslizante: la fila se mueve sola al tocar un marcador (ver JS_PESTANAS), con las flechas o deslizando */
+[role="tablist"] {{ gap: 6px; padding-bottom: 4px; scrollbar-width: none !important; }}
+[role="tablist"]::-webkit-scrollbar {{ display: none !important; }}
+/* el bloque que solo trae el script no ocupa lugar (ni el espacio entre elementos) */
+[data-testid="stElementContainer"]:has(> [data-testid="stHtml"] > script:only-child) {{ display: none; }}
+/* flechas de desplazamiento: botón redondo celeste sobre el degradé que ya pone Streamlit */
+[data-testid="stTabsScrollLeft"], [data-testid="stTabsScrollRight"] {{
+    width: 52px !important; height: 3.4rem !important; display: flex; align-items: center; cursor: pointer;
 }}
-/* barra deslizante con la forma de la bandera: celeste - blanco - celeste */
-[role="tablist"]::-webkit-scrollbar {{ display: block !important; height: 12px; }}
-[role="tablist"]::-webkit-scrollbar-track {{ background: rgba(116,172,223,.14); border-radius: 12px; }}
-[role="tablist"]::-webkit-scrollbar-thumb {{
-    border-radius: 12px; border: 1px solid rgba(116,172,223,.9);
-    background: linear-gradient(to bottom, {CELESTE} 0 34%, #FFFFFF 34% 66%, {CELESTE} 66% 100%);
+[data-testid="stTabsScrollLeft"] {{ justify-content: flex-start; }}
+[data-testid="stTabsScrollRight"] {{ justify-content: flex-end; }}
+[data-testid="stTabsScrollLeft"] svg, [data-testid="stTabsScrollRight"] svg {{
+    width: 32px !important; height: 32px !important; padding: 5px; box-sizing: border-box; border-radius: 50%;
+    color: {CELESTE}; background: rgba(116,172,223,.16); border: 1px solid rgba(116,172,223,.55);
+    box-shadow: 0 2px 10px rgba(0,0,0,.18);
+    transition: transform .18s ease, background-color .18s ease, color .18s ease, box-shadow .18s ease;
 }}
-[role="tablist"]::-webkit-scrollbar-thumb:hover {{
-    background: linear-gradient(to bottom, #4A8FD4 0 34%, #FFFFFF 34% 66%, #4A8FD4 66% 100%);
+[data-testid="stTabsScrollLeft"]:hover svg, [data-testid="stTabsScrollRight"]:hover svg {{
+    background: {CELESTE}; color: #0E1420; transform: scale(1.1); box-shadow: 0 0 0 4px rgba(116,172,223,.22);
+}}
+[data-testid="stTabsScrollLeft"]:active svg, [data-testid="stTabsScrollRight"]:active svg {{ transform: scale(.94); }}
+[data-testid="stTabsScrollLeft"]:focus-visible svg, [data-testid="stTabsScrollRight"]:focus-visible svg {{
+    outline: 2px solid {CELESTE}; outline-offset: 2px;
 }}
 [data-testid="stTab"] {{ height: 3.4rem; padding: 0 1.15rem; }}
 [data-testid="stTab"] p {{ font-size: 1.15rem; font-weight: 600; }}
@@ -517,8 +527,43 @@ h3 {{ font-weight: 700 !important; }}
 """
 
 
+# Al tocar una pestaña, la barra se desliza para centrarla: si la elegida estaba cortada en un borde, aparecen las
+# que siguen (o las anteriores). Se instala una sola vez por página y también sigue a las flechas del teclado.
+JS_PESTANAS = """
+<script>
+(() => {
+  if (window.__mcPestanas) return;
+  window.__mcPestanas = true;
+  const centrar = (tab) => {
+    const lista = tab && tab.closest('[role="tablist"]');
+    if (!lista) return;
+    let c = lista;
+    while (c && c.scrollWidth <= c.clientWidth + 1) c = c.parentElement;
+    if (!c || c === document.body || c === document.documentElement) return;
+    const t = tab.getBoundingClientRect(), r = c.getBoundingClientRect();
+    const destino = Math.max(0, Math.min(c.scrollWidth - c.clientWidth,
+      c.scrollLeft + (t.left + t.width / 2) - (r.left + r.width / 2)));
+    c.scrollTo({left: destino, behavior: 'smooth'});
+    // por si el navegador no anima (pestaña en segundo plano, ahorro de energía): llega igual
+    setTimeout(() => { if (Math.abs(c.scrollLeft - destino) > 2) c.scrollLeft = destino; }, 450);
+  };
+  document.addEventListener('click', (e) => {
+    const tab = e.target.closest && e.target.closest('[role="tablist"] [role="tab"]');
+    if (tab) setTimeout(() => centrar(tab), 0);
+  }, true);
+  document.addEventListener('keyup', (e) => {
+    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    const tab = document.activeElement;
+    if (tab && tab.getAttribute('role') === 'tab') centrar(tab);
+  }, true);
+})();
+</script>
+"""
+
+
 def aplicar() -> None:
     st.markdown(CSS, unsafe_allow_html=True)
+    st.html(JS_PESTANAS, unsafe_allow_javascript=True)
 
 
 def _sol_svg(cx: float, cy: float, r: float) -> str:
