@@ -30,10 +30,10 @@ Si cambiás el código, cerrá y volvé a abrir `run.bat`: Streamlit no recarga 
 | Dinero y crédito | Base monetaria, M2 privado, préstamos al sector privado |
 | Comercio exterior | Exportaciones, importaciones, saldo comercial |
 
-## Navegación: Tablero, Historia económica y Juegos
+## Navegación: Tablero, Historia económica y Herramientas
 
 La barra lateral tiene una sección **Explorar** que cambia la pantalla principal entre el **Tablero** (con sus pestañas),
-la **Historia económica** y los **Juegos y herramientas**. Estas dos últimas no ocupan pestañas; se vuelve con
+la **Historia económica** y las **Herramientas**. Estas dos últimas no ocupan pestañas; se vuelve con
 *← Volver al tablero*.
 
 ## Historia económica (línea de tiempo)
@@ -45,11 +45,13 @@ los criterios y límites (por ejemplo, la inflación 2007-2015 es la del INDEC i
 
 ## Interactivo
 
-La sección **Juegos y herramientas** (barra lateral → *Explorar*; `macrocenter/interactivo.py`) tiene tres herramientas y la calificación macro, de a una por vez:
+La sección **Herramientas** (barra lateral → *Explorar*; `macrocenter/interactivo.py`) tiene cuatro herramientas y la calificación macro, de a una por vez:
 
 - **¿Cuánto valían tus pesos?** — un monto y una fecha (desde 1992): qué fue de esa plata según la inflación, el dólar
   oficial y la UVA.
 - **Comparador de épocas** — dos momentos cualesquiera (asunciones, hoy u otra fecha) lado a lado.
+- **Ajuste de alquileres** — monto inicial, fecha de inicio y frecuencia: cronograma de ajustes y alquiler actual según
+  ICL, IPC nacional, IPC GBA, CER o salarios, y el mismo contrato comparado con cada índice.
 - **Viaje en el tiempo** — un deslizador de fecha (1984 a hoy) que muestra quién gobernaba y cómo estaba el país, con
   botón para reproducirlo hasta hoy.
 

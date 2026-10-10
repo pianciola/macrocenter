@@ -359,7 +359,7 @@ with st.sidebar:
         ver_noticias()
     st.markdown(style.etiqueta("Explorar"), unsafe_allow_html=True)
     for clave_vista, texto in (("tablero", "Tablero"), ("historia", "Historia económica"),
-                               ("juegos", "Juegos y herramientas")):
+                               ("juegos", "Herramientas")):
         st.button(texto, width="stretch", key=f"nav_{clave_vista}", on_click=ir_a, args=(clave_vista,),
                   type="primary" if vista == clave_vista else "secondary")
     st.markdown(style.etiqueta("Datos"), unsafe_allow_html=True)
@@ -535,6 +535,55 @@ def fiscal_df() -> pd.DataFrame:
             f[c] = f[c] / (f["pbi"] / 12) * 100
             f[c + "_12m"] = suma12 / f["pbi"] * 100
     return f.dropna(subset=["pbi"]).replace([float("inf"), float("-inf")], float("nan")).reset_index(drop=True)
+
+
+def fiscal_anual() -> pd.DataFrame:
+    """Resultado primario y financiero de cada año calendario, en % del PBI de ese año.
+    PBI del año: promedio de los trimestres (ya anualizados) del INDEC; los que todavía no se publicaron se estiman con
+    el último trimestre actualizado por inflación. El año en curso es el acumulado hasta el último mes sobre el PBI
+    estimado del año entero (así lo informa también el Ministerio de Economía). Columnas: anio, primario, financiero, meses."""
+    if pib_corr is None or (fis_prim is None and fis_fin is None):
+        return pd.DataFrame(columns=["anio"])
+    q = pib_corr.dropna(subset=["valor"]).set_index("fecha")["valor"].sort_index()
+    if q.empty:
+        return pd.DataFrame(columns=["anio"])
+    inf = infl_m.set_index("fecha")["valor"] if infl_m is not None else pd.Series(dtype=float)
+
+    def pbi_trimestre(t: pd.Timestamp) -> float:
+        if t in q.index:
+            return float(q[t])
+        if t < q.index[0]:
+            return float("nan")
+        tramo = inf[(inf.index >= q.index[-1] + pd.DateOffset(months=3)) & (inf.index < t + pd.DateOffset(months=3))]
+        return float(q.iloc[-1] * (1 + tramo / 100).prod())
+
+    filas = []
+    base = {}
+    for df_, c in ((fis_prim, "primario"), (fis_fin, "financiero")):
+        if df_ is not None:
+            base[c] = df_[df_["fecha"] <= HOY].set_index("fecha")["valor"]
+    anios = sorted({fch.year for s in base.values() for fch in s.index})
+    for y in anios:
+        pbi_y = sum(pbi_trimestre(pd.Timestamp(year=y, month=m, day=1)) for m in (1, 4, 7, 10)) / 4
+        if not pbi_y or pbi_y != pbi_y:
+            continue
+        fila = {"anio": y}
+        meses = 0
+        for c, s in base.items():
+            sy = s[s.index.year == y].dropna()
+            meses = max(meses, len(sy))
+            fila[c] = float(sy.sum()) / pbi_y * 100 if len(sy) else float("nan")
+        fila["meses"] = meses
+        filas.append(fila)
+    out = pd.DataFrame(filas)
+    if out.empty:
+        return pd.DataFrame(columns=["anio"])
+    ultimo_mes = max(s.index.max() for s in base.values())
+    out["etiqueta"] = [f"{a} (ene-{MESES_ES[ultimo_mes.month - 1][:3]})" if m < 12 else str(a)
+                       for a, m in zip(out["anio"], out["meses"])]
+    return out
+
+
 comercio = None
 if ex is not None and im is not None:
     comercio = ex.rename(columns={"valor": "exp"}).merge(im.rename(columns={"valor": "imp"}), on="fecha")
@@ -738,7 +787,7 @@ def pantalla_historia() -> None:
                     """
                 )
 
-# ── Calificación macro (dentro de Juegos y herramientas) ──
+# ── Calificación macro (dentro de Herramientas) ──
 def _calificacion_contenido() -> None:
     if NOTAS["Hoy"]["total"] is None:
         st.warning("No hay datos suficientes para calcular la calificación.")
@@ -909,6 +958,8 @@ def pantalla_juegos() -> None:
         pantalla_calificacion()
     else:
         dp_i = {**dp_i, "uva": uva,
+                "icl": get("bcra:icl"), "cer": get("bcra:cer"), "infl_m": infl_m, "ipc_gba": get("serie:ipc_gba"),
+                "salarios": sal,
                 "dolar_blue": None if dol is None else dol[["fecha", "blue"]].dropna().rename(columns={"blue": "valor"})}
         interactivo.mostrar(dp_i, inds_i, fotos_presidentes(), uva, extra={"Calificación macro": pantalla_calificacion})
 
@@ -1109,8 +1160,8 @@ if isinstance(pagina_legal, str) and pagina_legal in legal.PAGINAS:
     st.stop()
 
 if vista != "tablero":
-    # Vistas aparte (Historia económica, Juegos): reemplazan al tablero y no ocupan una pestaña.
-    titulos = {"historia": "Historia económica", "juegos": "Juegos y herramientas"}
+    # Vistas aparte (Historia económica, Herramientas): reemplazan al tablero y no ocupan una pestaña.
+    titulos = {"historia": "Historia económica", "juegos": "Herramientas"}
     pantallas = {"historia": pantalla_historia, "juegos": pantalla_juegos}
     st.button("← Volver al tablero", on_click=ir_a, args=("tablero",))
     st.subheader(titulos[vista])
@@ -1729,6 +1780,22 @@ with t_fis, protegido("Resultado fiscal"):
             if "financiero" in f:
                 grafico(charts.barras(con_periodo("fis_fin", f, defecto="5 años", mensual=True), "financiero",
                                       "Resultado financiero mensual (% del PBI)", yfmt=",.1f", height=320))
+        fa = fiscal_anual()
+        if not fa.empty:
+            st.markdown("#### Resultado anual")
+            a, b = st.columns(2)
+            for col_, c, titulo in ((a, "primario", "Resultado primario anual (% del PBI)"),
+                                    (b, "financiero", "Resultado financiero anual (% del PBI)")):
+                if c in fa and fa[c].notna().any():
+                    with col_:
+                        fig_a = charts.barras(fa.dropna(subset=[c]), c, titulo, yfmt=",.1f", height=320, x="etiqueta")
+                        fig_a.update_traces(text=[charts.num(v, 1, "%") for v in fa.dropna(subset=[c])[c]],
+                                            textposition="outside", cliponaxis=False)
+                        fig_a.update_xaxes(type="category")
+                        grafico(fig_a)
+            if (fa["meses"] < 12).any():
+                st.caption("El año en curso es el acumulado de los meses publicados sobre el PBI estimado del año completo, "
+                           "así que todavía puede cambiar (diciembre suele ser deficitario por el aguinaldo).")
         with st.expander("Cómo se calcula el porcentaje del PBI"):
             st.markdown(
                 "- **Resultado:** informe mensual de ingresos y gastos del Ministerio de Economía (base caja).\n"
