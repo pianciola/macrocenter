@@ -527,34 +527,63 @@ h3 {{ font-weight: 700 !important; }}
 """
 
 
-# Al tocar una pestaña, la barra se desliza para centrarla: si la elegida estaba cortada en un borde, aparecen las
-# que siguen (o las anteriores). Se instala una sola vez por página y también sigue a las flechas del teclado.
+# Al tocar una pestaña de un borde, la fila se desliza lo justo para mostrar la que sigue (o la anterior); las del
+# medio no mueven nada. Se instala una sola vez por página y también sigue a las flechas del teclado.
 JS_PESTANAS = """
 <script>
 (() => {
-  if (window.__mcPestanas) return;
-  window.__mcPestanas = true;
-  const centrar = (tab) => {
-    const lista = tab && tab.closest('[role="tablist"]');
-    if (!lista) return;
-    let c = lista;
-    while (c && c.scrollWidth <= c.clientWidth + 1) c = c.parentElement;
-    if (!c || c === document.body || c === document.documentElement) return;
-    const t = tab.getBoundingClientRect(), r = c.getBoundingClientRect();
-    const destino = Math.max(0, Math.min(c.scrollWidth - c.clientWidth,
-      c.scrollLeft + (t.left + t.width / 2) - (r.left + r.width / 2)));
-    c.scrollTo({left: destino, behavior: 'smooth'});
-    // por si el navegador no anima (pestaña en segundo plano, ahorro de energía): llega igual
-    setTimeout(() => { if (Math.abs(c.scrollLeft - destino) > 2) c.scrollLeft = destino; }, 450);
+  if (window.__mcPestanasV3) return;
+  window.__mcPestanasV3 = true;
+  const MARGEN = 56;  // lo que tapa cada flechita (botón + degradé)
+  // Destino de la fila para que se vean enteras la pestaña tocada y sus vecinas. Si ya se ven (las del medio),
+  // devuelve null y la fila no se mueve.
+  const destinoPara = (tab) => {
+    const c = tab && tab.closest('[role="tablist"]');
+    if (!c || c.scrollWidth <= c.clientWidth + 1) return null;
+    const tabs = [...c.querySelectorAll('[role="tab"]')], i = tabs.indexOf(tab);
+    const r = c.getBoundingClientRect();
+    const izq = tabs[Math.max(0, i - 1)].getBoundingClientRect();
+    const der = tabs[Math.min(tabs.length - 1, i + 1)].getBoundingClientRect();
+    const t = tab.getBoundingClientRect();
+    const desde = r.left + MARGEN, hasta = r.right - MARGEN;
+    let delta = 0;
+    if (der.right - izq.left > hasta - desde) delta = (t.left + t.width / 2) - (r.left + r.width / 2);  // no entran: centrar
+    else if (der.right > hasta) delta = der.right - hasta;
+    else if (izq.left < desde) delta = izq.left - desde;
+    if (Math.abs(delta) < 2) return null;
+    return {c, left: Math.max(0, Math.min(c.scrollWidth - c.clientWidth, c.scrollLeft + delta))};
+  };
+  // Streamlit desliza la fila por su cuenta al cambiar de pestaña (scrollIntoView); lo anulamos para las pestañas
+  // y queda un único movimiento suave, el nuestro (si no, las dos animaciones se pisan y la fila salta).
+  const scrollOriginal = Element.prototype.scrollIntoView;
+  Element.prototype.scrollIntoView = function (...args) {
+    if (this.getAttribute && this.getAttribute('role') === 'tab' && this.closest('[role="tablist"]')) return;
+    return scrollOriginal.apply(this, args);
+  };
+  let turno = 0;
+  const mover = (d) => {
+    if (!d) return;
+    const mio = ++turno;
+    setTimeout(() => {
+      if (mio !== turno) return;
+      d.c.scrollTo({left: d.left, behavior: 'smooth'});
+      // si la animación no llega (pestaña en segundo plano, ahorro de energía), termina igual; un clic posterior manda
+      setTimeout(() => { if (mio === turno && Math.abs(d.c.scrollLeft - d.left) > 2) d.c.scrollLeft = d.left; }, 900);
+    }, 0);
   };
   document.addEventListener('click', (e) => {
     const tab = e.target.closest && e.target.closest('[role="tablist"] [role="tab"]');
-    if (tab) setTimeout(() => centrar(tab), 0);
+    if (tab) mover(destinoPara(tab));
   }, true);
+  // si la persona mueve la fila a mano (flechitas, rueda, dedo), eso manda sobre cualquier movimiento pendiente
+  const aMano = (e) => { if (e.target.closest && e.target.closest('[data-testid^="stTabsScroll"], [role="tablist"]')) turno++; };
+  document.addEventListener('pointerdown', (e) => { if (e.target.closest && e.target.closest('[data-testid^="stTabsScroll"]')) turno++; }, true);
+  document.addEventListener('wheel', aMano, {capture: true, passive: true});
+  document.addEventListener('touchstart', aMano, {capture: true, passive: true});
   document.addEventListener('keyup', (e) => {
     if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
     const tab = document.activeElement;
-    if (tab && tab.getAttribute('role') === 'tab') centrar(tab);
+    if (tab && tab.getAttribute('role') === 'tab') mover(destinoPara(tab));
   }, true);
 })();
 </script>
