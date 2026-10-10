@@ -114,6 +114,21 @@ section[data-testid="stSidebar"] [data-testid="stPills"] button {{ border-radius
 [class*="st-key-btn_noticias"] button:hover {{
     background: rgba(246,180,14,.14) !important; transform: translateY(-1px); box-shadow: 0 4px 14px rgba(246,180,14,.25) !important;
 }}
+/* con noticias sin leer: el botón se rellena de dorado (Sol de Mayo) y late suave, para que se note sin gritar */
+.st-key-btn_noticias_nuevas button {{
+    background: linear-gradient(135deg, {SOL} 0%, #F79F1F 100%) !important; border-color: {SOL} !important;
+    box-shadow: 0 0 0 0 rgba(246,180,14,.55) !important; animation: mc-latido 2.4s ease-out infinite;
+}}
+.st-key-btn_noticias_nuevas button p {{ color: #3A2A00 !important; font-weight: 800; }}
+.st-key-btn_noticias_nuevas button:hover {{
+    background: linear-gradient(135deg, #FFC52E 0%, #F7A93A 100%) !important; box-shadow: 0 6px 18px rgba(246,180,14,.45) !important;
+}}
+@keyframes mc-latido {{
+    0% {{ box-shadow: 0 0 0 0 rgba(246,180,14,.55); }}
+    70% {{ box-shadow: 0 0 0 10px rgba(246,180,14,0); }}
+    100% {{ box-shadow: 0 0 0 0 rgba(246,180,14,0); }}
+}}
+@media (prefers-reduced-motion: reduce) {{ .st-key-btn_noticias_nuevas button {{ animation: none; }} }}
 
 /* menú de navegación: filas planas, la activa con barra celeste a la izquierda */
 section[data-testid="stSidebar"] [class*="st-key-nav_"] button {{
