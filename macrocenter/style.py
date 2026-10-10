@@ -229,6 +229,37 @@ section[data-testid="stSidebar"] [class*="st-key-nav_"] button[data-testid="stBa
 }}
 section[data-testid="stSidebar"] [class*="st-key-nav_"] button[data-testid="stBaseButton-primary"] p {{ font-weight: 800; }}
 
+/* termómetro (calificación de hoy) y término del día */
+.mc-termo, .mc-termino {{
+    border: 1px solid rgba(116,172,223,.28); border-radius: 12px; padding: 12px 14px;
+    background: rgba(116,172,223,.07);
+}}
+.mc-termo-top {{ display: flex; align-items: baseline; gap: 4px; }}
+.mc-termo-num {{ font-size: 1.9rem; font-weight: 800; line-height: 1; }}
+.mc-termo-de {{ font-size: .85rem; opacity: .6; }}
+.mc-termo-barra {{ height: 6px; border-radius: 6px; background: rgba(128,128,128,.25); margin: 9px 0 7px; overflow: hidden; }}
+.mc-termo-barra span {{ display: block; height: 100%; border-radius: 6px; }}
+.mc-termo-niv {{ font-size: .82rem; font-weight: 600; opacity: .9; }}
+.mc-termino {{ border-left: 3px solid {SOL}; }}
+.mc-termino-t {{ font-weight: 800; font-size: .95rem; margin-bottom: 4px; color: {SOL}; }}
+.mc-termino-d {{ font-size: .82rem; line-height: 1.45; opacity: .9; }}
+/* atajos: como el menú, pero más chicos y con ícono */
+section[data-testid="stSidebar"] [class*="st-key-atajo_"] button {{
+    justify-content: flex-start; background: transparent; border: none; border-radius: 10px;
+    padding: .35rem .7rem; min-height: 0;
+}}
+section[data-testid="stSidebar"] [class*="st-key-atajo_"] button > div,
+section[data-testid="stSidebar"] [class*="st-key-atajo_"] button [data-testid="stMarkdownContainer"] {{
+    justify-content: flex-start !important; text-align: left !important;
+}}
+section[data-testid="stSidebar"] [class*="st-key-atajo_"] button p {{ font-size: .86rem; font-weight: 500; }}
+section[data-testid="stSidebar"] [class*="st-key-atajo_"] button:hover {{ background: rgba(116,172,223,.12); }}
+section[data-testid="stSidebar"] [class*="st-key-atajo_"] {{ margin-top: -6px; }}
+/* recuadro "En pocas palabras" de Inicio */
+.st-key-panorama {{ border-left: 4px solid {CELESTE} !important; background: rgba(116,172,223,.05); }}
+.st-key-panorama ul {{ margin-bottom: 0; }}
+.st-key-panorama li {{ margin-bottom: .3rem; line-height: 1.55; }}
+
 /* actualizar datos: discreto, al pie */
 section[data-testid="stSidebar"] .st-key-actualizar button {{
     background: transparent; border: 1px dashed rgba(116,172,223,.5); font-size: .82rem; font-weight: 600;
@@ -748,6 +779,20 @@ def pie_noticias(sitios: list[tuple[str, str]]) -> str:
 
 def etiqueta(texto: str) -> str:
     return f'<div class="mc-label">{texto}</div>'
+
+
+def termometro_lateral(puntaje: float, nivel: str, color: str) -> str:
+    """Tarjetita de la barra lateral con la calificación macro de hoy (0-100) y una barra de progreso."""
+    p = max(0.0, min(100.0, float(puntaje)))
+    return (f'<div class="mc-termo"><div class="mc-termo-top"><span class="mc-termo-num" style="color:{color}">'
+            f'{p:.0f}</span><span class="mc-termo-de">/100</span></div>'
+            f'<div class="mc-termo-barra"><span style="width:{p:.0f}%;background:{color}"></span></div>'
+            f'<div class="mc-termo-niv">{html.escape(nivel)}</div></div>')
+
+
+def termino_del_dia(termino: str, definicion: str) -> str:
+    return (f'<div class="mc-termino"><div class="mc-termino-t">{html.escape(termino)}</div>'
+            f'<div class="mc-termino-d">{html.escape(definicion)}</div></div>')
 
 
 def cotizacion(nombre: str, valor: str, variacion: float | None) -> str:
