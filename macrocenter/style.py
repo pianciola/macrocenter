@@ -690,6 +690,7 @@ FUENTES = [
     ("CoinGecko", "Criptomonedas", "https://www.coingecko.com/"),
     ("CriptoYa", "USDT por exchange argentino", "https://criptoya.com/"),
     ("Yahoo Finance", "Bolsas y materias primas (fuente no oficial)", "https://finance.yahoo.com/"),
+    ("FRED (Reserva Federal de St. Louis)", "Inflación de EE. UU., para ajustar dólares", "https://fred.stlouisfed.org/"),
     ("Wikipedia / Wikimedia Commons", "Fotos de los presidentes", "https://commons.wikimedia.org/"),
 ]
 

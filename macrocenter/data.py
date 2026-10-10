@@ -186,6 +186,19 @@ def divisa(codigo: str, desde: str = "2016-01-01") -> pd.DataFrame:
     return df.sort_values("fecha").reset_index(drop=True)
 
 
+def ipc_eeuu() -> pd.DataFrame:
+    """Índice de precios al consumidor de EE. UU. (CPIAUCSL, mensual desde 1947), de la Reserva Federal de St. Louis (FRED).
+    Sirve para pasar dólares de distintas épocas a dólares de hoy. Columnas: fecha (primer día del mes), valor."""
+    import io
+
+    texto = _get("https://fred.stlouisfed.org/graph/fredgraph.csv", id="CPIAUCSL").text
+    df = pd.read_csv(io.StringIO(texto))
+    df.columns = ["fecha", "valor"]
+    df["fecha"] = pd.to_datetime(df["fecha"], errors="coerce")
+    df["valor"] = pd.to_numeric(df["valor"], errors="coerce")
+    return df.dropna().sort_values("fecha").reset_index(drop=True)
+
+
 def dolar_historico() -> pd.DataFrame:
     """Dólar oficial (BCRA, serie 175.1 'Dólar estadounidense') desde 1992 hasta 2010, en pesos por dólar.
     Son ~7.000 datos diarios, así que se pide en dos tramos (la API entrega hasta 5.000 por pedido).
