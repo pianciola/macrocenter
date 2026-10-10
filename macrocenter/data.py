@@ -9,6 +9,8 @@ Todas las funciones devuelven DataFrames con columna `fecha` (datetime64) ordena
 """
 from __future__ import annotations
 
+import time
+
 import pandas as pd
 import requests
 
@@ -82,9 +84,22 @@ def limpiar(df):
 
 
 def _get(url: str, **params) -> requests.Response:
-    resp = requests.get(url, params=params or None, timeout=TIMEOUT)
-    resp.raise_for_status()
-    return resp
+    """GET con reintentos: si la fuente responde «demasiados pedidos» (429) o un error pasajero del servidor (5xx),
+    espera un poco (más cada vez) y vuelve a probar, hasta 4 veces. Cualquier otro error se informa enseguida."""
+    espera = 1.5
+    for intento in range(4):
+        try:
+            resp = requests.get(url, params=params or None, timeout=TIMEOUT)
+        except (requests.ConnectionError, requests.Timeout):
+            if intento == 3:
+                raise
+        else:
+            if resp.status_code not in (429, 500, 502, 503, 504) or intento == 3:
+                resp.raise_for_status()
+                return resp
+        time.sleep(espera)
+        espera *= 2
+    raise RuntimeError("inalcanzable")
 
 
 def bcra(variable: str, desde: str | None = None) -> pd.DataFrame:
