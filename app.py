@@ -358,8 +358,8 @@ with st.sidebar:
                       + (f" ({nuevas} publicadas hoy o ayer, sin leer)" if nuevas else "")):
         ver_noticias()
     st.markdown(style.etiqueta("Explorar"), unsafe_allow_html=True)
-    for clave_vista, texto in (("tablero", "Tablero"), ("historia", "Historia económica"),
-                               ("juegos", "Herramientas")):
+    for clave_vista, texto in (("tablero", "Tablero"), ("juegos", "Herramientas"),
+                               ("historia", "Historia económica")):
         st.button(texto, width="stretch", key=f"nav_{clave_vista}", on_click=ir_a, args=(clave_vista,),
                   type="primary" if vista == clave_vista else "secondary")
     st.markdown(style.etiqueta("Datos"), unsafe_allow_html=True)
@@ -404,6 +404,19 @@ def con_periodo(clave: str, df: pd.DataFrame, min_anios: int = 0, defecto: str =
     """Recorta `df` al período elegido. `min_anios` fuerza una ventana mínima (solo para series muy poco frecuentes);
     para series mensuales conviene `mensual=True`: cada botón recorta de verdad, desde 6 meses."""
     return rec(df, min_anios, selector_periodo(clave, defecto, mensual))
+
+
+def _grafico_periodo(clave: str, df: pd.DataFrame, armar, min_anios: int = 0, defecto: str = "2 años",
+                     mensual: bool = False) -> None:
+    grafico(armar(con_periodo(clave, df, min_anios, defecto, mensual)))
+
+
+@st.fragment
+def grafico_periodo(clave: str, df: pd.DataFrame, armar, min_anios: int = 0, defecto: str = "2 años",
+                    mensual: bool = False) -> None:
+    """Botones de período + gráfico como «fragmento»: al tocar un período se redibuja solo este gráfico, no la app
+    entera (responde al instante). `armar` recibe el df recortado y devuelve la figura."""
+    _grafico_periodo(clave, df, armar, min_anios, defecto, mensual)
 
 
 def ultimo(df: pd.DataFrame, col: str = "valor") -> float | None:
@@ -451,12 +464,13 @@ def kpi(slot, label: str, valor: float | None, dec: int = 0, pre: str = "", suf:
     )
 
 
-MAX_PUNTOS = 1200  # una línea de ~1.000 px de ancho no muestra más detalle que esto
+MAX_PUNTOS = 1000  # una línea de ~1.000 px de ancho no muestra más detalle que esto
 
 
 def aligerar(fig) -> None:
     """Las líneas con miles de puntos (series diarias de muchos años) se reducen a ~MAX_PUNTOS tomando uno cada k
-    y siempre el último: el dibujo es el mismo a la vista y el navegador (sobre todo en celulares) trabaja mucho menos."""
+    y siempre el último: el dibujo es el mismo a la vista y la página pesa mucho menos (clave en celulares, porque
+    todas las pestañas se mandan juntas para que cambiar de una a otra sea instantáneo)."""
     for tr in fig.data:
         if getattr(tr, "type", "") != "scatter" or tr.x is None or len(tr.x) <= MAX_PUNTOS:
             continue
@@ -999,6 +1013,7 @@ def _nombre_exchange(k: str) -> str:
     return base.capitalize() + (" P2P" if p2p else "")
 
 
+@st.fragment  # sus selectores redibujan solo esta pestaña
 def pantalla_cripto() -> None:
     cr = cargar_cripto()
     reintentar_si_fallo(cargar_cripto, "cripto", any(isinstance(v, str) for v in cr.values()))
@@ -1073,6 +1088,7 @@ def _var_pct(df: pd.DataFrame, dias: int | None = None) -> float | None:
     return None if ref == 0 else (float(ult["valor"]) / ref - 1) * 100
 
 
+@st.fragment  # sus selectores redibujan solo esta pestaña
 def pantalla_bolsas() -> None:
     mk = cargar_mercados()
     reintentar_si_fallo(cargar_mercados, "mercados", any(isinstance(v, str) for v in mk.values()))
@@ -1184,7 +1200,7 @@ if vista != "tablero":
     # Vistas aparte (Historia económica, Herramientas): reemplazan al tablero y no ocupan una pestaña.
     titulos = {"historia": "Historia económica", "juegos": "Herramientas"}
     pantallas = {"historia": pantalla_historia, "juegos": pantalla_juegos}
-    st.button("← Volver al tablero", on_click=ir_a, args=("tablero",))
+    st.button("Volver al tablero", key="volver_tablero", icon=":material/arrow_back:", on_click=ir_a, args=("tablero",))
     st.subheader(titulos[vista])
     with protegido(titulos[vista]):
         pantallas[vista]()
@@ -1193,10 +1209,7 @@ if vista != "tablero":
 
 t_res, t_dol, t_cri, t_bol, t_res_i, t_act, t_sal, t_prec, t_tasas, t_din, t_com, t_fis = st.tabs(
     ["Inicio", "Dólar", "Cripto", "Bolsas", "Reservas", "Actividad y PBI", "Salarios", "Precios y UVA",
-     "Tasas y riesgo país", "Dinero y crédito", "Comercio exterior", "Resultado fiscal"],
-    # pestañas «perezosas»: solo se calcula y se manda al navegador la pestaña abierta (antes iban las 12 en cada
-    # interacción, unos 45 gráficos). Cada bloque de abajo pregunta `if t_xxx.open:`.
-    key="pestana", on_change="rerun",
+     "Tasas y riesgo país", "Dinero y crédito", "Comercio exterior", "Resultado fiscal"]
 )
 
 # ───────────────────────── indicadores personalizables ─────────────────────────
@@ -1297,8 +1310,8 @@ def panel_plazo_fijo() -> None:
             kpi(k[1], "Suben los precios (mensual)", float(ult["inflacion"]), 1, suf="%")
             kpi(k[2], "Rendimiento real del mes", float(ult["real"]), 1, suf="%", color="normal",
                 help="Positivo: la tasa le ganó a la inflación. Negativo: el ahorro perdió poder de compra.")
-            grafico(charts.barras(con_periodo("res_real", real, mensual=True), "real",
-                                  "Rendimiento real mensual de un plazo fijo (%)", yfmt=",.1f", height=300))
+            grafico_periodo("res_real", real, lambda d: charts.barras(
+                d, "real", "Rendimiento real mensual de un plazo fijo (%)", yfmt=",.1f", height=300), mensual=True)
             st.caption("Usa la tasa BADLAR (depósitos a plazo de bancos privados) como referencia de un plazo fijo, promedio del "
                        "mes, contra la inflación de ese mes. No incluye impuestos ni comisiones.")
     else:
@@ -1306,54 +1319,63 @@ def panel_plazo_fijo() -> None:
 
 
 # ── Inicio ──
-if t_res.open:
-    with t_res, protegido("Inicio"):
-        # el estado de sesión puede traer claves viejas o inválidas: se filtra antes de dibujar el selector
-        previos = st.session_state.get("kpis_sel")
-        st.session_state["kpis_sel"] = [k for k in (previos if isinstance(previos, list) else [])
-                                        if isinstance(k, str) and k in CATALOGO]
-        h, p = st.columns([5, 1.5], vertical_alignment="center")
-        h.subheader("Indicadores clave")
-        with p.popover("Personalizar", width="stretch"):
-            st.caption("Elegí qué indicadores ver (y en qué orden). Tu elección queda guardada.")
-            st.multiselect(
-                "Indicadores", options=list(CATALOGO), key="kpis_sel", on_change=guardar_prefs,
-                format_func=lambda k: f"{CATALOGO[k][0]} · {CATALOGO[k][1]}", label_visibility="collapsed",
-                placeholder="Elegí indicadores…",
-            )
-            st.button("Restablecer los de siempre", on_click=restablecer_prefs, width="stretch")
-        elegidos = st.session_state["kpis_sel"]
-        if not elegidos:
-            st.info("No elegiste ningún indicador. Usá **Personalizar** para agregar los que quieras ver.")
-        for i in range(0, len(elegidos), 5):
-            for slot, clave in zip(st.columns(5), elegidos[i:i + 5]):
-                try:
-                    kpi(slot, CATALOGO[clave][1], **CATALOGO[clave][2]())
-                except Exception:  # noqa: BLE001
-                    traceback.print_exc()
-                    kpi(slot, CATALOGO[clave][1], None)
+with t_res, protegido("Inicio"):
+    # el estado de sesión puede traer claves viejas o inválidas: se filtra antes de dibujar el selector
+    previos = st.session_state.get("kpis_sel")
+    st.session_state["kpis_sel"] = [k for k in (previos if isinstance(previos, list) else [])
+                                    if isinstance(k, str) and k in CATALOGO]
+    h, p = st.columns([5, 1.5], vertical_alignment="center")
+    h.subheader("Indicadores clave")
+    with p.popover("Personalizar", width="stretch"):
+        st.caption("Elegí qué indicadores ver (y en qué orden). Tu elección queda guardada.")
+        st.multiselect(
+            "Indicadores", options=list(CATALOGO), key="kpis_sel", on_change=guardar_prefs,
+            format_func=lambda k: f"{CATALOGO[k][0]} · {CATALOGO[k][1]}", label_visibility="collapsed",
+            placeholder="Elegí indicadores…",
+        )
+        st.button("Restablecer los de siempre", on_click=restablecer_prefs, width="stretch")
+    elegidos = st.session_state["kpis_sel"]
+    if not elegidos:
+        st.info("No elegiste ningún indicador. Usá **Personalizar** para agregar los que quieras ver.")
+    for i in range(0, len(elegidos), 5):
+        for slot, clave in zip(st.columns(5), elegidos[i:i + 5]):
+            try:
+                kpi(slot, CATALOGO[clave][1], **CATALOGO[clave][2]())
+            except Exception:  # noqa: BLE001
+                traceback.print_exc()
+                kpi(slot, CATALOGO[clave][1], None)
 
-        # un solo gráfico a la vez (el usuario elige cuál), para que la portada no se llene
+    # un solo gráfico a la vez (el usuario elige cuál), para que la portada no se llene
+    @st.fragment
+    def grafico_inicio() -> None:
+        """Selector de gráfico + período: cambiar uno u otro redibuja solo esto."""
         OPC = ["Dólar", "Inflación", "Reservas", "Riesgo país"]
         elegido_i = st.segmented_control("Gráfico", OPC, default="Dólar", key="inicio_grafico", label_visibility="collapsed") or "Dólar"
         if elegido_i == "Dólar" and dol is not None:
-            grafico(charts.lineas(con_periodo("res_dolar", dol_rec), {"Oficial": "oficial", "Blue": "blue"}, "Dólar ($)", height=340))
+            _grafico_periodo("res_dolar", dol_rec, lambda d: charts.lineas(d, {"Oficial": "oficial", "Blue": "blue"}, "Dólar ($)",
+                                                                           height=340))
         elif elegido_i == "Inflación" and infl_m is not None and infl_ia is not None:
             m = infl_m.merge(infl_ia, on="fecha", suffixes=("_m", "_ia"))
-            grafico(charts.barras_y_linea(con_periodo("res_infl", m, defecto="5 años", mensual=True), "valor_m", "valor_ia", "Inflación (%)",
-                                          "Mensual", "Interanual", height=340))
+            _grafico_periodo("res_infl", m, lambda d: charts.barras_y_linea(d, "valor_m", "valor_ia", "Inflación (%)",
+                                                                            "Mensual", "Interanual", height=340),
+                            defecto="5 años", mensual=True)
         elif elegido_i == "Reservas" and reservas is not None:
-            grafico(charts.lineas(con_periodo("res_reservas", reservas), {"Reservas brutas": "valor"},
-                                  "Reservas internacionales (USD millones)", height=340))
+            _grafico_periodo("res_reservas", reservas, lambda d: charts.lineas(d, {"Reservas brutas": "valor"},
+                                                                               "Reservas internacionales (USD millones)", height=340))
         elif elegido_i == "Riesgo país" and riesgo is not None:
-            grafico(charts.lineas(con_periodo("res_riesgo", riesgo), {"Riesgo país": "valor"},
-                                  "Riesgo país (puntos básicos)", height=340))
+            _grafico_periodo("res_riesgo", riesgo, lambda d: charts.lineas(d, {"Riesgo país": "valor"},
+                                                                           "Riesgo país (puntos básicos)", height=340))
         else:
             st.info("No se pudo cargar este gráfico.")
 
-        # ¿Qué le ganó a la inflación? Variación de cada alternativa de ahorro en el mismo período.
-        st.divider()
-        st.subheader("¿Qué le ganó a la inflación?")
+    grafico_inicio()
+
+    # ¿Qué le ganó a la inflación? Variación de cada alternativa de ahorro en el mismo período.
+    st.divider()
+    st.subheader("¿Qué le ganó a la inflación?")
+    @st.fragment
+    def que_le_gano() -> None:
+        """Comparativo contra la inflación: cambiar el período redibuja solo esto."""
         ventanas = {"3 meses": 3, "6 meses": 6, "1 año": 12}
         vent = st.segmented_control("Período", list(ventanas), default="1 año", key="rend_periodo",
                                     label_visibility="collapsed") or "1 año"
@@ -1405,62 +1427,63 @@ if t_res.open:
             traceback.print_exc()
             st.info("No se pudo armar este comparativo.")
 
+    que_le_gano()
 
 # ── Criptomonedas ──
-if t_cri.open:
-    with t_cri, protegido("Criptomonedas"):
-        pantalla_cripto()
+with t_cri, protegido("Criptomonedas"):
+    pantalla_cripto()
 
 # ── Bolsas ──
-if t_bol.open:
-    with t_bol, protegido("Bolsas"):
-        pantalla_bolsas()
+with t_bol, protegido("Bolsas"):
+    pantalla_bolsas()
 
 # ── Dólar ──
-if t_dol.open:
-    with t_dol, protegido("Dólar"):
-        if dol is not None:
-            TIPOS_DOLAR = [
-                ("oficial", "Dólar oficial", "Banco Nación, venta minorista"),
-                ("mayorista", "Dólar mayorista", "Entre grandes operadores"),
-                ("blue", "Dólar blue", "Mercado informal"),
-                ("bolsa", "Dólar MEP", "Compra de bonos en bolsa"),
-                ("contadoconliqui", "Dólar CCL", "Contado con liquidación, giro al exterior"),
-                ("cripto", "Dólar cripto", "Vía stablecoins (USDT)"),
-                ("tarjeta", "Dólar tarjeta", "Consumos en el exterior: oficial + impuestos"),
-            ]
-            oficial_hoy = ultimo(dol[["fecha", "oficial"]].dropna().rename(columns={"oficial": "valor"}))
-            tarjetas_usd = []
-            for clave, nombre, desc in TIPOS_DOLAR:
-                s = dol[["fecha", clave, f"{clave}_compra"]].dropna(subset=[clave])
-                if s.empty:
-                    continue
-                venta, compra = float(s.iloc[-1][clave]), s.iloc[-1][f"{clave}_compra"]
-                tarjetas_usd.append(dict(
-                    nombre=nombre, desc=desc, valor=charts.num(venta, 0, pre="$"),
-                    detalle=f"Compra {charts.num(float(compra), 0, pre='$')} · Venta {charts.num(venta, 0, pre='$')}",
-                    var=delta(s.rename(columns={clave: "valor"})), sentido="bajo",  # que suba el dólar es mala noticia
-                    spark=list(s.tail(30)[clave]),
-                    chip=None if clave == "oficial" or not oficial_hoy else
-                    f"{(venta / oficial_hoy - 1) * 100:+.0f}% vs oficial".replace(".", ","),
-                ))
-            st.markdown(style.cotizaciones(tarjetas_usd), unsafe_allow_html=True)
-            st.caption(f"Cotizaciones al {dol['fecha'].max():%d/%m/%Y} (ArgentinaDatos). La variación compara con 30 días atrás.")
+with t_dol, protegido("Dólar"):
+    if dol is not None:
+        TIPOS_DOLAR = [
+            ("oficial", "Dólar oficial", "Banco Nación, venta minorista"),
+            ("mayorista", "Dólar mayorista", "Entre grandes operadores"),
+            ("blue", "Dólar blue", "Mercado informal"),
+            ("bolsa", "Dólar MEP", "Compra de bonos en bolsa"),
+            ("contadoconliqui", "Dólar CCL", "Contado con liquidación, giro al exterior"),
+            ("cripto", "Dólar cripto", "Vía stablecoins (USDT)"),
+            ("tarjeta", "Dólar tarjeta", "Consumos en el exterior: oficial + impuestos"),
+        ]
+        oficial_hoy = ultimo(dol[["fecha", "oficial"]].dropna().rename(columns={"oficial": "valor"}))
+        tarjetas_usd = []
+        for clave, nombre, desc in TIPOS_DOLAR:
+            s = dol[["fecha", clave, f"{clave}_compra"]].dropna(subset=[clave])
+            if s.empty:
+                continue
+            venta, compra = float(s.iloc[-1][clave]), s.iloc[-1][f"{clave}_compra"]
+            tarjetas_usd.append(dict(
+                nombre=nombre, desc=desc, valor=charts.num(venta, 0, pre="$"),
+                detalle=f"Compra {charts.num(float(compra), 0, pre='$')} · Venta {charts.num(venta, 0, pre='$')}",
+                var=delta(s.rename(columns={clave: "valor"})), sentido="bajo",  # que suba el dólar es mala noticia
+                spark=list(s.tail(30)[clave]),
+                chip=None if clave == "oficial" or not oficial_hoy else
+                f"{(venta / oficial_hoy - 1) * 100:+.0f}% vs oficial".replace(".", ","),
+            ))
+        st.markdown(style.cotizaciones(tarjetas_usd), unsafe_allow_html=True)
+        st.caption(f"Cotizaciones al {dol['fecha'].max():%d/%m/%Y} (ArgentinaDatos). La variación compara con 30 días atrás.")
 
-            eur, gbp = get("fx:EUR"), get("fx:GBP")
-            tarjetas_fx = []
-            for df_, nombre, simbolo in ((eur, "Euro", "€"), (gbp, "Libra esterlina", "£")):
-                if df_ is not None:
-                    u = df_.iloc[-1]
-                    tarjetas_fx.append(dict(
-                        nombre=nombre, desc="Cotización de referencia del BCRA",
-                        valor=charts.num(float(u["valor"]), 0, pre="$"),
-                        detalle=f"1 {simbolo} = US$ {charts.num(float(u['pase']), 2)}",
-                        var=delta(df_), sentido="bajo", chip=None, spark=list(df_.tail(30)["valor"])))
-            if tarjetas_fx:
-                st.markdown(style.cotizaciones(tarjetas_fx), unsafe_allow_html=True)
-                st.caption("Euro y libra: referencia cambiaria del BCRA en pesos por unidad (no es el precio de la casa de cambio).")
+        eur, gbp = get("fx:EUR"), get("fx:GBP")
+        tarjetas_fx = []
+        for df_, nombre, simbolo in ((eur, "Euro", "€"), (gbp, "Libra esterlina", "£")):
+            if df_ is not None:
+                u = df_.iloc[-1]
+                tarjetas_fx.append(dict(
+                    nombre=nombre, desc="Cotización de referencia del BCRA",
+                    valor=charts.num(float(u["valor"]), 0, pre="$"),
+                    detalle=f"1 {simbolo} = US$ {charts.num(float(u['pase']), 2)}",
+                    var=delta(df_), sentido="bajo", chip=None, spark=list(df_.tail(30)["valor"])))
+        if tarjetas_fx:
+            st.markdown(style.cotizaciones(tarjetas_fx), unsafe_allow_html=True)
+            st.caption("Euro y libra: referencia cambiaria del BCRA en pesos por unidad (no es el precio de la casa de cambio).")
 
+        @st.fragment
+        def graficos_dolar() -> None:
+            """Período + gráfico de cotizaciones + brecha: al cambiar el período se redibuja solo esto."""
             r = con_periodo("dolar", dol_rec)
             grafico(charts.lineas(r, {"Oficial": "oficial", "Mayorista": "mayorista", "Blue": "blue", "MEP": "bolsa",
                                       "CCL": "contadoconliqui", "Cripto": "cripto", "Tarjeta": "tarjeta"},
@@ -1476,19 +1499,23 @@ if t_dol.open:
                     base = base100(r, ["oficial", "blue"])
                     grafico(charts.lineas(base, {"Oficial": "oficial", "Blue": "blue"},
                                           "Evolución base 100 = inicio del período", yfmt=",.0f"))
-            with st.expander("Últimas cotizaciones (venta)"):
-                tabla = dol[["fecha", "oficial", "mayorista", "blue", "bolsa", "contadoconliqui", "cripto", "tarjeta",
-                             "brecha_blue", "brecha_ccl"]].tail(10).sort_values("fecha", ascending=False).rename(columns={
-                    "fecha": "Fecha", "oficial": "Oficial", "blue": "Blue", "bolsa": "MEP",
-                    "contadoconliqui": "CCL", "mayorista": "Mayorista", "cripto": "Cripto", "tarjeta": "Tarjeta",
-                    "brecha_blue": "Brecha blue %", "brecha_ccl": "Brecha CCL %"})
-                st.dataframe(tabla, hide_index=True, width="stretch",
-                             column_config={"Fecha": st.column_config.DateColumn(format="DD/MM/YYYY")})
+
+        graficos_dolar()
+        with st.expander("Últimas cotizaciones (venta)"):
+            tabla = dol[["fecha", "oficial", "mayorista", "blue", "bolsa", "contadoconliqui", "cripto", "tarjeta",
+                         "brecha_blue", "brecha_ccl"]].tail(10).sort_values("fecha", ascending=False).rename(columns={
+                "fecha": "Fecha", "oficial": "Oficial", "blue": "Blue", "bolsa": "MEP",
+                "contadoconliqui": "CCL", "mayorista": "Mayorista", "cripto": "Cripto", "tarjeta": "Tarjeta",
+                "brecha_blue": "Brecha blue %", "brecha_ccl": "Brecha CCL %"})
+            st.dataframe(tabla, hide_index=True, width="stretch",
+                         column_config={"Fecha": st.column_config.DateColumn(format="DD/MM/YYYY")})
 
 # ── Reservas ──
-if t_res_i.open:
-    with t_res_i, protegido("Reservas"):
-        if reservas is not None:
+with t_res_i, protegido("Reservas"):
+    if reservas is not None:
+        @st.fragment
+        def bloque_reservas() -> None:
+            """Período + indicadores + gráfico: al cambiar el período se redibuja solo esto."""
             per_res = selector_periodo("reservas")
             r = rec(reservas, 0, per_res)
             c = st.columns(3)
@@ -1508,12 +1535,14 @@ if t_res_i.open:
                     d=None if maximo == 0 else (fin_r / maximo - 1) * 100, d_txt="hoy vs el máximo", color="normal")
             grafico(charts.lineas(r, {"Reservas brutas": "valor"}, "Reservas internacionales brutas del BCRA (USD millones)",
                                   height=460))
-            st.caption("Son las reservas **brutas**: incluyen el swap con China, los encajes de los depósitos en dólares y los repos "
-                       "con bancos, que no son de libre disponibilidad. Las **netas** (lo que el BCRA puede usar para intervenir) son "
-                       "bastante menores, pero no se muestran porque no existe una serie oficial pública con la que calcularlas.")
-            with st.expander("Variación mensual"):
-                rm = reservas.set_index("fecha")["valor"].resample("ME").last().diff().rename("var").reset_index()
-                grafico(charts.barras(rec(rm.dropna(), 2), "var", "Variación mensual de reservas (USD millones)", yfmt=",.0f"))
+
+        bloque_reservas()
+        st.caption("Son las reservas **brutas**: incluyen el swap con China, los encajes de los depósitos en dólares y los repos "
+                   "con bancos, que no son de libre disponibilidad. Las **netas** (lo que el BCRA puede usar para intervenir) son "
+                   "bastante menores, pero no se muestran porque no existe una serie oficial pública con la que calcularlas.")
+        with st.expander("Variación mensual"):
+            rm = reservas.set_index("fecha")["valor"].resample("ME").last().diff().rename("var").reset_index()
+            grafico(charts.barras(rec(rm.dropna(), 2), "var", "Variación mensual de reservas (USD millones)", yfmt=",.0f"))
 
 def ult_y_ant(df: pd.DataFrame | None, col: str = "valor", atras: int = 1) -> tuple[float | None, float | None]:
     """Último dato y el de `atras` períodos antes (None si no hay)."""
@@ -1534,314 +1563,308 @@ def pct(a: float | None, b: float | None) -> float | None:
 
 
 # ── Actividad y PBI ──
-if t_act.open:
-    with t_act, protegido("Actividad y PBI"):
-        st.caption("Cómo viene la producción: el **PBI** (trimestral, con unos tres meses de demora) y el **EMAE**, el indicador "
-                   "mensual del INDEC que lo anticipa. Verde: la actividad mejora; rojo: empeora.")
-        p = None
-        if pib is not None:
-            p = pib.copy()
-            p["interanual"] = p["valor"].pct_change(4) * 100
-            p["trimestral"] = p["valor"].pct_change() * 100
-        mom = get("serie:emae_sa_mom")
-        e_ia = emae.assign(interanual=emae["valor"].pct_change(12) * 100).dropna() if emae is not None else None
-        k = st.columns(4)
-        v, a_ = ult_y_ant(p, "interanual")
-        kpi(k[0], "PBI · var. interanual", v, 1, suf="%", d=dif(v, a_), d_suf=" pp", d_txt="vs trim. ant.",
-            help="Último trimestre publicado contra el mismo trimestre del año anterior.")
-        v, a_ = ult_y_ant(mom)
-        kpi(k[1], "EMAE · var. mensual", v, 1, suf="%", d=dif(v, a_), d_suf=" pp", d_txt="vs mes ant.",
-            help="Desestacionalizada: compara con el mes anterior sin el efecto de la época del año.")
-        v, a_ = ult_y_ant(e_ia, "interanual")
-        kpi(k[2], "EMAE · var. interanual", v, 1, suf="%", d=dif(v, a_), d_suf=" pp", d_txt="vs mes ant.")
-        v, a_ = ult_y_ant(paro_pct)
-        kpi(k[3], "Desocupación (EPH)", v, 1, suf="%", d=dif(v, a_), d_suf=" pp", d_txt="vs trim. ant.", color="inverse")
-        if p is not None:
-            st.markdown("#### PBI trimestral")
+with t_act, protegido("Actividad y PBI"):
+    st.caption("Cómo viene la producción: el **PBI** (trimestral, con unos tres meses de demora) y el **EMAE**, el indicador "
+               "mensual del INDEC que lo anticipa. Verde: la actividad mejora; rojo: empeora.")
+    p = None
+    if pib is not None:
+        p = pib.copy()
+        p["interanual"] = p["valor"].pct_change(4) * 100
+        p["trimestral"] = p["valor"].pct_change() * 100
+    mom = get("serie:emae_sa_mom")
+    e_ia = emae.assign(interanual=emae["valor"].pct_change(12) * 100).dropna() if emae is not None else None
+    k = st.columns(4)
+    v, a_ = ult_y_ant(p, "interanual")
+    kpi(k[0], "PBI · var. interanual", v, 1, suf="%", d=dif(v, a_), d_suf=" pp", d_txt="vs trim. ant.",
+        help="Último trimestre publicado contra el mismo trimestre del año anterior.")
+    v, a_ = ult_y_ant(mom)
+    kpi(k[1], "EMAE · var. mensual", v, 1, suf="%", d=dif(v, a_), d_suf=" pp", d_txt="vs mes ant.",
+        help="Desestacionalizada: compara con el mes anterior sin el efecto de la época del año.")
+    v, a_ = ult_y_ant(e_ia, "interanual")
+    kpi(k[2], "EMAE · var. interanual", v, 1, suf="%", d=dif(v, a_), d_suf=" pp", d_txt="vs mes ant.")
+    v, a_ = ult_y_ant(paro_pct)
+    kpi(k[3], "Desocupación (EPH)", v, 1, suf="%", d=dif(v, a_), d_suf=" pp", d_txt="vs trim. ant.", color="inverse")
+    if p is not None:
+        st.markdown("#### PBI trimestral")
+        a, b = st.columns(2)
+        with a:
+            grafico(charts.lineas(rec(p, 5), {"PBI real": "valor"}, "PBI trimestral a precios constantes de 2004 (millones de $)"))
+        with b:
+            grafico(charts.barras(rec(p.dropna(subset=["interanual"]), 5), "interanual",
+                                  "PBI — variación interanual (%)"))
+        st.caption("Serie trimestral sin desestacionalizar de Cuentas Nacionales (INDEC). "
+                   f"Último trimestre disponible: {p['fecha'].iloc[-1]:%m/%Y} (inicio de trimestre).")
+    if emae_sa is not None:
+        st.markdown("#### Actividad mes a mes (EMAE)")
+        a, b = st.columns(2)
+        with a:
+            grafico(charts.lineas(rec(emae_sa, 3), {"EMAE desestacionalizado": "valor"},
+                                  "EMAE desestacionalizado (base 2004 = 100)", yfmt=",.0f"))
+        with b:
+            if mom is not None:
+                grafico(charts.barras(rec(mom, 3), "valor", "EMAE — variación mensual desestacionalizada (%)", yfmt=",.1f"))
+    if emae is not None:
+        with st.expander("EMAE interanual y desocupación"):
+            e = emae.assign(interanual=emae["valor"].pct_change(12) * 100).dropna()
             a, b = st.columns(2)
             with a:
-                grafico(charts.lineas(rec(p, 5), {"PBI real": "valor"}, "PBI trimestral a precios constantes de 2004 (millones de $)"))
+                grafico(charts.barras(rec(e, 3), "interanual", "EMAE — variación interanual (%)"))
             with b:
-                grafico(charts.barras(rec(p.dropna(subset=["interanual"]), 5), "interanual",
-                                      "PBI — variación interanual (%)"))
-            st.caption("Serie trimestral sin desestacionalizar de Cuentas Nacionales (INDEC). "
-                       f"Último trimestre disponible: {p['fecha'].iloc[-1]:%m/%Y} (inicio de trimestre).")
-        if emae_sa is not None:
-            st.markdown("#### Actividad mes a mes (EMAE)")
-            a, b = st.columns(2)
-            with a:
-                grafico(charts.lineas(rec(emae_sa, 3), {"EMAE desestacionalizado": "valor"},
-                                      "EMAE desestacionalizado (base 2004 = 100)", yfmt=",.0f"))
-            with b:
-                if mom is not None:
-                    grafico(charts.barras(rec(mom, 3), "valor", "EMAE — variación mensual desestacionalizada (%)", yfmt=",.1f"))
-        if emae is not None:
-            with st.expander("EMAE interanual y desocupación"):
-                e = emae.assign(interanual=emae["valor"].pct_change(12) * 100).dropna()
-                a, b = st.columns(2)
-                with a:
-                    grafico(charts.barras(rec(e, 3), "interanual", "EMAE — variación interanual (%)"))
-                with b:
-                    if paro is not None:
-                        grafico(charts.lineas(rec(paro.assign(valor=paro["valor"] * 100), 5), {"Desocupación": "valor"},
-                                              "Tasa de desocupación (EPH, %)", yfmt=",.1f"))
+                if paro is not None:
+                    grafico(charts.lineas(rec(paro.assign(valor=paro["valor"] * 100), 5), {"Desocupación": "valor"},
+                                          "Tasa de desocupación (EPH, %)", yfmt=",.1f"))
 
 # ── Salarios ──
-if t_sal.open:
-    with t_sal, protegido("Salarios"):
-        st.caption("Cuánto suben los sueldos y si le ganan a la inflación (**salario real**). Verde: el poder de compra mejora; "
-                   "rojo: empeora.")
-        sr_k = salario_real()
-        k = st.columns(4)
-        v, a_ = ult_y_ant(sal_ia)
-        kpi(k[0], "Salarios · var. interanual", v, 1, suf="%", d=dif(v, a_), d_suf=" pp", d_txt="vs mes ant.")
-        v, a_ = ult_y_ant(sr_k, "real")
-        kpi(k[1], "Salario real · interanual", v, 1, suf="%", d=dif(v, a_), d_suf=" pp", d_txt="vs mes ant.",
-            help="Positivo: los salarios subieron más que los precios en el último año.")
-        v, a_ = ult_y_ant(smvm)
-        kpi(k[2], "Salario mínimo", v, 0, pre="$", d=pct(v, a_), d_txt="vs mes ant.")
-        v, a_ = ult_y_ant(haber_min)
-        kpi(k[3], "Haber mínimo jubilatorio", v, 0, pre="$", d=pct(v, a_), d_txt="vs mes ant.")
-        if sal is not None:
-            st.markdown("#### Salarios e inflación")
-            base = sal.rename(columns={"valor": "Total"})
-            for df_, nombre in ((sal_priv, "Privado registrado"), (sal_pub, "Público")):
-                if df_ is not None:
-                    base = base.merge(df_.rename(columns={"valor": nombre}), on="fecha", how="outer")
-            base = base.sort_values("fecha")
-            cols = {n: n for n in ("Total", "Privado registrado", "Público") if n in base}
+with t_sal, protegido("Salarios"):
+    st.caption("Cuánto suben los sueldos y si le ganan a la inflación (**salario real**). Verde: el poder de compra mejora; "
+               "rojo: empeora.")
+    sr_k = salario_real()
+    k = st.columns(4)
+    v, a_ = ult_y_ant(sal_ia)
+    kpi(k[0], "Salarios · var. interanual", v, 1, suf="%", d=dif(v, a_), d_suf=" pp", d_txt="vs mes ant.")
+    v, a_ = ult_y_ant(sr_k, "real")
+    kpi(k[1], "Salario real · interanual", v, 1, suf="%", d=dif(v, a_), d_suf=" pp", d_txt="vs mes ant.",
+        help="Positivo: los salarios subieron más que los precios en el último año.")
+    v, a_ = ult_y_ant(smvm)
+    kpi(k[2], "Salario mínimo", v, 0, pre="$", d=pct(v, a_), d_txt="vs mes ant.")
+    v, a_ = ult_y_ant(haber_min)
+    kpi(k[3], "Haber mínimo jubilatorio", v, 0, pre="$", d=pct(v, a_), d_txt="vs mes ant.")
+    if sal is not None:
+        st.markdown("#### Salarios e inflación")
+        base = sal.rename(columns={"valor": "Total"})
+        for df_, nombre in ((sal_priv, "Privado registrado"), (sal_pub, "Público")):
+            if df_ is not None:
+                base = base.merge(df_.rename(columns={"valor": nombre}), on="fecha", how="outer")
+        base = base.sort_values("fecha")
+        cols = {n: n for n in ("Total", "Privado registrado", "Público") if n in base}
+        a, b = st.columns(2)
+        with a:
+            grafico(charts.lineas(rec(base, 3), cols, "Índice de salarios INDEC (oct-2016 = 100)"))
+        sr = salario_real()
+        with b:
+            if sr is not None:
+                grafico(charts.lineas(rec(sr, 3), {"Salarios (nominal)": "salario", "Inflación": "inflacion"},
+                                      "Salarios vs inflación — variación interanual (%)", yfmt=",.0f"))
+        with st.expander("Salario real, RIPTE, salario mínimo y haber mínimo"):
             a, b = st.columns(2)
             with a:
-                grafico(charts.lineas(rec(base, 3), cols, "Índice de salarios INDEC (oct-2016 = 100)"))
-            sr = salario_real()
-            with b:
                 if sr is not None:
-                    grafico(charts.lineas(rec(sr, 3), {"Salarios (nominal)": "salario", "Inflación": "inflacion"},
-                                          "Salarios vs inflación — variación interanual (%)", yfmt=",.0f"))
-            with st.expander("Salario real, RIPTE, salario mínimo y haber mínimo"):
-                a, b = st.columns(2)
-                with a:
-                    if sr is not None:
-                        grafico(charts.barras(rec(sr, 3), "real", "Salario real — variación interanual (%)"))
-                with b:
-                    if ripte is not None:
-                        grafico(charts.lineas(rec(ripte, 3), {"RIPTE": "valor"}, "RIPTE — remuneración imponible promedio ($)"))
-                if smvm is not None or haber_min is not None:
-                    piso = None
-                    for df_, nombre in ((smvm, "Salario mínimo, vital y móvil"), (haber_min, "Haber mínimo jubilatorio")):
-                        if df_ is not None:
-                            df_ = df_.rename(columns={"valor": nombre})
-                            piso = df_ if piso is None else piso.merge(df_, on="fecha", how="outer")
-                    piso = piso.sort_values("fecha")
-                    grafico(charts.lineas(rec(piso, 3), {c_: c_ for c_ in piso.columns if c_ != "fecha"},
-                                          "Salario mínimo y haber mínimo jubilatorio ($ mensuales)", height=340))
-        st.caption("Índice de salarios y RIPTE: INDEC / Secretaría de Seguridad Social, con rezago de ~2 meses. "
-                   "El salario real se calcula como (1 + salario nominal) / (1 + inflación) − 1, interanual.")
+                    grafico(charts.barras(rec(sr, 3), "real", "Salario real — variación interanual (%)"))
+            with b:
+                if ripte is not None:
+                    grafico(charts.lineas(rec(ripte, 3), {"RIPTE": "valor"}, "RIPTE — remuneración imponible promedio ($)"))
+            if smvm is not None or haber_min is not None:
+                piso = None
+                for df_, nombre in ((smvm, "Salario mínimo, vital y móvil"), (haber_min, "Haber mínimo jubilatorio")):
+                    if df_ is not None:
+                        df_ = df_.rename(columns={"valor": nombre})
+                        piso = df_ if piso is None else piso.merge(df_, on="fecha", how="outer")
+                piso = piso.sort_values("fecha")
+                grafico(charts.lineas(rec(piso, 3), {c_: c_ for c_ in piso.columns if c_ != "fecha"},
+                                      "Salario mínimo y haber mínimo jubilatorio ($ mensuales)", height=340))
+    st.caption("Índice de salarios y RIPTE: INDEC / Secretaría de Seguridad Social, con rezago de ~2 meses. "
+               "El salario real se calcula como (1 + salario nominal) / (1 + inflación) − 1, interanual.")
 
 # ── Precios y UVA ──
-if t_prec.open:
-    with t_prec, protegido("Precios y UVA"):
-        st.caption("La inflación (IPC del INDEC), lo que espera el mercado para los próximos 12 meses (REM del BCRA) y la "
-                   "**UVA**, la unidad que ajusta créditos y plazos fijos por inflación. Verde: la inflación baja; rojo: sube.")
-        k = st.columns(4)
-        v, a_ = ult_y_ant(infl_m)
-        kpi(k[0], "Inflación mensual", v, 1, suf="%", d=dif(v, a_), d_suf=" pp", d_txt="vs mes ant.", color="inverse")
-        v, a_ = ult_y_ant(infl_ia)
-        kpi(k[1], "Inflación interanual", v, 1, suf="%", d=dif(v, a_), d_suf=" pp", d_txt="vs mes ant.", color="inverse")
-        v, a_ = ult_y_ant(rem)
-        kpi(k[2], "Esperada 12 meses (REM)", v, 1, suf="%", d=dif(v, a_), d_suf=" pp", d_txt="vs mes ant.", color="inverse",
-            help="Mediana de lo que esperan los analistas del Relevamiento de Expectativas de Mercado.")
-        kpi(k[3], "UVA", ultimo(uva) if uva is not None else None, 2, pre="$",
-            d=delta(uva) if uva is not None else None, color="off", help="Sube con la inflación (CER), con unas semanas de rezago.")
-        if infl_m is not None and infl_ia is not None:
-            st.markdown("#### Inflación")
-            m = infl_m.merge(infl_ia, on="fecha", suffixes=("_m", "_ia"))
-            a, b = st.columns(2)
-            with a:
-                grafico(charts.barras_y_linea(rec(m, 2), "valor_m", "valor_ia", "Inflación (IPC INDEC, %)",
-                                              "Mensual", "Interanual"))
-            with b:
-                if rem is not None:
-                    x = m[["fecha", "valor_ia"]].rename(columns={"valor_ia": "Inflación interanual observada"})
-                    y = rem.rename(columns={"valor": "Expectativa 12 m (REM)"})
-                    grafico(charts.lineas(x.merge(y, on="fecha", how="outer").sort_values("fecha").pipe(rec, 2),
-                                          {"Interanual observada": "Inflación interanual observada",
-                                           "Expectativa 12 m (REM)": "Expectativa 12 m (REM)"},
-                                          "Inflación interanual vs. expectativas del REM (%)", yfmt=",.0f"))
-        if uva is not None and dol is not None:
-            st.markdown("#### UVA contra el dólar")
-            comp = pd.merge_asof(rec(dol_rec).dropna(subset=["oficial"])[["fecha", "oficial", "blue"]],
-                                 uva.rename(columns={"valor": "uva"}), on="fecha")
-            comp = base100(comp, ["oficial", "blue", "uva"])
-            grafico(charts.lineas(comp, {"UVA": "uva", "Dólar oficial": "oficial", "Dólar blue": "blue"},
-                                  "UVA vs dólar — base 100 = inicio del período", yfmt=",.0f", height=340))
-        with st.expander("Índices de ajuste: UVA, CER, UVI e ICL"):
-            pares = [("bcra:uva", "UVA (pesos)", ",.0f"), ("bcra:cer", "CER (base 2/2/2002 = 1)", ",.0f"),
-                     ("bcra:uvi", "UVI (pesos)", ",.0f"), ("bcra:icl", "ICL — Índice para Contratos de Locación", ",.1f")]
-            for fila in (pares[:2], pares[2:]):
-                cols = st.columns(2)
-                for col, (clave, titulo, fmt) in zip(cols, fila):
-                    d = get(clave)
-                    if d is not None:
-                        with col:
-                            grafico(charts.lineas(rec(d), {titulo: "valor"}, titulo, yfmt=fmt, height=320))
-
-# ── Tasas y riesgo país ──
-if t_tasas.open:
-    with t_tasas, protegido("Tasas y riesgo país"):
-        panel_plazo_fijo()
-        st.divider()
-        if pases is not None or tpm is not None:
-            ref = None
-            for df_, nombre in ((tpm, "Tasa de política monetaria"), (pases, "Pases a 1 día")):
-                if df_ is not None:
-                    df_ = df_.rename(columns={"valor": nombre})
-                    ref = df_ if ref is None else ref.merge(df_, on="fecha", how="outer")
-            ref = ref.sort_values("fecha")
-            grafico(charts.lineas(rec(ref, 3), {c_: c_ for c_ in ref.columns if c_ != "fecha"},
-                                  "Tasa de política monetaria y tasa de pases a 1 día (TNA, %)", yfmt=",.0f", paso=True))
-            st.caption("La API del BCRA no registra datos de tasa de política monetaria después del 10/07/2025 "
-                       "(último valor: 29% TNA). Como referencia vigente se muestra la tasa de pases a 1 día.")
+with t_prec, protegido("Precios y UVA"):
+    st.caption("La inflación (IPC del INDEC), lo que espera el mercado para los próximos 12 meses (REM del BCRA) y la "
+               "**UVA**, la unidad que ajusta créditos y plazos fijos por inflación. Verde: la inflación baja; rojo: sube.")
+    k = st.columns(4)
+    v, a_ = ult_y_ant(infl_m)
+    kpi(k[0], "Inflación mensual", v, 1, suf="%", d=dif(v, a_), d_suf=" pp", d_txt="vs mes ant.", color="inverse")
+    v, a_ = ult_y_ant(infl_ia)
+    kpi(k[1], "Inflación interanual", v, 1, suf="%", d=dif(v, a_), d_suf=" pp", d_txt="vs mes ant.", color="inverse")
+    v, a_ = ult_y_ant(rem)
+    kpi(k[2], "Esperada 12 meses (REM)", v, 1, suf="%", d=dif(v, a_), d_suf=" pp", d_txt="vs mes ant.", color="inverse",
+        help="Mediana de lo que esperan los analistas del Relevamiento de Expectativas de Mercado.")
+    kpi(k[3], "UVA", ultimo(uva) if uva is not None else None, 2, pre="$",
+        d=delta(uva) if uva is not None else None, color="off", help="Sube con la inflación (CER), con unas semanas de rezago.")
+    if infl_m is not None and infl_ia is not None:
+        st.markdown("#### Inflación")
+        m = infl_m.merge(infl_ia, on="fecha", suffixes=("_m", "_ia"))
         a, b = st.columns(2)
         with a:
-            tasas = {}
-            base = None
-            for clave, nombre in [("bcra:badlar", "BADLAR"), ("bcra:tamar", "TAMAR"), ("bcra:depositos_30d", "Plazo fijo 30 d")]:
+            grafico(charts.barras_y_linea(rec(m, 2), "valor_m", "valor_ia", "Inflación (IPC INDEC, %)",
+                                          "Mensual", "Interanual"))
+        with b:
+            if rem is not None:
+                x = m[["fecha", "valor_ia"]].rename(columns={"valor_ia": "Inflación interanual observada"})
+                y = rem.rename(columns={"valor": "Expectativa 12 m (REM)"})
+                grafico(charts.lineas(x.merge(y, on="fecha", how="outer").sort_values("fecha").pipe(rec, 2),
+                                      {"Interanual observada": "Inflación interanual observada",
+                                       "Expectativa 12 m (REM)": "Expectativa 12 m (REM)"},
+                                      "Inflación interanual vs. expectativas del REM (%)", yfmt=",.0f"))
+    if uva is not None and dol is not None:
+        st.markdown("#### UVA contra el dólar")
+        comp = pd.merge_asof(rec(dol_rec).dropna(subset=["oficial"])[["fecha", "oficial", "blue"]],
+                             uva.rename(columns={"valor": "uva"}), on="fecha")
+        comp = base100(comp, ["oficial", "blue", "uva"])
+        grafico(charts.lineas(comp, {"UVA": "uva", "Dólar oficial": "oficial", "Dólar blue": "blue"},
+                              "UVA vs dólar — base 100 = inicio del período", yfmt=",.0f", height=340))
+    with st.expander("Índices de ajuste: UVA, CER, UVI e ICL"):
+        pares = [("bcra:uva", "UVA (pesos)", ",.0f"), ("bcra:cer", "CER (base 2/2/2002 = 1)", ",.0f"),
+                 ("bcra:uvi", "UVI (pesos)", ",.0f"), ("bcra:icl", "ICL — Índice para Contratos de Locación", ",.1f")]
+        for fila in (pares[:2], pares[2:]):
+            cols = st.columns(2)
+            for col, (clave, titulo, fmt) in zip(cols, fila):
                 d = get(clave)
                 if d is not None:
-                    d = d.rename(columns={"valor": nombre})
-                    base = d if base is None else base.merge(d, on="fecha", how="outer")
-                    tasas[nombre] = nombre
-            if base is not None:
-                grafico(charts.lineas(rec(base.sort_values("fecha")), tasas, "Tasas de interés en pesos (TNA, %)", yfmt=",.0f"))
-        with b:
-            pp = get("bcra:prestamos_personales")
-            if pp is not None:
-                grafico(charts.lineas(rec(pp), {"Préstamos personales": "valor"}, "Tasa de préstamos personales (TNA, %)", yfmt=",.0f"))
-        if riesgo is not None:
-            grafico(charts.lineas(rec(riesgo), {"Riesgo país": "valor"}, "Riesgo país — EMBI (puntos básicos)", height=420))
+                    with col:
+                        grafico(charts.lineas(rec(d), {titulo: "valor"}, titulo, yfmt=fmt, height=320))
+
+# ── Tasas y riesgo país ──
+with t_tasas, protegido("Tasas y riesgo país"):
+    panel_plazo_fijo()
+    st.divider()
+    if pases is not None or tpm is not None:
+        ref = None
+        for df_, nombre in ((tpm, "Tasa de política monetaria"), (pases, "Pases a 1 día")):
+            if df_ is not None:
+                df_ = df_.rename(columns={"valor": nombre})
+                ref = df_ if ref is None else ref.merge(df_, on="fecha", how="outer")
+        ref = ref.sort_values("fecha")
+        grafico(charts.lineas(rec(ref, 3), {c_: c_ for c_ in ref.columns if c_ != "fecha"},
+                              "Tasa de política monetaria y tasa de pases a 1 día (TNA, %)", yfmt=",.0f", paso=True))
+        st.caption("La API del BCRA no registra datos de tasa de política monetaria después del 10/07/2025 "
+                   "(último valor: 29% TNA). Como referencia vigente se muestra la tasa de pases a 1 día.")
+    a, b = st.columns(2)
+    with a:
+        tasas = {}
+        base = None
+        for clave, nombre in [("bcra:badlar", "BADLAR"), ("bcra:tamar", "TAMAR"), ("bcra:depositos_30d", "Plazo fijo 30 d")]:
+            d = get(clave)
+            if d is not None:
+                d = d.rename(columns={"valor": nombre})
+                base = d if base is None else base.merge(d, on="fecha", how="outer")
+                tasas[nombre] = nombre
+        if base is not None:
+            grafico(charts.lineas(rec(base.sort_values("fecha")), tasas, "Tasas de interés en pesos (TNA, %)", yfmt=",.0f"))
+    with b:
+        pp = get("bcra:prestamos_personales")
+        if pp is not None:
+            grafico(charts.lineas(rec(pp), {"Préstamos personales": "valor"}, "Tasa de préstamos personales (TNA, %)", yfmt=",.0f"))
+    if riesgo is not None:
+        grafico(charts.lineas(rec(riesgo), {"Riesgo país": "valor"}, "Riesgo país — EMBI (puntos básicos)", height=420))
 
 # ── Dinero y crédito ──
-if t_din.open:
-    with t_din, protegido("Dinero y crédito"):
-        bm, pr, m2 = get("bcra:base_monetaria"), get("bcra:prestamos_privados"), get("bcra:m2_privado_ia")
-        st.caption("Cuántos pesos hay en la economía (**base monetaria** y **M2**) y cuánto le prestan los bancos a empresas y "
-                   "familias. Verde en el crédito: crece; rojo: cae. El dinero se muestra sin color: crecer no es bueno ni malo en sí.")
-        k = st.columns(3)
-        kpi(k[0], "Base monetaria", ultimo(bm) / 1e6 if bm is not None and ultimo(bm) else None, 1, pre="$", suf=" bill.",
-            d=delta(bm) if bm is not None else None, color="off", help="Billones de pesos. Variación contra 30 días atrás.")
-        v, a_ = ult_y_ant(m2, atras=30)
-        kpi(k[1], "M2 privado · var. interanual", v, 1, suf="%", d=dif(v, a_), d_suf=" pp", color="off")
-        kpi(k[2], "Préstamos al sector privado", ultimo(pr) / 1e6 if pr is not None and ultimo(pr) else None, 1, pre="$",
-            suf=" bill.", d=delta(pr) if pr is not None else None,
-            help="Billones de pesos (nominales). Variación contra 30 días atrás.")
-        a, b = st.columns(2)
-        with a:
-            if bm is not None:
-                grafico(charts.lineas(rec(bm.assign(valor=bm["valor"] / 1e6)), {"Base monetaria": "valor"},
-                                      "Base monetaria (billones de $)", yfmt=",.1f"))
-        with b:
-            if m2 is not None:
-                grafico(charts.lineas(rec(m2), {"M2 privado": "valor"},
-                                      "M2 privado — var. interanual del promedio móvil 30 d (%)", yfmt=",.0f"))
-        if pr is not None:
-            grafico(charts.lineas(rec(pr.assign(valor=pr["valor"] / 1e6)), {"Préstamos al sector privado": "valor"},
-                                  "Préstamos al sector privado (billones de $)", yfmt=",.1f"))
+with t_din, protegido("Dinero y crédito"):
+    bm, pr, m2 = get("bcra:base_monetaria"), get("bcra:prestamos_privados"), get("bcra:m2_privado_ia")
+    st.caption("Cuántos pesos hay en la economía (**base monetaria** y **M2**) y cuánto le prestan los bancos a empresas y "
+               "familias. Verde en el crédito: crece; rojo: cae. El dinero se muestra sin color: crecer no es bueno ni malo en sí.")
+    k = st.columns(3)
+    kpi(k[0], "Base monetaria", ultimo(bm) / 1e6 if bm is not None and ultimo(bm) else None, 1, pre="$", suf=" bill.",
+        d=delta(bm) if bm is not None else None, color="off", help="Billones de pesos. Variación contra 30 días atrás.")
+    v, a_ = ult_y_ant(m2, atras=30)
+    kpi(k[1], "M2 privado · var. interanual", v, 1, suf="%", d=dif(v, a_), d_suf=" pp", color="off")
+    kpi(k[2], "Préstamos al sector privado", ultimo(pr) / 1e6 if pr is not None and ultimo(pr) else None, 1, pre="$",
+        suf=" bill.", d=delta(pr) if pr is not None else None,
+        help="Billones de pesos (nominales). Variación contra 30 días atrás.")
+    a, b = st.columns(2)
+    with a:
+        if bm is not None:
+            grafico(charts.lineas(rec(bm.assign(valor=bm["valor"] / 1e6)), {"Base monetaria": "valor"},
+                                  "Base monetaria (billones de $)", yfmt=",.1f"))
+    with b:
+        if m2 is not None:
+            grafico(charts.lineas(rec(m2), {"M2 privado": "valor"},
+                                  "M2 privado — var. interanual del promedio móvil 30 d (%)", yfmt=",.0f"))
+    if pr is not None:
+        grafico(charts.lineas(rec(pr.assign(valor=pr["valor"] / 1e6)), {"Préstamos al sector privado": "valor"},
+                              "Préstamos al sector privado (billones de $)", yfmt=",.1f"))
 
 # ── Comercio exterior ──
-if t_com.open:
-    with t_com, protegido("Comercio exterior"):
-        st.caption("Lo que la Argentina le vende al mundo (**exportaciones**) y le compra (**importaciones**), en dólares. "
-                   "El saldo positivo trae dólares al país: verde si mejora, rojo si empeora.")
-        if comercio is not None:
-            c = comercio
-            k = st.columns(4)
-            v, a_ = ult_y_ant(c, "exp", atras=12)
-            kpi(k[0], "Exportaciones del mes", v, 0, pre="USD ", suf=" M", d=pct(v, a_), d_txt="vs un año antes")
-            v, a_ = ult_y_ant(c, "imp", atras=12)
-            kpi(k[1], "Importaciones del mes", v, 0, pre="USD ", suf=" M", d=pct(v, a_), d_txt="vs un año antes", color="off")
-            v, a_ = ult_y_ant(c, "saldo", atras=12)
-            kpi(k[2], "Saldo del mes", v, 0, pre="USD ", suf=" M", d=dif(v, a_), d_suf=" M", d_txt="vs un año antes")
-            v, a_ = ult_y_ant(c.dropna(subset=["saldo_12m"]), "saldo_12m", atras=12)
-            kpi(k[3], "Saldo 12 meses", v, 0, pre="USD ", suf=" M", d=dif(v, a_), d_suf=" M", d_txt="vs un año antes")
-            ult_c = c.dropna(subset=["exp"])["fecha"].max()
-            st.caption(f"Último dato: {ult_c:%m/%Y} (INDEC, intercambio comercial argentino).")
-            a, b = st.columns(2)
-            with a:
-                grafico(charts.lineas(rec(c, 3), {"Exportaciones": "exp", "Importaciones": "imp"},
-                                      "Exportaciones e importaciones (USD millones)"))
-            with b:
-                grafico(charts.barras(rec(c, 3), "saldo", "Saldo comercial mensual (USD millones)", yfmt=",.0f"))
-            grafico(charts.lineas(rec(c.dropna(subset=["saldo_12m"]), 3), {"Saldo acumulado 12 m": "saldo_12m"},
-                                  "Saldo comercial acumulado 12 meses (USD millones)", yfmt=",.0f", height=320))
+with t_com, protegido("Comercio exterior"):
+    st.caption("Lo que la Argentina le vende al mundo (**exportaciones**) y le compra (**importaciones**), en dólares. "
+               "El saldo positivo trae dólares al país: verde si mejora, rojo si empeora.")
+    if comercio is not None:
+        c = comercio
+        k = st.columns(4)
+        v, a_ = ult_y_ant(c, "exp", atras=12)
+        kpi(k[0], "Exportaciones del mes", v, 0, pre="USD ", suf=" M", d=pct(v, a_), d_txt="vs un año antes")
+        v, a_ = ult_y_ant(c, "imp", atras=12)
+        kpi(k[1], "Importaciones del mes", v, 0, pre="USD ", suf=" M", d=pct(v, a_), d_txt="vs un año antes", color="off")
+        v, a_ = ult_y_ant(c, "saldo", atras=12)
+        kpi(k[2], "Saldo del mes", v, 0, pre="USD ", suf=" M", d=dif(v, a_), d_suf=" M", d_txt="vs un año antes")
+        v, a_ = ult_y_ant(c.dropna(subset=["saldo_12m"]), "saldo_12m", atras=12)
+        kpi(k[3], "Saldo 12 meses", v, 0, pre="USD ", suf=" M", d=dif(v, a_), d_suf=" M", d_txt="vs un año antes")
+        ult_c = c.dropna(subset=["exp"])["fecha"].max()
+        st.caption(f"Último dato: {ult_c:%m/%Y} (INDEC, intercambio comercial argentino).")
+        a, b = st.columns(2)
+        with a:
+            grafico(charts.lineas(rec(c, 3), {"Exportaciones": "exp", "Importaciones": "imp"},
+                                  "Exportaciones e importaciones (USD millones)"))
+        with b:
+            grafico(charts.barras(rec(c, 3), "saldo", "Saldo comercial mensual (USD millones)", yfmt=",.0f"))
+        grafico(charts.lineas(rec(c.dropna(subset=["saldo_12m"]), 3), {"Saldo acumulado 12 m": "saldo_12m"},
+                              "Saldo comercial acumulado 12 meses (USD millones)", yfmt=",.0f", height=320))
 
 
 # ── Resultado fiscal ──
-if t_fis.open:
-    with t_fis, protegido("Resultado fiscal"):
-        f = fiscal_df()
-        if f.empty:
-            st.warning("No se pudieron cargar los datos fiscales o el PBI para calcular el porcentaje.")
-        else:
-            ult_f = f.iloc[-1]
-            st.caption(f"Sector público nacional no financiero, base caja, como porcentaje del PBI. Último dato: {ult_f['fecha']:%m/%Y}. "
-                       "Positivo = superávit, negativo = déficit.")
-            k = st.columns(4)
-            for slot, (nombre, col, ayuda) in zip(k, [
-                    ("Primario 12 meses", "primario_12m", "Suma de los últimos 12 meses sobre el PBI de ese período."),
-                    ("Financiero 12 meses", "financiero_12m", "Suma de los últimos 12 meses sobre el PBI de ese período."),
-                    ("Primario del mes", "primario", "El resultado del mes sobre 1/12 del PBI. Cambia mucho de mes a mes (aguinaldo, vencimientos)."),
-                    ("Financiero del mes", "financiero", "El resultado del mes sobre 1/12 del PBI. Cambia mucho de mes a mes (aguinaldo, vencimientos).")]):
-                v = ult_f.get(col)
-                v = None if pd.isna(v) else float(v)
-                hace_un_anio = f[f["fecha"] <= ult_f["fecha"] - pd.DateOffset(months=12)][col].dropna()
-                antes = float(hace_un_anio.iloc[-1]) if not hace_un_anio.empty else None
-                kpi(slot, nombre, v, 1, suf="% del PBI", d=dif(v, antes), d_suf=" pp", d_txt="vs un año antes",
-                    help=ayuda + " Verde: el resultado mejoró contra un año antes; rojo: empeoró.")
-            st.caption("Primario: ingresos menos gastos, sin contar intereses de la deuda. Financiero: lo que queda después de pagar intereses.")
-            cols_12 = [c for c in ("primario_12m", "financiero_12m") if c in f and f[c].notna().any()]
-            if cols_12:
-                nombres = {"primario_12m": "Primario", "financiero_12m": "Financiero"}
-                fig12 = charts.lineas(con_periodo("fis_12m", f.dropna(subset=cols_12, how="all"), defecto="5 años", mensual=True),
-                                      {nombres[c]: c for c in cols_12}, "Resultado acumulado de 12 meses (% del PBI)",
-                                      yfmt=",.1f", height=340)
-                fig12.add_hline(y=0, line_width=1, line_dash="dot", line_color="rgba(128,128,128,.7)")
-                grafico(fig12)
+with t_fis, protegido("Resultado fiscal"):
+    f = fiscal_df()
+    if f.empty:
+        st.warning("No se pudieron cargar los datos fiscales o el PBI para calcular el porcentaje.")
+    else:
+        ult_f = f.iloc[-1]
+        st.caption(f"Sector público nacional no financiero, base caja, como porcentaje del PBI. Último dato: {ult_f['fecha']:%m/%Y}. "
+                   "Positivo = superávit, negativo = déficit.")
+        k = st.columns(4)
+        for slot, (nombre, col, ayuda) in zip(k, [
+                ("Primario 12 meses", "primario_12m", "Suma de los últimos 12 meses sobre el PBI de ese período."),
+                ("Financiero 12 meses", "financiero_12m", "Suma de los últimos 12 meses sobre el PBI de ese período."),
+                ("Primario del mes", "primario", "El resultado del mes sobre 1/12 del PBI. Cambia mucho de mes a mes (aguinaldo, vencimientos)."),
+                ("Financiero del mes", "financiero", "El resultado del mes sobre 1/12 del PBI. Cambia mucho de mes a mes (aguinaldo, vencimientos).")]):
+            v = ult_f.get(col)
+            v = None if pd.isna(v) else float(v)
+            hace_un_anio = f[f["fecha"] <= ult_f["fecha"] - pd.DateOffset(months=12)][col].dropna()
+            antes = float(hace_un_anio.iloc[-1]) if not hace_un_anio.empty else None
+            kpi(slot, nombre, v, 1, suf="% del PBI", d=dif(v, antes), d_suf=" pp", d_txt="vs un año antes",
+                help=ayuda + " Verde: el resultado mejoró contra un año antes; rojo: empeoró.")
+        st.caption("Primario: ingresos menos gastos, sin contar intereses de la deuda. Financiero: lo que queda después de pagar intereses.")
+        cols_12 = [c for c in ("primario_12m", "financiero_12m") if c in f and f[c].notna().any()]
+        if cols_12:
+            nombres = {"primario_12m": "Primario", "financiero_12m": "Financiero"}
+            def fig12(d):
+                fig = charts.lineas(d, {nombres[c]: c for c in cols_12}, "Resultado acumulado de 12 meses (% del PBI)",
+                                    yfmt=",.1f", height=340)
+                fig.add_hline(y=0, line_width=1, line_dash="dot", line_color="rgba(128,128,128,.7)")
+                return fig
+            grafico_periodo("fis_12m", f.dropna(subset=cols_12, how="all"), fig12, defecto="5 años", mensual=True)
+        a, b = st.columns(2)
+        with a:
+            if "primario" in f:
+                grafico_periodo("fis_prim", f, lambda d: charts.barras(d, "primario", "Resultado primario mensual (% del PBI)",
+                                                                        yfmt=",.1f", height=320), defecto="5 años", mensual=True)
+        with b:
+            if "financiero" in f:
+                grafico_periodo("fis_fin", f, lambda d: charts.barras(d, "financiero", "Resultado financiero mensual (% del PBI)",
+                                                                       yfmt=",.1f", height=320), defecto="5 años", mensual=True)
+        fa = fiscal_anual()
+        if not fa.empty:
+            st.markdown("#### Resultado anual")
             a, b = st.columns(2)
-            with a:
-                if "primario" in f:
-                    grafico(charts.barras(con_periodo("fis_prim", f, defecto="5 años", mensual=True), "primario",
-                                          "Resultado primario mensual (% del PBI)", yfmt=",.1f", height=320))
-            with b:
-                if "financiero" in f:
-                    grafico(charts.barras(con_periodo("fis_fin", f, defecto="5 años", mensual=True), "financiero",
-                                          "Resultado financiero mensual (% del PBI)", yfmt=",.1f", height=320))
-            fa = fiscal_anual()
-            if not fa.empty:
-                st.markdown("#### Resultado anual")
-                a, b = st.columns(2)
-                for col_, c, titulo in ((a, "primario", "Resultado primario anual (% del PBI)"),
-                                        (b, "financiero", "Resultado financiero anual (% del PBI)")):
-                    if c in fa and fa[c].notna().any():
-                        with col_:
-                            fig_a = charts.barras(fa.dropna(subset=[c]), c, titulo, yfmt=",.1f", height=320, x="etiqueta")
-                            fig_a.update_traces(text=[charts.num(v, 1, "%") for v in fa.dropna(subset=[c])[c]],
-                                                textposition="outside", cliponaxis=False)
-                            fig_a.update_xaxes(type="category")
-                            grafico(fig_a)
-                if (fa["meses"] < 12).any():
-                    st.caption("El año en curso es el acumulado de los meses publicados sobre el PBI estimado del año completo, "
-                               "así que todavía puede cambiar (diciembre suele ser deficitario por el aguinaldo).")
-            with st.expander("Cómo se calcula el porcentaje del PBI"):
-                st.markdown(
-                    "- **Resultado:** informe mensual de ingresos y gastos del Ministerio de Economía (base caja).\n"
-                    "- **PBI:** a precios corrientes, trimestral anualizado del INDEC. Para cada mes se usa el promedio de los últimos "
-                    "4 trimestres; pasado el último trimestre publicado, se lo actualiza con la inflación mensual (no incluye "
-                    "crecimiento real, por eso las últimas cifras son una estimación).\n"
-                    "- **Mensual:** resultado del mes sobre 1/12 del PBI. Es muy variable; mirá el acumulado de 12 meses para la tendencia.\n"
-                    "- Puede diferir de las cifras que publica el Gobierno, que usan su propio PBI y criterios de ajuste (por ejemplo, "
-                    "ingresos extraordinarios).")
-            st.caption("Fuente: Ministerio de Economía (IMIG, Informe Mensual de Ingresos y Gastos) e INDEC, vía datos.gob.ar.")
+            for col_, c, titulo in ((a, "primario", "Resultado primario anual (% del PBI)"),
+                                    (b, "financiero", "Resultado financiero anual (% del PBI)")):
+                if c in fa and fa[c].notna().any():
+                    with col_:
+                        fig_a = charts.barras(fa.dropna(subset=[c]), c, titulo, yfmt=",.1f", height=320, x="etiqueta")
+                        fig_a.update_traces(text=[charts.num(v, 1, "%") for v in fa.dropna(subset=[c])[c]],
+                                            textposition="outside", cliponaxis=False)
+                        fig_a.update_xaxes(type="category")
+                        grafico(fig_a)
+            if (fa["meses"] < 12).any():
+                st.caption("El año en curso es el acumulado de los meses publicados sobre el PBI estimado del año completo, "
+                           "así que todavía puede cambiar (diciembre suele ser deficitario por el aguinaldo).")
+        with st.expander("Cómo se calcula el porcentaje del PBI"):
+            st.markdown(
+                "- **Resultado:** informe mensual de ingresos y gastos del Ministerio de Economía (base caja).\n"
+                "- **PBI:** a precios corrientes, trimestral anualizado del INDEC. Para cada mes se usa el promedio de los últimos "
+                "4 trimestres; pasado el último trimestre publicado, se lo actualiza con la inflación mensual (no incluye "
+                "crecimiento real, por eso las últimas cifras son una estimación).\n"
+                "- **Mensual:** resultado del mes sobre 1/12 del PBI. Es muy variable; mirá el acumulado de 12 meses para la tendencia.\n"
+                "- Puede diferir de las cifras que publica el Gobierno, que usan su propio PBI y criterios de ajuste (por ejemplo, "
+                "ingresos extraordinarios).")
+        st.caption("Fuente: Ministerio de Economía (IMIG, Informe Mensual de Ingresos y Gastos) e INDEC, vía datos.gob.ar.")
 
 
 pie_pagina()
