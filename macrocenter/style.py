@@ -229,17 +229,21 @@ section[data-testid="stSidebar"] [class*="st-key-nav_"] button[data-testid="stBa
 }}
 section[data-testid="stSidebar"] [class*="st-key-nav_"] button[data-testid="stBaseButton-primary"] p {{ font-weight: 800; }}
 
-/* termómetro (calificación de hoy) y término del día */
-.mc-termo, .mc-termino {{
-    border: 1px solid rgba(116,172,223,.28); border-radius: 12px; padding: 12px 14px;
+/* conversor de pesos y dólares, y término del día */
+.mc-conv, .mc-termino {{
+    border: 1px solid rgba(116,172,223,.28); border-radius: 12px; padding: 10px 12px;
     background: rgba(116,172,223,.07);
 }}
-.mc-termo-top {{ display: flex; align-items: baseline; gap: 4px; }}
-.mc-termo-num {{ font-size: 1.9rem; font-weight: 800; line-height: 1; }}
-.mc-termo-de {{ font-size: .85rem; opacity: .6; }}
-.mc-termo-barra {{ height: 6px; border-radius: 6px; background: rgba(128,128,128,.25); margin: 9px 0 7px; overflow: hidden; }}
-.mc-termo-barra span {{ display: block; height: 100%; border-radius: 6px; }}
-.mc-termo-niv {{ font-size: .82rem; font-weight: 600; opacity: .9; }}
+.mc-conv .f {{ display: flex; justify-content: space-between; align-items: baseline; gap: 8px; padding: 5px 0;
+    border-bottom: 1px dashed rgba(128,128,128,.25); }}
+.mc-conv .f:last-of-type {{ border-bottom: none; }}
+.mc-conv .k {{ font-size: .82rem; font-weight: 600; display: flex; flex-direction: column; line-height: 1.2; }}
+.mc-conv .k small {{ font-size: .68rem; font-weight: 500; opacity: .6; }}
+.mc-conv .v {{ font-size: .98rem; font-weight: 800; white-space: nowrap; }}
+.mc-conv .nota {{ font-size: .66rem; opacity: .55; margin-top: 4px; text-align: right; }}
+section[data-testid="stSidebar"] .st-key-conv_sentido button {{ padding: .25rem .6rem; font-size: .8rem; }}
+section[data-testid="stSidebar"] .st-key-conv_pesos input, section[data-testid="stSidebar"] .st-key-conv_usd input {{
+    font-weight: 700; }}
 .mc-termino {{ border-left: 3px solid {SOL}; }}
 .mc-termino-t {{ font-weight: 800; font-size: .95rem; margin-bottom: 4px; color: {SOL}; }}
 .mc-termino-d {{ font-size: .82rem; line-height: 1.45; opacity: .9; }}
@@ -524,19 +528,39 @@ button[data-variant="segmented_control"][aria-checked="true"] p {{ color: #fff !
     [data-testid="stTab"], [data-testid="stTab"] p {{ transition: none; }}
     [data-testid="stTab"]:hover {{ transform: none; }}
 }}
-/* "Resumen" (primer marcador): píldora celeste con detalle dorado y separador, distinto del resto */
+/* "Inicio" (primer marcador): la casa de la app. Píldora celeste con el Sol de Mayo, como la bandera; se rellena
+   cuando está elegida y queda separada del resto por una línea vertical */
 [role="tablist"] [data-testid="stTab"]:first-of-type {{
-    margin-right: 1.1rem; position: relative; padding-left: 2.35rem;
+    position: relative; height: 2.6rem; margin: .4rem 1.25rem .4rem .1rem; padding: 0 1.15rem 0 2.45rem;
+    border-radius: 999px; border: 1px solid rgba(116,172,223,.55);
+    background: linear-gradient(135deg, rgba(116,172,223,.20), rgba(116,172,223,.07));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
 }}
+[role="tablist"] [data-testid="stTab"]:first-of-type p {{ color: {CELESTE} !important; }}
+[role="tablist"] [data-testid="stTab"]:first-of-type:hover {{
+    transform: translateY(-1px); border-color: {CELESTE};
+    background: linear-gradient(135deg, rgba(116,172,223,.32), rgba(116,172,223,.12));
+    box-shadow: 0 4px 14px rgba(116,172,223,.25);
+}}
+[role="tablist"] [data-testid="stTab"]:first-of-type[aria-selected="true"] {{
+    border-color: transparent; background: linear-gradient(135deg, {CELESTE} 0%, #4A8FD4 100%);
+    box-shadow: 0 4px 16px rgba(74,143,212,.45), inset 0 1px 0 rgba(255,255,255,.35);
+}}
+[role="tablist"] [data-testid="stTab"]:first-of-type[aria-selected="true"] p {{ color: #0B1A2E !important; }}
+/* la píldora ya marca la selección: sin la rayita de abajo */
+[role="tablist"] [data-testid="stTab"]:first-of-type .react-aria-SelectionIndicator {{ display: none; }}
 [role="tablist"] [data-testid="stTab"]:first-of-type::before {{
     content: ""; position: absolute; left: .75rem; top: 50%; width: 1.3rem; height: 1.3rem; transform: translateY(-50%);
     background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><g stroke='%23F6B40E' stroke-width='1.6' stroke-linecap='round'><path d='M12 1.5v3M12 19.5v3M1.5 12h3M19.5 12h3M4.6 4.6l2.1 2.1M17.3 17.3l2.1 2.1M4.6 19.4l2.1-2.1M17.3 6.7l2.1-2.1'/></g><circle cx='12' cy='12' r='5' fill='%23F6B40E'/></svg>") center / contain no-repeat;
     transition: transform .6s ease;
 }}
 [role="tablist"] [data-testid="stTab"]:first-of-type:hover::before {{ transform: translateY(-50%) rotate(90deg); }}
+[role="tablist"] [data-testid="stTab"]:first-of-type[aria-selected="true"]::before {{
+    filter: drop-shadow(0 0 4px rgba(246,180,14,.9));
+}}
 [role="tablist"] [data-testid="stTab"]:first-of-type p {{ font-weight: 800; letter-spacing: .02em; }}
 [role="tablist"] [data-testid="stTab"]:first-of-type::after {{
-    content: ""; position: absolute; right: -0.65rem; top: 22%; height: 56%; width: 1px;
+    content: ""; position: absolute; right: -0.75rem; top: 15%; height: 70%; width: 1px;
     background: rgba(128,128,128,.45);
 }}
 h3 {{ font-weight: 700 !important; }}
@@ -810,13 +834,12 @@ def etiqueta(texto: str) -> str:
     return f'<div class="mc-label">{texto}</div>'
 
 
-def termometro_lateral(puntaje: float, nivel: str, color: str) -> str:
-    """Tarjetita de la barra lateral con la calificación macro de hoy (0-100) y una barra de progreso."""
-    p = max(0.0, min(100.0, float(puntaje)))
-    return (f'<div class="mc-termo"><div class="mc-termo-top"><span class="mc-termo-num" style="color:{color}">'
-            f'{p:.0f}</span><span class="mc-termo-de">/100</span></div>'
-            f'<div class="mc-termo-barra"><span style="width:{p:.0f}%;background:{color}"></span></div>'
-            f'<div class="mc-termo-niv">{html.escape(nivel)}</div></div>')
+def conversor(filas: list[tuple[str, str, str]], nota: str) -> str:
+    """Resultado del conversor de la barra lateral. filas: (dólar, cotización, resultado)."""
+    esc = html.escape
+    cuerpo = "".join(f'<div class="f"><span class="k">{esc(n)}<small>{esc(p)}</small></span><span class="v">{esc(r)}</span></div>'
+                     for n, p, r in filas)
+    return f'<div class="mc-conv">{cuerpo}<div class="nota">{esc(nota)}</div></div>'
 
 
 def termino_del_dia(termino: str, definicion: str) -> str:
