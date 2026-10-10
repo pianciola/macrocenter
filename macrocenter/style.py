@@ -130,6 +130,42 @@ section[data-testid="stSidebar"] [data-testid="stPills"] button {{ border-radius
 }}
 @media (prefers-reduced-motion: reduce) {{ .st-key-btn_noticias_nuevas button {{ animation: none; }} }}
 
+/* ── Ventana de noticias: lista limpia, fecha a la izquierda, etiquetas de fuente ── */
+.mc-news {{ display: flex; flex-direction: column; margin-top: 6px; }}
+.mc-news-it {{
+    display: grid; grid-template-columns: 58px 1fr; gap: 14px; padding: 14px 10px; border-radius: 12px;
+    border-bottom: 1px solid rgba(128,128,128,.18); transition: background-color .15s ease;
+}}
+.mc-news-it:hover {{ background: rgba(116,172,223,.07); }}
+.mc-news-it.es-nueva {{ background: rgba(246,180,14,.07); box-shadow: inset 3px 0 0 {SOL}; }}
+.mc-news-fecha {{
+    display: flex; flex-direction: column; align-items: center; justify-content: center; height: 58px;
+    border-radius: 12px; border: 1px solid rgba(116,172,223,.35); background: rgba(116,172,223,.08);
+}}
+.mc-news-fecha b {{ font-size: 1.35rem; line-height: 1; }}
+.mc-news-fecha span {{ font-size: .7rem; letter-spacing: .1em; text-transform: uppercase; opacity: .75; margin-top: 3px; }}
+.mc-news-tags {{ display: flex; gap: 6px; margin-bottom: 5px; }}
+.mc-news .tag {{ font-size: .66rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; padding: 2px 8px;
+    border-radius: 999px; }}
+.mc-news .tag.bcra {{ color: {CELESTE}; background: rgba(116,172,223,.15); }}
+.mc-news .tag.economia {{ color: #A9B8C9; background: rgba(169,184,201,.13); }}
+.mc-news .tag.nueva {{ color: #3A2A00; background: {SOL}; }}
+.mc-news-txt a {{ font-weight: 700; font-size: .98rem; line-height: 1.35; color: inherit !important; text-decoration: none; }}
+.mc-news-txt a:hover {{ color: {CELESTE} !important; text-decoration: underline; text-underline-offset: 3px; }}
+.mc-news-txt p {{ margin: 5px 0 0; font-size: .84rem; opacity: .72; line-height: 1.45;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }}
+.mc-news-pie {{ font-size: .8rem; opacity: .8; margin-top: 12px; }}
+.mc-news-pie a {{ color: {CELESTE} !important; }}
+.mc-news-vacio {{ padding: 18px; opacity: .7; }}
+/* botón «Marcar todas como leídas» y su estado ya leído (verde) */
+.st-key-btn_marcar_leidas button {{ border: 1px solid rgba(116,172,223,.6) !important; border-radius: 10px; }}
+.st-key-btn_todo_leido button {{
+    background: #10AC84 !important; border: 1px solid #10AC84 !important; border-radius: 10px;
+    box-shadow: 0 4px 14px rgba(16,172,132,.35);
+}}
+.st-key-btn_todo_leido button p {{ color: #FFFFFF !important; font-weight: 700; }}
+.st-key-btn_todo_leido button:hover {{ background: #0E9673 !important; }}
+
 /* menú de navegación: filas planas, la activa con barra celeste a la izquierda */
 section[data-testid="stSidebar"] [class*="st-key-nav_"] button {{
     justify-content: flex-start; text-align: left; background: transparent; border: none;
@@ -562,6 +598,35 @@ def resultado_final(fichas: list[tuple[str, str, str, str]]) -> str:
     return '<div class="mc-rf">' + "".join(
         f'<div class="f {t}"><div class="k">{html.escape(k)}</div><div class="v">{html.escape(v)}</div>'
         f'<div class="d">{html.escape(d)}</div></div>' for k, v, d, t in fichas) + "</div>"
+
+
+def lista_noticias(items: list[dict], meses: list[str]) -> str:
+    """Lista de noticias: fecha a la izquierda, fuente y «Nueva» como etiquetas, título y resumen corto.
+    items: {titulo, url, fecha, resumen, fuente, clase ('bcra'|'economia'), nueva}. Todo el texto viene de afuera: se escapa."""
+    from macrocenter.news import url_segura
+
+    if not items:
+        return '<div class="mc-news-vacio">No hay noticias para mostrar.</div>'
+    filas = []
+    for it in items:
+        url = it["url"] if url_segura(it["url"]) else ""
+        resumen = (it.get("resumen") or "").strip()
+        f = it["fecha"]
+        tag_nueva = '<span class="tag nueva">Nueva</span>' if it.get("nueva") else ""
+        filas.append(
+            f'<div class="mc-news-it{" es-nueva" if it.get("nueva") else ""}">'
+            f'<div class="mc-news-fecha"><b>{f.day}</b><span>{html.escape(meses[f.month - 1][:3])}</span></div>'
+            f'<div class="mc-news-txt"><div class="mc-news-tags"><span class="tag {html.escape(it["clase"])}">'
+            f'{html.escape(it["fuente"])}</span>{tag_nueva}</div>'
+            f'<a href="{html.escape(url, quote=True)}" target="_blank" rel="noopener noreferrer">{html.escape(it["titulo"])}</a>'
+            + (f'<p>{html.escape(resumen)}</p>' if resumen else "") + "</div></div>")
+    return '<div class="mc-news">' + "".join(filas) + "</div>"
+
+
+def pie_noticias(sitios: list[tuple[str, str]]) -> str:
+    links = " · ".join(f'<a href="{html.escape(u, quote=True)}" target="_blank" rel="noopener noreferrer">{html.escape(n)} ↗</a>'
+                       for n, u in sitios)
+    return f'<div class="mc-news-pie">Todo en los sitios oficiales: {links}</div>'
 
 
 def etiqueta(texto: str) -> str:
