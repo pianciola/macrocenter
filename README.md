@@ -81,7 +81,7 @@ están definidas en `.streamlit/config.toml`.
 ## Calificación macro
 
 Cada driver (inflación, REM, reservas, riesgo país, brecha, saldo comercial, EMAE, desocupación, salario real)
-recibe un puntaje de 0 a 100 según qué tan favorable es su valor frente a su propia historia de los últimos
+recibe un puntaje de 0 a 100 según qué tan bien queda su valor frente a su propia historia de los últimos
 5 años (percentil, invertido si "menos es mejor"). Se promedian por pilar (Precios, Externo, Actividad,
 Ingresos) y los pilares, con igual peso, dan la nota total. El mismo cálculo "a una fecha pasada" permite comparar
 con períodos anteriores. Es una medida relativa y descriptiva, no un pronóstico. Ver `macrocenter/score.py`.

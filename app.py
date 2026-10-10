@@ -435,11 +435,14 @@ def base100(df: pd.DataFrame, cols: list[str]) -> pd.DataFrame:
 
 def kpi(slot, label: str, valor: float | None, dec: int = 0, pre: str = "", suf: str = "",
         d: float | None = None, d_suf: str = "%", d_txt: str = "vs 30 d", color: str = "off", help: str | None = None):
+    # una variación que redondeada da 0,0 no lleva flecha (una flecha para arriba con 0,0% confunde)
+    plano = d is not None and abs(d) < 0.05
     slot.metric(
         label,
         charts.num(valor, dec, suf, pre),
-        None if d is None else f"{charts.num(d, 1, d_suf)} {d_txt}",
-        delta_color=color,
+        None if d is None else (f"sin cambios {d_txt}" if plano else f"{charts.num(d, 1, d_suf)} {d_txt}"),
+        delta_color="off" if plano else color,
+        delta_arrow="off" if plano else "auto",
         help=help,
         border=True,
     )
@@ -711,7 +714,10 @@ def pantalla_historia() -> None:
             ) for m in MS]
             st.markdown(style.linea_tiempo(items), unsafe_allow_html=True)
             st.caption("Fotos: Wikipedia / Wikimedia Commons (licencias libres); tocá una foto para ir a su página. "
-                       "Ojo: los mandatos duraron y ocurrieron en contextos muy distintos, así que comparar cifras entre épocas tiene límites.")
+                       "Ojo: los mandatos duraron y ocurrieron en contextos muy distintos, así que comparar cifras entre épocas tiene límites. "
+                       "La inflación de cada mes se asigna a quien gobernaba al cierre de ese mes: por eso julio de 1989 cuenta "
+                       "para Menem y diciembre de 2023 para Milei, aunque esas subas se hayan gestado antes. Es un criterio "
+                       "discutible, y se aplica igual a todos.")
             with st.expander("Cómo se calcula cada cifra"):
                 st.markdown(
                     """
@@ -756,7 +762,8 @@ def _calificacion_contenido() -> None:
     st.markdown(
         f"**Cómo leerla:** es una nota de 0 a 100 que dice si la economía está hoy mejor o peor que en los últimos "
         f"{anios_sel} años. **0** = el peor momento del período, **100** = el mejor, **50** = un momento típico. "
-        "No mide si la economía está \"bien\" en términos absolutos."
+        "Dice **«mejor que el pasado reciente»**, no **«buena»**: si ese pasado fue muy malo, una nota alta puede convivir "
+        "con valores todavía altos (por ejemplo, una inflación de 1,7% mensual sale bien parada al lado de 2023-2024)."
     )
     if hoy_n["total"] is None:
         st.warning("Con esta ventana no hay datos suficientes. Probá con otra en «Ajustar el criterio», al final.")
@@ -810,6 +817,11 @@ def _calificacion_contenido() -> None:
             for d in ordenados[::-1][:3]:
                 p = hoy_n["drivers"][d.clave]
                 st.markdown(f"- {score.frase_driver(d, valor_txt(d, HOY), p, anios_sel)}")
+        st.caption("Para tener en cuenta: el **EMAE** y el **salario real** se miden como variación interanual, así que después "
+                   "de una caída fuerte el rebote suma puntos aunque el nivel siga bajo. Las **reservas** son las **brutas**: "
+                   "incluyen el swap con China, los encajes de los depósitos en dólares y los repos, que no son de libre "
+                   "disponibilidad; las **netas** (lo que el BCRA puede usar de verdad) son bastante menores, pero no hay una "
+                   "serie oficial pública para calcularlas.")
 
     # ── 4) Evolución ──
     grafico(charts.evolucion_nota(hist_c, score.NIVELES, "Cómo fue cambiando la nota (últimos 5 años)", height=360))
@@ -870,7 +882,7 @@ def _calificacion_contenido() -> None:
 - Los indicadores se promedian por **área** (Precios, Externo, Actividad, Ingresos) y las áreas se combinan con los pesos
   elegidos (por defecto, iguales) en la **nota total**.
 - Para comparar con períodos anteriores se repite el cálculo *a esa fecha*, usando solo los datos que existían entonces.
-- Niveles: Muy favorable ≥ 75 · Favorable ≥ 60 · Neutral ≥ 40 · Adversa ≥ 25 · Muy adversa < 25.
+- Niveles: Mucho mejor que lo reciente ≥ 75 · Mejor ≥ 60 · Similar ≥ 40 · Peor ≥ 25 · Mucho peor < 25.
 - **Qué no mide:** es una medida **relativa** (mejor o peor que el pasado reciente), no absoluta. No incluye deuda ni pobreza.
   Cambiar la ventana o los pesos puede mover mucho el resultado. No es un pronóstico ni asesoramiento financiero.
             """
@@ -893,7 +905,8 @@ def pantalla_juegos() -> None:
                    "Falta o falló: " + ", ".join(faltan_i))
         pantalla_calificacion()
     else:
-        dp_i = {**dp_i, "uva": uva}
+        dp_i = {**dp_i, "uva": uva,
+                "dolar_blue": None if dol is None else dol[["fecha", "blue"]].dropna().rename(columns={"blue": "valor"})}
         interactivo.mostrar(dp_i, inds_i, fotos_presidentes(), uva, extra={"Calificación macro": pantalla_calificacion})
 
 
@@ -989,7 +1002,8 @@ def pantalla_bolsas() -> None:
     mk = cargar_mercados()
     reintentar_si_fallo(cargar_mercados, "mercados", any(isinstance(v, str) for v in mk.values()))
     st.caption("Las principales bolsas del mundo y algunas materias primas que mueven a la Argentina. Datos de Yahoo "
-               "Finance (fuente no oficial, con demora); se actualizan cada 15 minutos.")
+               "Finance (fuente no oficial, con demora); se actualizan cada 15 minutos. Al no ser un servicio oficial, "
+               "puede cambiar o dejar de funcionar sin aviso: si pasa, esta sección muestra un aviso y el resto sigue andando.")
     tarjetas = []
     for simbolo, nombre, grupo, unidad in data.INDICES:
         df = mk.get(simbolo)
@@ -1283,12 +1297,13 @@ with t_res, protegido("Inicio"):
                     v_ = variacion(dol.set_index("fecha")[col])
                     if v_ is not None:
                         nombres_r.append(nom); valores_r.append(v_)
-        if uva is not None:
-            v_ = variacion(uva.set_index("fecha")["valor"])
-            if v_ is not None:
-                nombres_r.append("UVA"); valores_r.append(v_)
+        # la UVA no compite: ajusta por CER (la inflación con rezago), así que por construcción queda pegada a la línea.
+        # Se informa como referencia, debajo del gráfico.
+        uva_p = variacion(uva.set_index("fecha")["valor"]) if uva is not None else None
         infl_p = None
-        if infl_m is not None:
+        if n_m == 12 and infl_ia is not None and ultimo(infl_ia) is not None:
+            infl_p = ultimo(infl_ia)  # 12 meses: el dato interanual oficial, el mismo de los indicadores clave
+        elif infl_m is not None:
             im_ = infl_m[(infl_m["fecha"] <= HOY)].dropna(subset=["valor"]).tail(n_m)
             if len(im_) == n_m:
                 infl_p = float(((1 + im_["valor"] / 100).prod() - 1) * 100)
@@ -1301,7 +1316,10 @@ with t_res, protegido("Inicio"):
             grafico(charts.rendimientos(nombres_r, valores_r, infl_p, f"Variación en los últimos {vent} (%)"))
             st.caption("En verde, lo que superó a la inflación del período (línea punteada); en rojo, lo que quedó abajo. "
                        "Es el pasado: no anticipa qué va a pasar. El plazo fijo se aproxima con la tasa BADLAR, sin impuestos "
-                       "ni comisiones; el dólar se mide sin considerar costos de compra o venta.")
+                       "ni comisiones; el dólar se mide sin considerar costos de compra o venta."
+                       + ("" if uva_p is None else
+                          f" Como referencia, la UVA subió {charts.num(uva_p, 1, '%')}: no se compara porque se ajusta por la "
+                          "inflación (CER, con unas semanas de rezago), así que siempre queda cerca de la línea."))
         else:
             st.info("No hay datos suficientes para este comparativo.")
     except Exception:  # noqa: BLE001
@@ -1400,8 +1418,11 @@ with t_res_i, protegido("Reservas"):
             kpi(c[1], f"Variación en {per_res.lower()}", r["valor"].iloc[-1] - r["valor"].iloc[0], 0,
                 pre="USD ", suf=" M", color="normal")
             kpi(c[2], "Máximo del período", r["valor"].max(), 0, pre="USD ", suf=" M")
-        grafico(charts.lineas(r, {"Reservas brutas": "valor"}, "Reservas internacionales del BCRA (USD millones)",
+        grafico(charts.lineas(r, {"Reservas brutas": "valor"}, "Reservas internacionales brutas del BCRA (USD millones)",
                               height=460))
+        st.caption("Son las reservas **brutas**: incluyen el swap con China, los encajes de los depósitos en dólares y los repos "
+                   "con bancos, que no son de libre disponibilidad. Las **netas** (lo que el BCRA puede usar para intervenir) son "
+                   "bastante menores, pero no se muestran porque no existe una serie oficial pública con la que calcularlas.")
         with st.expander("Variación mensual"):
             rm = reservas.set_index("fecha")["valor"].resample("ME").last().diff().rename("var").reset_index()
             grafico(charts.barras(rec(rm.dropna(), 2), "var", "Variación mensual de reservas (USD millones)", yfmt=",.0f"))
