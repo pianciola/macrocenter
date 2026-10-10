@@ -21,6 +21,14 @@ def num(x: float | None, dec: int = 0, suf: str = "", pre: str = "") -> str:
     return f"{pre}{s}{suf}"
 
 
+def _marcas(fmt: str | None) -> str | None:
+    """Formato de las marcas del eje: el mismo que el de los valores pero sin ceros de relleno («25» y no «25,0»;
+    «2,5» sigue igual). El formato completo queda para el recuadro que aparece al pasar el cursor."""
+    if fmt and fmt.endswith("f") and "~" not in fmt and "." in fmt:
+        return fmt[:-1] + "~f"
+    return fmt
+
+
 def _base(fig: go.Figure, titulo: str, yfmt: str | None, height: int) -> go.Figure:
     fig.update_layout(
         font=dict(family="Segoe UI Variable Text, Segoe UI, system-ui, -apple-system, Helvetica Neue, Roboto, Arial, sans-serif"),
@@ -31,7 +39,8 @@ def _base(fig: go.Figure, titulo: str, yfmt: str | None, height: int) -> go.Figu
         # la leyenda va abajo (arriba pisaba el título en pantallas angostas)
         legend=dict(orientation="h", yanchor="top", y=-0.12, xanchor="center", x=0.5),
         xaxis=dict(showgrid=False),
-        yaxis=dict(gridcolor="rgba(128,128,128,0.2)", tickformat=yfmt, separatethousands=True),
+        yaxis=dict(gridcolor="rgba(128,128,128,0.2)", tickformat=_marcas(yfmt), hoverformat=yfmt,
+                   separatethousands=True),
         separators=",.",  # formato argentino en ejes y etiquetas: 1.600,5
     )
     if _eje_x_fechas(fig):
@@ -248,8 +257,10 @@ def barras_y_linea(
     fig.add_trace(go.Scatter(x=d[x], y=d[col_linea], name=nombre_linea, mode="lines", yaxis="y2",
                              line=dict(color=PALETA[1], width=2.5)))
     fig = _base(fig, titulo, yfmt, height)
-    fig.update_layout(yaxis2=dict(overlaying="y", side="right", showgrid=False, tickformat=",.0f",
-                                  title=dict(text=nombre_linea, font=dict(color=PALETA[1], size=11)),
-                                  tickfont=dict(color=PALETA[1])),
-                      yaxis=dict(title=dict(text=nombre_barra, font=dict(color=PALETA[0], size=11))))
+    # cada eje con sus propias marcas redondas (sincronizadas daban 17, 70, 124…); el color de las marcas indica a qué
+    # serie corresponde cada eje, y los nombres ya están en la leyenda
+    fig.update_layout(yaxis2=dict(overlaying="y", side="right", showgrid=False, tickformat=",~f", hoverformat=",.1f",
+                                  tickmode="auto", nticks=6, rangemode="tozero", tickfont=dict(color=PALETA[1]),
+                                  separatethousands=True),
+                      yaxis=dict(rangemode="tozero", tickfont=dict(color=PALETA[0]), nticks=6))
     return fig

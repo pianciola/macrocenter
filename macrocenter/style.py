@@ -400,22 +400,36 @@ button[data-variant="segmented_control"][aria-checked="true"] p {{ color: #fff !
 .mc-legal .card p:last-child {{ margin-bottom: 0; }}
 
 /* ── Tarjetas de cotización ── */
-.mc-fxgrid {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 12px; margin: 6px 0 4px; }}
+/* columnas según la cantidad de tarjetas (--cols, ver _columnas): filas parejas, sin tarjetas huérfanas */
+.mc-fxgrid {{ display: grid; grid-template-columns: repeat(var(--cols, 4), minmax(0, 1fr)); gap: 12px; margin: 8px 0 8px; }}
+@media (max-width: 1100px) {{ .mc-fxgrid {{ grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }} }}
 .mc-fx {{
-    padding: 14px 16px 12px; border-radius: 14px; background: rgba(128,128,128,.09);
+    padding: 14px 16px 12px; border-radius: 14px; background: rgba(128,128,128,.09); min-width: 0; overflow: hidden;
     border: 1px solid rgba(116,172,223,.32); border-top: 4px solid {CELESTE};
+    transition: border-color .18s ease, transform .18s ease, box-shadow .18s ease;
 }}
-.mc-fx .n {{ font-weight: 800; font-size: .98rem; }}
-.mc-fx .d {{ font-size: .72rem; opacity: .65; min-height: 1.9em; line-height: 1.3; }}
-.mc-fx .v {{ font-size: 1.55rem; font-weight: 800; letter-spacing: -.5px; margin: 4px 0 0; white-space: nowrap; }}
+.mc-fx:hover {{ border-color: rgba(116,172,223,.6); transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,.18); }}
+.mc-fx .n {{ font-weight: 800; font-size: .98rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }}
+/* descripción: siempre el alto de dos renglones, así los valores de todas las tarjetas quedan a la misma altura */
+.mc-fx .d {{ font-size: .72rem; opacity: .65; line-height: 1.3; min-height: 2.6em; overflow: hidden;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }}
+.mc-fx .v {{ font-size: 1.5rem; font-weight: 800; letter-spacing: -.5px; margin: 6px 0 0; white-space: nowrap; min-width: 0; }}
 .mc-fx .c {{ font-size: .78rem; opacity: .75; margin-bottom: 8px; }}
 .mc-fx .chips {{ display: flex; flex-wrap: wrap; gap: 6px; }}
 .mc-fx .chip {{ font-size: .7rem; font-weight: 700; padding: 3px 8px; border-radius: 999px; background: rgba(128,128,128,.16); }}
 .mc-fx .chip.bien {{ color: #10AC84; background: rgba(16,172,132,.16); }}
 .mc-fx .chip.mal {{ color: #EE5253; background: rgba(238,82,83,.16); }}
 .mc-fx .chip.flat {{ opacity: .8; }}
-.mc-fx .fila {{ display: flex; align-items: center; justify-content: space-between; gap: 8px; }}
-.mc-fx .spark {{ flex: none; opacity: .95; }}
+.mc-fx .fila {{ display: flex; align-items: center; justify-content: space-between; gap: 10px; min-width: 0; }}
+/* el mini-gráfico se angosta si el valor es largo, en lugar de salirse de la tarjeta */
+.mc-fx .spark {{ flex: 0 1 76px; min-width: 28px; width: 76px; opacity: .95; }}
+@media (max-width: 640px) {{
+    .mc-fxgrid {{ grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }}
+    .mc-fx {{ padding: 11px 12px 10px; }}
+    .mc-fx .v {{ font-size: 1.15rem; }}
+    .mc-fx .spark {{ display: none; }}
+    .mc-fx .c {{ font-size: .72rem; }}
+}}
 
 /* ── Franja superior deslizante (inspirada en los tableros de cotizaciones) ── */
 .mc-ticker {{
@@ -452,7 +466,21 @@ button[data-variant="segmented_control"][aria-checked="true"] p {{ color: #fff !
 .mc-cmp .mejor {{ color: #10AC84; }}
 .mc-cmp .peor {{ color: #EE5253; }}
 
-[data-testid="stMetric"] {{ border-radius: 14px; }}
+[data-testid="stMetric"] {{ border-radius: 14px; transition: border-color .18s ease; }}
+[data-testid="stMetric"]:hover {{ border-color: rgba(116,172,223,.55); }}
+/* números de los indicadores: más peso y espaciado ajustado, como en los tableros financieros */
+[data-testid="stMetricValue"] {{ font-weight: 650 !important; letter-spacing: -.02em; }}
+/* tarjetas de una misma fila, del mismo alto (con o sin variación debajo) */
+[data-testid="stColumn"]:has(> [data-testid="stVerticalBlock"] > [data-testid="stElementContainer"]:only-child > [data-testid="stMetric"])
+    > [data-testid="stVerticalBlock"],
+[data-testid="stElementContainer"]:only-child:has(> [data-testid="stMetric"]),
+[data-testid="stElementContainer"]:only-child > [data-testid="stMetric"] {{ height: 100%; }}
+/* menos aire muerto arriba: el contenido arranca justo debajo de la barra superior */
+[data-testid="stMainBlockContainer"] {{ padding-top: 3.6rem; }}
+/* sin el ícono de enlace que Streamlit agrega al pasar por los títulos */
+[data-testid="stHeaderActionElements"] {{ display: none !important; }}
+/* títulos de sección con un poco más de aire arriba */
+[data-testid="stHeading"] h3 {{ padding-top: .9rem; }}
 /* sin barra deslizante: la fila se mueve sola al tocar un marcador (ver JS_PESTANAS), con las flechas o deslizando */
 [role="tablist"] {{ gap: 6px; padding-bottom: 4px; scrollbar-width: none !important; }}
 [role="tablist"]::-webkit-scrollbar {{ display: none !important; }}
@@ -540,6 +568,7 @@ h3 {{ font-weight: 700 !important; }}
         flex: 1 1 calc(50% - .6rem) !important; min-width: calc(50% - .6rem) !important; width: auto !important;
     }}
     [data-testid="stMetric"] {{ padding: .7rem .8rem !important; }}
+    [data-testid="stMetric"] > div {{ padding: 0 !important; }}  /* Streamlit le suma otro relleno adentro */
     [data-testid="stMetricValue"] {{ font-size: 1.45rem !important; }}
     [data-testid="stMetricLabel"] p {{ font-size: .8rem !important; }}
     [data-testid="stMetricDelta"] {{ font-size: .72rem !important; }}
@@ -836,10 +865,18 @@ def linea_tiempo(items: list[dict]) -> str:
     return "".join(out)
 
 
+def _columnas(n: int) -> int:
+    """Columnas de la grilla de tarjetas en pantallas anchas: las que dejan filas completas (16 → 4×4, 10 → 5×2) o, si
+    ninguna divide justo, la que deja la última fila más llena (7 → 4+3). Nunca una tarjeta sola en una fila."""
+    if n <= 4:
+        return 4
+    return max((5, 4, 6), key=lambda c: (n % c == 0, (n % c or c) / c))
+
+
 def cotizaciones(tarjetas: list[dict]) -> str:
     """Grilla de tarjetas de cotización. Cada una: nombre, desc, valor, detalle, var (% o None), chip (texto o None)."""
     esc = html.escape
-    out = ['<div class="mc-fxgrid">']
+    out = [f'<div class="mc-fxgrid" style="--cols:{_columnas(len(tarjetas))}">']
     for t in tarjetas:
         var = _chip_var(t.get("var"), t.get("var_txt", "30 d"), t.get("sentido", "neutro"))
         extra = "".join(_chip_var(v, txt, t.get("sentido", "neutro")) for txt, v in t.get("extras", []))
@@ -894,7 +931,8 @@ def sparkline(valores: list, ancho: int = 92, alto: int = 30, color: str | None 
             color = CELESTE
         else:
             color = "#10AC84" if (vs[-1] > vs[0]) == (sentido == "alto") else "#EE5253"
-    return (f'<svg class="spark" width="{ancho}" height="{alto}" viewBox="0 0 {ancho} {alto}" aria-hidden="true">'
+    return (f'<svg class="spark" width="{ancho}" height="{alto}" viewBox="0 0 {ancho} {alto}" preserveAspectRatio="none" '
+            f'aria-hidden="true">'
             f'<polyline points="{puntos}" fill="none" stroke="{color}" stroke-width="1.8" stroke-linejoin="round" '
             f'stroke-linecap="round"/></svg>')
 
