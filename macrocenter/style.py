@@ -702,7 +702,8 @@ def footer() -> str:
     return (
         '<div class="mc-foot"><div class="cols">'
         f'<div><h5>Fuentes de datos</h5><ul>{lista}</ul></div>'
-        '<div><h5>Importante</h5><p><b>Algunos datos pueden tener un rezago</b> respecto de lo que difunden las fuentes en el día '
+        '<div><h5>Propósito de la página</h5><p>Tiene más datos macroeconómicos que otras páginas.</p>'
+        '<h5 style="margin-top:14px">Importante</h5><p><b>Algunos datos pueden tener un rezago</b> respecto de lo que difunden las fuentes en el día '
         '(por ejemplo, las reservas del BCRA se publican con 1 o 2 días de demora). '
         'Los datos vienen de APIs y sitios públicos y pueden tener demoras o revisiones. '
         'Los valores son de referencia y no constituyen asesoramiento financiero. Las notas y las calificaciones son '
