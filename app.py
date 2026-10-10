@@ -279,32 +279,6 @@ def md_seguro(texto: str) -> str:
     return re.sub(r"([\\`*_{}\[\]()<>#+\-!|~$&])", r"\\\1", texto or "")
 
 
-def tarjeta_noticia(n: news.Noticia) -> None:
-    with st.container(border=True):
-        enlace = n.url.replace("(", "%28").replace(")", "%29").replace(" ", "%20")  # para no romper el enlace Markdown
-        st.markdown(f"**[{md_seguro(n.titulo)}]({enlace})**")
-        meta = f"{n.fecha.day} de {MESES_ES[n.fecha.month - 1]} de {n.fecha.year}"
-        nueva = "Nueva · " if n.url not in leidas() else ""
-        st.caption(nueva + meta + (f" · {md_seguro(n.etiquetas)}" if n.etiquetas else ""))
-        if n.resumen:
-            st.markdown(md_seguro(n.resumen if len(n.resumen) <= 260 else n.resumen[:257].rsplit(" ", 1)[0] + "…"))
-
-
-def columna_noticias(slot, titulo: str, sitio: str, items: list[news.Noticia] | str, visibles: int = 4) -> None:
-    with slot:
-        st.markdown(f"#### {titulo}")
-        if isinstance(items, str) or not items:
-            st.warning("No se pudieron leer las noticias de este sitio (puede haber cambiado su diseño o estar "
-                       f"caído). Podés verlas directamente en la fuente.\n\n`{items if isinstance(items, str) else 'sin resultados'}`")
-        else:
-            for n in items[:visibles]:
-                tarjeta_noticia(n)
-            if len(items) > visibles:
-                with st.expander(f"Ver {len(items) - visibles} más"):
-                    for n in items[visibles:]:
-                        tarjeta_noticia(n)
-        st.markdown(f"[Ver todas en el sitio oficial ↗]({sitio})")
-
 
 def noticias_recientes(dias: int = 1) -> int:
     """Cuántas notas sin leer se publicaron hoy o ayer (hora argentina). 0 si no se pudieron leer.
@@ -321,17 +295,40 @@ def noticias_recientes(dias: int = 1) -> int:
     return total
 
 
+def es_nueva(n: news.Noticia) -> bool:
+    """Misma regla que el contador del botón: sin leer y publicada hoy o ayer (hora argentina)."""
+    hoy = pd.Timestamp(data.hoy_argentina())
+    return n.url not in leidas() and 0 <= (hoy - pd.Timestamp(n.fecha).normalize()).days <= 1
+
+
 @st.dialog("Noticias oficiales", width="large")
 def ver_noticias() -> None:
-    st.caption("Últimas novedades de los sitios oficiales (se actualizan cada 30 minutos). "
-               "Los textos completos están en cada fuente.")
     noticias = cargar_noticias()
-    if st.button("✓ Marcar todas como leídas", help="Apaga el aviso del botón de noticias hasta que haya novedades."):
-        marcar_leidas()
-        st.rerun()
-    a, b = st.columns(2)
-    columna_noticias(a, "Banco Central (BCRA)", news.BCRA_URL, noticias["bcra"])
-    columna_noticias(b, "Ministerio de Economía", news.ECONOMIA_URL, noticias["economia"])
+    fuentes = {"bcra": "BCRA", "economia": "Economía"}
+    pares = [(n, k) for k in fuentes for n in (noticias.get(k) if isinstance(noticias.get(k), list) else [])]
+    hay_sin_leer = any(es_nueva(n) for n, _ in pares)
+
+    c_filtro, c_boton = st.columns([3, 1.4], vertical_alignment="center")
+    filtro = c_filtro.segmented_control("Fuente", ["Todas", "BCRA", "Economía"], default="Todas", key="news_filtro",
+                                        label_visibility="collapsed") or "Todas"
+    if hay_sin_leer:
+        # al tocarlo se marca todo y el diálogo se redibuja solo: el botón pasa a verde
+        c_boton.button("Marcar todas como leídas", key="btn_marcar_leidas", on_click=marcar_leidas, width="stretch",
+                       help="Apaga el aviso del botón de noticias hasta que haya novedades.")
+    elif c_boton.button("✓ Todo leído", key="btn_todo_leido", width="stretch",
+                        help="No hay novedades sin leer. Tocalo para cerrar y actualizar el aviso."):
+        st.rerun()  # cierra el diálogo y refresca el botón de la barra lateral
+
+    for k, nombre in fuentes.items():
+        if isinstance(noticias.get(k), str) or not noticias.get(k):
+            st.warning(f"No se pudieron leer las noticias de {nombre} ahora; podés verlas en el sitio oficial.")
+    visibles = sorted(((n, k) for n, k in pares if filtro == "Todas" or fuentes[k] == filtro),
+                      key=lambda par: par[0].fecha, reverse=True)
+    st.markdown(style.lista_noticias([
+        dict(titulo=n.titulo, url=n.url, fecha=n.fecha, resumen=n.resumen, fuente=fuentes[k], clase=k, nueva=es_nueva(n))
+        for n, k in visibles[:14]], MESES_ES), unsafe_allow_html=True)
+    st.markdown(style.pie_noticias([("Banco Central", news.BCRA_URL), ("Ministerio de Economía", news.ECONOMIA_URL)]),
+                unsafe_allow_html=True)
 
 
 # ───────────────────────── barra lateral ─────────────────────────
