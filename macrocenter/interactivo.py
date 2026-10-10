@@ -16,7 +16,8 @@ import streamlit as st
 from macrocenter import charts, style
 from macrocenter import presidentes as P
 
-HOY = pd.Timestamp.today().normalize()
+HOY = P.hoy()  # se actualiza en cada visita (ver `mostrar`): el servidor queda prendido días seguidos
+GRAFICO_CFG = {"displayModeBar": False, "scrollZoom": False}  # como en el resto de la app: sin barra ni zoom accidental
 MESES = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre",
          "Diciembre"]
 FECHA_MIN = date(1992, 1, 2)  # desde la convertibilidad: antes las monedas eran otras (peso argentino, austral)
@@ -183,17 +184,19 @@ def pantalla_pesos(d: dict, uva: pd.DataFrame | None) -> None:
     uva_en_pesos = monto / u0 * u_hoy if u0 and u_hoy else None
 
     k = st.columns(4)
+    # las líneas de abajo son aclaraciones, no variaciones: sin flecha
     k[0].metric("Para comprar lo mismo hoy necesitás", _n(equiv, 0, "$"), f"×{_n(fac, 1)} los precios", delta_color="off",
-                border=True, help="Precios hasta el último mes publicado por el INDEC.")
+                delta_arrow="off", border=True, help="Precios hasta el último mes publicado por el INDEC.")
     k[1].metric("Tus pesos de entonces hoy compran", _n(100 / fac, 1, suf="%"), "de lo que compraban", delta_color="off",
-                border=True)
+                delta_arrow="off", border=True)
     k[2].metric("Si los hubieras pasado a dólares", _n(usd_en_pesos, 0, "$") if usd_en_pesos else "s/d",
-                f"USD {_n(en_usd, 0)} a ${_n(usd0, 0)} ({tipo0})" if en_usd else None, delta_color="off", border=True,
+                f"USD {_n(en_usd, 0)} a ${_n(usd0, 2 if usd0 < 100 else 0)} ({tipo0})" if en_usd else None,
+                delta_color="off", delta_arrow="off", border=True,
                 help="Se usa el dólar que de verdad se podía comprar: durante el cepo (2011-2015 y 2019-2025) el blue, "
                      "porque al oficial no se accedía libremente; fuera del cepo, el oficial. Hoy se valúan al "
                      f"dólar {tipo_hoy}.")
     k[3].metric("Si los hubieras puesto en UVA", _n(uva_en_pesos, 0, "$") if uva_en_pesos else "s/d",
-                None if uva_en_pesos else "UVA existe desde 2016", delta_color="off", border=True)
+                None if uva_en_pesos else "UVA existe desde 2016", delta_color="off", delta_arrow="off", border=True)
 
     # veredicto en una línea
     opciones = {"la inflación (precios)": equiv}
@@ -209,7 +212,7 @@ def pantalla_pesos(d: dict, uva: pd.DataFrame | None) -> None:
     graf = indices_base100(d, f, uva)
     cols = {c: c for c in ("Precios", "Dólar oficial", "Dólar blue", "UVA") if c in graf}
     st.plotly_chart(charts.lineas(graf, cols, "Cómo evolucionó cada cosa (base 100 = la fecha elegida)", yfmt=",.0f",
-                                  height=340), width="stretch")
+                                  height=340).update_layout(dragmode=False), width="stretch", config=GRAFICO_CFG)
     st.caption("Valores mes a mes (aproximados). No es una recomendación de inversión: es solo mirar el pasado."
                + (" La fecha elegida cae en un período de cepo: al dólar oficial no se podía comprar libremente, así que "
                   "el cálculo usa el blue." if tipo0 == "blue" else ""))
@@ -434,8 +437,9 @@ def _cuadro_viaje(d: dict, fotos: dict, f: pd.Timestamp) -> None:
     k[4].metric("Desocupación", P._pct(e["paro"]), border=True)
     anual = P.inflacion_anual_serie(d["inflacion"])
     st.plotly_chart(charts.inflacion_presidentes(anual[anual["fecha"] >= "1983-12-01"], P.MANDATOS, P.CORTO,
-                                                 "Inflación anual: estás en la línea dorada", height=300, marca=f),
-                    width="stretch")
+                                                 "Inflación anual: estás en la línea dorada", height=300,
+                                                 marca=f).update_layout(dragmode=False),
+                    width="stretch", config=GRAFICO_CFG)
 
 
 def pantalla_viaje(d: dict, fotos: dict) -> None:
@@ -470,6 +474,8 @@ TARJETAS = {  # ícono (Material) y descripción corta de cada herramienta
 
 def mostrar(d: dict, inds: dict, fotos: dict, uva: pd.DataFrame | None, extra: dict | None = None) -> None:
     """`extra`: secciones adicionales {nombre: función sin argumentos} que se suman al selector."""
+    global HOY
+    HOY = P.hoy()
     extra = extra or {}
     opciones = MODOS + list(extra)
     if st.session_state.get("inter_modo") not in opciones:  # estado inicial o alterado: la primera herramienta

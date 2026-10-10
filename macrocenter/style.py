@@ -236,7 +236,7 @@ section[data-testid="stSidebar"] [class*="st-key-nav_"] button[data-testid="stBa
 }}
 .mc-conv .f {{ display: flex; justify-content: space-between; align-items: baseline; gap: 8px; padding: 5px 0;
     border-bottom: 1px dashed rgba(128,128,128,.25); }}
-.mc-conv .f:last-of-type {{ border-bottom: none; }}
+.mc-conv .f:has(+ .nota) {{ border-bottom: none; }}
 .mc-conv .k {{ font-size: .82rem; font-weight: 600; display: flex; flex-direction: column; line-height: 1.2; }}
 .mc-conv .k small {{ font-size: .68rem; font-weight: 500; opacity: .6; }}
 .mc-conv .v {{ font-size: .98rem; font-weight: 800; white-space: nowrap; }}

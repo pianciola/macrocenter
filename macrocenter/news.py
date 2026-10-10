@@ -176,7 +176,8 @@ def _economia_listado() -> list[Noticia]:
             continue
         out.append(Noticia(
             fuente="Ministerio de Economía",
-            fecha=datetime.fromisoformat(t["datetime"]),
+            # sin zona horaria, como las del BCRA: si no, no se pueden ordenar juntas
+            fecha=datetime.fromisoformat(t["datetime"]).replace(tzinfo=None),
             titulo=_texto(h3),
             resumen=_texto(a.select_one("p.text-muted")),
             url=ECONOMIA_BASE + a["href"],

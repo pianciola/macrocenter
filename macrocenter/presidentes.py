@@ -20,7 +20,13 @@ from dataclasses import dataclass
 
 import pandas as pd
 
-HOY = pd.Timestamp.today().normalize()
+from macrocenter.data import hoy_argentina
+
+
+def hoy() -> pd.Timestamp:
+    """Fecha de hoy en la Argentina, calculada en cada uso: el servidor queda prendido días seguidos y una fecha fijada
+    al arrancar dejaría congelado el «hoy» del mandato en curso."""
+    return pd.Timestamp(hoy_argentina())
 
 
 @dataclass(frozen=True)
@@ -35,7 +41,7 @@ class Mandato:
 
     @property
     def fin(self) -> pd.Timestamp:
-        return self.hasta or HOY
+        return self.hasta or hoy()
 
     @property
     def periodo(self) -> str:
