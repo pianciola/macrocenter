@@ -15,6 +15,8 @@ def num(x: float | None, dec: int = 0, suf: str = "", pre: str = "") -> str:
     """Formato argentino: 1.234,56"""
     if x is None or pd.isna(x):
         return "s/d"
+    if round(x, dec) == 0:
+        x = 0.0  # evita «-0,0»
     s = f"{x:,.{dec}f}".replace(",", "§").replace(".", ",").replace("§", ".")
     return f"{pre}{s}{suf}"
 

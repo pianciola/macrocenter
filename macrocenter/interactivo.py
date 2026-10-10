@@ -290,14 +290,34 @@ def pantalla_viaje(d: dict, fotos: dict) -> None:
 
 # ───────────────────────── entrada ─────────────────────────
 MODOS = ["¿Cuánto valían tus pesos?", "Comparador de épocas", "Viaje en el tiempo"]
+TARJETAS = {  # ícono (Material) y descripción corta de cada herramienta
+    "¿Cuánto valían tus pesos?": (":material/savings:", "Qué fue de tu plata según la inflación, el dólar y la UVA."),
+    "Comparador de épocas": (":material/compare_arrows:", "Dos momentos de la economía, lado a lado."),
+    "Viaje en el tiempo": (":material/history:", "Elegí una fecha y mirá cómo estaba el país."),
+    "Calificación macro": (":material/speed:", "Una nota de 0 a 100: hoy contra el pasado reciente."),
+}
 
 
 def mostrar(d: dict, inds: dict, fotos: dict, uva: pd.DataFrame | None, extra: dict | None = None) -> None:
     """`extra`: secciones adicionales {nombre: función sin argumentos} que se suman al selector."""
     extra = extra or {}
     opciones = MODOS + list(extra)
-    st.caption("Herramientas para jugar con los datos. Elegí una:")
-    modo = st.pills("Herramienta", opciones, default=MODOS[0], key="inter_modo", label_visibility="collapsed") or MODOS[0]
+    if st.session_state.get("inter_modo") not in opciones:  # estado inicial o alterado: la primera herramienta
+        st.session_state["inter_modo"] = MODOS[0]
+
+    def elegir(nombre: str) -> None:
+        st.session_state["inter_modo"] = nombre
+
+    # selector en tarjetas: ícono, nombre y una línea de qué hace; la elegida queda resaltada
+    st.caption("Elegí una herramienta:")
+    for i, (col, nombre) in enumerate(zip(st.columns(len(opciones)), opciones)):
+        icono, desc = TARJETAS.get(nombre, (":material/apps:", ""))
+        with col:
+            st.button(nombre, key=f"modo_{i}", icon=icono, width="stretch", on_click=elegir, args=(nombre,),
+                      type="primary" if st.session_state["inter_modo"] == nombre else "secondary")
+            st.caption(desc)
+    st.divider()
+    modo = st.session_state["inter_modo"]
     if modo in extra:
         extra[modo]()
     elif modo == MODOS[0]:

@@ -130,6 +130,27 @@ section[data-testid="stSidebar"] [data-testid="stPills"] button {{ border-radius
 }}
 @media (prefers-reduced-motion: reduce) {{ .st-key-btn_noticias_nuevas button {{ animation: none; }} }}
 
+/* ── Juegos y herramientas: selector en tarjetas ── */
+[class*="st-key-modo_"] button {{
+    min-height: 3.4rem; border-radius: 14px !important; justify-content: flex-start; padding: .7rem 1rem;
+    border: 1px solid rgba(116,172,223,.35) !important; background: rgba(116,172,223,.06) !important;
+    transition: transform .18s ease, background-color .18s ease, box-shadow .18s ease, border-color .18s ease;
+}}
+[class*="st-key-modo_"] button p {{ font-weight: 700; font-size: .95rem; text-align: left; white-space: normal !important;
+    overflow: visible !important; text-overflow: clip !important; line-height: 1.25; }}
+[class*="st-key-modo_"] button div {{ overflow: visible !important; min-width: 0; }}
+[class*="st-key-modo_"] button [data-testid="stIconMaterial"] {{ color: {CELESTE}; font-size: 1.35rem; }}
+[class*="st-key-modo_"] button:hover {{
+    transform: translateY(-2px); border-color: {CELESTE} !important; background: rgba(116,172,223,.14) !important;
+    box-shadow: 0 6px 16px rgba(74,143,212,.18);
+}}
+[class*="st-key-modo_"] button[data-testid="stBaseButton-primary"] {{
+    background: linear-gradient(135deg, {CELESTE} 0%, #4A8FD4 100%) !important; border-color: {CELESTE} !important;
+    box-shadow: 0 6px 18px rgba(74,143,212,.35), inset 0 -3px 0 {SOL};
+}}
+[class*="st-key-modo_"] button[data-testid="stBaseButton-primary"] p,
+[class*="st-key-modo_"] button[data-testid="stBaseButton-primary"] [data-testid="stIconMaterial"] {{ color: #FFFFFF !important; }}
+
 /* ── Ventana de noticias: lista limpia, fecha a la izquierda, etiquetas de fuente ── */
 .mc-news {{ display: flex; flex-direction: column; margin-top: 6px; }}
 .mc-news-it {{
@@ -337,8 +358,8 @@ button[data-variant="segmented_control"][aria-checked="true"] p {{ color: #fff !
 .mc-fx .c {{ font-size: .78rem; opacity: .75; margin-bottom: 8px; }}
 .mc-fx .chips {{ display: flex; flex-wrap: wrap; gap: 6px; }}
 .mc-fx .chip {{ font-size: .7rem; font-weight: 700; padding: 3px 8px; border-radius: 999px; background: rgba(128,128,128,.16); }}
-.mc-fx .chip.bien, .mc-fx .chip.sube {{ color: #10AC84; background: rgba(16,172,132,.16); }}
-.mc-fx .chip.mal, .mc-fx .chip.baja {{ color: #EE5253; background: rgba(238,82,83,.16); }}
+.mc-fx .chip.bien {{ color: #10AC84; background: rgba(16,172,132,.16); }}
+.mc-fx .chip.mal {{ color: #EE5253; background: rgba(238,82,83,.16); }}
 .mc-fx .chip.flat {{ opacity: .8; }}
 .mc-fx .fila {{ display: flex; align-items: center; justify-content: space-between; gap: 8px; }}
 .mc-fx .spark {{ flex: none; opacity: .95; }}
@@ -356,8 +377,8 @@ button[data-variant="segmented_control"][aria-checked="true"] p {{ color: #fff !
 .mc-ticker .n {{ font-size: .68rem; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; opacity: .6; }}
 .mc-ticker .v {{ font-weight: 800; font-size: .92rem; }}
 .mc-ticker .d {{ font-size: .75rem; font-weight: 700; opacity: .75; }}
-.mc-ticker .d.bien, .mc-ticker .d.sube {{ color: #10AC84; opacity: 1; }}
-.mc-ticker .d.mal, .mc-ticker .d.baja {{ color: #EE5253; opacity: 1; }}
+.mc-ticker .d.bien {{ color: #10AC84; opacity: 1; }}
+.mc-ticker .d.mal {{ color: #EE5253; opacity: 1; }}
 @keyframes mc-marquee {{ from {{ transform: translateX(0); }} to {{ transform: translateX(-50%); }} }}
 @media (prefers-reduced-motion: reduce) {{ .mc-ticker .pista {{ animation: none; }} .mc-ticker {{ overflow-x: auto; }} }}
 
@@ -682,7 +703,8 @@ def cotizaciones(tarjetas: list[dict]) -> str:
         var = _chip_var(t.get("var"), t.get("var_txt", "30 d"), t.get("sentido", "neutro"))
         extra = "".join(_chip_var(v, txt, t.get("sentido", "neutro")) for txt, v in t.get("extras", []))
         chip = f'<span class="chip">{esc(t["chip"])}</span>' if t.get("chip") else ""
-        spark = sparkline(t.get("spark") or [], ancho=76, color=t.get("spark_color")) if t.get("spark") else ""
+        spark = (sparkline(t.get("spark") or [], ancho=76, color=t.get("spark_color"), sentido=t.get("sentido", "neutro"))
+                 if t.get("spark") else "")
         out.append(
             f'<div class="mc-fx"><div class="n">{esc(t["nombre"])}</div><div class="d">{esc(t["desc"])}</div>'
             f'<div class="fila"><div class="v">{esc(t["valor"])}</div>{spark}</div><div class="c">{esc(t["detalle"])}</div>'
@@ -704,16 +726,17 @@ def _flecha(v: float) -> str:
 
 
 def _clase_var(v: float, sentido: str = "neutro") -> str:
-    """Color de una variación. Precios ('neutro'): verde si sube, rojo si baja, como en cualquier pizarra de mercado.
-    Indicadores con juicio ('alto' = subir es bueno, 'bajo' = subir es malo, p. ej. riesgo país): verde si mejora."""
+    """Color de una variación: verde si es buena noticia, rojo si es mala.
+    sentido: 'alto' (subir es bueno: reservas, bolsas, soja), 'bajo' (subir es malo: dólar, riesgo país, inflación)
+    o 'neutro' (sin juicio claro: oro, tasas): sin color, solo la flecha."""
     if abs(v) <= 0.05:
         return "flat"
     if sentido == "neutro":
-        return "sube" if v > 0 else "baja"
+        return "up" if v > 0 else "down"
     return "bien" if (v > 0) == (sentido == "alto") else "mal"
 
 
-def sparkline(valores: list, ancho: int = 92, alto: int = 30, color: str | None = None) -> str:
+def sparkline(valores: list, ancho: int = 92, alto: int = 30, color: str | None = None, sentido: str = "alto") -> str:
     """Mini-gráfico de línea en SVG. Sin color explícito, verde si terminó arriba de donde empezó y rojo si no."""
     vs = [float(x) for x in valores if x is not None and x == x]
     if len(vs) < 2:
@@ -725,7 +748,11 @@ def sparkline(valores: list, ancho: int = 92, alto: int = 30, color: str | None 
     rango = (mx - mn) or 1.0
     puntos = " ".join(f"{1 + i * (ancho - 2) / (len(vs) - 1):.1f},{alto - 2 - (v - mn) / rango * (alto - 4):.1f}"
                       for i, v in enumerate(vs))
-    color = color or ("#10AC84" if vs[-1] >= vs[0] else "#EE5253")
+    if not color:  # verde si el período fue bueno, rojo si fue malo; sin juicio, celeste
+        if sentido == "neutro" or vs[-1] == vs[0]:
+            color = CELESTE
+        else:
+            color = "#10AC84" if (vs[-1] > vs[0]) == (sentido == "alto") else "#EE5253"
     return (f'<svg class="spark" width="{ancho}" height="{alto}" viewBox="0 0 {ancho} {alto}" aria-hidden="true">'
             f'<polyline points="{puntos}" fill="none" stroke="{color}" stroke-width="1.8" stroke-linejoin="round" '
             f'stroke-linecap="round"/></svg>')
