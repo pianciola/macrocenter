@@ -391,14 +391,18 @@ def rec(df: pd.DataFrame, min_anios: int = 0, periodo: str = "2 años") -> pd.Da
     return out[out["fecha"] >= HOY - pd.Timedelta(days=max(dias, min_anios * 365))]
 
 
-def selector_periodo(clave: str, defecto: str = "2 años") -> str:
-    """Botones de período propios de un gráfico (cada gráfico importante tiene el suyo)."""
-    p = st.pills("Período", list(PERIODOS), default=defecto, key=f"per_{clave}", label_visibility="collapsed")
-    return p if p in PERIODOS else defecto
+def selector_periodo(clave: str, defecto: str = "2 años", mensual: bool = False) -> str:
+    """Botones de período propios de un gráfico (cada gráfico importante tiene el suyo).
+    Con datos mensuales no se ofrece «1 mes» (quedaría un solo punto)."""
+    opciones = [o for o in PERIODOS if not (mensual and o == "1 mes")]
+    p = st.pills("Período", opciones, default=defecto, key=f"per_{clave}", label_visibility="collapsed")
+    return p if p in opciones else defecto
 
 
-def con_periodo(clave: str, df: pd.DataFrame, min_anios: int = 0, defecto: str = "2 años") -> pd.DataFrame:
-    return rec(df, min_anios, selector_periodo(clave, defecto))
+def con_periodo(clave: str, df: pd.DataFrame, min_anios: int = 0, defecto: str = "2 años", mensual: bool = False) -> pd.DataFrame:
+    """Recorta `df` al período elegido. `min_anios` fuerza una ventana mínima (solo para series muy poco frecuentes);
+    para series mensuales conviene `mensual=True`: cada botón recorta de verdad, desde 6 meses."""
+    return rec(df, min_anios, selector_periodo(clave, defecto, mensual))
 
 
 def ultimo(df: pd.DataFrame, col: str = "valor") -> float | None:
@@ -1201,7 +1205,7 @@ def panel_plazo_fijo() -> None:
             kpi(k[1], "Suben los precios (mensual)", float(ult["inflacion"]), 1, suf="%")
             kpi(k[2], "Rendimiento real del mes", float(ult["real"]), 1, suf="%", color="normal",
                 help="Positivo: la tasa le ganó a la inflación. Negativo: el ahorro perdió poder de compra.")
-            grafico(charts.barras(con_periodo("res_real", real, 2), "real",
+            grafico(charts.barras(con_periodo("res_real", real, mensual=True), "real",
                                   "Rendimiento real mensual de un plazo fijo (%)", yfmt=",.1f", height=300))
             st.caption("Usa la tasa BADLAR (depósitos a plazo de bancos privados) como referencia de un plazo fijo, promedio del "
                        "mes, contra la inflación de ese mes. No incluye impuestos ni comisiones.")
@@ -1243,7 +1247,7 @@ with t_res, protegido("Inicio"):
         grafico(charts.lineas(con_periodo("res_dolar", dol_rec), {"Oficial": "oficial", "Blue": "blue"}, "Dólar ($)", height=340))
     elif elegido_i == "Inflación" and infl_m is not None and infl_ia is not None:
         m = infl_m.merge(infl_ia, on="fecha", suffixes=("_m", "_ia"))
-        grafico(charts.barras_y_linea(con_periodo("res_infl", m, 2, "5 años"), "valor_m", "valor_ia", "Inflación (%)",
+        grafico(charts.barras_y_linea(con_periodo("res_infl", m, defecto="5 años", mensual=True), "valor_m", "valor_ia", "Inflación (%)",
                                       "Mensual", "Interanual", height=340))
     elif elegido_i == "Reservas" and reservas is not None:
         grafico(charts.lineas(con_periodo("res_reservas", reservas), {"Reservas brutas": "valor"},
@@ -1591,7 +1595,7 @@ with t_fis, protegido("Resultado fiscal"):
         cols_12 = [c for c in ("primario_12m", "financiero_12m") if c in f and f[c].notna().any()]
         if cols_12:
             nombres = {"primario_12m": "Primario", "financiero_12m": "Financiero"}
-            fig12 = charts.lineas(con_periodo("fis_12m", f.dropna(subset=cols_12, how="all"), 3, "5 años"),
+            fig12 = charts.lineas(con_periodo("fis_12m", f.dropna(subset=cols_12, how="all"), defecto="5 años", mensual=True),
                                   {nombres[c]: c for c in cols_12}, "Resultado acumulado de 12 meses (% del PBI)",
                                   yfmt=",.1f", height=340)
             fig12.add_hline(y=0, line_width=1, line_dash="dot", line_color="rgba(128,128,128,.7)")
@@ -1599,11 +1603,11 @@ with t_fis, protegido("Resultado fiscal"):
         a, b = st.columns(2)
         with a:
             if "primario" in f:
-                grafico(charts.barras(con_periodo("fis_prim", f, 3, "5 años"), "primario",
+                grafico(charts.barras(con_periodo("fis_prim", f, defecto="5 años", mensual=True), "primario",
                                       "Resultado primario mensual (% del PBI)", yfmt=",.1f", height=320))
         with b:
             if "financiero" in f:
-                grafico(charts.barras(con_periodo("fis_fin", f, 3, "5 años"), "financiero",
+                grafico(charts.barras(con_periodo("fis_fin", f, defecto="5 años", mensual=True), "financiero",
                                       "Resultado financiero mensual (% del PBI)", yfmt=",.1f", height=320))
         with st.expander("Cómo se calcula el porcentaje del PBI"):
             st.markdown(
