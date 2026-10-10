@@ -83,6 +83,12 @@ def limpiar(df):
     return d.drop_duplicates("fecha", keep="last").reset_index(drop=True)
 
 
+def hoy_argentina() -> str:
+    """Fecha de hoy en Argentina (UTC-3) como AAAA-MM-DD. El servidor donde se publica la app anda en UTC y, de noche,
+    ya está en el día siguiente: el BCRA rechaza (error 400) una fecha 'hasta' que todavía no ocurrió allá."""
+    return (pd.Timestamp.now(tz="UTC") - pd.Timedelta(hours=3)).strftime("%Y-%m-%d")
+
+
 def _get(url: str, **params) -> requests.Response:
     """GET con reintentos: si la fuente responde «demasiados pedidos» (429) o un error pasajero del servidor (5xx),
     espera un poco (más cada vez) y vuelve a probar, hasta 4 veces. Cualquier otro error se informa enseguida."""
@@ -166,7 +172,7 @@ def divisa(codigo: str, desde: str = "2016-01-01") -> pd.DataFrame:
     filas: list[tuple] = []
     offset = 0
     while True:
-        payload = _get(f"{CAMBIARIAS_URL}/{codigo}", fechadesde=desde, fechahasta=pd.Timestamp.today().strftime("%Y-%m-%d"),
+        payload = _get(f"{CAMBIARIAS_URL}/{codigo}", fechadesde=desde, fechahasta=hoy_argentina(),
                        limit=1000, offset=offset).json()
         resultados = payload.get("results") or []
         for r in resultados:
