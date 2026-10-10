@@ -435,7 +435,9 @@ def base100(df: pd.DataFrame, cols: list[str]) -> pd.DataFrame:
 
 
 def kpi(slot, label: str, valor: float | None, dec: int = 0, pre: str = "", suf: str = "",
-        d: float | None = None, d_suf: str = "%", d_txt: str = "vs 30 d", color: str = "off", help: str | None = None):
+        d: float | None = None, d_suf: str = "%", d_txt: str = "vs 30 d", color: str = "normal", help: str | None = None):
+    # color por defecto: verde si sube, rojo si baja (precios). Los indicadores donde subir es malo
+    # (inflación, riesgo país, desocupación) pasan color="inverse".
     # una variación que redondeada da 0,0 no lleva flecha (una flecha para arriba con 0,0% confunde)
     plano = d is not None and abs(d) < 0.05
     slot.metric(
@@ -1359,7 +1361,7 @@ with t_dol, protegido("Dólar"):
                 nombre=nombre, desc=desc, valor=charts.num(venta, 0, pre="$"),
                 detalle=f"Compra {charts.num(float(compra), 0, pre='$')} · Venta {charts.num(venta, 0, pre='$')}",
                 var=delta(s.rename(columns={clave: "valor"})),
-                spark=list(s.tail(30)[clave]), spark_color="#74ACDF",
+                spark=list(s.tail(30)[clave]),
                 chip=None if clave == "oficial" or not oficial_hoy else
                 f"{(venta / oficial_hoy - 1) * 100:+.0f}% vs oficial".replace(".", ","),
             ))
@@ -1375,7 +1377,7 @@ with t_dol, protegido("Dólar"):
                     nombre=nombre, desc="Cotización de referencia del BCRA",
                     valor=charts.num(float(u["valor"]), 0, pre="$"),
                     detalle=f"1 {simbolo} = US$ {charts.num(float(u['pase']), 2)}",
-                    var=delta(df_), chip=None, spark=list(df_.tail(30)["valor"]), spark_color="#74ACDF"))
+                    var=delta(df_), chip=None, spark=list(df_.tail(30)["valor"])))
         if tarjetas_fx:
             st.markdown(style.cotizaciones(tarjetas_fx), unsafe_allow_html=True)
             st.caption("Euro y libra: referencia cambiaria del BCRA en pesos por unidad (no es el precio de la casa de cambio).")
