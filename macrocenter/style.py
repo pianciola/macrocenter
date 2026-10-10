@@ -241,7 +241,9 @@ section[data-testid="stSidebar"] [class*="st-key-nav_"] button[data-testid="stBa
 .mc-conv .k small {{ font-size: .68rem; font-weight: 500; opacity: .6; }}
 .mc-conv .v {{ font-size: .98rem; font-weight: 800; white-space: nowrap; }}
 .mc-conv .nota {{ font-size: .66rem; opacity: .55; margin-top: 4px; text-align: right; }}
-section[data-testid="stSidebar"] .st-key-conv_sentido button {{ padding: .25rem .6rem; font-size: .8rem; }}
+section[data-testid="stSidebar"] .st-key-conv_sentido button {{ padding: .25rem .5rem; font-size: .8rem; flex: 1 1 0; }}
+section[data-testid="stSidebar"] .st-key-conv_sentido [data-baseweb="button-group"],
+section[data-testid="stSidebar"] .st-key-conv_sentido [role="radiogroup"] {{ width: 100%; flex-wrap: nowrap; }}
 section[data-testid="stSidebar"] .st-key-conv_pesos input, section[data-testid="stSidebar"] .st-key-conv_usd input {{
     font-weight: 700; }}
 .mc-termino {{ border-left: 3px solid {SOL}; }}
@@ -259,10 +261,54 @@ section[data-testid="stSidebar"] [class*="st-key-atajo_"] button [data-testid="s
 section[data-testid="stSidebar"] [class*="st-key-atajo_"] button p {{ font-size: .86rem; font-weight: 500; }}
 section[data-testid="stSidebar"] [class*="st-key-atajo_"] button:hover {{ background: rgba(116,172,223,.12); }}
 section[data-testid="stSidebar"] [class*="st-key-atajo_"] {{ margin-top: -6px; }}
-/* recuadro "En pocas palabras" de Inicio */
-.st-key-panorama {{ border-left: 4px solid {CELESTE} !important; background: rgba(116,172,223,.05); }}
-.st-key-panorama ul {{ margin-bottom: 0; }}
-.st-key-panorama li {{ margin-bottom: .3rem; line-height: 1.55; }}
+/* informe "En pocas palabras" de Inicio */
+.mc-pano {{
+    border: 1px solid rgba(116,172,223,.28); border-radius: 16px; overflow: hidden; margin: 4px 0 6px;
+    background: linear-gradient(180deg, rgba(116,172,223,.09), rgba(116,172,223,.02));
+}}
+.mc-pano .cab {{ display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;
+    padding: 16px 20px 14px; border-bottom: 1px solid rgba(116,172,223,.2); }}
+.mc-pano .tit {{ font-size: .78rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: {CELESTE}; }}
+.mc-pano .sub {{ font-size: .85rem; opacity: .7; margin-top: 2px; }}
+.mc-pano .bal {{ display: flex; gap: 8px; flex-wrap: wrap; }}
+.mc-pano .cnt {{ display: inline-flex; align-items: center; gap: 6px; font-size: .74rem; font-weight: 700;
+    padding: 4px 10px; border-radius: 999px; background: rgba(128,128,128,.14); }}
+.mc-pano .cnt i {{ width: 7px; height: 7px; border-radius: 50%; background: currentColor; }}
+.mc-pano .cnt.bien {{ color: #10AC84; background: rgba(16,172,132,.13); }}
+.mc-pano .cnt.mal {{ color: #EE5253; background: rgba(238,82,83,.13); }}
+.mc-pano .cnt.mixto {{ color: {SOL}; background: rgba(246,180,14,.13); }}
+.mc-pano .fila {{ display: grid; grid-template-columns: 170px 1fr 92px; gap: 18px; align-items: center;
+    padding: 13px 20px; border-left: 3px solid transparent; transition: background-color .15s ease; }}
+.mc-pano .fila + .fila {{ border-top: 1px solid rgba(128,128,128,.14); }}
+.mc-pano .fila:hover {{ background: rgba(116,172,223,.06); }}
+.mc-pano .fila.bien {{ border-left-color: #10AC84; }}
+.mc-pano .fila.mal {{ border-left-color: #EE5253; }}
+.mc-pano .fila.mixto {{ border-left-color: {SOL}; }}
+.mc-pano .tema {{ font-size: .7rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; opacity: .65; }}
+.mc-pano .cifra {{ font-size: 1.35rem; font-weight: 800; letter-spacing: -.02em; line-height: 1.2; }}
+.mc-pano .det {{ font-size: .72rem; opacity: .6; }}
+.mc-pano .txt {{ font-size: .92rem; line-height: 1.55; }}
+.mc-pano .txt strong {{ font-weight: 700; }}
+.mc-pano .pos {{ color: #10AC84; font-weight: 700; }}
+.mc-pano .neg {{ color: #EE5253; font-weight: 700; }}
+.mc-pano .tono {{ justify-self: end; display: inline-flex; align-items: center; gap: 6px; font-size: .72rem; font-weight: 700;
+    padding: 4px 10px; border-radius: 999px; white-space: nowrap; }}
+.mc-pano .bien .tono {{ color: #10AC84; background: rgba(16,172,132,.13); }}
+.mc-pano .mal .tono {{ color: #EE5253; background: rgba(238,82,83,.13); }}
+.mc-pano .mixto .tono {{ color: {SOL}; background: rgba(246,180,14,.13); }}
+.mc-pano .estable .tono, .mc-pano .cnt.estable {{ color: inherit; opacity: .75; background: rgba(128,128,128,.16); }}
+.mc-pano .fila.estable {{ border-left-color: rgba(128,128,128,.5); }}
+.mc-pano .pie {{ font-size: .72rem; opacity: .55; padding: 10px 20px 12px; border-top: 1px solid rgba(128,128,128,.14); }}
+@media (max-width: 760px) {{
+    .mc-pano .fila {{ grid-template-columns: 1fr auto; gap: 6px 12px; padding: 12px 14px; }}
+    .mc-pano .izq {{ display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }}
+    .mc-pano .txt {{ grid-column: 1 / -1; grid-row: 2; font-size: .88rem; }}
+    .mc-pano .tono {{ grid-column: 2; grid-row: 1; }}
+    .mc-pano .tono span {{ display: none; }}
+    .mc-pano .cifra {{ font-size: 1.1rem; }}
+    .mc-pano .cab {{ padding: 14px; }}
+    .mc-pano .pie {{ padding: 10px 14px; }}
+}}
 
 /* actualizar datos: discreto, al pie */
 section[data-testid="stSidebar"] .st-key-actualizar button {{
@@ -832,6 +878,34 @@ def pie_noticias(sitios: list[tuple[str, str]]) -> str:
 
 def etiqueta(texto: str) -> str:
     return f'<div class="mc-label">{texto}</div>'
+
+
+def _md_a_html(texto: str) -> str:
+    """El poquito de Markdown que usan las frases del panorama: **negrita**, :green[...] y :red[...]."""
+    t = html.escape(texto)
+    t = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", t)
+    t = re.sub(r":green\[(.+?)\]", r'<span class="pos">\1</span>', t)
+    return re.sub(r":red\[(.+?)\]", r'<span class="neg">\1</span>', t)
+
+
+def panorama(items: list[dict], fecha: str) -> str:
+    """Informe «En pocas palabras»: una fila por tema con su cifra clave, el resumen y el tono (bien / mal / mixto)."""
+    esc = html.escape
+    marcas = {"bien": ("A favor", "▲"), "mal": ("En contra", "▼"), "mixto": ("Mixto", "◆"), "estable": ("Estable", "■")}
+    cuenta = {k: sum(1 for i in items if i["tono"] == k) for k in marcas}
+    resumen = "".join(f'<span class="cnt {k}"><i></i>{cuenta[k]} {marcas[k][0].lower()}</span>'
+                      for k in marcas if cuenta[k])
+    filas = "".join(
+        f'<div class="fila {i["tono"]}"><div class="izq"><div class="tema">{esc(i["tema"])}</div>'
+        f'<div class="cifra">{esc(i["cifra"])}</div><div class="det">{esc(i["detalle"])}</div></div>'
+        f'<div class="txt">{_md_a_html(i["texto"])}</div>'
+        f'<div class="tono" title="{marcas[i["tono"]][0]}">{marcas[i["tono"]][1]}<span>{marcas[i["tono"]][0]}</span></div></div>'
+        for i in items)
+    return (f'<div class="mc-pano"><div class="cab"><div><div class="tit">En pocas palabras</div>'
+            f'<div class="sub">Lo más importante de la economía, con los últimos datos al {esc(fecha)}</div></div>'
+            f'<div class="bal">{resumen}</div></div>{filas}'
+            f'<div class="pie">Resumen automático con el último dato publicado por cada fuente (algunos tienen semanas de '
+            f'rezago). A favor / en contra según el efecto sobre la economía y el bolsillo.</div></div>')
 
 
 def conversor(filas: list[tuple[str, str, str]], nota: str) -> str:
