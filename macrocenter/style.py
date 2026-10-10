@@ -138,6 +138,20 @@ section[data-testid="stSidebar"] [data-testid="stPills"] button {{ border-radius
 [data-testid="InputInstructions"] {{ font-size: 0 !important; }}
 [data-testid="InputInstructions"]::after {{ content: "Presioná Enter para aplicar"; font-size: .75rem; opacity: .7; }}
 
+/* ── Botón «Volver al tablero»: píldora celeste con flecha que se corre al pasar el cursor ── */
+.st-key-volver_tablero button {{
+    border-radius: 999px !important; padding: .45rem 1.2rem .45rem .9rem !important; min-height: 0;
+    background: rgba(116,172,223,.10) !important; border: 1px solid rgba(116,172,223,.45) !important;
+    transition: background-color .18s ease, border-color .18s ease, box-shadow .18s ease;
+}}
+.st-key-volver_tablero button p {{ color: {CELESTE} !important; font-weight: 700; font-size: .92rem; }}
+.st-key-volver_tablero button [data-testid="stIconMaterial"] {{ color: {CELESTE}; transition: transform .18s ease; }}
+.st-key-volver_tablero button:hover {{
+    background: rgba(116,172,223,.2) !important; border-color: {CELESTE} !important;
+    box-shadow: 0 4px 14px rgba(74,143,212,.25);
+}}
+.st-key-volver_tablero button:hover [data-testid="stIconMaterial"] {{ transform: translateX(-3px); }}
+
 /* ── Herramientas: selector en tarjetas ── */
 [class*="st-key-modo_"] button {{
     min-height: 3.4rem; border-radius: 14px !important; justify-content: flex-start; padding: .7rem 1rem;
