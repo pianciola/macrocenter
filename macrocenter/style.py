@@ -404,6 +404,46 @@ button[data-variant="segmented_control"][aria-checked="true"] p {{ color: #fff !
     letter-spacing: .14em; color: #3A2A00; background: linear-gradient(135deg, {SOL}, #F79F1F);
     box-shadow: 0 4px 12px rgba(246,180,14,.4); position: relative; z-index: 1;
 }}
+/* ── Ministros de Economía ── */
+.mc-min-res {{ display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 6px 0 16px; }}
+.mc-min-res > div {{
+    padding: 12px 14px; border-radius: 14px; background: rgba(128,128,128,.09); border: 1px solid rgba(116,172,223,.3);
+}}
+.mc-min-res .k {{ font-size: .74rem; opacity: .7; }}
+.mc-min-res .v {{ font-size: 1.15rem; font-weight: 800; margin-top: 2px; }}
+.mc-min-res .d {{ font-size: .76rem; opacity: .7; }}
+.mc-min-grupo {{ margin: 18px 0 8px; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
+    border-bottom: 2px solid rgba(116,172,223,.45); padding-bottom: 4px; }}
+.mc-min-grupo b {{ font-size: 1.05rem; }}
+.mc-min-grupo span {{ font-size: .78rem; opacity: .65; }}
+.mc-min-nota {{ font-size: .78rem; opacity: .7; font-style: italic; margin: 0 0 10px; line-height: 1.4; }}
+.mc-min {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }}
+.mc-min-card {{
+    padding: 14px 16px 12px; border-radius: 16px; background: rgba(128,128,128,.09);
+    border: 1px solid rgba(116,172,223,.38); box-shadow: 0 4px 14px rgba(0,0,0,.08);
+}}
+.mc-min-card.actual {{ border-color: {SOL}; box-shadow: 0 0 14px rgba(246,180,14,.3); }}
+.mc-min-card .cab {{ display: flex; gap: 12px; align-items: center; }}
+.mc-min-card .ini {{
+    flex: 0 0 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    color: #fff; font-weight: 800; background: linear-gradient(135deg, {CELESTE}, #4A8FD4);
+}}
+.mc-min-card.actual .ini {{ background: linear-gradient(135deg, {SOL}, #F79F1F); color: #3A2A00; }}
+.mc-min-card h5 {{ margin: 0; padding: 0; font-size: 1.05rem; font-weight: 800; }}
+.mc-min-card .cargo {{ font-size: .74rem; opacity: .65; }}
+.mc-min-card .chips {{ display: flex; gap: 6px; flex-wrap: wrap; margin: 8px 0 6px; }}
+.mc-min-card .chips span {{
+    font-size: .72rem; font-weight: 700; padding: 2px 9px; border-radius: 999px;
+    background: rgba(116,172,223,.16); color: {CELESTE};
+}}
+.mc-min-card .perfil {{ font-size: .8rem; opacity: .75; font-style: italic; line-height: 1.35; }}
+.mc-min-card ul {{ margin: 8px 0 8px; padding-left: 18px; }}
+.mc-min-card li {{ font-size: .84rem; line-height: 1.4; margin-bottom: 3px; }}
+.mc-min-card .pico {{ margin-top: 6px; font-size: .78rem; opacity: .85; }}
+@media (max-width: 860px) {{
+    .mc-min-res {{ grid-template-columns: repeat(2, 1fr); }}
+    .mc-min {{ grid-template-columns: 1fr; }}
+}}
 @media (max-width: 860px) {{
     .mc-tl::before {{ left: 48px; }}
     .mc-tl-item {{ grid-template-columns: 96px 1fr; }}
@@ -1096,6 +1136,39 @@ def linea_tiempo(items: list[dict]) -> str:
             f'<div class="mc-tl-dot">{dot}</div><div class="mc-tl-anio">{it["anio"]}</div></div>'
         )
     out.append('<div class="mc-tl-hoy">HOY</div></div>')
+    return "".join(out)
+
+
+def ministros(resumen: dict | None, grupos: list[dict]) -> str:
+    """Ministros de Economía agrupados por presidente. resumen: [(etiqueta, valor, detalle)] o None.
+    Cada grupo: titulo, periodo, nota, items [{nombre, cargo, periodo, duracion, perfil, hitos, filas, pico, actual}]."""
+    esc = html.escape
+    out = []
+    if resumen:
+        out.append('<div class="mc-min-res">' + "".join(
+            f'<div><div class="k">{esc(k)}</div><div class="v">{esc(v)}</div><div class="d">{esc(d)}</div></div>'
+            for k, v, d in resumen) + "</div>")
+    for g in grupos:
+        out.append(f'<div class="mc-min-grupo"><b>{esc(g["titulo"])}</b><span>{esc(g["periodo"])}</span></div>')
+        if g.get("nota"):
+            out.append(f'<div class="mc-min-nota">{esc(g["nota"])}</div>')
+        out.append('<div class="mc-min">')
+        for it in g["items"]:
+            ini = it.get("iniciales") or it["nombre"][:2]
+            filas = "".join(
+                f'<div class="mc-fila"><span class="k">{esc(f["k"])}</span><span class="v">'
+                + (f'{esc(f["ini"])} <span style="opacity:.5">→</span> ' if f["ini"] else "")
+                + f'<span class="{f["tend"]}">{esc(f["fin"])}</span></span></div>' for f in it["filas"])
+            hitos = "".join(f"<li>{esc(h)}</li>" for h in it["hitos"])
+            pico = f'<div class="pico">{esc(it["pico"])}</div>' if it.get("pico") else ""
+            out.append(
+                f'<div class="mc-min-card{" actual" if it.get("actual") else ""}">'
+                f'<div class="cab"><div class="ini">{esc(ini)}</div><div><h5>{esc(it["nombre"])}</h5>'
+                f'<div class="cargo">{esc(it["cargo"])}</div></div></div>'
+                f'<div class="chips"><span>{esc(it["periodo"])}</span><span>{esc(it["duracion"])}</span></div>'
+                f'<div class="perfil">{esc(it["perfil"])}</div><ul>{hitos}</ul>{filas}{pico}</div>'
+            )
+        out.append("</div>")
     return "".join(out)
 
 
