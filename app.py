@@ -37,7 +37,7 @@ def error_corto(exc: BaseException) -> str:
 import pickle
 import threading
 
-CACHE_DISCO = Path(__file__).parent / ".macrocenter_cache.pkl"
+CACHE_DISCO = Path(__file__).parent / ".macrocenter_cache_v2.pkl"  # v2: series sin los huecos al azar de la API
 DISCO_FRESCO = 3600       # un dato guardado con menos de 1 h se usa tal cual, sin descargar
 DISCO_VIEJO_MAX = 43200   # hasta 12 h se muestra enseguida mientras se actualiza de fondo
 _refrescando = threading.Lock()
@@ -908,6 +908,7 @@ def pantalla_historia() -> None:
     try:
         dp, inds, faltan = historicos(DATOS, dol, ACTUALIZADO)
     except Exception as e:  # noqa: BLE001 — una falla de cálculo no debe romper el resto de la app
+        traceback.print_exc()
         dp, inds, faltan = None, None, ["cálculo"]
     if faltan:
         st.warning("No se pudo armar la línea de tiempo. Falta o falló: " + ", ".join(faltan))
@@ -1253,6 +1254,7 @@ def pantalla_juegos() -> None:
     try:
         dp_i, inds_i, faltan_i = historicos(DATOS, dol, ACTUALIZADO)
     except Exception as e:  # noqa: BLE001
+        traceback.print_exc()
         dp_i, inds_i, faltan_i = None, None, ["cálculo"]
     if faltan_i:
         st.warning("No se pudieron cargar los datos necesarios para las herramientas interactivas. "
