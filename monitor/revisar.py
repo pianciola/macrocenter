@@ -113,7 +113,7 @@ def revisar_pantallas() -> list[str]:
         for e in at.exception:
             problemas.append(f"{nombre}: error — {str(e.value)[:150]}")
         for w in at.warning:
-            if "No se pudo mostrar" in w.value:
+            if any(t in w.value for t in ("No se pudo mostrar", "No se pudo armar", "No se pudieron cargar")):
                 problemas.append(f"{nombre}: {w.value[:150]}")
     return problemas
 
