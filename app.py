@@ -505,6 +505,26 @@ def grafico_periodo(clave: str, df: pd.DataFrame, armar, min_anios: int = 0, def
     _grafico_periodo(clave, df, armar, min_anios, defecto, mensual)
 
 
+@st.fragment
+def graficos_fiscales(f: pd.DataFrame) -> None:
+    """Resultado fiscal: un solo selector de período para el acumulado de 12 meses y los dos mensuales (antes cada
+    gráfico tenía el suyo y la pestaña quedaba cargada de botones repetidos)."""
+    per = selector_periodo("fis", "5 años", mensual=True)
+    cols_12 = [c for c in ("primario_12m", "financiero_12m") if c in f and f[c].notna().any()]
+    if cols_12:
+        nombres = {"primario_12m": "Primario", "financiero_12m": "Financiero"}
+        fig = charts.lineas(rec(f.dropna(subset=cols_12, how="all"), 0, per), {nombres[c]: c for c in cols_12},
+                            "Resultado acumulado de 12 meses (% del PBI)", yfmt=",.1f", height=340)
+        fig.add_hline(y=0, line_width=1, line_dash="dot", line_color="rgba(128,128,128,.7)")
+        grafico(fig, key="graf_fis_12m")
+    a, b = st.columns(2)
+    for slot, c, titulo in ((a, "primario", "Resultado primario mensual (% del PBI)"),
+                            (b, "financiero", "Resultado financiero mensual (% del PBI)")):
+        if c in f:
+            with slot:
+                grafico(charts.barras(rec(f, 0, per), c, titulo, yfmt=",.1f", height=320), key=f"graf_fis_{c}")
+
+
 def ultimo(df: pd.DataFrame, col: str = "valor") -> float | None:
     d = df[df["fecha"] <= HOY].dropna(subset=[col])
     return None if d.empty else float(d.iloc[-1][col])
@@ -577,6 +597,7 @@ def grafico(fig, key: str | None = None):
     # `key` hace falta cuando el mismo gráfico aparece en dos pantallas (por ejemplo, en Inicio y en su pestaña).
     fig.update_layout(dragmode=False)
     aligerar(fig)
+    charts.compactar(fig)
     st.plotly_chart(fig, width="stretch", config={"displayModeBar": False, "scrollZoom": False}, key=key)
 
 
@@ -1059,7 +1080,8 @@ def _calificacion_contenido() -> None:
     if st.session_state.get("cal_anios") not in (3, 5, 10):
         st.session_state["cal_anios"] = 5
     for p_ in score.PILARES:
-        if not isinstance(st.session_state.get(f"cal_peso_{p_}"), int):
+        v_ = st.session_state.get(f"cal_peso_{p_}")
+        if not isinstance(v_, int) or isinstance(v_, bool) or not 0 <= v_ <= 100:
             st.session_state[f"cal_peso_{p_}"] = 25
     anios_sel = int(st.session_state["cal_anios"])
     pesos_sel = {p: int(st.session_state[f"cal_peso_{p}"]) for p in score.PILARES}
@@ -1290,8 +1312,11 @@ def pantalla_cripto() -> None:
             if isinstance(hist, str) or hist.empty:
                 st.info(f"No se pudo cargar el historial de {fila.iloc[0]['nombre']} ahora. ({hist})")
             else:
+                # decimales según el precio: con ",.0f" las monedas de menos de US$ 1 (TRX, DOGE, ADA) mostraban «0» en el eje
+                tope = float(hist["valor"].abs().max() or 0)
+                fmt_c = ",.0f" if tope >= 100 else ",.2f" if tope >= 1 else ",.4f"
                 grafico(charts.lineas(hist, {f"{fila.iloc[0]['nombre']} (US$)": "valor"},
-                                      f"{fila.iloc[0]['nombre']} en dólares — {rango.lower()}", yfmt=",.0f", height=340))
+                                      f"{fila.iloc[0]['nombre']} en dólares — {rango.lower()}", yfmt=fmt_c, height=340))
         st.caption("El historial gratuito de CoinGecko llega hasta 1 año atrás.")
 
     st.subheader("USDT en pesos: ¿dónde conviene?")
@@ -2384,24 +2409,7 @@ with t_fis, protegido("Resultado fiscal"):
                 kpi(slot, nombre, v, 1, suf="% del PBI", d=dif(v, antes), d_suf=" pp", d_txt="vs un año antes",
                     help=ayuda + " Verde: el resultado mejoró contra un año antes; rojo: empeoró.")
             st.caption("Primario: ingresos menos gastos, sin contar intereses de la deuda. Financiero: lo que queda después de pagar intereses.")
-            cols_12 = [c for c in ("primario_12m", "financiero_12m") if c in f and f[c].notna().any()]
-            if cols_12:
-                nombres = {"primario_12m": "Primario", "financiero_12m": "Financiero"}
-                def fig12(d):
-                    fig = charts.lineas(d, {nombres[c]: c for c in cols_12}, "Resultado acumulado de 12 meses (% del PBI)",
-                                        yfmt=",.1f", height=340)
-                    fig.add_hline(y=0, line_width=1, line_dash="dot", line_color="rgba(128,128,128,.7)")
-                    return fig
-                grafico_periodo("fis_12m", f.dropna(subset=cols_12, how="all"), fig12, defecto="5 años", mensual=True)
-            a, b = st.columns(2)
-            with a:
-                if "primario" in f:
-                    grafico_periodo("fis_prim", f, lambda d: charts.barras(d, "primario", "Resultado primario mensual (% del PBI)",
-                                                                            yfmt=",.1f", height=320), defecto="5 años", mensual=True)
-            with b:
-                if "financiero" in f:
-                    grafico_periodo("fis_fin", f, lambda d: charts.barras(d, "financiero", "Resultado financiero mensual (% del PBI)",
-                                                                           yfmt=",.1f", height=320), defecto="5 años", mensual=True)
+            graficos_fiscales(f)
             fa = fiscal_anual()
             if not fa.empty:
                 st.markdown("#### Resultado anual")
