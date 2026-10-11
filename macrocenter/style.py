@@ -267,53 +267,51 @@ section[data-testid="stSidebar"] [class*="st-key-atajo_"] button [data-testid="s
 section[data-testid="stSidebar"] [class*="st-key-atajo_"] button p {{ font-size: .86rem; font-weight: 500; }}
 section[data-testid="stSidebar"] [class*="st-key-atajo_"] button:hover {{ background: rgba(116,172,223,.12); }}
 section[data-testid="stSidebar"] [class*="st-key-atajo_"] {{ margin-top: -6px; }}
-/* informe "En pocas palabras" de Inicio */
-.mc-pano {{
-    border: 1px solid rgba(116,172,223,.28); border-radius: 16px; overflow: hidden; margin: 4px 0 6px;
-    background: linear-gradient(180deg, rgba(116,172,223,.09), rgba(116,172,223,.02));
-}}
-.mc-pano .cab {{ display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;
-    padding: 16px 20px 14px; border-bottom: 1px solid rgba(116,172,223,.2); }}
-.mc-pano .tit {{ font-size: .78rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: {CELESTE}; }}
-.mc-pano .sub {{ font-size: .85rem; opacity: .7; margin-top: 2px; }}
-.mc-pano .bal {{ display: flex; gap: 8px; flex-wrap: wrap; }}
-.mc-pano .cnt {{ display: inline-flex; align-items: center; gap: 6px; font-size: .74rem; font-weight: 700;
-    padding: 4px 10px; border-radius: 999px; background: rgba(128,128,128,.14); }}
-.mc-pano .cnt i {{ width: 7px; height: 7px; border-radius: 50%; background: currentColor; }}
-.mc-pano .cnt.bien {{ color: #10AC84; background: rgba(16,172,132,.13); }}
-.mc-pano .cnt.mal {{ color: #EE5253; background: rgba(238,82,83,.13); }}
-.mc-pano .cnt.mixto {{ color: {SOL}; background: rgba(246,180,14,.13); }}
-.mc-pano .fila {{ display: grid; grid-template-columns: 170px 1fr 92px; gap: 18px; align-items: center;
-    padding: 13px 20px; border-left: 3px solid transparent; transition: background-color .15s ease; }}
-.mc-pano .fila + .fila {{ border-top: 1px solid rgba(128,128,128,.14); }}
-.mc-pano .fila:hover {{ background: rgba(116,172,223,.06); }}
-.mc-pano .fila.bien {{ border-left-color: #10AC84; }}
-.mc-pano .fila.mal {{ border-left-color: #EE5253; }}
-.mc-pano .fila.mixto {{ border-left-color: {SOL}; }}
-.mc-pano .tema {{ font-size: .7rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; opacity: .65; }}
-.mc-pano .cifra {{ font-size: 1.35rem; font-weight: 800; letter-spacing: -.02em; line-height: 1.2; }}
-.mc-pano .det {{ font-size: .72rem; opacity: .6; }}
-.mc-pano .txt {{ font-size: .92rem; line-height: 1.55; }}
+/* informe "En pocas palabras" de Inicio: estilo de columna de diario económico (filete arriba, título con serif,
+   filas numeradas separadas por líneas finas y el veredicto como palabra, sin cajas ni píldoras) */
+.mc-pano {{ margin: 6px 0 10px; border-top: 3px solid currentColor; padding-top: 2px; }}
+.mc-pano .cab {{ display: flex; justify-content: space-between; align-items: baseline; gap: 6px 18px; flex-wrap: wrap;
+    padding: 12px 0 10px; border-bottom: 1px solid rgba(128,128,128,.45); }}
+.stApp .mc-pano .cab .tit {{ font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif !important;
+    font-size: 1.65rem; font-weight: 700; letter-spacing: -.01em; line-height: 1.1; }}
+.stApp .mc-pano .cab .sub {{ font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif !important;
+    font-style: italic; font-size: .92rem; opacity: .7; margin-top: 4px; }}
+.mc-pano .bal {{ font-size: .82rem; opacity: .9; white-space: nowrap; }}
+.mc-pano .bal .cnt + .cnt::before {{ content: " · "; color: inherit; opacity: .5; font-weight: 400; }}
+.mc-pano .cnt {{ font-weight: 700; }}
+.mc-pano .cnt.bien {{ color: #10AC84; }} .mc-pano .cnt.mal {{ color: #EE5253; }} .mc-pano .cnt.mixto {{ color: {SOL}; }}
+.mc-pano .cnt.estable {{ opacity: .75; }}
+.mc-pano .fila {{ display: grid; grid-template-columns: 2.1rem 150px 1fr 104px; gap: 18px; align-items: baseline;
+    padding: 15px 2px; counter-increment: pano; }}
+.mc-pano {{ counter-reset: pano; }}
+.mc-pano .fila + .fila {{ border-top: 1px solid rgba(128,128,128,.22); }}
+.stApp .mc-pano .fila::before {{ content: counter(pano, decimal-leading-zero);
+    font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif !important;
+    font-size: 1.05rem; font-style: italic; opacity: .45; }}
+.mc-pano .tema {{ font-size: .8rem; font-weight: 600; opacity: .7; }}
+.mc-pano .cifra {{ font-size: 1.45rem; font-weight: 700; letter-spacing: -.02em; line-height: 1.15;
+    font-variant-numeric: tabular-nums; margin: 1px 0; }}
+.mc-pano .det {{ font-size: .74rem; opacity: .55; }}
+.mc-pano .txt {{ font-size: .94rem; line-height: 1.6; }}
 .mc-pano .txt strong {{ font-weight: 700; }}
 .mc-pano .pos {{ color: #10AC84; font-weight: 700; }}
 .mc-pano .neg {{ color: #EE5253; font-weight: 700; }}
-.mc-pano .tono {{ justify-self: end; display: inline-flex; align-items: center; gap: 6px; font-size: .72rem; font-weight: 700;
-    padding: 4px 10px; border-radius: 999px; white-space: nowrap; }}
-.mc-pano .bien .tono {{ color: #10AC84; background: rgba(16,172,132,.13); }}
-.mc-pano .mal .tono {{ color: #EE5253; background: rgba(238,82,83,.13); }}
-.mc-pano .mixto .tono {{ color: {SOL}; background: rgba(246,180,14,.13); }}
-.mc-pano .estable .tono, .mc-pano .cnt.estable {{ color: inherit; opacity: .75; background: rgba(128,128,128,.16); }}
-.mc-pano .fila.estable {{ border-left-color: rgba(128,128,128,.5); }}
-.mc-pano .pie {{ font-size: .72rem; opacity: .55; padding: 10px 20px 12px; border-top: 1px solid rgba(128,128,128,.14); }}
+.mc-pano .tono {{ justify-self: end; font-size: .82rem; font-weight: 700; white-space: nowrap; }}
+.mc-pano .tono b {{ font-weight: 400; margin-right: 4px; }}
+.mc-pano .bien .tono {{ color: #10AC84; }} .mc-pano .mal .tono {{ color: #EE5253; }} .mc-pano .mixto .tono {{ color: {SOL}; }}
+.mc-pano .estable .tono {{ opacity: .6; }}
+.stApp .mc-pano .pie {{ font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif !important;
+    font-style: italic; font-size: .8rem; opacity: .6; padding: 10px 0 0; border-top: 1px solid rgba(128,128,128,.45); }}
 @media (max-width: 760px) {{
-    .mc-pano .fila {{ grid-template-columns: 1fr auto; gap: 6px 12px; padding: 12px 14px; }}
+    .mc-pano .fila {{ grid-template-columns: 1.8rem 1fr auto; gap: 4px 10px; padding: 13px 0; }}
     .mc-pano .izq {{ display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }}
-    .mc-pano .txt {{ grid-column: 1 / -1; grid-row: 2; font-size: .88rem; }}
-    .mc-pano .tono {{ grid-column: 2; grid-row: 1; }}
+    .mc-pano .txt {{ grid-column: 2 / -1; grid-row: 2; font-size: .9rem; }}
+    .mc-pano .tono {{ grid-column: 3; grid-row: 1; }}
     .mc-pano .tono span {{ display: none; }}
-    .mc-pano .cifra {{ font-size: 1.1rem; }}
-    .mc-pano .cab {{ padding: 14px; }}
-    .mc-pano .pie {{ padding: 10px 14px; }}
+    .mc-pano .cifra {{ font-size: 1.15rem; }}
+    .stApp .mc-pano .cab .tit {{ font-size: 1.35rem; }}
+    .mc-pano .bal {{ white-space: normal; }}
+}}
 }}
 
 /* actualizar datos: discreto, al pie */
@@ -763,6 +761,13 @@ button[data-variant="segmented_control"][aria-checked="true"] p {{ color: #fff !
 [role="tablist"] [data-testid="stTab"]:first-of-type[aria-selected="true"] p {{ color: #0B1A2E !important; }}
 /* la píldora ya marca la selección: sin la rayita de abajo */
 [role="tablist"] [data-testid="stTab"]:first-of-type .react-aria-SelectionIndicator {{ display: none; }}
+/* la rayita no viaja desde la pestaña anterior (saliendo de «Inicio» cruzaba toda la fila como una línea saltando):
+   aparece en su lugar, creciendo desde el centro */
+[role="tablist"] .react-aria-SelectionIndicator {{
+    transition: background-color .2s ease !important; animation: mc-raya .25s ease-out;
+}}
+@keyframes mc-raya {{ from {{ transform: scaleX(0); opacity: 0; }} to {{ transform: scaleX(1); opacity: 1; }} }}
+@media (prefers-reduced-motion: reduce) {{ [role="tablist"] .react-aria-SelectionIndicator {{ animation: none; }} }}
 [role="tablist"] [data-testid="stTab"]:first-of-type::before {{
     content: ""; position: absolute; left: .75rem; top: 50%; width: 1.3rem; height: 1.3rem; transform: translateY(-50%);
     background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><g stroke='%23F6B40E' stroke-width='1.6' stroke-linecap='round'><path d='M12 1.5v3M12 19.5v3M1.5 12h3M19.5 12h3M4.6 4.6l2.1 2.1M17.3 17.3l2.1 2.1M4.6 19.4l2.1-2.1M17.3 6.7l2.1-2.1'/></g><circle cx='12' cy='12' r='5' fill='%23F6B40E'/></svg>") center / contain no-repeat;
@@ -1208,22 +1213,22 @@ def _md_a_html(texto: str) -> str:
 def panorama(items: list[dict], fecha: str) -> str:
     """Informe «En pocas palabras»: una fila por tema con su cifra clave, el resumen y el tono (bien / mal / mixto)."""
     esc = html.escape
-    marcas = {"bien": ("Positivo", "▲"), "mal": ("Negativo", "▼"), "mixto": ("Mixto", "◆"), "estable": ("Estable", "■")}
+    marcas = {"bien": ("Positivo", "↑"), "mal": ("Negativo", "↓"), "mixto": ("Mixto", "↕"), "estable": ("Estable", "→")}
     cuenta = {k: sum(1 for i in items if i["tono"] == k) for k in marcas}
     plural = {"bien": "positivos", "mal": "negativos", "mixto": "mixtos", "estable": "estables"}
-    resumen = "".join(f'<span class="cnt {k}"><i></i>{cuenta[k]} '
+    resumen = "".join(f'<span class="cnt {k}">{cuenta[k]} '
                       f'{marcas[k][0].lower() if cuenta[k] == 1 else plural[k]}</span>'
                       for k in marcas if cuenta[k])
     filas = "".join(
         f'<div class="fila {i["tono"]}"><div class="izq"><div class="tema">{esc(i["tema"])}</div>'
         f'<div class="cifra">{esc(i["cifra"])}</div><div class="det">{esc(i["detalle"])}</div></div>'
         f'<div class="txt">{_md_a_html(i["texto"])}</div>'
-        f'<div class="tono" title="{marcas[i["tono"]][0]}">{marcas[i["tono"]][1]}<span>{marcas[i["tono"]][0]}</span></div></div>'
+        f'<div class="tono" title="{marcas[i["tono"]][0]}"><b>{marcas[i["tono"]][1]}</b><span>{marcas[i["tono"]][0]}</span></div></div>'
         for i in items)
     return (f'<div class="mc-pano"><div class="cab"><div><div class="tit">En pocas palabras</div>'
-            f'<div class="sub">Lo más importante de la economía, con los últimos datos al {esc(fecha)}</div></div>'
+            f'<div class="sub">Lo más importante de la economía · datos al {esc(fecha)}</div></div>'
             f'<div class="bal">{resumen}</div></div>{filas}'
-            f'<div class="pie">Resumen automático con el último dato publicado por cada fuente (algunos tienen semanas de '
+            f'<div class="pie">Nota: resumen automático con el último dato publicado por cada fuente (algunos tienen semanas de '
             f'rezago). Positivo / negativo según el efecto sobre la economía y el bolsillo.</div></div>')
 
 
