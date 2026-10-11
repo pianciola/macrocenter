@@ -1868,7 +1868,7 @@ with t_res, protegido("Inicio"):
                                         if isinstance(k, str) and k in CATALOGO]
         h, p = st.columns([5, 1.5], vertical_alignment="center")
         h.subheader("Indicadores clave")
-        with p.popover("Personalizar", width="stretch"):
+        with p.container(key="personalizar"), st.popover("Personalizar", icon=":material/tune:", width="content"):
             st.caption("Elegí qué indicadores ver (y en qué orden). Tu elección queda guardada.")
             st.multiselect(
                 "Indicadores", options=list(CATALOGO), key="kpis_sel", on_change=guardar_prefs,
