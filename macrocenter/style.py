@@ -267,6 +267,19 @@ section[data-testid="stSidebar"] [class*="st-key-atajo_"] button [data-testid="s
 section[data-testid="stSidebar"] [class*="st-key-atajo_"] button p {{ font-size: .86rem; font-weight: 500; }}
 section[data-testid="stSidebar"] [class*="st-key-atajo_"] button:hover {{ background: rgba(116,172,223,.12); }}
 section[data-testid="stSidebar"] [class*="st-key-atajo_"] {{ margin-top: -6px; }}
+/* botón «Personalizar» de Indicadores clave: píldora chica alineada a la derecha, con ícono de ajustes */
+.st-key-personalizar {{ align-items: flex-end; }}
+.st-key-personalizar [data-testid="stPopover"] > div > button, .st-key-personalizar [data-testid="stPopoverButton"] {{
+    min-height: 0 !important; padding: .32rem .85rem .32rem .7rem !important; border-radius: 999px !important;
+    border: 1px solid rgba(116,172,223,.45) !important; background: rgba(116,172,223,.08) !important;
+    transition: background-color .18s ease, border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+}}
+.st-key-personalizar [data-testid="stPopoverButton"] p {{ font-size: .84rem !important; font-weight: 700; color: {CELESTE} !important; }}
+.st-key-personalizar [data-testid="stPopoverButton"] [data-testid="stIconMaterial"] {{ color: {CELESTE}; font-size: 1.05rem; }}
+.st-key-personalizar [data-testid="stPopoverButton"]:hover {{
+    background: rgba(116,172,223,.18) !important; border-color: {CELESTE} !important;
+    box-shadow: 0 4px 12px rgba(74,143,212,.2); transform: translateY(-1px);
+}}
 /* títulos de sección: mismo tamaño y el mismo aire arriba en todas las pestañas y vistas (antes había títulos de
    28, 24 y 20 px según la pestaña, y ninguno se separaba de lo anterior más que el espacio común entre bloques) */
 [data-testid="stMain"] [data-testid="stElementContainer"]:has([data-testid="stHeadingWithActionElements"]):not(:first-child) {{
