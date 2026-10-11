@@ -996,6 +996,45 @@ JS_PESTANAS = """
 """
 
 
+GOATCOUNTER = "https://jmp0912.goatcounter.com/count"
+
+
+def slug(texto: str) -> str:
+    """«Tasas y riesgo país» → «tasas-y-riesgo-pais» (para las rutas de las estadísticas)."""
+    import unicodedata
+
+    t = unicodedata.normalize("NFKD", texto).encode("ascii", "ignore").decode().lower()
+    return re.sub(r"[^a-z0-9]+", "-", t).strip("-") or "inicio"
+
+
+def contador_visitas(ruta: str, titulo: str) -> str:
+    """Cuenta una visita a la sección con GoatCounter: sin cookies ni datos personales (solo totales por página,
+    navegador, país y tamaño de pantalla). Cada sección cuenta una vez por cambio; en la computadora local no cuenta."""
+    import json
+
+    return f"""<script>
+(() => {{
+  const ruta = {json.dumps(ruta)}, titulo = {json.dumps(titulo)};
+  if (['localhost', '127.0.0.1', '[::1]'].includes(location.hostname)) return;
+  if (window.__mcRuta === ruta) return;
+  window.__mcRuta = ruta;
+  const contar = () => {{ try {{ window.goatcounter.count({{path: window.__mcRuta, title: window.__mcTitulo}}); }} catch (e) {{}} }};
+  window.__mcTitulo = titulo;
+  if (window.goatcounter && window.goatcounter.count) {{ contar(); return; }}
+  if (window.__mcGoat) return;  // el script ya se está cargando: al terminar cuenta la última sección
+  window.__mcGoat = true;
+  // la app corre dentro de un marco en Streamlit Cloud: hay que permitirlo; el conteo de la carga lo hacemos nosotros
+  window.goatcounter = {{no_onload: true, allow_frame: true}};
+  const s = document.createElement('script');
+  s.async = true;
+  s.src = 'https://gc.zgo.at/count.js';
+  s.dataset.goatcounter = {json.dumps(GOATCOUNTER)};
+  s.onload = contar;
+  document.head.appendChild(s);
+}})();
+</script>"""
+
+
 def aplicar() -> None:
     st.markdown(CSS, unsafe_allow_html=True)
     st.html(JS_PESTANAS, unsafe_allow_javascript=True)

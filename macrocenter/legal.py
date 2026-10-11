@@ -3,7 +3,7 @@
 Redactados conforme al marco normativo argentino aplicable (Ley N.º 25.326 de Protección de los Datos Personales y su
 Decreto Reglamentario N.º 1558/2001, Ley N.º 11.723 de Propiedad Intelectual, Ley N.º 24.240 de Defensa del Consumidor,
 Código Civil y Comercial de la Nación). Describen lo que la aplicación hace realmente: no tiene registro de usuarios,
-formularios, publicidad ni analítica de terceros.
+formularios ni publicidad; cuenta visitas de forma agregada y sin cookies con GoatCounter.
 
 IMPORTANTE: es un texto base. Antes de publicar el sitio en internet de forma abierta conviene que lo revise un/a
 abogado/a (en especial el domicilio legal y el medio de contacto, que se completan en CONTACTO y DOMICILIO).
@@ -12,7 +12,7 @@ from __future__ import annotations
 
 MARCA = "MacroCenter"
 RESPONSABLE = "Juan Manuel Pianciola"
-ACTUALIZACION = "9 de octubre de 2026"
+ACTUALIZACION = "11 de octubre de 2026"
 CONTACTO = "juanpianciola06@gmail.com"
 DOMICILIO = "Ciudad Autónoma de Buenos Aires"
 
@@ -106,8 +106,14 @@ PRIVACIDAD = {
     "secciones": [
         ("1. Qué datos personales recopilamos",
          ["**Ninguno de forma deliberada.** El Sitio no exige registro, no tiene cuentas de usuario ni formularios, y no solicita "
-          "nombre, correo electrónico, documento, datos de pago ni ningún otro dato personal. Tampoco incorpora publicidad, "
-          "herramientas de analítica de terceros ni mecanismos de seguimiento del comportamiento de los usuarios."]),
+          "nombre, correo electrónico, documento, datos de pago ni ningún otro dato personal. Tampoco incorpora publicidad "
+          "ni mecanismos de seguimiento individual del comportamiento de los usuarios.",
+          "Para saber cuántas personas usan el Sitio y qué secciones resultan más útiles, se cuentan las visitas de forma "
+          "**agregada y anónima** con **GoatCounter** (goatcounter.com), un servicio de estadísticas que **no usa cookies** ni "
+          "identifica a las personas. Registra la sección visitada, la página de procedencia, el tipo de navegador y de sistema "
+          "operativo, el tamaño de pantalla y el país aproximado (deducido de la dirección IP, que no se guarda). Para distinguir "
+          "visitas únicas usa un identificador temporal que no permite reconocer a nadie y se descarta a las pocas horas. El "
+          "Responsable solo accede a totales, nunca a datos de una persona en particular."]),
         ("2. Información técnica",
          ["Como ocurre en cualquier servicio web, el servidor donde se ejecuta la aplicación puede registrar de forma automática "
           "datos técnicos de la conexión (por ejemplo, dirección IP, fecha y hora, tipo de navegador) en registros operativos "
@@ -125,7 +131,10 @@ PRIVACIDAD = {
           "Algunos contenidos (por ejemplo, las fotografías de Wikimedia Commons) son cargados directamente por el navegador desde "
           "los servidores de esos terceros, que pueden recibir datos técnicos de la conexión como la dirección IP. El Sitio "
           "indica al navegador que no envíe la página de origen (referrer), pero el tratamiento que realicen esos terceros se rige "
-          "por sus propias políticas de privacidad."]),
+          "por sus propias políticas de privacidad.",
+          "El conteo de visitas descripto en el punto 1 también lo realiza el navegador, conectándose a los servidores de "
+          "GoatCounter, cuyo tratamiento se rige por su política de privacidad (goatcounter.com/help/privacy). Quien prefiera que "
+          "no se cuente su visita puede bloquear el dominio «gc.zgo.at» con un bloqueador de contenido: el Sitio funciona igual."]),
         ("5. Finalidad y base del tratamiento",
          ["La información técnica y las preferencias locales se utilizan únicamente para el funcionamiento, la seguridad y la "
           "mejora del Sitio. Dado que no se recopilan datos personales de los usuarios, no se requiere su consentimiento "
@@ -154,7 +163,8 @@ PRIVACIDAD = {
          ["El Sitio no está dirigido a niños y niñas ni recopila deliberadamente datos personales de menores de edad."]),
         ("10. Conservación",
          ["Los archivos de preferencias se conservan hasta que el usuario los elimine. Los registros técnicos se conservan por el "
-          "tiempo que defina el entorno donde se ejecute la aplicación y no más de lo necesario para su finalidad."]),
+          "tiempo que defina el entorno donde se ejecute la aplicación y no más de lo necesario para su finalidad. Las "
+          "estadísticas de visitas son totales anónimos y se conservan mientras el Sitio esté en funcionamiento."]),
         ("11. Cambios en esta política",
          ["Esta Política puede actualizarse periódicamente. La versión vigente es la publicada en el Sitio, con su fecha de "
           "actualización. Se recomienda revisarla con frecuencia."]),
