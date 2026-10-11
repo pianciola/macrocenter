@@ -404,46 +404,125 @@ button[data-variant="segmented_control"][aria-checked="true"] p {{ color: #fff !
     letter-spacing: .14em; color: #3A2A00; background: linear-gradient(135deg, {SOL}, #F79F1F);
     box-shadow: 0 4px 12px rgba(246,180,14,.4); position: relative; z-index: 1;
 }}
+/* ── Selector de sección de Historia: dos pestañas grandes ── */
+.st-key-hist_seccion, .st-key-hist_seccion [data-testid="stButtonGroup"] {{ width: 100% !important; }}
+.st-key-hist_seccion [data-testid="stButtonGroup"] > div {{ width: 100% !important; max-width: none !important; display: flex; gap: 10px; }}
+.st-key-hist_seccion button {{
+    flex: 1 1 0; min-width: 0; min-height: 3.3rem; border-radius: 16px !important; padding: .6rem 1.1rem !important;
+    border: 1px solid rgba(116,172,223,.4) !important; background: rgba(116,172,223,.07) !important;
+    transition: transform .18s ease, box-shadow .18s ease, background-color .18s ease;
+}}
+.st-key-hist_seccion button p {{ font-size: 1.02rem !important; font-weight: 800; }}
+.st-key-hist_seccion button:hover {{ transform: translateY(-2px); box-shadow: 0 6px 16px rgba(74,143,212,.2); }}
+.st-key-hist_seccion button[aria-checked="true"] {{
+    background: linear-gradient(135deg, {CELESTE} 0%, #4A8FD4 100%) !important; border-color: {CELESTE} !important;
+    box-shadow: 0 8px 20px rgba(74,143,212,.35), inset 0 -3px 0 {SOL};
+}}
+.st-key-hist_seccion button[aria-checked="true"] p {{ color: #fff !important; }}
+
 /* ── Ministros de Economía ── */
-.mc-min-res {{ display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 6px 0 16px; }}
+.mc-min-hero {{
+    position: relative; overflow: hidden; border-radius: 22px; padding: 26px 28px 22px; margin: 6px 0 18px; color: #fff;
+    background:
+        radial-gradient(circle at 92% 8%, rgba(246,180,14,.45) 0, rgba(246,180,14,0) 30%),
+        radial-gradient(circle at 0% 100%, rgba(116,172,223,.55) 0, rgba(116,172,223,0) 45%),
+        linear-gradient(135deg, #0E2440 0%, #17406B 55%, #1F5A93 100%);
+    box-shadow: 0 14px 34px rgba(14,36,64,.35);
+}}
+.mc-min-hero::after {{
+    content: "$"; position: absolute; right: 22px; bottom: -48px; font-size: 13rem; font-weight: 900; line-height: 1;
+    color: rgba(255,255,255,.06); pointer-events: none;
+}}
+.mc-min-hero .eyebrow {{ font-size: .72rem; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; color: {SOL}; }}
+.mc-min-hero h3 {{ margin: 4px 0 6px; padding: 0; font-size: 2rem; font-weight: 900; letter-spacing: -.03em; color: #fff; }}
+.mc-min-hero p {{ margin: 0; max-width: 720px; font-size: .94rem; line-height: 1.5; color: rgba(255,255,255,.85); }}
+.mc-min-res {{ display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 18px; position: relative; z-index: 1; }}
 .mc-min-res > div {{
-    padding: 12px 14px; border-radius: 14px; background: rgba(128,128,128,.09); border: 1px solid rgba(116,172,223,.3);
+    padding: 12px 14px; border-radius: 14px; background: rgba(255,255,255,.09); border: 1px solid rgba(255,255,255,.16);
+    backdrop-filter: blur(4px);
 }}
-.mc-min-res .k {{ font-size: .74rem; opacity: .7; }}
-.mc-min-res .v {{ font-size: 1.15rem; font-weight: 800; margin-top: 2px; }}
-.mc-min-res .d {{ font-size: .76rem; opacity: .7; }}
-.mc-min-grupo {{ margin: 18px 0 8px; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
-    border-bottom: 2px solid rgba(116,172,223,.45); padding-bottom: 4px; }}
-.mc-min-grupo b {{ font-size: 1.05rem; }}
-.mc-min-grupo span {{ font-size: .78rem; opacity: .65; }}
-.mc-min-nota {{ font-size: .78rem; opacity: .7; font-style: italic; margin: 0 0 10px; line-height: 1.4; }}
-.mc-min {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }}
+.mc-min-res .k {{ font-size: .7rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: rgba(255,255,255,.7); }}
+.mc-min-res .v {{ font-size: 1.3rem; font-weight: 900; margin-top: 2px; color: #fff; }}
+.mc-min-res .d {{ font-size: .76rem; color: rgba(255,255,255,.7); }}
+
+.mc-min-grupo {{ display: flex; align-items: center; gap: 14px; margin: 30px 0 12px; }}
+.mc-min-grupo .pf {{
+    flex: 0 0 52px; height: 52px; border-radius: 50%; overflow: hidden; position: relative;
+    background: linear-gradient(135deg, {CELESTE}, #4A8FD4); border: 3px solid #fff; box-shadow: 0 0 0 2px {CELESTE};
+    display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800;
+}}
+.mc-min-grupo .pf img {{ position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: top center; }}
+.mc-min-grupo .t {{ flex: 1; }}
+.mc-min-grupo .t small {{ display: block; font-size: .68rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: {CELESTE}; }}
+.mc-min-grupo .t b {{ font-size: 1.25rem; font-weight: 900; letter-spacing: -.02em; }}
+.mc-min-grupo .t span {{ font-size: .82rem; opacity: .6; margin-left: 6px; }}
+.mc-min-grupo .n {{
+    font-size: .74rem; font-weight: 800; padding: 4px 12px; border-radius: 999px; white-space: nowrap;
+    color: {CELESTE}; background: rgba(116,172,223,.14); border: 1px solid rgba(116,172,223,.35);
+}}
+.mc-min-linea {{ height: 4px; border-radius: 4px; margin: -4px 0 14px;
+    background: linear-gradient(90deg, {CELESTE} 0%, rgba(116,172,223,.15) 70%, rgba(116,172,223,0) 100%); }}
+.mc-min-nota {{
+    font-size: .8rem; line-height: 1.45; margin: 0 0 14px; padding: 10px 14px; border-radius: 12px;
+    background: rgba(246,180,14,.08); border-left: 3px solid {SOL};
+}}
+.mc-min {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }}
 .mc-min-card {{
-    padding: 14px 16px 12px; border-radius: 16px; background: rgba(128,128,128,.09);
-    border: 1px solid rgba(116,172,223,.38); box-shadow: 0 4px 14px rgba(0,0,0,.08);
+    position: relative; overflow: hidden; display: flex; flex-direction: column; border-radius: 20px;
+    background: rgba(128,128,128,.07); border: 1px solid rgba(116,172,223,.3); box-shadow: 0 6px 18px rgba(0,0,0,.08);
+    transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
 }}
-.mc-min-card.actual {{ border-color: {SOL}; box-shadow: 0 0 14px rgba(246,180,14,.3); }}
-.mc-min-card .cab {{ display: flex; gap: 12px; align-items: center; }}
-.mc-min-card .ini {{
-    flex: 0 0 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
-    color: #fff; font-weight: 800; background: linear-gradient(135deg, {CELESTE}, #4A8FD4);
+.mc-min-card:hover {{ transform: translateY(-4px); border-color: {CELESTE}; box-shadow: 0 14px 30px rgba(74,143,212,.22); }}
+.mc-min-card .top {{
+    display: flex; gap: 14px; align-items: center; padding: 16px 16px 14px;
+    background: linear-gradient(135deg, rgba(116,172,223,.30) 0%, rgba(74,143,212,.10) 60%, rgba(116,172,223,0) 100%);
+    border-bottom: 1px solid rgba(116,172,223,.22);
 }}
-.mc-min-card.actual .ini {{ background: linear-gradient(135deg, {SOL}, #F79F1F); color: #3A2A00; }}
-.mc-min-card h5 {{ margin: 0; padding: 0; font-size: 1.05rem; font-weight: 800; }}
-.mc-min-card .cargo {{ font-size: .74rem; opacity: .65; }}
-.mc-min-card .chips {{ display: flex; gap: 6px; flex-wrap: wrap; margin: 8px 0 6px; }}
-.mc-min-card .chips span {{
-    font-size: .72rem; font-weight: 700; padding: 2px 9px; border-radius: 999px;
-    background: rgba(116,172,223,.16); color: {CELESTE};
+.mc-min-card .ph {{
+    flex: 0 0 76px; height: 76px; border-radius: 50%; overflow: hidden; position: relative;
+    display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 1.4rem;
+    background: linear-gradient(135deg, {CELESTE}, #4A8FD4); border: 3px solid #fff;
+    box-shadow: 0 0 0 2px {CELESTE}, 0 6px 14px rgba(0,0,0,.25);
 }}
-.mc-min-card .perfil {{ font-size: .8rem; opacity: .75; font-style: italic; line-height: 1.35; }}
-.mc-min-card ul {{ margin: 8px 0 8px; padding-left: 18px; }}
-.mc-min-card li {{ font-size: .84rem; line-height: 1.4; margin-bottom: 3px; }}
-.mc-min-card .pico {{ margin-top: 6px; font-size: .78rem; opacity: .85; }}
+.mc-min-card .ph img {{ position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: top center; }}
+.mc-min-card .per {{ font-size: .7rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: {CELESTE}; }}
+.mc-min-card h5 {{ margin: 1px 0 1px; padding: 0; font-size: 1.18rem; font-weight: 900; letter-spacing: -.02em; line-height: 1.2; }}
+.mc-min-card .cargo {{ font-size: .74rem; opacity: .62; line-height: 1.3; }}
+.mc-min-card .cuerpo {{ padding: 12px 16px 14px; display: flex; flex-direction: column; gap: 10px; flex: 1; }}
+.mc-min-card .dur {{ display: flex; align-items: center; gap: 10px; font-size: .74rem; font-weight: 800; white-space: nowrap; }}
+.mc-min-card .dur .b {{ flex: 1; height: 6px; border-radius: 6px; background: rgba(128,128,128,.18); overflow: hidden; }}
+.mc-min-card .dur .b i {{ display: block; height: 100%; border-radius: 6px; background: linear-gradient(90deg, {CELESTE}, #4A8FD4); }}
+.mc-min-card .perfil {{ font-size: .8rem; opacity: .72; font-style: italic; line-height: 1.4; }}
+.mc-min-card ul {{ list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 7px; }}
+.mc-min-card li {{ position: relative; padding-left: 18px; font-size: .86rem; line-height: 1.42; }}
+.mc-min-card li::before {{
+    content: ""; position: absolute; left: 2px; top: .5em; width: 8px; height: 8px; border-radius: 50%;
+    background: {CELESTE}; box-shadow: 0 0 0 3px rgba(116,172,223,.22);
+}}
+.mc-min-card .datos {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(92px, 1fr)); gap: 8px; margin-top: auto; padding-top: 4px; }}
+.mc-min-card .dato {{ padding: 9px 10px; border-radius: 12px; background: rgba(116,172,223,.09); border: 1px solid rgba(116,172,223,.2); }}
+.mc-min-card .dato .k {{ font-size: .64rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; opacity: .65; }}
+.mc-min-card .dato .v {{ font-size: .95rem; font-weight: 900; margin-top: 2px; line-height: 1.2; }}
+.mc-min-card .dato .s {{ font-size: .72rem; opacity: .75; margin-top: 1px; }}
+.mc-min-card .dato .mejor {{ color: #10AC84; opacity: 1; font-weight: 800; }}
+.mc-min-card .dato .peor {{ color: #EE5253; opacity: 1; font-weight: 800; }}
+.mc-min-card .pico {{ font-size: .76rem; opacity: .8; }}
+.mc-min-card.actual {{ border-color: {SOL}; box-shadow: 0 0 0 1px {SOL}, 0 10px 26px rgba(246,180,14,.25); }}
+.mc-min-card.actual .top {{ background: linear-gradient(135deg, rgba(246,180,14,.32) 0%, rgba(247,159,31,.10) 60%, rgba(246,180,14,0) 100%); }}
+.mc-min-card.actual .ph {{ box-shadow: 0 0 0 2px {SOL}, 0 0 18px rgba(246,180,14,.55); background: linear-gradient(135deg, {SOL}, #F79F1F); }}
+.mc-min-card.actual .dur .b i {{ background: linear-gradient(90deg, {SOL}, #F79F1F); }}
+.mc-min-card .vivo {{
+    position: absolute; top: 12px; right: 12px; font-size: .64rem; font-weight: 900; letter-spacing: .12em;
+    padding: 3px 9px; border-radius: 999px; color: #3A2A00; background: linear-gradient(135deg, {SOL}, #F79F1F);
+}}
 @media (max-width: 860px) {{
+    .mc-min-hero {{ padding: 20px 18px 18px; }}
+    .mc-min-hero h3 {{ font-size: 1.55rem; }}
     .mc-min-res {{ grid-template-columns: repeat(2, 1fr); }}
     .mc-min {{ grid-template-columns: 1fr; }}
+    .mc-min-card .ph {{ flex-basis: 64px; height: 64px; }}
 }}
+@media (prefers-reduced-motion: reduce) {{ .mc-min-card, .st-key-hist_seccion button {{ transition: none; }} }}
 @media (max-width: 860px) {{
     .mc-tl::before {{ left: 48px; }}
     .mc-tl-item {{ grid-template-columns: 96px 1fr; }}
@@ -1139,34 +1218,49 @@ def linea_tiempo(items: list[dict]) -> str:
     return "".join(out)
 
 
-def ministros(resumen: dict | None, grupos: list[dict]) -> str:
-    """Ministros de Economía agrupados por presidente. resumen: [(etiqueta, valor, detalle)] o None.
-    Cada grupo: titulo, periodo, nota, items [{nombre, cargo, periodo, duracion, perfil, hitos, filas, pico, actual}]."""
+def ministros(resumen: list | None, grupos: list[dict], intro: str = "") -> str:
+    """Sección de ministros de Economía. resumen: [(etiqueta, valor, detalle)] o None. Cada grupo: titulo, periodo,
+    foto, nota, items [{nombre, iniciales, foto, cargo, periodo, duracion, barra, perfil, hitos, datos, pico, actual}]."""
     esc = html.escape
+
+    def img(url: str | None, alt: str) -> str:
+        return (f'<img src="{esc(url)}" alt="{esc(alt)}" loading="lazy" referrerpolicy="no-referrer">' if url else "")
+
     out = []
-    if resumen:
-        out.append('<div class="mc-min-res">' + "".join(
-            f'<div><div class="k">{esc(k)}</div><div class="v">{esc(v)}</div><div class="d">{esc(d)}</div></div>'
-            for k, v, d in resumen) + "</div>")
+    if intro or resumen:  # portada (va arriba del filtro, por eso se dibuja aparte)
+        out.append('<div class="mc-min-hero"><div class="eyebrow">Historia económica · 1983 – hoy</div>'
+                   '<h3>Ministros de Economía</h3>' + (f"<p>{esc(intro)}</p>" if intro else ""))
+        if resumen:
+            out.append('<div class="mc-min-res">' + "".join(
+                f'<div><div class="k">{esc(k)}</div><div class="v">{esc(v)}</div><div class="d">{esc(d)}</div></div>'
+                for k, v, d in resumen) + "</div>")
+        out.append("</div>")
     for g in grupos:
-        out.append(f'<div class="mc-min-grupo"><b>{esc(g["titulo"])}</b><span>{esc(g["periodo"])}</span></div>')
+        ini_p = "".join(p[0] for p in g["titulo"].split() if p[0].isupper())[:2]
+        n = len(g["items"])
+        out.append(
+            f'<div class="mc-min-grupo"><div class="pf"><span>{esc(ini_p)}</span>{img(g.get("foto"), g["titulo"])}</div>'
+            f'<div class="t"><small>Presidencia</small><b>{esc(g["titulo"])}</b><span>{esc(g["periodo"])}</span></div>'
+            f'<div class="n">{n} ministro{"s" if n != 1 else ""}</div></div><div class="mc-min-linea"></div>')
         if g.get("nota"):
             out.append(f'<div class="mc-min-nota">{esc(g["nota"])}</div>')
         out.append('<div class="mc-min">')
         for it in g["items"]:
-            ini = it.get("iniciales") or it["nombre"][:2]
-            filas = "".join(
-                f'<div class="mc-fila"><span class="k">{esc(f["k"])}</span><span class="v">'
-                + (f'{esc(f["ini"])} <span style="opacity:.5">→</span> ' if f["ini"] else "")
-                + f'<span class="{f["tend"]}">{esc(f["fin"])}</span></span></div>' for f in it["filas"])
+            datos = "".join(
+                f'<div class="dato"><div class="k">{esc(d["k"])}</div><div class="v">{esc(d["v"])}</div>'
+                f'<div class="s{" " + d["tend"] if d.get("tend") else ""}">{esc(d["s"])}</div></div>' for d in it["datos"])
             hitos = "".join(f"<li>{esc(h)}</li>" for h in it["hitos"])
             pico = f'<div class="pico">{esc(it["pico"])}</div>' if it.get("pico") else ""
+            vivo = '<span class="vivo">EN EJERCICIO</span>' if it.get("actual") else ""
             out.append(
-                f'<div class="mc-min-card{" actual" if it.get("actual") else ""}">'
-                f'<div class="cab"><div class="ini">{esc(ini)}</div><div><h5>{esc(it["nombre"])}</h5>'
+                f'<div class="mc-min-card{" actual" if it.get("actual") else ""}">{vivo}'
+                f'<div class="top"><div class="ph"><span>{esc(it["iniciales"])}</span>{img(it.get("foto"), it["nombre"])}</div>'
+                f'<div><div class="per">{esc(it["periodo"])}</div><h5>{esc(it["nombre"])}</h5>'
                 f'<div class="cargo">{esc(it["cargo"])}</div></div></div>'
-                f'<div class="chips"><span>{esc(it["periodo"])}</span><span>{esc(it["duracion"])}</span></div>'
-                f'<div class="perfil">{esc(it["perfil"])}</div><ul>{hitos}</ul>{filas}{pico}</div>'
+                f'<div class="cuerpo"><div class="dur"><span>{esc(it["duracion"])}</span>'
+                f'<div class="b"><i style="width:{float(it["barra"]):.0f}%"></i></div></div>'
+                f'<div class="perfil">{esc(it["perfil"])}</div><ul>{hitos}</ul>'
+                + (f'<div class="datos">{datos}</div>' if datos else "") + f"{pico}</div></div>"
             )
         out.append("</div>")
     return "".join(out)

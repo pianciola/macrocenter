@@ -29,6 +29,8 @@ class Ministro:
     hitos: tuple[str, ...]
     cargo: str = "Ministro de Economía"
     apellido: str = ""  # solo si tiene más de una palabra (para las iniciales)
+    wiki: str = ""  # título en es.wikipedia.org si no es igual al nombre (de ahí sale la foto)
+    archivo: str = ""  # foto elegida a mano en Wikimedia Commons cuando la del artículo no sirve; "-" = sin foto
 
     @property
     def iniciales(self) -> str:
@@ -64,11 +66,12 @@ MINISTROS = [
     Ministro("Juan Carlos Pugliese", _f("1989-04-04"), _f("1989-05-26"), ("alfonsin",),
              "Presidente de la Cámara de Diputados; había sido ministro de Economía de Illia.",
              ("Gestión de menos de dos meses, en plena aceleración inflacionaria y antes de las elecciones de mayo de 1989.",
-              "Se lo recuerda por la frase «les hablé con el corazón y me contestaron con el bolsillo».")),
+              "Se lo recuerda por la frase «les hablé con el corazón y me contestaron con el bolsillo»."),
+             archivo="JuanCarlosPugliese (cropped).jpg"),
     Ministro("Jesús Rodríguez", _f("1989-05-27"), _f("1989-07-08"), ("alfonsin",),
              "Diputado nacional.",
              ("Ejerció durante el pico de la hiperinflación de 1989.",
-              "El traspaso presidencial se adelantó al 8 de julio de 1989.")),
+              "El traspaso presidencial se adelantó al 8 de julio de 1989."), wiki="Jesús Rodríguez (político)"),
     # ── Menem ──
     Ministro("Miguel Ángel Roig", _f("1989-07-08"), _f("1989-07-15"), ("menem",),
              "Directivo del grupo Bunge & Born.",
@@ -82,7 +85,7 @@ MINISTROS = [
              "Contador. Luego fue ministro de Defensa y de Trabajo.",
              ("Plan Bonex (enero de 1990): canje obligatorio de plazos fijos por bonos en dólares a 10 años.",
               "Segundo episodio hiperinflacionario a comienzos de 1990.",
-              "Primeras privatizaciones grandes: ENTel y Aerolíneas Argentinas (1990).")),
+              "Primeras privatizaciones grandes: ENTel y Aerolíneas Argentinas (1990)."), archivo="-"),
     Ministro("Domingo Cavallo", _f("1991-01-31"), _f("1996-08-02"), ("menem",),
              "Doctor en Economía (Harvard). Había presidido el BCRA en 1982 y fue canciller entre 1989 y 1991.",
              ("Ley de Convertibilidad (abril de 1991): 10.000 australes = 1 dólar; desde 1992, 1 peso = 1 dólar.",
@@ -150,7 +153,7 @@ MINISTROS = [
              ("El Senado rechazó la Resolución 125 (julio de 2008) con el voto de desempate del vicepresidente.",
               "Estatización de las AFJP (noviembre de 2008): los aportes volvieron al sistema estatal (SIPA).",
               "Crisis financiera mundial: la economía se contrajo en 2009."),
-             cargo="Ministro de Economía y Finanzas Públicas"),
+             cargo="Ministro de Economía y Finanzas Públicas", wiki="Carlos Rafael Fernández"),
     Ministro("Amado Boudou", _f("2009-07-10"), _f("2011-12-10"), ("cfk",),
              "Economista. Dirigía la ANSES; después fue vicepresidente (2011–2015).",
              ("Asignación Universal por Hijo (noviembre de 2009).",
@@ -277,30 +280,80 @@ def periodo(m: Ministro) -> str:
     return f"{_fecha(m.desde)} – {_fecha(m.hasta) if m.hasta else 'hoy'}"
 
 
-def filas(m: Ministro, i: dict) -> list[dict]:
-    """Filas de la tarjeta, mismo formato que presidentes.filas. Las que no tienen dato no se muestran."""
+def _usd(x: float) -> str:
+    return P._n(x, 2 if x < 100 else 0, "$")
+
+
+def datos(i: dict) -> list[dict]:
+    """Cifras de la tarjeta: [{'k': título, 'v': valor, 's': detalle, 'tend': ''|'mejor'|'peor'}].
+    Las que no tienen dato (o no cambian en gestiones de pocos días) no se muestran."""
     out = []
-    if i["inf"] is not None and i["meses"] >= 2:
-        prom = ((1 + i["inf"] / 100) ** (1 / i["meses"]) - 1) * 100
-        prom = 0.0 if abs(prom) < 0.05 else prom  # sin «-0,0%»
-        out.append({"k": f"Inflación en la gestión ({i['meses']} meses)", "ini": "",
-                    "fin": f"{P._pct(i['inf'])} · {P._n(prom, 1)}% por mes", "tend": ""})
-    elif i["inf"] is not None:
-        out.append({"k": "Inflación en la gestión (1 mes)", "ini": "", "fin": P._pct(i["inf"]), "tend": ""})
+    if i["inf"] is not None:
+        if i["meses"] >= 2:
+            prom = ((1 + i["inf"] / 100) ** (1 / i["meses"]) - 1) * 100
+            prom = 0.0 if abs(prom) < 0.05 else prom  # sin «-0,0%»
+            det = f"{P._n(prom, 1)}% por mes · {i['meses']} meses"
+        else:
+            det = "en su único mes"
+        out.append({"k": "Inflación acumulada", "v": P._pct(i["inf"]), "s": det, "tend": ""})
     if i["usd_ini"] and i["usd_fin"]:
-        out.append({"k": "Dólar oficial", "ini": P._n(i["usd_ini"], 2, "$"),
-                    "fin": f"{P._n(i['usd_fin'], 2, '$')} (×{P._n(i['usd_fin'] / i['usd_ini'], 1)})", "tend": ""})
-    if i["res_ini"] is not None and i["res_fin"] is not None and i["res_ini"] != i["res_fin"]:  # gestiones de días: sin dato
-        out.append({"k": "Reservas (USD M)", "ini": P._n(i["res_ini"]), "fin": P._n(i["res_fin"]),
+        out.append({"k": "Dólar oficial", "v": f"{_usd(i['usd_ini'])} → {_usd(i['usd_fin'])}",
+                    "s": f"×{P._n(i['usd_fin'] / i['usd_ini'], 1)}", "tend": ""})
+    if i["res_ini"] and i["res_fin"] is not None and i["res_ini"] != i["res_fin"]:
+        cambio = (i["res_fin"] / i["res_ini"] - 1) * 100
+        out.append({"k": "Reservas (USD M)", "v": f"{P._n(i['res_ini'])} → {P._n(i['res_fin'])}",
+                    "s": ("+" if cambio > 0 else "") + P._n(cambio, 0, suf="%"),
                     "tend": P._tendencia(i["res_ini"], i["res_fin"], "alto")})
     return out
+
+
+def foto_url(m: Ministro, fotos_wiki: dict[str, str]) -> str:
+    """Foto del ministro: la elegida a mano en Commons, o la del artículo de Wikipedia, o ninguna."""
+    if m.archivo == "-":
+        return ""
+    if m.archivo:
+        from urllib.parse import quote
+        return f"https://commons.wikimedia.org/wiki/Special:FilePath/{quote(m.archivo.replace(' ', '_'))}?width=300"
+    return fotos_wiki.get(m.nombre, "")
+
+
+def fotos() -> dict[str, str]:
+    """{nombre: url de la foto} con la imagen principal de cada artículo de es.wikipedia.org, en un solo pedido.
+    Solo se aceptan imágenes alojadas en Wikimedia. Devuelve {} si no hay conexión: las tarjetas muestran iniciales."""
+    import requests
+
+    titulos = {(m.wiki or m.nombre): m.nombre for m in MINISTROS if not m.archivo}
+    try:
+        r = requests.get(
+            "https://es.wikipedia.org/w/api.php",
+            params={"action": "query", "format": "json", "prop": "pageimages", "pithumbsize": 300, "redirects": 1,
+                    "titles": "|".join(titulos)},
+            headers={"User-Agent": "MacroCenter/1.0 (tablero personal)"}, timeout=30,
+        ).json()["query"]
+        redirigido = {x["from"]: x["to"] for x in r.get("redirects", []) + r.get("normalized", [])}
+        paginas = {p["title"]: p for p in r["pages"].values()}
+        out = {}
+        for titulo, nombre in titulos.items():
+            foto = ((paginas.get(redirigido.get(titulo, titulo)) or {}).get("thumbnail") or {}).get("source", "")
+            if foto and P._host_ok(foto, ("upload.wikimedia.org", "thumb.wikimedia.org")):
+                out[nombre] = foto
+        return out
+    except Exception:  # noqa: BLE001
+        return {}
 
 
 def pico_texto(i: dict) -> str:
     if not i["pico"] or i["meses"] < 2:
         return ""
     mes, v = i["pico"]
-    return f"Pico de inflación mensual: {P._pct(v)} ({_MESES[mes.month - 1]}-{mes.year})"
+    return f"Pico mensual de inflación: {P._pct(v)} en {_MESES[mes.month - 1]}-{mes.year}"
+
+
+def barra_duracion(m: Ministro) -> float:
+    """Ancho (0–100) de la barra de duración, relativo a la gestión más larga. Escala de raíz cuadrada para que
+    una gestión de días siga siendo visible al lado de una de años."""
+    mayor = max(x.dias for x in MINISTROS)
+    return max(4.0, (m.dias / mayor) ** 0.5 * 100)
 
 
 def resumen() -> dict:
