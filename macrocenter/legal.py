@@ -134,7 +134,7 @@ PRIVACIDAD = {
           "por sus propias políticas de privacidad.",
           "El conteo de visitas descripto en el punto 1 también lo realiza el navegador, conectándose a los servidores de "
           "GoatCounter, cuyo tratamiento se rige por su política de privacidad (goatcounter.com/help/privacy). Quien prefiera que "
-          "no se cuente su visita puede bloquear el dominio «gc.zgo.at» con un bloqueador de contenido: el Sitio funciona igual."]),
+          "no se cuente su visita puede bloquear el dominio «goatcounter.com» con un bloqueador de contenido: el Sitio funciona igual."]),
         ("5. Finalidad y base del tratamiento",
          ["La información técnica y las preferencias locales se utilizan únicamente para el funcionamiento, la seguridad y la "
           "mejora del Sitio. Dado que no se recopilan datos personales de los usuarios, no se requiere su consentimiento "

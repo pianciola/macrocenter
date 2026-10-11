@@ -1018,19 +1018,19 @@ def contador_visitas(ruta: str, titulo: str) -> str:
   if (['localhost', '127.0.0.1', '[::1]'].includes(location.hostname)) return;
   if (window.__mcRuta === ruta) return;
   window.__mcRuta = ruta;
-  const contar = () => {{ try {{ window.goatcounter.count({{path: window.__mcRuta, title: window.__mcTitulo}}); }} catch (e) {{}} }};
-  window.__mcTitulo = titulo;
-  if (window.goatcounter && window.goatcounter.count) {{ contar(); return; }}
-  if (window.__mcGoat) return;  // el script ya se está cargando: al terminar cuenta la última sección
-  window.__mcGoat = true;
-  // la app corre dentro de un marco en Streamlit Cloud: hay que permitirlo; el conteo de la carga lo hacemos nosotros
-  window.goatcounter = {{no_onload: true, allow_frame: true}};
-  const s = document.createElement('script');
-  s.async = true;
-  s.src = 'https://gc.zgo.at/count.js';
-  s.dataset.goatcounter = {json.dumps(GOATCOUNTER)};
-  s.onload = contar;
-  document.head.appendChild(s);
+  // pedido directo al contador (método «sin JavaScript» de GoatCounter): el script oficial no arranca dentro del
+  // marco en el que Streamlit Cloud muestra la app. La procedencia solo se manda en la primera sección de la visita.
+  let origen = '';
+  if (!window.__mcOrigen) {{
+    window.__mcOrigen = true;
+    try {{ origen = window.parent.document.referrer || document.referrer; }} catch (e) {{ origen = document.referrer; }}
+  }}
+  const q = new URLSearchParams({{p: ruta, t: titulo, r: origen,
+    s: [screen.width, screen.height, window.devicePixelRatio || 1].join(','),
+    rnd: Math.random().toString(36).slice(2)}});
+  const img = new Image();
+  img.referrerPolicy = 'no-referrer-when-downgrade';
+  img.src = {json.dumps(GOATCOUNTER)} + '?' + q.toString();
 }})();
 </script>"""
 
