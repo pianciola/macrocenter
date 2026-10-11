@@ -17,7 +17,7 @@ from pathlib import Path
 import pandas as pd
 import streamlit as st
 
-from macrocenter import charts, data, glosario, interactivo, legal, news, presidentes, score, style
+from macrocenter import charts, data, glosario, interactivo, legal, ministros, news, presidentes, score, style
 
 st.set_page_config(page_title="MacroCenter", page_icon=style.favicon(), layout="wide")
 
@@ -973,6 +973,50 @@ def pantalla_historia() -> None:
 - No se incluye pobreza: no existe una serie oficial continua desde 1983.
                     """
                 )
+    seccion_ministros(dp)
+
+
+def seccion_ministros(dp: dict | None) -> None:
+    """Ministros de Economía desde 1983, agrupados por presidente. Los hitos son fijos; las cifras salen de las series
+    (si faltan, las tarjetas se muestran igual, sin números)."""
+    st.markdown("#### Ministros de Economía desde 1983")
+    st.caption("Quién condujo la economía, cuánto duró y qué medidas marcaron cada gestión. Los hitos son hechos con fecha, "
+               "sin valoraciones; las cifras se calculan con las series oficiales.")
+    MS = presidentes.MANDATOS
+    opciones = ["Todos"] + [presidentes.CORTO[m.clave] for m in MS]
+    elegido = st.segmented_control("Presidente", opciones, default="Todos", key="min_pres",
+                                   label_visibility="collapsed") or "Todos"
+    r = ministros.resumen()
+    resumen = None
+    if elegido == "Todos":
+        resumen = [("Gestiones desde 1983", str(r["gestiones"]), f"{r['personas']} personas distintas"),
+                   ("Duración promedio", r["promedio"], "por gestión"),
+                   ("La más larga", r["larga"][0].nombre, f"{r['larga'][1]} · {ministros.periodo(r['larga'][0])}"),
+                   ("La más corta", r["corta"][0].nombre, f"{r['corta'][1]} · {ministros.periodo(r['corta'][0])}")]
+    grupos = []
+    for m in MS:
+        corto = presidentes.CORTO[m.clave]
+        if elegido not in ("Todos", corto):
+            continue
+        # con «Todos», cada ministro va una sola vez (con el presidente con el que asumió); filtrando, aparece con todos
+        lista = [x for x in ministros.MINISTROS
+                 if (x.presidentes[0] == m.clave if elegido == "Todos" else m.clave in x.presidentes)]
+        items = []
+        for x in lista:
+            try:
+                ind = ministros.indicadores(x, dp) if dp else None
+            except Exception:  # noqa: BLE001 — sin cifras, la tarjeta igual se muestra
+                ind = None
+            items.append(dict(nombre=x.nombre, iniciales=x.iniciales, cargo=x.cargo, periodo=ministros.periodo(x),
+                              duracion=ministros.duracion(x.dias) + (" (en ejercicio)" if x.hasta is None else ""),
+                              perfil=x.perfil, hitos=x.hitos, filas=ministros.filas(x, ind) if ind else [],
+                              pico=ministros.pico_texto(ind) if ind else "", actual=x.hasta is None))
+        grupos.append(dict(titulo=m.nombre, periodo=m.periodo, nota=ministros.NOTAS.get(m.clave, ""), items=items))
+    st.markdown(style.ministros(resumen, grupos), unsafe_allow_html=True)
+    st.caption("Fechas: listado oficial del Ministerio de Economía (CDI). La inflación de cada mes se asigna a quien estaba "
+               "en el cargo al cierre de ese mes; entre 2007 y 2015 son las cifras del INDEC intervenido, que distintos "
+               "analistas consideran subestimadas. El dólar oficial se muestra desde 1992. Las cifras de un ministro dependen "
+               "también del contexto que heredó y de decisiones de otras áreas (BCRA, Congreso, Presidencia).")
 
 # ── Calificación macro (dentro de Herramientas) ──
 def _calificacion_contenido() -> None:
