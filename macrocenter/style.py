@@ -617,6 +617,36 @@ button[data-variant="segmented_control"][aria-checked="true"] p {{ color: #fff !
     content: ""; position: absolute; right: -0.75rem; top: 15%; height: 70%; width: 1px;
     background: rgba(128,128,128,.45);
 }}
+/* pestaña recién tocada (se arma en el servidor): esqueleto de tarjetas y gráfico con un brillo que pasa, en lugar de
+   un hueco vacío con el pie de página subiendo */
+[data-testid="stTabPanel"] > [data-testid="stVerticalBlock"]:empty {{
+    display: block; position: relative; overflow: hidden; min-height: 120vh; margin-top: 10px; border-radius: 14px;
+    background-image: linear-gradient(rgba(116,172,223,.10), rgba(116,172,223,.10)),
+        linear-gradient(rgba(116,172,223,.08), rgba(116,172,223,.08)),
+        linear-gradient(rgba(116,172,223,.08), rgba(116,172,223,.08)),
+        linear-gradient(rgba(116,172,223,.08), rgba(116,172,223,.08)),
+        linear-gradient(rgba(116,172,223,.08), rgba(116,172,223,.08)),
+        linear-gradient(rgba(116,172,223,.07), rgba(116,172,223,.07)),
+        linear-gradient(rgba(116,172,223,.07), rgba(116,172,223,.07));
+    background-repeat: no-repeat;
+    background-size: 55% 14px, 23.5% 104px, 23.5% 104px, 23.5% 104px, 23.5% 104px, 30% 34px, 100% 380px;
+    background-position: 0 6px, 0 40px, 33.33% 40px, 66.67% 40px, 100% 40px, 0 176px, 0 226px;
+}}
+[data-testid="stTabPanel"] > [data-testid="stVerticalBlock"]:empty::before {{
+    content: ""; position: absolute; inset: 0; transform: translateX(-100%);
+    background: linear-gradient(90deg, transparent 0, rgba(116,172,223,.13) 50%, transparent 100%);
+    animation: mc-brillo 1.2s ease-in-out infinite;
+}}
+@keyframes mc-brillo {{ to {{ transform: translateX(100%); }} }}
+@media (prefers-reduced-motion: reduce) {{
+    [data-testid="stTabPanel"] > [data-testid="stVerticalBlock"]:empty::before {{ animation: none; }}
+}}
+@media (max-width: 640px) {{
+    [data-testid="stTabPanel"] > [data-testid="stVerticalBlock"]:empty {{
+        background-size: 70% 14px, 48.5% 96px, 48.5% 96px, 48.5% 96px, 48.5% 96px, 45% 30px, 100% 300px;
+        background-position: 0 6px, 0 36px, 100% 36px, 0 144px, 100% 144px, 0 256px, 0 300px;
+    }}
+}}
 h3 {{ font-weight: 700 !important; }}
 /* la etiqueta de variación de los indicadores no se corta con «…»: si no entra, baja de renglón */
 [data-testid="stMetricDelta"], [data-testid="stMetricDelta"] div, [data-testid="stMetricDelta"] p {{
