@@ -174,14 +174,25 @@ def inflacion_mandato(inf: pd.DataFrame, m: Mandato) -> tuple[float | None, tupl
 def pbi_empalmado(s86: pd.DataFrame, s93: pd.DataFrame, s04: pd.DataFrame) -> pd.Series:
     """PBI real de los últimos 4 trimestres, empalmando las tres series oficiales. Índice = fin del trimestre."""
     def t4(df: pd.DataFrame) -> pd.Series:
-        s = df.set_index("fecha")["valor"].sort_index().rolling(4).sum().dropna()
+        s = df.set_index("fecha")["valor"].sort_index()
+        s = s[~s.index.duplicated()]
+        # con un trimestre faltante, la suma de 4 queda vacía (y no mezcla trimestres de años distintos)
+        s = s.reindex(pd.date_range(s.index.min(), s.index.max(), freq="QS")).rolling(4).sum().dropna()
         s.index = s.index + pd.offsets.QuarterEnd(0)  # inicio de trimestre -> fin de trimestre
         return s
 
+    def factor(nueva: pd.Series, vieja: pd.Series, q: pd.Timestamp) -> float:
+        """Empalme en `q` o, si falta ese dato, en el trimestre común más cercano."""
+        comunes = nueva.index.intersection(vieja.index)
+        if comunes.empty:
+            raise ValueError("las series de PBI no tienen trimestres en común para empalmar")
+        k = comunes[abs(comunes - q).argmin()]
+        return vieja.loc[k] / nueva.loc[k]
+
     a, b, c = t4(s86), t4(s93), t4(s04)
     q1, q2 = pd.Timestamp("1996-12-31"), pd.Timestamp("2010-12-31")
-    b = b * (a.loc[q1] / b.loc[q1])
-    c = c * (b.loc[q2] / c.loc[q2])
+    b = b * factor(b, a, q1)
+    c = c * factor(c, b, q2)
     return pd.concat([a[a.index <= q1], b[(b.index > q1) & (b.index <= q2)], c[c.index > q2]])
 
 

@@ -9,6 +9,7 @@ Todas las funciones devuelven DataFrames con columna `fecha` (datetime64) ordena
 """
 from __future__ import annotations
 
+import io
 import time
 
 import pandas as pd
@@ -133,15 +134,36 @@ def bcra(variable: str, desde: str | None = None) -> pd.DataFrame:
 
 def serie(nombre: str, desde: str | None = None, hasta: str | None = None) -> pd.DataFrame:
     """Serie de la API de Series de Tiempo por nombre lógico (ver SERIES_IDS). Máximo 5.000 puntos por pedido."""
-    params = {"ids": SERIES_IDS[nombre], "limit": 5000, "format": "json"}
+    params = {"ids": SERIES_IDS[nombre], "limit": 5000}
     if desde:
         params["start_date"] = desde
     if hasta:
         params["end_date"] = hasta
-    payload = _get(SERIES_URL, **params).json()
-    df = pd.DataFrame(payload["data"], columns=["fecha", "valor"])
-    df["fecha"] = pd.to_datetime(df["fecha"])
+    # La API a veces devuelve valores vacíos al azar (distintos en cada pedido y en cada formato). Se pide de nuevo,
+    # alternando JSON y CSV, y se completan los huecos hasta que una vuelta no agrega nada (los huecos reales quedan).
+    s = _serie_pedido(params, "json")
+    for formato in ("csv", "json") * 4:
+        huecos = int(s.isna().sum())
+        if not huecos:
+            break
+        s = s.combine_first(_serie_pedido(params, formato))
+        if int(s.isna().sum()) == huecos:
+            break
+    df = s.rename("valor").rename_axis("fecha").reset_index()
     return df.dropna().sort_values("fecha").reset_index(drop=True)
+
+
+def _serie_pedido(params: dict, formato: str) -> pd.Series:
+    """Un pedido a la API de Series de Tiempo: valores indexados por fecha (NaN donde vino vacío)."""
+    resp = _get(SERIES_URL, **params, format=formato)
+    if formato == "csv":
+        df = pd.read_csv(io.StringIO(resp.text))
+        fechas, valores = df.iloc[:, 0], pd.to_numeric(df.iloc[:, 1], errors="coerce")
+    else:
+        df = pd.DataFrame(resp.json()["data"], columns=["fecha", "valor"])
+        fechas, valores = df["fecha"], pd.to_numeric(df["valor"], errors="coerce")
+    s = pd.Series(valores.to_numpy(dtype=float), index=pd.to_datetime(fechas))
+    return s[~s.index.duplicated()]
 
 
 def dolar(casa: str) -> pd.DataFrame:
