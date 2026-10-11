@@ -23,6 +23,8 @@ enableCORS = true
 maxUploadSize = 1
 # El navegador no recibe información sensible de la máquina en los errores.
 headless = true
+# Comprime lo que viaja al navegador (los gráficos son texto JSON): la página baja varias veces menos datos.
+enableWebsocketCompression = true
 
 [client]
 showErrorDetails = "none"
