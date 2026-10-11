@@ -111,16 +111,20 @@ def _leer_monto(texto) -> float | None:
 def entrada_monto(slot, etiqueta: str, clave: str, defecto: float) -> float:
     """Campo de monto con separador de miles (600.000). Al confirmar, se reescribe con los puntos; si lo escrito no es
     un número válido, avisa y usa el último valor bueno."""
-    bueno = f"{clave}_ok"
-    if clave not in st.session_state:
-        st.session_state[clave] = _n(defecto)
+    bueno, texto = f"{clave}_ok", f"{clave}_txt"
+    if texto not in st.session_state:
+        st.session_state[texto] = _n(defecto)
         st.session_state[bueno] = float(defecto)
+    # Streamlit borra el estado de un campo que deja de dibujarse (por ejemplo, al pasar a otra herramienta) y al
+    # volver el navegador lo mostraba vacío. El texto vive en una clave propia y se restaura antes de cada dibujo.
+    st.session_state[clave] = st.session_state[texto]
 
     def formatear() -> None:
         v = _leer_monto(st.session_state[clave])
+        st.session_state[texto] = st.session_state[clave]
         if v is not None:
             st.session_state[bueno] = v
-            st.session_state[clave] = _n(v, 0 if v == int(v) else 2)
+            st.session_state[clave] = st.session_state[texto] = _n(v, 0 if v == int(v) else 2)
 
     slot.text_input(etiqueta, key=clave, on_change=formatear, help="Escribilo con o sin puntos: por ejemplo 600.000.")
     if _leer_monto(st.session_state[clave]) is None:
@@ -211,8 +215,9 @@ def pantalla_pesos(d: dict, uva: pd.DataFrame | None) -> None:
 
     graf = indices_base100(d, f, uva)
     cols = {c: c for c in ("Precios", "Dólar oficial", "Dólar blue", "UVA") if c in graf}
-    st.plotly_chart(charts.lineas(graf, cols, "Cómo evolucionó cada cosa (base 100 = la fecha elegida)", yfmt=",.0f",
-                                  height=340).update_layout(dragmode=False), width="stretch", config=GRAFICO_CFG)
+    st.plotly_chart(charts.compactar(charts.lineas(graf, cols, "Cómo evolucionó cada cosa (base 100 = la fecha elegida)",
+                                                   yfmt=",.0f", height=340).update_layout(dragmode=False)),
+                    width="stretch", config=GRAFICO_CFG)
     st.caption("Valores mes a mes (aproximados). No es una recomendación de inversión: es solo mirar el pasado."
                + (" La fecha elegida cae en un período de cepo: al dólar oficial no se podía comprar libremente, así que "
                   "el cálculo usa el blue." if tipo0 == "blue" else ""))
@@ -436,9 +441,9 @@ def _cuadro_viaje(d: dict, fotos: dict, f: pd.Timestamp) -> None:
     k[3].metric("Riesgo país", _n(e["riesgo"]) if e["riesgo"] else "s/d", border=True)
     k[4].metric("Desocupación", P._pct(e["paro"]), border=True)
     anual = P.inflacion_anual_serie(d["inflacion"])
-    st.plotly_chart(charts.inflacion_presidentes(anual[anual["fecha"] >= "1983-12-01"], P.MANDATOS, P.CORTO,
-                                                 "Inflación anual: estás en la línea dorada", height=300,
-                                                 marca=f).update_layout(dragmode=False),
+    st.plotly_chart(charts.compactar(charts.inflacion_presidentes(anual[anual["fecha"] >= "1983-12-01"], P.MANDATOS,
+                                                                  P.CORTO, "Inflación anual: estás en la línea dorada",
+                                                                  height=300, marca=f).update_layout(dragmode=False)),
                     width="stretch", config=GRAFICO_CFG)
 
 

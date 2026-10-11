@@ -313,7 +313,7 @@ def foto_url(m: Ministro, fotos_wiki: dict[str, str]) -> str:
         return ""
     if m.archivo:
         from urllib.parse import quote
-        return f"https://commons.wikimedia.org/wiki/Special:FilePath/{quote(m.archivo.replace(' ', '_'))}?width=300"
+        return f"https://commons.wikimedia.org/wiki/Special:FilePath/{quote(m.archivo.replace(' ', '_'))}?width=250"
     return fotos_wiki.get(m.nombre, "")
 
 
@@ -326,7 +326,7 @@ def fotos() -> dict[str, str]:
     try:
         r = requests.get(
             "https://es.wikipedia.org/w/api.php",
-            params={"action": "query", "format": "json", "prop": "pageimages", "pithumbsize": 300, "redirects": 1,
+            params={"action": "query", "format": "json", "prop": "pageimages", "pithumbsize": 250, "redirects": 1,
                     "titles": "|".join(titulos)},
             headers={"User-Agent": "MacroCenter/1.0 (tablero personal)"}, timeout=30,
         ).json()["query"]

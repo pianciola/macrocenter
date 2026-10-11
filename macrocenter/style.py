@@ -1,6 +1,7 @@
 """Estilos de MacroCenter. Usa colores translúcidos para verse bien en modo claro y oscuro."""
 from __future__ import annotations
 
+import functools
 import html
 import math
 import re
@@ -499,6 +500,18 @@ button[data-variant="segmented_control"][aria-checked="true"] p {{ color: #fff !
     content: ""; position: absolute; left: 2px; top: .5em; width: 8px; height: 8px; border-radius: 50%;
     background: {CELESTE}; box-shadow: 0 0 0 3px rgba(116,172,223,.22);
 }}
+.mc-min-card li.mas {{ padding-left: 0; }}
+.mc-min-card li.mas::before {{ display: none; }}
+.mc-min-card li.mas summary {{
+    cursor: pointer; list-style: none; display: inline-flex; align-items: center; gap: 6px; font-size: .78rem; font-weight: 800;
+    color: {CELESTE}; padding: 3px 10px; border-radius: 999px; background: rgba(116,172,223,.12);
+    border: 1px solid rgba(116,172,223,.3); transition: background-color .15s ease;
+}}
+.mc-min-card li.mas summary::-webkit-details-marker {{ display: none; }}
+.mc-min-card li.mas summary::after {{ content: "▾"; font-size: .7rem; transition: transform .15s ease; }}
+.mc-min-card li.mas details[open] summary::after {{ transform: rotate(180deg); }}
+.mc-min-card li.mas summary:hover {{ background: rgba(116,172,223,.22); }}
+.mc-min-card li.mas ul {{ margin-top: 8px; }}
 .mc-min-card .datos {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(92px, 1fr)); gap: 8px; margin-top: auto; padding-top: 4px; }}
 .mc-min-card .dato {{ padding: 9px 10px; border-radius: 12px; background: rgba(116,172,223,.09); border: 1px solid rgba(116,172,223,.2); }}
 .mc-min-card .dato .k {{ font-size: .64rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; opacity: .65; }}
@@ -545,7 +558,17 @@ button[data-variant="segmented_control"][aria-checked="true"] p {{ color: #fff !
 .mc-foot a {{ color: {CELESTE}; font-weight: 700; text-decoration: none; border-bottom: 1px solid rgba(116,172,223,.4); }}
 .mc-foot a:hover {{ border-bottom-color: {CELESTE}; }}
 .mc-foot p {{ margin: 0 0 8px; font-size: .86rem; line-height: 1.55; }}
-.mc-foot .fin {{ text-align: center; display: flex; flex-direction: column; align-items: center; gap: 8px; }}
+/* columna del crédito: tarjeta del alto de las otras dos, con el contenido centrado (antes quedaba un hueco abajo) */
+.mc-foot .fin {{
+    text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+    align-self: stretch; padding: 20px 16px; border-radius: 16px;
+    background: linear-gradient(160deg, rgba(116,172,223,.16) 0%, rgba(116,172,223,.05) 100%);
+    border: 1px solid rgba(116,172,223,.25);
+}}
+.mc-foot .fin p {{ margin: 0; }}
+/* el pie cierra la página: sin el relleno que Streamlit deja al final */
+[data-testid="stMainBlockContainer"] {{ padding-bottom: 0 !important; }}
+.mc-foot {{ margin-bottom: 0; }}
 .mc-foot a.mc-linkedin {{ display: inline-flex; align-items: center; gap: 7px; padding: 6px 14px; border-radius: 999px;
     border: 1px solid rgba(116,172,223,.45); background: rgba(116,172,223,.10); font-size: .82rem; color: {CELESTE}; }}
 .mc-foot a.mc-linkedin:hover {{ background: #0A66C2; border-color: #0A66C2; color: #fff; }}
@@ -580,6 +603,9 @@ button[data-variant="segmented_control"][aria-checked="true"] p {{ color: #fff !
 /* columnas según la cantidad de tarjetas (--cols, ver _columnas): filas parejas, sin tarjetas huérfanas */
 .mc-fxgrid {{ display: grid; grid-template-columns: repeat(var(--cols, 4), minmax(0, 1fr)); gap: 12px; margin: 8px 0 8px; }}
 @media (max-width: 1100px) {{ .mc-fxgrid {{ grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }} }}
+/* según el ancho real disponible (barra lateral abierta o no): con poco lugar, menos columnas */
+.mc-fxwrap {{ container-type: inline-size; }}
+@container (max-width: 760px) {{ .mc-fxgrid {{ grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }} }}
 .mc-fx {{
     padding: 14px 16px 12px; border-radius: 14px; background: rgba(128,128,128,.09); min-width: 0; overflow: hidden;
     border: 1px solid rgba(116,172,223,.32); border-top: 4px solid {CELESTE};
@@ -598,8 +624,16 @@ button[data-variant="segmented_control"][aria-checked="true"] p {{ color: #fff !
 .mc-fx .chip.mal {{ color: #EE5253; background: rgba(238,82,83,.16); }}
 .mc-fx .chip.flat {{ opacity: .8; }}
 .mc-fx .fila {{ display: flex; align-items: center; justify-content: space-between; gap: 10px; min-width: 0; }}
-/* el mini-gráfico se angosta si el valor es largo, en lugar de salirse de la tarjeta */
-.mc-fx .spark {{ flex: 0 1 76px; min-width: 28px; width: 76px; opacity: .95; }}
+/* el valor nunca se achica (si no, se monta sobre el mini-gráfico); el mini-gráfico se angosta y, en tarjetas
+   angostas (5 columnas con la barra lateral abierta), se oculta y el valor se achica un poco */
+.mc-fx {{ container-type: inline-size; }}
+.mc-fx .v {{ flex: 0 0 auto; }}
+.mc-fx .spark {{ flex: 0 1 76px; min-width: 0; width: 76px; opacity: .95; }}
+@container (max-width: 205px) {{
+    .mc-fx .spark {{ display: none; }}
+    .mc-fx .v {{ font-size: 1.3rem; }}
+}}
+@container (max-width: 150px) {{ .mc-fx .v {{ font-size: 1.1rem; }} }}
 @media (max-width: 640px) {{
     .mc-fxgrid {{ grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }}
     .mc-fx {{ padding: 11px 12px 10px; }}
@@ -615,8 +649,10 @@ button[data-variant="segmented_control"][aria-checked="true"] p {{ color: #fff !
     -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 3%, #000 97%, transparent 100%);
             mask-image: linear-gradient(90deg, transparent 0, #000 3%, #000 97%, transparent 100%);
 }}
-.mc-ticker .pista {{ display: inline-flex; width: max-content; animation: mc-marquee 120s linear infinite; }}
-.mc-ticker:hover .pista {{ animation-play-state: paused; }}
+.mc-ticker .pista {{ display: inline-flex; width: max-content; animation: mc-marquee 120s linear infinite;
+    will-change: transform; }}
+.mc-ticker {{ contain: layout paint; }}  /* su movimiento no obliga a redibujar el resto de la página */
+.mc-ticker:hover .pista, .mc-ticker.quieta .pista {{ animation-play-state: paused; }}  /* quieta: fuera de la vista */
 .mc-ticker .tk {{ display: inline-flex; align-items: baseline; gap: 8px; padding: 0 22px; border-right: 1px solid rgba(128,128,128,.22); }}
 .mc-ticker .n {{ font-size: .68rem; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; opacity: .6; }}
 .mc-ticker .v {{ font-weight: 800; font-size: .92rem; }}
@@ -642,6 +678,11 @@ button[data-variant="segmented_control"][aria-checked="true"] p {{ color: #fff !
 .mc-cmp td:first-child {{ font-weight: 400; opacity: .8; }}
 .mc-cmp .mejor {{ color: #10AC84; }}
 .mc-cmp .peor {{ color: #EE5253; }}
+@media (max-width: 640px) {{  /* en el celular, celdas más ajustadas para que la tabla entre en el ancho */
+    .mc-cmp {{ font-size: .8rem; }}
+    .mc-cmp th {{ padding: 6px 5px; font-size: .62rem; letter-spacing: .03em; }}
+    .mc-cmp td {{ padding: 7px 5px; }}
+}}
 
 [data-testid="stMetric"] {{ border-radius: 14px; transition: border-color .18s ease; }}
 [data-testid="stMetric"]:hover {{ border-color: rgba(116,172,223,.55); }}
@@ -817,7 +858,7 @@ h3 {{ font-weight: 700 !important; }}
 
 /* ── Celular y pantallas angostas: más aire, indicadores de a dos y todo legible ── */
 @media (max-width: 640px) {{
-    .block-container {{ padding: 3.2rem .85rem 2rem !important; }}
+    .block-container {{ padding: 3.2rem .85rem 0 !important; }}
     h1 {{ font-size: 1.6rem !important; }}
     h2, [data-testid="stHeading"] h2 {{ font-size: 1.3rem !important; }}
     h3 {{ font-size: 1.15rem !important; }}
@@ -846,10 +887,40 @@ h3 {{ font-weight: 700 !important; }}
 """
 
 
+def _minificar_css(css: str) -> str:
+    """Saca comentarios y espacios de sobra (el CSS viaja en cada carga): ~25% menos de bytes, mismas reglas.
+    Las comillas («content: "$"», data URIs) se respetan."""
+    partes = re.split(r'("[^"]*"|\'[^\']*\')', css)  # los textos entre comillas no se tocan
+    for i in range(0, len(partes), 2):
+        p = re.sub(r"/\*.*?\*/", "", partes[i], flags=re.S)
+        p = re.sub(r"\s+", " ", p)
+        partes[i] = re.sub(r"\s*([{};,>])\s*", r"\1", p)
+    return "".join(partes).replace(";}", "}").strip()
+
+
+CSS = _minificar_css(CSS)
+
+
 # Al tocar una pestaña de un borde, la fila se desliza lo justo para mostrar la que sigue (o la anterior); las del
 # medio no mueven nada. Se instala una sola vez por página y también sigue a las flechas del teclado.
 JS_PESTANAS = """
 <script>
+(() => {
+  // La franja de cotizaciones se pausa cuando no se ve (al bajar por la página): ahorra batería en el celular.
+  if (window.__mcFranja) return;
+  window.__mcFranja = true;
+  let pendiente = false;
+  const revisar = () => {
+    pendiente = false;
+    document.querySelectorAll('.mc-ticker').forEach((t) => {
+      const r = t.getBoundingClientRect();
+      t.classList.toggle('quieta', r.bottom < 0 || r.top > innerHeight);
+    });
+  };
+  const pedir = () => { if (!pendiente) { pendiente = true; requestAnimationFrame(revisar); } };
+  document.addEventListener('scroll', pedir, {capture: true, passive: true});
+  addEventListener('resize', pedir, {passive: true});
+})();
 (() => {
   // Montos: se aplican solos al dejar de escribir, sin tener que presionar Enter (Streamlit confirma un campo de
   // texto con Enter o al salir de él; acá se le manda ese Enter un instante después de la última tecla).
@@ -979,8 +1050,10 @@ def logo(tam: int = 52) -> str:
     )
 
 
+@functools.lru_cache(maxsize=1)
 def favicon():
-    """Ícono de la pestaña: el mismo logo, dibujado con PIL (viene incluido con Streamlit) en alta resolución."""
+    """Ícono de la pestaña: el mismo logo, dibujado con PIL (viene incluido con Streamlit) en alta resolución.
+    Se dibuja una sola vez por proceso: dibujarlo en cada corrida costaba ~0,25 s por clic."""
     from PIL import Image, ImageDraw
 
     k, final = 16, 256  # se dibuja 16 veces más grande y se reduce para que los bordes salgan suaves
@@ -1194,7 +1267,7 @@ def linea_tiempo(items: list[dict]) -> str:
     out = ['<div class="mc-tl">']
     for i, it in enumerate(items):
         lado = "izq" if i % 2 == 0 else "der"
-        foto = (f'<img src="{esc(it["foto"])}" alt="{esc(it["nombre"])}" loading="lazy" referrerpolicy="no-referrer">'
+        foto = (f'<img src="{esc(it["foto"])}" alt="{esc(it["nombre"])}" loading="lazy" decoding="async" referrerpolicy="no-referrer">'
                 if it.get("foto") else "")
         dot = f'<div class="mc-foto"><span>{esc(it["iniciales"])}</span>{foto}</div>'
         if it.get("pagina"):
@@ -1224,7 +1297,7 @@ def ministros(resumen: list | None, grupos: list[dict], intro: str = "") -> str:
     esc = html.escape
 
     def img(url: str | None, alt: str) -> str:
-        return (f'<img src="{esc(url)}" alt="{esc(alt)}" loading="lazy" referrerpolicy="no-referrer">' if url else "")
+        return (f'<img src="{esc(url)}" alt="{esc(alt)}" loading="lazy" decoding="async" referrerpolicy="no-referrer">' if url else "")
 
     out = []
     if intro or resumen:  # portada (va arriba del filtro, por eso se dibuja aparte)
@@ -1249,7 +1322,12 @@ def ministros(resumen: list | None, grupos: list[dict], intro: str = "") -> str:
             datos = "".join(
                 f'<div class="dato"><div class="k">{esc(d["k"])}</div><div class="v">{esc(d["v"])}</div>'
                 f'<div class="s{" " + d["tend"] if d.get("tend") else ""}">{esc(d["s"])}</div></div>' for d in it["datos"])
-            hitos = "".join(f"<li>{esc(h)}</li>" for h in it["hitos"])
+            # los dos primeros hitos a la vista; el resto, plegado (la sección completa ocupaba ~10 pantallas)
+            hitos = "".join(f"<li>{esc(h)}</li>" for h in it["hitos"][:2])
+            resto = it["hitos"][2:]
+            if resto:
+                hitos += (f'<li class="mas"><details><summary>+{len(resto)} hito{"s" if len(resto) > 1 else ""} más</summary>'
+                          f'<ul>{"".join(f"<li>{esc(h)}</li>" for h in resto)}</ul></details></li>')
             pico = f'<div class="pico">{esc(it["pico"])}</div>' if it.get("pico") else ""
             vivo = '<span class="vivo">EN EJERCICIO</span>' if it.get("actual") else ""
             out.append(
@@ -1277,7 +1355,7 @@ def _columnas(n: int) -> int:
 def cotizaciones(tarjetas: list[dict]) -> str:
     """Grilla de tarjetas de cotización. Cada una: nombre, desc, valor, detalle, var (% o None), chip (texto o None)."""
     esc = html.escape
-    out = [f'<div class="mc-fxgrid" style="--cols:{_columnas(len(tarjetas))}">']
+    out = [f'<div class="mc-fxwrap"><div class="mc-fxgrid" style="--cols:{_columnas(len(tarjetas))}">']
     for t in tarjetas:
         var = _chip_var(t.get("var"), t.get("var_txt", "30 d"), t.get("sentido", "neutro"))
         extra = "".join(_chip_var(v, txt, t.get("sentido", "neutro")) for txt, v in t.get("extras", []))
@@ -1289,7 +1367,7 @@ def cotizaciones(tarjetas: list[dict]) -> str:
             f'<div class="fila"><div class="v">{esc(t["valor"])}</div>{spark}</div><div class="c">{esc(t["detalle"])}</div>'
             f'<div class="chips">{var}{extra}{chip}</div></div>'
         )
-    out.append("</div>")
+    out.append("</div></div>")
     return "".join(out)
 
 
@@ -1370,7 +1448,7 @@ def tabla_simple(cabeceras: list[str], filas: list[list[str]]) -> str:
 def foto_html(nombre: str, iniciales: str, url: str | None, pagina: str | None = None, actual: bool = False) -> str:
     """Círculo con la foto (o las iniciales si la foto no carga). Reutiliza el estilo de la línea de tiempo."""
     esc = html.escape
-    img = (f'<img src="{esc(url)}" alt="{esc(nombre)}" loading="lazy" referrerpolicy="no-referrer">' if url else "")
+    img = (f'<img src="{esc(url)}" alt="{esc(nombre)}" loading="lazy" decoding="async" referrerpolicy="no-referrer">' if url else "")
     estilo = f' style="box-shadow:0 0 0 3px {SOL},0 0 20px rgba(246,180,14,.65)"' if actual else ""
     nodo = f'<div class="mc-foto"{estilo}><span>{esc(iniciales)}</span>{img}</div>'
     if pagina:
@@ -1402,7 +1480,7 @@ FUENTES = [
     ("CriptoYa", "USDT por exchange argentino", "https://criptoya.com/"),
     ("Yahoo Finance", "Bolsas y materias primas (fuente no oficial)", "https://finance.yahoo.com/"),
     ("FRED (Reserva Federal de St. Louis)", "Inflación de EE. UU., para ajustar dólares", "https://fred.stlouisfed.org/"),
-    ("Wikipedia / Wikimedia Commons", "Fotos de los presidentes", "https://commons.wikimedia.org/"),
+    ("Wikipedia / Wikimedia Commons", "Fotos de presidentes y ministros", "https://commons.wikimedia.org/"),
 ]
 
 

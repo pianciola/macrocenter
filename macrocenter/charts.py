@@ -21,6 +21,64 @@ def num(x: float | None, dec: int = 0, suf: str = "", pre: str = "") -> str:
     return f"{pre}{s}{suf}"
 
 
+def _fechas_cortas(x) -> list | None:
+    """Fechas de un eje como texto corto («2024-10-11» en vez de «2024-10-11T00:00:00.000000»). Plotly las sigue
+    leyendo como fechas. None si el eje no es de fechas (categorías, números)."""
+    try:
+        if len(x) == 0:
+            return None
+        muestra = next((v for v in x if v is not None and not (isinstance(v, float) and math.isnan(v))), None)
+        if not isinstance(muestra, (pd.Timestamp, np.datetime64)) and type(muestra).__name__ not in ("datetime", "date"):
+            return None
+        idx = pd.DatetimeIndex(pd.to_datetime(list(x)))
+    except (TypeError, ValueError):
+        return None
+    fmt = "%Y-%m-%d" if bool((idx.dropna() == idx.dropna().normalize()).all()) else "%Y-%m-%d %H:%M"
+    return [None if pd.isna(v) else v.strftime(fmt) for v in idx]
+
+
+def _un_numero(v: float) -> float | None:
+    if not math.isfinite(v):
+        return None
+    if abs(v) >= 1:  # la parte entera nunca se toca; decimales: al menos 2 (más si el número es chico)
+        return round(v, max(2, 6 - (int(math.log10(abs(v))) + 1)))
+    return float(f"{v:.6g}")  # menores que 1 (cripto chicas, tasas): 6 cifras significativas
+
+
+def _redondear(y) -> list | None:
+    """Saca el ruido de punto flotante (1534.9999999998 → 1535.0) sin cambiar el valor que se lee al pasar el cursor.
+    None si no son todos números."""
+    if any(isinstance(v, (str, bool, np.bool_)) for v in y):  # categorías («2016», nombres) quedan como están
+        return None
+    try:
+        a = np.asarray(y, dtype=float)
+    except (TypeError, ValueError):
+        return None
+    if a.ndim != 1:
+        return None
+    return [_un_numero(v) for v in a.tolist()]
+
+
+def compactar(fig: go.Figure) -> go.Figure:
+    """Achica lo que viaja al navegador sin cambiar el gráfico: fechas cortas y números sin decimales de sobra.
+    En las series diarias el peso del gráfico baja a menos de la mitad."""
+    for tr in fig.data:
+        for eje in ("x", "y"):
+            v = getattr(tr, eje, None)
+            if v is None or isinstance(v, str):
+                continue
+            fechas = _fechas_cortas(v)
+            if fechas is not None:
+                tr.update({eje: fechas})
+                continue
+            if getattr(tr, "orientation", None) == "h" and eje == "y":
+                continue  # en las barras horizontales el eje y son los nombres
+            nums = _redondear(v)
+            if nums is not None:
+                tr.update({eje: nums})
+    return fig
+
+
 def _marcas(fmt: str | None) -> str | None:
     """Formato de las marcas del eje: el mismo que el de los valores pero sin ceros de relleno («25» y no «25,0»;
     «2,5» sigue igual). El formato completo queda para el recuadro que aparece al pasar el cursor."""

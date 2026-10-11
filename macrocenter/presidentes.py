@@ -239,7 +239,8 @@ def fotos() -> dict[str, dict]:
         r = requests.get(
             "https://es.wikipedia.org/w/api.php",
             params={"action": "query", "format": "json", "prop": "pageimages|info", "inprop": "url",
-                    "pithumbsize": 400, "redirects": 1, "titles": "|".join(m.wiki for m in MANDATOS)},
+                    # se muestran a 88 px: 250 alcanza para pantallas 2× y pesa menos
+                    "pithumbsize": 250, "redirects": 1, "titles": "|".join(m.wiki for m in MANDATOS)},
             headers={"User-Agent": "MacroCenter/1.0 (tablero personal)"}, timeout=30,
         ).json()["query"]
         redirigido = {x["from"]: x["to"] for x in r.get("redirects", []) + r.get("normalized", [])}
