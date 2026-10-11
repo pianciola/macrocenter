@@ -110,7 +110,7 @@ def _refrescar_en_segundo_plano() -> None:
     threading.Thread(target=tarea, daemon=True).start()
 
 
-@st.cache_data(ttl=3600, show_spinner="Descargando datos de BCRA, INDEC y ArgentinaDatos…")
+@st.cache_data(ttl=3600, show_spinner=False)  # la espera la muestra `pantalla_carga` (ver más abajo)
 def cargar_todo() -> tuple[dict[str, pd.DataFrame | str], datetime]:
     """Datos de todas las fuentes. Usa el último guardado en disco si es reciente (arranque casi instantáneo);
     si es viejo pero no demasiado, lo muestra ya y actualiza de fondo; si no hay, descarga."""
@@ -292,7 +292,30 @@ def protegido(nombre: str):
         st.warning(f"No se pudo mostrar «{nombre}» ({type(e).__name__}). El resto de la página sigue funcionando.")
 
 
-DATOS, ACTUALIZADO = cargar_todo()
+@st.cache_resource
+def _ultima_carga() -> dict:
+    """Cuándo terminó la última carga de datos en este servidor (para saber si la próxima va a hacer esperar)."""
+    return {"t": 0.0}
+
+
+def _va_a_demorar() -> bool:
+    """¿Hay que bajar todo de las fuentes? Solo si no hay datos en memoria ni un guardado en disco de menos de 12 h."""
+    if time.time() - _ultima_carga()["t"] < 3600:
+        return False
+    try:
+        return time.time() - CACHE_DISCO.stat().st_mtime >= DISCO_VIEJO_MAX
+    except OSError:
+        return True
+
+
+if _va_a_demorar():
+    _carga = st.empty()
+    _carga.html(style.pantalla_carga(*glosario.termino_del_dia(HOY)))
+    DATOS, ACTUALIZADO = cargar_todo()
+    _carga.empty()
+else:
+    DATOS, ACTUALIZADO = cargar_todo()
+_ultima_carga()["t"] = time.time()
 reintentar_si_fallo(cargar_todo, "datos", any(isinstance(v, str) for v in DATOS.values()))
 
 
@@ -796,6 +819,7 @@ with st.sidebar:
     if st.button("Actualizar datos", width="stretch", key="actualizar", disabled=faltan > 0,
                  help=None if faltan <= 0 else f"Alguien actualizó hace poco. Podés volver a hacerlo en {faltan // 60 + 1} min."):
         _est["ultimo"] = time.time()
+        _ultima_carga()["t"] = 0.0  # la descarga que sigue muestra la pantalla de carga
         envejecer_disco()
         cargar_todo.clear()
         for e_ in _memoria().values():  # noticias, cripto y bolsas: se renuevan de fondo en la próxima carga
