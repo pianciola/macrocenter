@@ -155,10 +155,15 @@ CASAS_DOLAR = ("oficial", "mayorista", "blue", "bolsa", "contadoconliqui", "crip
 
 
 def dolares(casas: tuple[str, ...] = CASAS_DOLAR) -> pd.DataFrame:
-    """Un dólar por casa: precio de venta en la columna `<casa>` y de compra en `<casa>_compra`."""
+    """Un dólar por casa: precio de venta en la columna `<casa>` y de compra en `<casa>_compra`. Las casas se piden
+    todas a la vez (de a una tardaba más de 5 segundos)."""
+    from concurrent.futures import ThreadPoolExecutor
+
+    with ThreadPoolExecutor(max_workers=len(casas)) as pool:
+        series = list(pool.map(dolar, casas))
     wide = None
-    for casa in casas:
-        d = dolar(casa).drop_duplicates("fecha").set_index("fecha")
+    for casa, d in zip(casas, series):
+        d = d.drop_duplicates("fecha").set_index("fecha")
         s = d[["venta", "compra"]].rename(columns={"venta": casa, "compra": f"{casa}_compra"})
         wide = s if wide is None else wide.join(s, how="outer")
     return wide.sort_index().reset_index()

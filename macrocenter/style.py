@@ -10,6 +10,12 @@ import streamlit as st
 CELESTE = "#74ACDF"  # celeste de la bandera argentina
 SOL = "#F6B40E"  # amarillo del Sol de Mayo
 AUTOR = "Juan Manuel Pianciola"
+LINKEDIN = "https://www.linkedin.com/in/jmp1412/"
+_ICONO_LINKEDIN = ('<svg width="15" height="15" viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M20.45 '
+                   '20.45h-3.56v-5.57c0-1.33-.03-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.35V9h3.41v1.56h.05c.48-.9 '
+                   '1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28zM5.34 7.43a2.06 2.06 0 1 1 0-4.13 2.06 2.06 0 0 1 0 '
+                   '4.13zM7.12 20.45H3.56V9h3.56v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.73v20.54C0 23.23.79 24 1.77 24h20.45c.98 0 '
+                   '1.78-.77 1.78-1.73V1.73C24 .77 23.2 0 22.22 0z"/></svg>')
 
 #: Tipografía: fuentes del sistema (Segoe UI en Windows, SF en Mac, Roboto en Android…). Se eligen a propósito en
 #: lugar de Google Fonts para que el navegador no le pida nada a terceros (ver la Política de Privacidad).
@@ -421,6 +427,9 @@ button[data-variant="segmented_control"][aria-checked="true"] p {{ color: #fff !
 .mc-foot a:hover {{ border-bottom-color: {CELESTE}; }}
 .mc-foot p {{ margin: 0 0 8px; font-size: .86rem; line-height: 1.55; }}
 .mc-foot .fin {{ text-align: center; display: flex; flex-direction: column; align-items: center; gap: 8px; }}
+.mc-foot a.mc-linkedin {{ display: inline-flex; align-items: center; gap: 7px; padding: 6px 14px; border-radius: 999px;
+    border: 1px solid rgba(116,172,223,.45); background: rgba(116,172,223,.10); font-size: .82rem; color: {CELESTE}; }}
+.mc-foot a.mc-linkedin:hover {{ background: #0A66C2; border-color: #0A66C2; color: #fff; }}
 .mc-foot .made {{ font-size: .7rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; opacity: .75; }}
 .mc-foot .legal {{ display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; margin-top: 22px;
     padding-top: 14px; border-top: 1px solid rgba(128,128,128,.28); font-size: .8rem; opacity: .9; }}
@@ -1135,6 +1144,8 @@ def footer() -> str:
         'Los valores son de referencia y no constituyen asesoramiento financiero. Las notas y las calificaciones son '
         'medidas orientativas, con criterios propios.</p></div>'
         f'<div class="fin">{bandera(46)}<p><b>MacroCenter</b><br>Creada por {esc(AUTOR)}</p>'
+        f'<a class="mc-linkedin" href="{esc(LINKEDIN, quote=True)}" target="_blank" rel="noopener noreferrer" '
+        f'aria-label="LinkedIn de {esc(AUTOR)}">{_ICONO_LINKEDIN} LinkedIn</a>'
         '<p class="made">Hecho en Argentina</p></div>'
         '</div>'
         '<div class="legal"><span>© 2026 MacroCenter — Todos los derechos reservados.</span>'
