@@ -647,6 +647,38 @@ button[data-variant="segmented_control"][aria-checked="true"] p {{ color: #fff !
         background-position: 0 6px, 0 36px, 100% 36px, 0 144px, 100% 144px, 0 256px, 0 300px;
     }}
 }}
+/* barras de desplazamiento (barra lateral y página): finas, celestes y redondeadas, más visibles al pasar el mouse */
+[data-testid="stSidebarContent"], [data-testid="stMain"] {{
+    scrollbar-width: thin; scrollbar-color: rgba(116,172,223,.28) transparent;
+}}
+[data-testid="stSidebarContent"]:hover, [data-testid="stMain"]:hover {{ scrollbar-color: rgba(116,172,223,.55) transparent; }}
+[data-testid="stSidebarContent"]::-webkit-scrollbar, [data-testid="stMain"]::-webkit-scrollbar {{ width: 8px; }}
+[data-testid="stSidebarContent"]::-webkit-scrollbar-track, [data-testid="stMain"]::-webkit-scrollbar-track {{ background: transparent; }}
+[data-testid="stSidebarContent"]::-webkit-scrollbar-thumb, [data-testid="stMain"]::-webkit-scrollbar-thumb {{
+    background: rgba(116,172,223,.28); border-radius: 999px; border: 2px solid transparent; background-clip: padding-box;
+}}
+[data-testid="stSidebarContent"]::-webkit-scrollbar-thumb:hover, [data-testid="stMain"]::-webkit-scrollbar-thumb:hover {{
+    background-color: rgba(116,172,223,.6);
+}}
+/* botón para plegar y desplegar la barra lateral: redondo y celeste, con una flecha simple como las de las pestañas */
+[data-testid="stSidebarCollapseButton"] button, [data-testid="stExpandSidebarButton"] {{
+    width: 32px !important; height: 32px !important; min-height: 0 !important; padding: 0 !important; border-radius: 50% !important;
+    display: inline-flex !important; align-items: center; justify-content: center;
+    background: rgba(116,172,223,.16) !important; border: 1px solid rgba(116,172,223,.55) !important;
+    box-shadow: 0 2px 10px rgba(0,0,0,.18); transition: background-color .18s ease, transform .18s ease, box-shadow .18s ease;
+}}
+[data-testid="stSidebarCollapseButton"] button [data-testid="stIconMaterial"],
+[data-testid="stExpandSidebarButton"] [data-testid="stIconMaterial"] {{
+    font-size: 0 !important; width: 16px; height: 16px; display: block; background: {CELESTE};
+    -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M15 5l-7 7 7 7' fill='none' stroke='black' stroke-width='2.8' stroke-linecap='round' stroke-linejoin='round'/></svg>") center / contain no-repeat;
+            mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M15 5l-7 7 7 7' fill='none' stroke='black' stroke-width='2.8' stroke-linecap='round' stroke-linejoin='round'/></svg>") center / contain no-repeat;
+}}
+[data-testid="stExpandSidebarButton"] [data-testid="stIconMaterial"] {{ transform: rotate(180deg); }}
+[data-testid="stSidebarCollapseButton"] button:hover, [data-testid="stExpandSidebarButton"]:hover {{
+    background: {CELESTE} !important; transform: scale(1.08); box-shadow: 0 0 0 4px rgba(116,172,223,.22);
+}}
+[data-testid="stSidebarCollapseButton"] button:hover [data-testid="stIconMaterial"],
+[data-testid="stExpandSidebarButton"]:hover [data-testid="stIconMaterial"] {{ background: #0E1420; }}
 h3 {{ font-weight: 700 !important; }}
 /* la etiqueta de variación de los indicadores no se corta con «…»: si no entra, baja de renglón */
 [data-testid="stMetricDelta"], [data-testid="stMetricDelta"] div, [data-testid="stMetricDelta"] p {{
