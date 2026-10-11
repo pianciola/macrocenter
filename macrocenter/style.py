@@ -267,6 +267,12 @@ section[data-testid="stSidebar"] [class*="st-key-atajo_"] button [data-testid="s
 section[data-testid="stSidebar"] [class*="st-key-atajo_"] button p {{ font-size: .86rem; font-weight: 500; }}
 section[data-testid="stSidebar"] [class*="st-key-atajo_"] button:hover {{ background: rgba(116,172,223,.12); }}
 section[data-testid="stSidebar"] [class*="st-key-atajo_"] {{ margin-top: -6px; }}
+/* títulos de sección: mismo tamaño y el mismo aire arriba en todas las pestañas y vistas (antes había títulos de
+   28, 24 y 20 px según la pestaña, y ninguno se separaba de lo anterior más que el espacio común entre bloques) */
+[data-testid="stMain"] [data-testid="stElementContainer"]:has([data-testid="stHeadingWithActionElements"]):not(:first-child) {{
+    margin-top: 14px; }}
+[data-testid="stMain"] [data-testid="stHeadingWithActionElements"] :is(h3, h4) {{ font-size: 1.5rem !important; }}
+[data-testid="stMain"] [data-testid="stHeadingWithActionElements"] h5 {{ font-size: 1.15rem !important; }}
 /* informe "En pocas palabras" de Inicio: estilo de columna de diario económico (filete arriba, título con serif,
    filas numeradas separadas por líneas finas y el veredicto como palabra, sin cajas ni píldoras) */
 .mc-pano {{ margin: 6px 0 10px; border-top: 3px solid currentColor; padding-top: 2px; }}
