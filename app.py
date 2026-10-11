@@ -1447,8 +1447,28 @@ def construir_ticker() -> list[dict]:
     return items
 
 
+def seccion_actual() -> tuple[str, str]:
+    """(ruta, título) de lo que se está viendo, para contar visitas por sección (GoatCounter, sin cookies)."""
+    legal_ = st.query_params.get("legal")
+    if isinstance(legal_, str) and legal_ in legal.PAGINAS:
+        return f"/legal/{legal_}", legal.PAGINAS[legal_]["titulo"]
+    v = st.session_state.get("vista", "tablero")
+    if v == "historia":
+        sub = st.session_state.get("hist_seccion") or "Presidentes"
+        return f"/historia/{style.slug(sub)}", f"Historia económica · {sub}"
+    if v == "juegos":
+        sub = st.session_state.get("inter_modo") or interactivo.MODOS[0]
+        return f"/herramientas/{style.slug(sub)}", f"Herramientas · {sub}"
+    sub = st.session_state.get("pestana") or "Inicio"
+    return f"/tablero/{style.slug(str(sub))}", f"Tablero · {sub}"
+
+
 def pie_pagina() -> None:
     st.markdown(style.footer(), unsafe_allow_html=True)
+    try:
+        st.html(style.contador_visitas(*seccion_actual()), unsafe_allow_javascript=True)
+    except Exception:  # noqa: BLE001 — contar visitas nunca debe afectar la página
+        traceback.print_exc()
 
 
 # ───────────────────────── encabezado ─────────────────────────
