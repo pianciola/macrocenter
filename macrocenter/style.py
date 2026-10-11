@@ -996,6 +996,55 @@ def panorama(items: list[dict], fecha: str) -> str:
             f'rezago). Positivo / negativo según el efecto sobre la economía y el bolsillo.</div></div>')
 
 
+def pantalla_carga(termino: str, definicion: str) -> str:
+    """Pantalla que se ve mientras se bajan los datos de todas las fuentes (servidor recién prendido). Trae sus propios
+    estilos porque aparece antes de que se apliquen los de la página."""
+    import base64
+
+    esc = html.escape
+    # el logo va como imagen: este bloque filtra los SVG escritos directamente
+    _logo_img = "data:image/svg+xml;base64," + base64.b64encode(logo(68).encode()).decode()
+    fuentes = "".join(f'<span style="animation-delay:{i * .35:.2f}s">{f}</span>'
+                      for i, f in enumerate(("BCRA", "INDEC", "Ministerio de Economía", "ArgentinaDatos", "FRED")))
+    return f"""
+<style>
+.mc-carga {{ min-height: 78vh; display: flex; align-items: center; justify-content: center; font-family: {FUENTE}; }}
+.mc-carga .caja {{ width: min(520px, 92vw); text-align: center; }}
+.mc-carga .logo {{ display: inline-block; animation: mc-latir 2.2s ease-in-out infinite; }}
+.mc-carga h1 {{ margin: 14px 0 2px; font-size: 1.9rem; font-weight: 800; letter-spacing: -.02em; }}
+.mc-carga h1 span {{ color: {CELESTE}; }}
+.mc-carga .sub {{ opacity: .7; font-size: .95rem; }}
+.mc-carga .pista {{ position: relative; height: 6px; margin: 22px auto 14px; width: 78%; border-radius: 999px; overflow: hidden;
+    background: rgba(116,172,223,.16); }}
+.mc-carga .pista::after {{ content: ""; position: absolute; top: 0; bottom: 0; width: 38%; border-radius: 999px;
+    background: linear-gradient(90deg, {CELESTE}, #4A8FD4, {SOL}); animation: mc-avance 1.4s ease-in-out infinite; }}
+.mc-carga .fuentes {{ display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 8px; }}
+.mc-carga .fuentes span {{ font-size: .72rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; padding: 3px 10px;
+    border-radius: 999px; border: 1px solid rgba(116,172,223,.35); color: {CELESTE}; opacity: .45;
+    animation: mc-fuente 1.75s ease-in-out infinite; }}
+.mc-carga .termino {{ margin-top: 26px; text-align: left; padding: 12px 14px; border-radius: 12px; border-left: 3px solid {SOL};
+    background: rgba(116,172,223,.08); }}
+.mc-carga .termino b {{ display: block; color: {SOL}; font-size: .9rem; margin-bottom: 3px; }}
+.mc-carga .termino small {{ display: block; font-size: .66rem; letter-spacing: .12em; text-transform: uppercase; opacity: .55;
+    margin-bottom: 4px; }}
+.mc-carga .termino p {{ margin: 0; font-size: .85rem; line-height: 1.45; opacity: .9; }}
+.mc-carga .nota {{ margin-top: 14px; font-size: .75rem; opacity: .55; }}
+@keyframes mc-avance {{ 0% {{ left: -38%; }} 100% {{ left: 100%; }} }}
+@keyframes mc-latir {{ 0%, 100% {{ transform: scale(1); }} 50% {{ transform: scale(1.06); }} }}
+@keyframes mc-fuente {{ 0%, 100% {{ opacity: .4; }} 50% {{ opacity: 1; background: rgba(116,172,223,.14); }} }}
+@media (prefers-reduced-motion: reduce) {{ .mc-carga * {{ animation: none !important; }} }}
+</style>
+<div class="mc-carga"><div class="caja">
+  <div class="logo"><img src="{_logo_img}" width="68" height="68" alt="MacroCenter"></div>
+  <h1>Macro<span>Center</span></h1>
+  <div class="sub">Preparando el tablero con los últimos datos oficiales…</div>
+  <div class="pista"></div>
+  <div class="fuentes">{fuentes}</div>
+  <div class="termino"><small>Mientras tanto, el término del día</small><b>{esc(termino)}</b><p>{esc(definicion)}</p></div>
+  <div class="nota">La primera carga tarda unos segundos; después la página abre al instante.</div>
+</div></div>"""
+
+
 def conversor(filas: list[tuple[str, str, str]], nota: str) -> str:
     """Resultado del conversor de la barra lateral. filas: (dólar, cotización, resultado)."""
     esc = html.escape
