@@ -17,7 +17,7 @@ from pathlib import Path
 import pandas as pd
 import streamlit as st
 
-from macrocenter import charts, data, interactivo, legal, news, presidentes, score, style
+from macrocenter import charts, data, glosario, interactivo, legal, news, presidentes, score, style
 
 st.set_page_config(page_title="MacroCenter", page_icon=style.favicon(), layout="wide")
 
@@ -685,38 +685,7 @@ except Exception:  # noqa: BLE001 — sin la calificación el resto del tablero 
 
 
 # ───────────────────────── barra lateral (segunda parte: necesita los datos) ─────────────────────────
-GLOSARIO = [
-    ("Riesgo país", "Cuánto más que los bonos de EE. UU. tiene que pagar la Argentina para que le presten. 100 puntos "
-                    "son 1 punto porcentual de tasa extra."),
-    ("Brecha cambiaria", "La diferencia, en porcentaje, entre un dólar paralelo (blue, MEP o CCL) y el oficial."),
-    ("Reservas brutas", "Todos los dólares y el oro que tiene el Banco Central, incluidos los que pidió prestados o "
-                        "son de los ahorristas."),
-    ("Reservas netas", "Las reservas brutas menos lo que el Banco Central debe en el corto plazo: lo que de verdad "
-                       "puede usar."),
-    ("Inflación interanual", "Cuánto subieron los precios en los últimos 12 meses, contra el mismo mes del año anterior."),
-    ("Inflación núcleo", "La inflación sin los precios más volátiles o regulados (estacionales y tarifas). Muestra la "
-                         "tendencia de fondo."),
-    ("Salario real", "El sueldo medido en lo que alcanza a comprar: sube si los salarios aumentan más que los precios."),
-    ("UVA", "Unidad de Valor Adquisitivo: un valor en pesos que se ajusta todos los días por inflación (CER). Se usa en "
-            "créditos hipotecarios y plazos fijos."),
-    ("CER", "Coeficiente de Estabilización de Referencia: índice diario del BCRA que sigue a la inflación con unas "
-            "semanas de rezago."),
-    ("Tasa BADLAR", "La tasa que pagan los bancos privados por plazos fijos de más de un millón de pesos. Es la "
-                    "referencia del mercado."),
-    ("Dólar MEP", "Dólar que se obtiene comprando un bono en pesos y vendiéndolo en dólares, de forma legal, en la bolsa."),
-    ("Contado con liquidación", "Como el MEP, pero los dólares quedan en una cuenta del exterior. Lo usan empresas para "
-                                "girar divisas."),
-    ("EMAE", "Estimador Mensual de Actividad Económica del INDEC: el anticipo, mes a mes, de cómo viene el PBI."),
-    ("Superávit primario", "Cuando el Estado recauda más de lo que gasta, sin contar los intereses de la deuda."),
-    ("Déficit financiero", "Cuando el Estado gasta más de lo que recauda, contando también los intereses de la deuda."),
-    ("Base monetaria", "Los billetes y monedas en circulación más el dinero que los bancos tienen depositado en el BCRA."),
-    ("REM", "Relevamiento de Expectativas de Mercado: encuesta mensual del BCRA a consultoras sobre inflación, dólar y "
-            "actividad."),
-    ("ICL", "Índice de Contratos de Locación: combinaba inflación y salarios; se usó para ajustar alquileres."),
-    ("Recesión", "Caída de la actividad económica durante un período sostenido; suele hablarse de dos trimestres "
-                 "seguidos en baja."),
-    ("Devaluación", "Suba del precio del dólar oficial: el peso pasa a valer menos frente a otras monedas."),
-]
+# el término del día sale de macrocenter/glosario.py (365 términos, uno por día del año)
 
 
 @st.fragment  # escribir un monto redibuja solo el conversor, no la página entera
@@ -762,7 +731,7 @@ with st.sidebar:
     if dol is not None:
         st.markdown(style.etiqueta("Conversor"), unsafe_allow_html=True)
         conversor_lateral()
-    termino, definicion = GLOSARIO[HOY.dayofyear % len(GLOSARIO)]
+    termino, definicion = glosario.termino_del_dia(HOY)
     st.markdown(style.etiqueta("Término del día"), unsafe_allow_html=True)
     st.markdown(style.termino_del_dia(termino, definicion), unsafe_allow_html=True)
     # al final: actualizar es una acción poco frecuente
