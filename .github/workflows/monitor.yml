@@ -1,0 +1,33 @@
+# Monitor de MacroCenter: cada 6 horas revisa la página publicada, las fuentes de datos y que todas las pantallas
+# se dibujen bien (monitor/revisar.py). Si algo falla, el trabajo termina en rojo y GitHub le manda un mail al dueño
+# del repositorio. El resumen de cada revisión queda en la pestaña «Actions» del repositorio.
+name: Monitor
+
+on:
+  schedule:
+    - cron: "17 */6 * * *"  # 03:17, 09:17, 15:17 y 21:17 (hora de Argentina = UTC-3: 00:17, 06:17, 12:17, 18:17)
+  workflow_dispatch:  # también se puede correr a mano desde Actions → Monitor → Run workflow
+
+permissions:
+  contents: read  # solo lee el código; no puede modificar nada
+
+concurrency:
+  group: monitor
+  cancel-in-progress: true
+
+jobs:
+  revisar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Instalar dependencias
+        run: pip install -r requirements.txt
+      - name: Revisar página, fuentes y pantallas
+        env:
+          TZ: America/Argentina/Buenos_Aires
+        run: python monitor/revisar.py
