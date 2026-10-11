@@ -2071,7 +2071,7 @@ with t_dol, protegido("Dólar"):
                         detalle=f"1 {simbolo} = US$ {charts.num(float(u['pase']), 2)}",
                         var=delta(df_), sentido="bajo", chip=None, spark=list(df_.tail(30)["valor"])))
             if tarjetas_fx:
-                st.markdown("##### Otras monedas")
+                st.markdown("#### Otras monedas")
                 st.markdown(style.cotizaciones(tarjetas_fx), unsafe_allow_html=True)
                 st.caption("Euro y libra: referencia cambiaria del BCRA en pesos por unidad (no es el precio de la casa de cambio).")
 
