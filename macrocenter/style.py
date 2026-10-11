@@ -134,9 +134,8 @@ section[data-testid="stSidebar"] [data-testid="stPills"] button {{ border-radius
 [data-testid="stWidgetLabel"] p {{ font-size: 1rem !important; font-weight: 600; }}
 [data-testid="stTextInput"] input, [data-testid="stNumberInput"] input, [data-testid="stDateInput"] input,
 [data-testid="stSelectbox"] div[data-baseweb="select"] > div {{ font-size: 1.08rem !important; }}
-/* el aviso «Press Enter to apply» de Streamlit, en castellano */
-[data-testid="InputInstructions"] {{ font-size: 0 !important; }}
-[data-testid="InputInstructions"]::after {{ content: "Presioná Enter para aplicar"; font-size: .75rem; opacity: .7; }}
+/* sin el aviso «Press Enter to apply»: los montos se aplican solos al dejar de escribir (ver JS_PESTANAS) */
+[data-testid="InputInstructions"] {{ display: none !important; }}
 
 /* ── Botón «Volver al tablero»: píldora celeste con flecha que se corre al pasar el cursor ── */
 .st-key-volver_tablero button {{
@@ -662,6 +661,22 @@ h3 {{ font-weight: 700 !important; }}
 JS_PESTANAS = """
 <script>
 (() => {
+  // Montos: se aplican solos al dejar de escribir, sin tener que presionar Enter (Streamlit confirma un campo de
+  // texto con Enter o al salir de él; acá se le manda ese Enter un instante después de la última tecla).
+  if (window.__mcMontos) return;
+  window.__mcMontos = true;
+  let espera;
+  document.addEventListener('input', (e) => {
+    const el = e.target;
+    if (!el.matches || !el.matches('[data-testid="stTextInput"] input')) return;
+    clearTimeout(espera);
+    espera = setTimeout(() => {
+      if (!el.isConnected) return;
+      el.dispatchEvent(new KeyboardEvent('keydown', {key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true}));
+    }, 650);
+  }, true);
+})();
+(() => {
   if (window.__mcPestanasV3) return;
   window.__mcPestanasV3 = true;
   const MARGEN = 56;  // lo que tapa cada flechita (botón + degradé)
@@ -891,9 +906,11 @@ def _md_a_html(texto: str) -> str:
 def panorama(items: list[dict], fecha: str) -> str:
     """Informe «En pocas palabras»: una fila por tema con su cifra clave, el resumen y el tono (bien / mal / mixto)."""
     esc = html.escape
-    marcas = {"bien": ("A favor", "▲"), "mal": ("En contra", "▼"), "mixto": ("Mixto", "◆"), "estable": ("Estable", "■")}
+    marcas = {"bien": ("Positivo", "▲"), "mal": ("Negativo", "▼"), "mixto": ("Mixto", "◆"), "estable": ("Estable", "■")}
     cuenta = {k: sum(1 for i in items if i["tono"] == k) for k in marcas}
-    resumen = "".join(f'<span class="cnt {k}"><i></i>{cuenta[k]} {marcas[k][0].lower()}</span>'
+    plural = {"bien": "positivos", "mal": "negativos", "mixto": "mixtos", "estable": "estables"}
+    resumen = "".join(f'<span class="cnt {k}"><i></i>{cuenta[k]} '
+                      f'{marcas[k][0].lower() if cuenta[k] == 1 else plural[k]}</span>'
                       for k in marcas if cuenta[k])
     filas = "".join(
         f'<div class="fila {i["tono"]}"><div class="izq"><div class="tema">{esc(i["tema"])}</div>'
@@ -905,7 +922,7 @@ def panorama(items: list[dict], fecha: str) -> str:
             f'<div class="sub">Lo más importante de la economía, con los últimos datos al {esc(fecha)}</div></div>'
             f'<div class="bal">{resumen}</div></div>{filas}'
             f'<div class="pie">Resumen automático con el último dato publicado por cada fuente (algunos tienen semanas de '
-            f'rezago). A favor / en contra según el efecto sobre la economía y el bolsillo.</div></div>')
+            f'rezago). Positivo / negativo según el efecto sobre la economía y el bolsillo.</div></div>')
 
 
 def conversor(filas: list[tuple[str, str, str]], nota: str) -> str:
