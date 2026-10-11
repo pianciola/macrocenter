@@ -325,6 +325,18 @@ def fotos_presidentes() -> dict[str, dict]:
     return f
 
 
+@st.cache_data(ttl=86400, show_spinner=False)
+def cargar_fotos_ministros() -> dict[str, str]:
+    """Fotos de los ministros de Economía (Wikipedia/Commons). Se piden una vez por día."""
+    return ministros.fotos()
+
+
+def fotos_ministros() -> dict[str, str]:
+    f = cargar_fotos_ministros()
+    reintentar_si_fallo(cargar_fotos_ministros, "fotos_ministros", not f)
+    return f
+
+
 def get(clave: str) -> pd.DataFrame | None:
     d = DATOS.get(clave)
     if isinstance(d, pd.DataFrame) and not d.empty:
@@ -858,6 +870,17 @@ def historicos(_datos: dict, _dol: pd.DataFrame | None, descarga: datetime):
 
 # ── Historia económica (línea de tiempo de presidentes) ──
 def pantalla_historia() -> None:
+    secciones = ["Presidentes", "Ministros de Economía"]
+    if st.session_state.get("hist_seccion") not in secciones:
+        st.session_state["hist_seccion"] = secciones[0]
+    seccion = st.segmented_control("Sección", secciones, key="hist_seccion", label_visibility="collapsed") or secciones[0]
+    if seccion == "Ministros de Economía":
+        try:
+            dp = historicos(DATOS, dol, ACTUALIZADO)[0]
+        except Exception:  # noqa: BLE001 — sin series, las tarjetas se muestran sin cifras
+            dp = None
+        seccion_ministros(dp)
+        return
     st.caption("Cómo recibió y cómo dejó la economía cada presidente desde la vuelta de la democracia. "
                "Los números se calculan con las series oficiales; en cada fila: **lo que recibió → cómo dejó** "
                "(o cómo está hoy, en el caso del presidente actual).")
@@ -973,26 +996,25 @@ def pantalla_historia() -> None:
 - No se incluye pobreza: no existe una serie oficial continua desde 1983.
                     """
                 )
-    seccion_ministros(dp)
 
 
 def seccion_ministros(dp: dict | None) -> None:
     """Ministros de Economía desde 1983, agrupados por presidente. Los hitos son fijos; las cifras salen de las series
     (si faltan, las tarjetas se muestran igual, sin números)."""
-    st.markdown("#### Ministros de Economía desde 1983")
-    st.caption("Quién condujo la economía, cuánto duró y qué medidas marcaron cada gestión. Los hitos son hechos con fecha, "
-               "sin valoraciones; las cifras se calculan con las series oficiales.")
+    r = ministros.resumen()
+    resumen = [("Gestiones", str(r["gestiones"]), f"{r['personas']} personas distintas"),
+               ("Duración promedio", r["promedio"], "por gestión"),
+               ("La más larga", r["larga"][0].nombre, f"{r['larga'][1]} · {ministros.periodo(r['larga'][0])}"),
+               ("La más corta", r["corta"][0].nombre, f"{r['corta'][1]} · {ministros.periodo(r['corta'][0])}")]
+    st.markdown(style.ministros(resumen, [], intro=(
+        "Quién condujo la economía en cada gobierno, cuánto duró y qué medidas marcaron su gestión. Los hitos son "
+        "hechos con fecha, sin valoraciones; las cifras se calculan con las series oficiales.")), unsafe_allow_html=True)
     MS = presidentes.MANDATOS
     opciones = ["Todos"] + [presidentes.CORTO[m.clave] for m in MS]
     elegido = st.segmented_control("Presidente", opciones, default="Todos", key="min_pres",
                                    label_visibility="collapsed") or "Todos"
-    r = ministros.resumen()
-    resumen = None
-    if elegido == "Todos":
-        resumen = [("Gestiones desde 1983", str(r["gestiones"]), f"{r['personas']} personas distintas"),
-                   ("Duración promedio", r["promedio"], "por gestión"),
-                   ("La más larga", r["larga"][0].nombre, f"{r['larga'][1]} · {ministros.periodo(r['larga'][0])}"),
-                   ("La más corta", r["corta"][0].nombre, f"{r['corta'][1]} · {ministros.periodo(r['corta'][0])}")]
+    fotos_p = fotos_presidentes()
+    fotos_m = fotos_ministros()
     grupos = []
     for m in MS:
         corto = presidentes.CORTO[m.clave]
@@ -1007,12 +1029,14 @@ def seccion_ministros(dp: dict | None) -> None:
                 ind = ministros.indicadores(x, dp) if dp else None
             except Exception:  # noqa: BLE001 — sin cifras, la tarjeta igual se muestra
                 ind = None
-            items.append(dict(nombre=x.nombre, iniciales=x.iniciales, cargo=x.cargo, periodo=ministros.periodo(x),
-                              duracion=ministros.duracion(x.dias) + (" (en ejercicio)" if x.hasta is None else ""),
-                              perfil=x.perfil, hitos=x.hitos, filas=ministros.filas(x, ind) if ind else [],
-                              pico=ministros.pico_texto(ind) if ind else "", actual=x.hasta is None))
-        grupos.append(dict(titulo=m.nombre, periodo=m.periodo, nota=ministros.NOTAS.get(m.clave, ""), items=items))
-    st.markdown(style.ministros(resumen, grupos), unsafe_allow_html=True)
+            items.append(dict(nombre=x.nombre, iniciales=x.iniciales, foto=ministros.foto_url(x, fotos_m), cargo=x.cargo,
+                              periodo=ministros.periodo(x), duracion=ministros.duracion(x.dias),
+                              barra=ministros.barra_duracion(x), perfil=x.perfil, hitos=x.hitos,
+                              datos=ministros.datos(ind) if ind else [], pico=ministros.pico_texto(ind) if ind else "",
+                              actual=x.hasta is None))
+        grupos.append(dict(titulo=m.nombre, periodo=m.periodo, foto=fotos_p.get(m.clave, {}).get("url"),
+                           nota=ministros.NOTAS.get(m.clave, ""), items=items))
+    st.markdown(style.ministros(None, grupos), unsafe_allow_html=True)
     st.caption("Fechas: listado oficial del Ministerio de Economía (CDI). La inflación de cada mes se asigna a quien estaba "
                "en el cargo al cierre de ese mes; entre 2007 y 2015 son las cifras del INDEC intervenido, que distintos "
                "analistas consideran subestimadas. El dólar oficial se muestra desde 1992. Las cifras de un ministro dependen "
