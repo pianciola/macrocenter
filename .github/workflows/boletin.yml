@@ -1,12 +1,13 @@
 # Boletín semanal de MacroCenter: los lunes a las 8 de la mañana (hora de Argentina) arma el resumen de la semana y lo
-# deja como BORRADOR en Buttondown (monitor/boletin.py). No se manda a nadie hasta que el dueño lo aprueba ahí.
+# manda por Buttondown a los suscriptores (monitor/boletin.py). Si falta algún dato, o si se corre a mano, queda como
+# BORRADOR en Buttondown para revisarlo y mandarlo desde ahí.
 # Necesita el secreto BUTTONDOWN_API_KEY (Settings → Secrets and variables → Actions).
 name: Boletín
 
 on:
   schedule:
     - cron: "0 11 * * 1"  # lunes 11:00 UTC = 08:00 en Argentina
-  workflow_dispatch:  # también se puede correr a mano desde Actions → Boletín → Run workflow
+  workflow_dispatch:  # a mano (Actions → Boletín → Run workflow): solo crea un borrador, no manda nada
 
 permissions:
   contents: read  # solo lee el código; no puede modificar nada
@@ -27,8 +28,9 @@ jobs:
           cache: pip
       - name: Instalar dependencias
         run: pip install -r requirements.txt
-      - name: Armar el boletín y dejarlo como borrador
+      - name: Armar el boletín y mandarlo
         env:
           TZ: America/Argentina/Buenos_Aires
           BUTTONDOWN_API_KEY: ${{ secrets.BUTTONDOWN_API_KEY }}
+          BOLETIN_ENVIAR: ${{ github.event_name == 'schedule' }}  # solo la corrida de los lunes manda
         run: python monitor/boletin.py
