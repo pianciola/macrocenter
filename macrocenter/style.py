@@ -701,11 +701,16 @@ button[data-variant="segmented_control"][aria-checked="true"] p {{ color: #fff !
 .mc-pielinks {{ display: flex; flex-wrap: wrap; align-items: center; gap: 2px 14px; font-size: .76rem; white-space: nowrap; }}
 .mc-pielinks a {{ color: {CELESTE}; font-weight: 600; text-decoration: none; }}
 .mc-pielinks a:hover {{ text-decoration: underline; }}
+.mc-pielinks a.bol {{ padding: 5px 14px; border-radius: 999px; background: {CELESTE}; color: #0E1A2B; font-weight: 800;
+    box-shadow: 0 0 0 0 rgba(116,172,223,.6); animation: mc-resalta 2.6s ease-out infinite; transition: transform .15s ease; }}
+.mc-pielinks a.bol:hover {{ text-decoration: none; transform: translateY(-1px); filter: brightness(1.08); }}
+@keyframes mc-resalta {{ 0% {{ box-shadow: 0 0 0 0 rgba(116,172,223,.55); }} 70%, 100% {{ box-shadow: 0 0 0 9px rgba(116,172,223,0); }} }}
+@media (prefers-reduced-motion: reduce) {{ .mc-pielinks a.bol {{ animation: none; }} }}
 .mc-pielinks .c {{ opacity: .7; }}
 .st-key-pie_datos [data-testid="stPopover"] button {{ white-space: nowrap; }}
 .mc-vivo, .mc-vivo span {{ white-space: nowrap; }}
 @media (max-width: 1400px) {{ .mc-pielinks .c, .mc-vivo .sec {{ display: none; }} }}
-@media (max-width: 1100px) {{ .mc-pielinks a:first-child {{ display: none; }} }}
+@media (max-width: 800px) {{ .mc-pielinks a.bol {{ display: none; }} }}
 @media (max-width: 560px) {{ .st-key-pie_datos {{ padding-left: 14px !important; padding-right: 14px !important; justify-content: center; }}
     .mc-pielinks, .mc-vivo {{ display: none; }} }}
 /* el panel «Fuentes y aviso»: el contenido del pie, sin marco propio */
@@ -1195,9 +1200,24 @@ JS_PESTANAS = """
       setTimeout(() => { if (mio === turno && Math.abs(d.c.scrollLeft - d.left) > 2) d.c.scrollLeft = d.left; }, 900);
     }, 0);
   };
+  // Al abrir una pestaña, Streamlit vacía el contenido viejo antes de que llegue el nuevo y la página se encoge un
+  // instante (el pie salta y el scroll se pierde). Se mantiene el alto actual hasta que termina de cargar.
+  let soltar = 0;
+  const congelarAlto = () => {
+    const m = document.querySelector('[data-testid="stMainBlockContainer"]');
+    if (!m) return;
+    m.style.minHeight = m.offsetHeight + 'px';
+    const t0 = Date.now(), mio = ++soltar;
+    let quietos = 0;
+    const iv = setInterval(() => {
+      if (mio !== soltar) { clearInterval(iv); return; }
+      quietos = document.querySelector('[data-stale="true"]') ? 0 : quietos + 1;
+      if ((quietos >= 3 && Date.now() - t0 > 700) || Date.now() - t0 > 8000) { m.style.minHeight = ''; clearInterval(iv); }
+    }, 100);
+  };
   document.addEventListener('click', (e) => {
     const tab = e.target.closest && e.target.closest('[role="tablist"] [role="tab"]');
-    if (tab) mover(destinoPara(tab));
+    if (tab) { mover(destinoPara(tab)); congelarAlto(); }
   }, true);
   // si la persona mueve la fila a mano (flechitas, rueda, dedo), eso manda sobre cualquier movimiento pendiente
   const aMano = (e) => { if (e.target.closest && e.target.closest('[data-testid^="stTabsScroll"], [role="tablist"]')) turno++; };
@@ -1836,7 +1856,7 @@ def estado_datos(hora_dolar: str | None, oficiales: str) -> str:
 def pie_enlaces() -> str:
     """Enlaces fijos de la barra inferior: suscripción, términos y privacidad."""
     esc = html.escape
-    bol = (f'<a href="{esc(BOLETIN, quote=True)}" target="_blank" rel="noopener noreferrer">Resumen semanal por mail</a>'
+    bol = (f'<a class="bol" href="{esc(BOLETIN, quote=True)}" target="_blank" rel="noopener noreferrer">✉ Resumen semanal por mail</a>'
            if BOLETIN else '')
     return (f'<div class="mc-pielinks">{bol}<a href="?legal=terminos" target="_self">Términos</a>'
             '<a href="?legal=privacidad" target="_self">Privacidad</a><span class="c">© 2026 MacroCenter</span></div>')
