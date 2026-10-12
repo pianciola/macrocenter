@@ -3,7 +3,8 @@
 Lo arma `monitor/boletin.py` (GitHub Actions, los lunes) con las mismas fuentes públicas que la página y lo deja como
 borrador en Buttondown, el servicio que guarda la lista de suscriptores. La página nunca ve ni guarda direcciones de mail.
 
-`armar()` devuelve (asunto, cuerpo): el cuerpo es HTML simple con estilos en línea (lo que mejor se ve en los programas
+`armar()` devuelve (asunto, cuerpo, completo): `completo` es False si faltó algún dato (entonces no se manda solo,
+queda como borrador). El cuerpo es HTML simple con estilos en línea (lo que mejor se ve en los programas
 de correo). Verde = bueno, rojo = malo, gris = sin cambios.
 """
 from __future__ import annotations
@@ -62,7 +63,10 @@ def _seguro(fn):
         return None
 
 
-def armar() -> tuple[str, str]:
+FILAS = 9  # dólares (4), brecha, riesgo país, reservas e inflación (mensual y 12 meses)
+
+
+def armar() -> tuple[str, str, bool]:
     desde = (pd.Timestamp(data.hoy_argentina()) - timedelta(days=430)).strftime("%Y-%m-%d")
     dol = _seguro(data.dolares)
     riesgo = _seguro(data.riesgo_pais)
@@ -156,4 +160,5 @@ def armar() -> tuple[str, str]:
         'dato publicado por cada fuente (algunos tienen días o semanas de rezago). Es información de referencia, no '
         'asesoramiento financiero.</p></div>'
     )
-    return asunto, cuerpo
+    completo = len(filas) == FILAS and not any(">s/d<" in f for f in filas)
+    return asunto, cuerpo, completo
