@@ -18,8 +18,10 @@ import pandas as pd
 import streamlit as st
 
 from macrocenter import charts, data, glosario, interactivo, inversiones, legal, ministros, news, presidentes, score, style
+from macrocenter.avisos import actualizando, falla
 
 st.set_page_config(page_title="MacroCenter", page_icon=style.favicon(), layout="wide")
+st.session_state["_fallas"] = []  # fallas de datos de esta corrida (no se muestran; las lee el monitor)
 
 # fecha argentina: el servidor publicado anda en UTC y desde las 21 h ya estaría en el día siguiente
 HOY = pd.Timestamp(data.hoy_argentina())
@@ -51,6 +53,12 @@ def _leer_disco() -> tuple[tuple[dict, datetime], float] | None:
             datos, cuando = pickle.load(f)
         # si cambió la lista de fuentes (código nuevo), lo guardado ya no sirve
         if isinstance(datos, dict) and isinstance(cuando, datetime) and set(datos) == set(_tareas()):
+            # una serie vacía guardada (de antes de tratarlas como falla) cuenta como faltante: se completa con lo
+            # último bueno o se vuelve a pedir, y lo guardado se toma como viejo para que se actualice de fondo
+            vacias = [k for k, v in datos.items() if isinstance(v, pd.DataFrame) and v.empty]
+            if vacias:
+                datos = {k: ("sin datos" if k in vacias else v) for k, v in datos.items()}
+                edad = max(edad, DISCO_FRESCO)
             return (datos, cuando), edad
     except Exception:  # noqa: BLE001 — archivo inexistente, a medio escribir o de otra versión
         pass
@@ -147,9 +155,14 @@ def _descargar_todo() -> tuple[dict[str, pd.DataFrame | str], datetime]:
     def correr(item):
         nombre, fn = item
         try:
-            return nombre, data.limpiar(fn())
+            d = data.limpiar(fn())
         except Exception as e:  # noqa: BLE001 — queremos aislar cualquier falla de red/formato
             return nombre, error_corto(e)
+        # una respuesta vacía cuenta como falla: así se usa el último dato bueno guardado y se reintenta en un minuto
+        # (antes quedaba guardada como dato válido y la sección mostraba «sin datos» durante una hora)
+        if isinstance(d, pd.DataFrame) and d.empty:
+            return nombre, "la fuente respondió sin datos"
+        return nombre, d
 
     with ThreadPoolExecutor(max_workers=10) as pool:  # son pedidos de red: conviene hacer muchos a la vez
         return dict(pool.map(correr, tareas.items())), datetime.now()
@@ -359,13 +372,13 @@ def reintentar_si_fallo(cache_fn, clave: str, fallo: bool, espera: int = 60) -> 
 
 @contextmanager
 def protegido(nombre: str):
-    """Aísla una sección: si algo falla adentro, se avisa y el resto de la página sigue funcionando.
+    """Aísla una sección: si algo falla adentro, no se muestra (queda registrado) y el resto de la página sigue.
     (st.stop() y st.rerun() no son Exception, así que pasan de largo.)"""
     try:
         yield
     except Exception as e:  # noqa: BLE001
         traceback.print_exc()  # queda en la consola del servidor para poder diagnosticarlo
-        st.warning(f"No se pudo mostrar «{nombre}» ({type(e).__name__}). El resto de la página sigue funcionando.")
+        falla(f"no se pudo mostrar «{nombre}» ({type(e).__name__})")
 
 
 @st.cache_resource
@@ -413,11 +426,28 @@ def fotos_ministros() -> dict[str, str]:
     return f
 
 
+NOMBRES_DATOS = {  # cómo se llama cada serie en los avisos (la clave interna no le dice nada a quien lee)
+    "bcra:reservas": "reservas del BCRA", "bcra:tc_minorista": "dólar minorista del BCRA",
+    "bcra:tc_mayorista": "dólar mayorista del BCRA", "bcra:badlar": "tasa BADLAR", "bcra:depositos_30d": "tasa de plazo fijo",
+    "bcra:prestamos_personales": "tasa de préstamos personales", "bcra:pases_1d": "tasa de pases",
+    "bcra:tpm": "tasa de política monetaria", "bcra:base_monetaria": "base monetaria", "bcra:m2_privado_ia": "M2 privado",
+    "bcra:prestamos_privados": "préstamos al sector privado", "bcra:inflacion_mensual": "inflación mensual",
+    "bcra:inflacion_interanual": "inflación interanual", "bcra:rem_12m": "inflación esperada (REM)", "bcra:cer": "CER",
+    "bcra:uva": "UVA", "bcra:uvi": "UVI", "bcra:icl": "ICL", "bcra:tamar": "tasa TAMAR", "serie:pib": "PBI",
+    "serie:emae": "EMAE", "serie:emae_sa": "EMAE desestacionalizado", "serie:emae_sa_mom": "EMAE mensual",
+    "serie:desempleo": "desocupación", "serie:salarios": "índice de salarios", "serie:ripte": "RIPTE",
+    "serie:smvm": "salario mínimo", "serie:haber_minimo": "haber mínimo jubilatorio",
+    "serie:exportaciones": "exportaciones", "serie:importaciones": "importaciones", "serie:ipc_gba": "IPC GBA",
+    "dolares": "cotizaciones del dólar", "riesgo_pais": "riesgo país", "fx:EUR": "euro", "fx:GBP": "libra",
+}
+
+
 def get(clave: str) -> pd.DataFrame | None:
     d = DATOS.get(clave)
     if isinstance(d, pd.DataFrame) and not d.empty:
         return d
-    st.warning(f"No se pudo cargar `{clave}` ({d if isinstance(d, str) else 'sin datos'}).")
+    nombre = NOMBRES_DATOS.get(clave, clave.split(":")[-1].replace("_", " "))
+    falla(f"no se pudo cargar «{nombre}» ({d if isinstance(d, str) else 'sin datos'})")  # sin aviso en pantalla
     return None
 
 
@@ -502,7 +532,7 @@ def ver_noticias() -> None:
 
     for k, nombre in fuentes.items():
         if isinstance(noticias.get(k), str) or not noticias.get(k):
-            st.warning(f"No se pudieron leer las noticias de {nombre} ahora; podés verlas en el sitio oficial.")
+            falla(f"no se pudieron leer las noticias de {nombre}")
     visibles = sorted(((n, k) for n, k in pares if filtro == "Todas" or fuentes[k] == filtro),
                       key=lambda par: par[0].fecha, reverse=True)
     st.markdown(style.lista_noticias([
@@ -986,7 +1016,8 @@ def pantalla_historia() -> None:
         traceback.print_exc()
         dp, inds, faltan = None, None, ["cálculo"]
     if faltan:
-        st.warning("No se pudo armar la línea de tiempo. Falta o falló: " + ", ".join(faltan))
+        falla("no se pudo armar la línea de tiempo: falta " + ", ".join(faltan))
+        actualizando()
     else:
         fotos = fotos_presidentes()
         if inds:
@@ -1142,7 +1173,8 @@ def seccion_ministros(dp: dict | None) -> None:
 # ── Calificación macro (dentro de Herramientas) ──
 def _calificacion_contenido() -> None:
     if NOTAS["Hoy"]["total"] is None:
-        st.warning("No hay datos suficientes para calcular la calificación.")
+        falla("no hay datos suficientes para la calificación")
+        actualizando()
         return
 
     def restablecer_calificacion() -> None:
@@ -1349,8 +1381,8 @@ def pantalla_juegos() -> None:
         traceback.print_exc()
         dp_i, inds_i, faltan_i = None, None, ["cálculo"]
     if faltan_i:
-        st.warning("No se pudieron cargar los datos necesarios para las herramientas interactivas. "
-                   "Falta o falló: " + ", ".join(faltan_i))
+        falla("no se pudieron cargar los datos de las herramientas: falta " + ", ".join(faltan_i))
+        actualizando()
         pantalla_calificacion()
     else:
         dp_i = {**dp_i, "uva": uva,
@@ -1381,7 +1413,7 @@ def pantalla_cripto() -> None:
     st.caption("Las principales criptomonedas, en dólares y en pesos, y a cuánto se compra y vende el USDT en los "
                "exchanges argentinos. Se actualiza cada 5 minutos.")
     if isinstance(mercado, str) or mercado.empty:
-        st.warning(f"No se pudo cargar el mercado de criptomonedas ahora. Se reintenta solo en un minuto. ({mercado})")
+        falla(f"no se pudo cargar el mercado de criptomonedas ({mercado})")
     else:
         tarjetas = []
         for _, c in mercado.iterrows():
@@ -1402,7 +1434,7 @@ def pantalla_cripto() -> None:
         if not fila.empty:
             hist = historia_cripto(fila.iloc[0]["id"], rangos.get(rango, 365))
             if isinstance(hist, str) or hist.empty:
-                st.info(f"No se pudo cargar el historial de {fila.iloc[0]['nombre']} ahora. ({hist})")
+                falla(f"no se pudo cargar el historial de {fila.iloc[0]['nombre']} ({hist})")
             else:
                 # decimales según el precio: con ",.0f" las monedas de menos de US$ 1 (TRX, DOGE, ADA) mostraban «0» en el eje
                 tope = float(hist["valor"].abs().max() or 0)
@@ -1411,20 +1443,20 @@ def pantalla_cripto() -> None:
                                       f"{fila.iloc[0]['nombre']} en dólares — {rango.lower()}", yfmt=fmt_c, height=340))
         st.caption("El historial gratuito de CoinGecko llega hasta 1 año atrás.")
 
-    st.subheader("USDT en pesos: ¿dónde conviene?")
+    st.subheader("USDT en pesos, exchange por exchange")
     if isinstance(usdt, str) or usdt.empty:
-        st.info(f"No se pudieron cargar los precios del USDT por exchange ahora. ({usdt})")
+        falla(f"no se pudieron cargar los precios del USDT ({usdt})")
     else:
         oficial_hoy = ultimo(dol[["fecha", "oficial"]].dropna().rename(columns={"oficial": "valor"})) if dol is not None else None
         mejor_compra, mejor_venta = usdt.iloc[0], usdt.sort_values("venta", ascending=False).iloc[0]
         k1, k2, k3 = st.columns(3)
-        k1.metric("Comprar USDT más barato", charts.num(float(mejor_compra["compra"]), 0, pre="$"),
+        k1.metric("Compra más baja", charts.num(float(mejor_compra["compra"]), 0, pre="$"),
                   f"en {_nombre_exchange(mejor_compra['exchange'])}", delta_color="off", delta_arrow="off", border=True)
-        k2.metric("Vender USDT más caro", charts.num(float(mejor_venta["venta"]), 0, pre="$"),
+        k2.metric("Venta más alta", charts.num(float(mejor_venta["venta"]), 0, pre="$"),
                   f"en {_nombre_exchange(mejor_venta['exchange'])}", delta_color="off", delta_arrow="off", border=True)
         if oficial_hoy:
-            k3.metric("USDT vs dólar oficial", f"{(mejor_compra['compra'] / oficial_hoy - 1) * 100:+.1f}%".replace(".", ","),
-                      "al comprar en el más barato", delta_color="off", delta_arrow="off", border=True)
+            k3.metric("Contra el oficial", f"{(mejor_compra['compra'] / oficial_hoy - 1) * 100:+.1f}%".replace(".", ","),
+                      "con la compra más baja", delta_color="off", delta_arrow="off", border=True)
         filas = [[_nombre_exchange(r["exchange"]), charts.num(float(r["compra"]), 0, pre="$"),
                   charts.num(float(r["venta"]), 0, pre="$"),
                   (f"{(r['compra'] / oficial_hoy - 1) * 100:+.1f}%".replace(".", ",") if oficial_hoy else "s/d")]
@@ -1455,7 +1487,7 @@ def _var_pct(df: pd.DataFrame, dias: int | None = None) -> float | None:
 def pantalla_bolsas() -> None:
     mk = cargar_mercados()
     st.caption("Las principales bolsas del mundo y algunas materias primas que mueven a la Argentina. Datos de Yahoo "
-               "Finance (fuente no oficial, con demora); se actualizan cada 15 minutos. Al no ser un servicio oficial, "
+               "Finance (fuente no oficial, con demora); se actualizan cada 5 minutos. Al no ser un servicio oficial, "
                "puede cambiar o dejar de funcionar sin aviso: si pasa, esta sección muestra un aviso y el resto sigue andando.")
     tarjetas = []
     for simbolo, nombre, grupo, unidad in data.INDICES:
@@ -1468,7 +1500,7 @@ def pantalla_bolsas() -> None:
             var=_var_pct(df), var_txt="1 d", extras=[("30 d", _var_pct(df, 30))],
             sentido=("alto" if simbolo == "ZS=F" else "neutro") if grupo == "Materias primas" else "alto", spark=list(df.tail(30)["valor"])))
     if not tarjetas:
-        st.warning("No se pudieron cargar las cotizaciones de las bolsas ahora. Se reintenta solo en un minuto.")
+        falla("no se pudieron cargar las cotizaciones de las bolsas")
         return
     st.markdown(style.cotizaciones(tarjetas), unsafe_allow_html=True)
     faltan = [n for s, n, _, _ in data.INDICES if not isinstance(mk.get(s), pd.DataFrame)]
@@ -1753,7 +1785,7 @@ def panel_plazo_fijo(clave: str = "res_real", subtitulo: bool = True) -> None:
         real["real"] = ((1 + real["tna"] / 1200) / (1 + real["inflacion"] / 100) - 1) * 100
         real = real.replace([float("inf"), float("-inf")], float("nan")).dropna(subset=["real"])
         if real.empty:
-            st.info("Todavía no hay datos suficientes para calcular el rendimiento real.")
+            falla("no hay datos para el rendimiento real del plazo fijo")
         else:
             ult = real.iloc[-1]
             k = st.columns(3)
@@ -1766,7 +1798,7 @@ def panel_plazo_fijo(clave: str = "res_real", subtitulo: bool = True) -> None:
             st.caption("Usa la tasa BADLAR (depósitos a plazo de bancos privados) como referencia de un plazo fijo, promedio del "
                        "mes, contra la inflación de ese mes. No incluye impuestos ni comisiones.")
     else:
-        st.info("No se pudieron cargar la tasa o la inflación para este panel.")
+        falla("no se pudieron cargar la tasa o la inflación del panel del plazo fijo")
 
 
 # ───────────────────────── Inicio: rotación y panorama ─────────────────────────
@@ -1969,7 +2001,7 @@ GRAFICOS_INICIO = {
 def bloque_salarios() -> None:
     sr = sal_real_df
     if sr is None or sr.empty:
-        st.info("No se pudieron cargar los salarios.")
+        falla("no se pudieron cargar los salarios")
         return
     _grafico_periodo("ini_sal", sr, lambda d: charts.lineas(d, {"Salarios": "salario", "Inflación": "inflacion"},
                                                             "Salarios vs inflación — variación interanual (%)",
@@ -1985,7 +2017,7 @@ def bloque_fiscal() -> None:
     f = fiscal_df()
     cols = {n: c for n, c in (("Primario", "primario_12m"), ("Financiero", "financiero_12m")) if c in f}
     if f.empty or not cols:
-        st.info("No se pudieron cargar las cuentas públicas.")
+        falla("no se pudieron cargar las cuentas públicas")
         return
     f12 = f.dropna(subset=list(cols.values()), how="all")
 
@@ -2069,7 +2101,7 @@ with t_res, protegido("Inicio"):
                     d, "real", "Salario real — variación interanual (%)", yfmt=",.1f", height=340),
                     defecto="5 años", mensual=True)
             else:
-                st.info("No se pudo cargar este gráfico.")
+                falla(f"no se pudo cargar el gráfico destacado «{elegido_i}»")
                 return
             st.caption(GRAFICOS_INICIO[elegido_i])
 
@@ -2122,10 +2154,10 @@ with t_res, protegido("Inicio"):
                                   f" Como referencia, la UVA subió {charts.num(uva_p, 1, '%')}: no se compara porque se ajusta por la "
                                   "inflación (CER, con unas semanas de rezago), así que siempre queda cerca de la línea."))
                 else:
-                    st.info("No hay datos suficientes para este comparativo.")
+                    falla("no hay datos para el comparativo contra la inflación")
             except Exception:  # noqa: BLE001
                 traceback.print_exc()
-                st.info("No se pudo armar este comparativo.")
+                falla("no se pudo armar el comparativo contra la inflación")
 
         # Análisis destacado: rota en cada visita y con el botón se pasa al siguiente (solo se redibuja esta parte)
         ANALISIS = [
@@ -2152,7 +2184,7 @@ with t_res, protegido("Inicio"):
                 dibujar()
             except Exception:  # noqa: BLE001
                 traceback.print_exc()
-                st.info("No se pudo armar este análisis.")
+                falla("no se pudo armar el análisis destacado")
 
         st.divider()
         analisis_inicio()
@@ -2198,7 +2230,10 @@ with t_dol, protegido("Dólar"):
                     f"{(venta / oficial_hoy - 1) * 100:+.0f}% vs oficial".replace(".", ","),
                 ))
             st.markdown(style.cotizaciones(tarjetas_usd), unsafe_allow_html=True)
-            st.caption(f"Cotizaciones al {dol['fecha'].max():%d/%m/%Y} (ArgentinaDatos). La variación compara con 30 días atrás.")
+            dv_ = VIVO.get("dolares")
+            hora_ = (f" Último dato del día: {pd.Timestamp(dv_['actualizado'].max()):%d/%m %H:%M} (DolarApi); se renueva cada minuto."
+                     if isinstance(dv_, pd.DataFrame) and not dv_.empty else "")
+            st.caption(f"Historia: ArgentinaDatos.{hora_} La variación compara con 30 días atrás.")
 
             eur, gbp = get("fx:EUR"), get("fx:GBP")
             tarjetas_fx = []
@@ -2562,7 +2597,8 @@ with t_fis, protegido("Resultado fiscal"):
     if t_fis.open:  # solo la pestaña abierta se calcula y se manda al navegador
         f = fiscal_df()
         if f.empty:
-            st.warning("No se pudieron cargar los datos fiscales o el PBI para calcular el porcentaje.")
+            falla("no se pudieron cargar los datos fiscales o el PBI")
+            actualizando()
         else:
             ult_f = f.iloc[-1]
             st.caption(f"Sector público nacional no financiero, base caja, como porcentaje del PBI. Último dato: {ult_f['fecha']:%m/%Y}. "
