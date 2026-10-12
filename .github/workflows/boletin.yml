@@ -1,0 +1,34 @@
+# Boletín semanal de MacroCenter: los lunes a las 8 de la mañana (hora de Argentina) arma el resumen de la semana y lo
+# deja como BORRADOR en Buttondown (monitor/boletin.py). No se manda a nadie hasta que el dueño lo aprueba ahí.
+# Necesita el secreto BUTTONDOWN_API_KEY (Settings → Secrets and variables → Actions).
+name: Boletín
+
+on:
+  schedule:
+    - cron: "0 11 * * 1"  # lunes 11:00 UTC = 08:00 en Argentina
+  workflow_dispatch:  # también se puede correr a mano desde Actions → Boletín → Run workflow
+
+permissions:
+  contents: read  # solo lee el código; no puede modificar nada
+
+concurrency:
+  group: boletin
+  cancel-in-progress: false
+
+jobs:
+  armar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Instalar dependencias
+        run: pip install -r requirements.txt
+      - name: Armar el boletín y dejarlo como borrador
+        env:
+          TZ: America/Argentina/Buenos_Aires
+          BUTTONDOWN_API_KEY: ${{ secrets.BUTTONDOWN_API_KEY }}
+        run: python monitor/boletin.py
