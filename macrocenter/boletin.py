@@ -273,10 +273,9 @@ def armar() -> tuple[str, str, bool]:
                         ("contadoconliqui", "Contado con liqui")):
         u, a, _ = _ult_y_hace(dol, col)
         if u is not None:
-            cambio, bueno = _var_pct(u, a, sube_es_bueno=False)
+            # cotización: verde si sube, rojo si baja (no cuenta en el balance de buenas y malas noticias)
+            cambio, bueno = _var_pct(u, a, sube_es_bueno=True)
             filas.append(_fila(nombre, charts.num(u, 0, pre="$"), cambio, bueno))
-            if col in ("oficial", "blue"):
-                senales.append(bueno)
             if col == "oficial":
                 destacados.append(f"dólar {charts.num(u, 0, pre='$')}")
     of, of_a, _ = _ult_y_hace(dol, "oficial")
@@ -351,9 +350,10 @@ def armar() -> tuple[str, str, bool]:
         f'{_redaccion(dol, riesgo, reservas, infl_m, infl_ia, rem, senales)}'
         f'<h2 style="font-size:13px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:{GRIS};'
         'margin:24px 0 4px">Los números de la semana</h2>'
-        '<p style="font-size:13px;color:#475569;margin:0 0 6px">Cambio en los últimos 7 días. '
-        f'<span style="color:{VERDE};font-weight:700">Verde</span>: mejoró · '
-        f'<span style="color:{ROJO};font-weight:700">rojo</span>: empeoró.</p>'
+        '<p style="font-size:13px;color:#475569;margin:0 0 6px">Cambio en los últimos 7 días. En los dólares, '
+        f'<span style="color:{VERDE};font-weight:700">verde</span> es que subió y '
+        f'<span style="color:{ROJO};font-weight:700">rojo</span> que bajó; en el resto, verde es que mejoró y rojo que '
+        'empeoró.</p>'
         f'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse">'
         f'{"".join(filas)}</table>'
         f'<p style="margin:22px 0"><a href="{URL_PAGINA}" style="background:{CELESTE};color:#fff;text-decoration:none;'

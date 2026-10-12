@@ -321,7 +321,7 @@ section[data-testid="stSidebar"] [class*="st-key-atajo_"] {{ margin-top: -6px; }
 :is(.mc-pano, .mc-nota, .mc-aviso) .neg {{ color: #EE5253; font-weight: 700; }}
 .mc-pano .tono {{ justify-self: end; font-size: .82rem; font-weight: 700; white-space: nowrap; }}
 .mc-pano .tono b {{ font-weight: 400; margin-right: 4px; }}
-.mc-pano .bien .tono {{ color: #10AC84; }} .mc-pano .mal .tono {{ color: #EE5253; }} .mc-pano .mixto .tono {{ color: {SOL}; }}
+.mc-pano :is(.bien, .sube) .tono {{ color: #10AC84; }} .mc-pano :is(.mal, .baja) .tono {{ color: #EE5253; }} .mc-pano .mixto .tono {{ color: {SOL}; }}
 .mc-pano .estable .tono {{ opacity: .6; }}
 .stApp .mc-pano .pie {{ font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif !important;
     font-style: italic; font-size: .8rem; opacity: .6; padding: 10px 0 0; border-top: 1px solid rgba(128,128,128,.45); }}
@@ -360,6 +360,40 @@ button[data-variant="segmented_control"][aria-checked="true"] {{
     box-shadow: 0 3px 10px rgba(74,143,212,.4); font-weight: 700;
 }}
 button[data-variant="segmented_control"][aria-checked="true"] p {{ color: #fff !important; }}
+
+/* selectores de los gráficos: lo que se mira (categoría) y desde cuándo (período) se ven distintos en todas las pestañas.
+   · CATEGORÍA (claves cat_*): fichas redondas sueltas; la elegida va rellena de celeste.
+   · PERÍODO (claves per_*): grupo compacto de botones unidos, más chico; el activo lleva el amarillo del Sol de Mayo. */
+[class*="st-key-cat_"] button[data-variant="pills"] {{
+    border-radius: 999px; padding: .32rem 1rem; min-height: 0; font-weight: 600;
+    border: 1px solid rgba(128,128,128,.38); background: transparent;
+    transition: background-color .18s ease, border-color .18s ease, color .18s ease, box-shadow .18s ease;
+}}
+[class*="st-key-cat_"] button[data-variant="pills"]:hover {{ border-color: {CELESTE}; color: {CELESTE}; }}
+[class*="st-key-cat_"] button[data-variant="pills"]:is([aria-checked="true"], [aria-pressed="true"]) {{
+    background: linear-gradient(135deg, {CELESTE} 0%, #4A8FD4 100%) !important; border-color: transparent !important;
+    color: #fff !important; font-weight: 700; box-shadow: 0 2px 8px rgba(74,143,212,.38);
+}}
+[class*="st-key-cat_"] button[data-variant="pills"]:is([aria-checked="true"], [aria-pressed="true"]) p {{ color: #fff !important; }}
+[class*="st-key-per_"] [role="radiogroup"], .st-key-cal_anios [role="radiogroup"] {{
+    display: inline-flex; flex-wrap: nowrap; gap: 0; padding: 3px; max-width: 100%; overflow-x: auto;
+    border-radius: 10px; background: rgba(128,128,128,.14); border: 1px solid rgba(128,128,128,.24);
+}}
+[class*="st-key-per_"] button[data-variant="pills"], .st-key-cal_anios button[data-variant="pills"] {{
+    border: none !important; border-radius: 7px !important; background: transparent !important;
+    padding: .2rem .75rem; min-height: 0; font-size: .82rem; font-weight: 600; white-space: nowrap;
+    transition: background-color .18s ease, box-shadow .18s ease;
+}}
+[class*="st-key-per_"] button[data-variant="pills"] p, .st-key-cal_anios button[data-variant="pills"] p {{ font-size: .82rem !important; }}
+[class*="st-key-per_"] button[data-variant="pills"]:hover, .st-key-cal_anios button[data-variant="pills"]:hover {{
+    background: rgba(128,128,128,.22) !important;
+}}
+[class*="st-key-per_"] button[data-variant="pills"][aria-checked="true"], .st-key-cal_anios button[data-variant="pills"][aria-checked="true"] {{
+    background: rgba(246,180,14,.24) !important; box-shadow: inset 0 0 0 1px {SOL}; font-weight: 700;
+}}
+@media (max-width: 640px) {{
+    [class*="st-key-per_"] button[data-variant="pills"], .st-key-cal_anios button[data-variant="pills"] {{ padding: .2rem .55rem; }}
+}}
 
 /* ── Zona principal ── */
 .mc-hero {{
@@ -597,42 +631,64 @@ button[data-variant="segmented_control"][aria-checked="true"] p {{ color: #fff !
 
 /* ── Pie de página: franja celeste de la paleta ── */
 .mc-foot {{
-    margin: 48px 0 0; padding: 28px 30px; border-radius: 18px 18px 0 0; color: inherit;
+    margin: 40px 0 0; padding: 16px 22px 12px; border-radius: 14px 14px 0 0; color: inherit; font-size: .82rem;
     background: rgba(116,172,223,.10); border: 1px solid rgba(116,172,223,.22); border-top: 3px solid {CELESTE};
 }}
-.mc-foot .cols {{ display: grid; grid-template-columns: 1.4fr 1.2fr .8fr; gap: 28px; }}
-.mc-foot h5 {{ margin: 0 0 10px; padding: 0; font-size: .74rem; font-weight: 800; letter-spacing: .14em;
+.mc-foot .tit {{ margin: 0 0 4px; font-size: .68rem; font-weight: 800; letter-spacing: .14em;
     text-transform: uppercase; color: {CELESTE}; }}
-.mc-foot ul {{ list-style: none; margin: 0; padding: 0; font-size: .86rem; line-height: 1.75; opacity: .9; }}
-.mc-foot a {{ color: {CELESTE}; font-weight: 700; text-decoration: none; border-bottom: 1px solid rgba(116,172,223,.4); }}
-.mc-foot a:hover {{ border-bottom-color: {CELESTE}; }}
-.mc-foot p {{ margin: 0 0 8px; font-size: .86rem; line-height: 1.55; }}
-/* columna del crédito: tarjeta del alto de las otras dos, con el contenido centrado (antes quedaba un hueco abajo) */
-.mc-foot .fin {{
-    text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
-    align-self: stretch; padding: 20px 16px; border-radius: 16px;
-    background: linear-gradient(160deg, rgba(116,172,223,.16) 0%, rgba(116,172,223,.05) 100%);
-    border: 1px solid rgba(116,172,223,.25);
-}}
-.mc-foot .fin p {{ margin: 0; }}
+.mc-foot a {{ color: {CELESTE}; font-weight: 600; text-decoration: none; }}
+.mc-foot a:hover {{ text-decoration: underline; }}
+.mc-foot p {{ margin: 0; line-height: 1.5; }}
 /* el pie cierra la página: sin el relleno que Streamlit deja al final */
 [data-testid="stMainBlockContainer"] {{ padding-bottom: 0 !important; }}
-.mc-foot {{ margin-bottom: 0; }}
-.mc-foot a.mc-linkedin {{ display: inline-flex; align-items: center; gap: 7px; padding: 6px 14px; border-radius: 999px;
-    border: 1px solid rgba(116,172,223,.45); background: rgba(116,172,223,.10); font-size: .82rem; color: {CELESTE}; }}
-.mc-foot a.mc-linkedin:hover {{ background: #0A66C2; border-color: #0A66C2; color: #fff; }}
-.mc-foot .bol {{ display: flex; align-items: center; justify-content: space-between; gap: 18px; flex-wrap: wrap;
-    margin: 0 0 24px; padding: 16px 20px; border-radius: 14px; border: 1px solid rgba(116,172,223,.35);
-    background: linear-gradient(120deg, rgba(116,172,223,.20) 0%, rgba(116,172,223,.06) 100%); }}
-.mc-foot .bol > div {{ flex: 1 1 320px; min-width: 0; }}
-.mc-foot .bol b {{ display: block; font-size: 1.02rem; color: {CELESTE}; }}
-.mc-foot .bol span {{ font-size: .86rem; opacity: .85; }}
-.mc-foot .bol a {{ flex: 0 0 auto; padding: 8px 18px; border-radius: 999px; border: 0; background: {CELESTE}; color: #0E1A2B;
-    font-size: .9rem; transition: transform .15s ease, box-shadow .15s ease; }}
-.mc-foot .bol a:hover {{ transform: translateY(-1px); box-shadow: 0 4px 12px rgba(74,143,212,.3); }}
-.mc-foot .made {{ font-size: .7rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; opacity: .75; }}
-.mc-foot .legal {{ display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; margin-top: 22px;
-    padding-top: 14px; border-top: 1px solid rgba(128,128,128,.28); font-size: .8rem; opacity: .9; }}
+/* suscripción: una franja finita */
+.mc-foot .bol {{ display: flex; align-items: center; justify-content: space-between; gap: 12px 18px; flex-wrap: wrap;
+    margin: 0 0 14px; padding: 9px 14px; border-radius: 10px; border: 1px solid rgba(116,172,223,.30);
+    background: rgba(116,172,223,.10); }}
+.mc-foot .bol > div {{ flex: 1 1 300px; min-width: 0; }}
+.mc-foot .bol b {{ color: {CELESTE}; font-size: .86rem; margin-right: 8px; }}
+.mc-foot .bol span {{ opacity: .85; }}
+.mc-foot .bol a {{ flex: 0 0 auto; padding: 5px 14px; border-radius: 999px; background: {CELESTE}; color: #0E1A2B;
+    font-size: .8rem; font-weight: 700; transition: transform .15s ease; }}
+.mc-foot .bol a:hover {{ transform: translateY(-1px); text-decoration: none; }}
+/* franja final del pie (debajo del aviso legal): estado de los datos y botón «Refrescar datos». Es un contenedor de
+   Streamlit pegado al pie, con el mismo fondo y bordes */
+.st-key-pie_datos {{ margin-top: 0; padding: 8px 22px 12px; justify-content: space-between; flex-wrap: wrap;
+    gap: 8px 16px !important; background: rgba(116,172,223,.10); border: 1px solid rgba(116,172,223,.22); border-top: none; }}
+.st-key-pie_datos [data-testid="stElementContainer"] {{ width: auto !important; }}
+.st-key-pie_datos > [data-testid="stLayoutWrapper"] {{ flex: 1 1 260px; min-width: 0; }}
+.mc-vivo {{ display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; font-size: .78rem; opacity: .85; }}
+.mc-vivo .en {{ display: inline-flex; align-items: center; gap: 6px; font-weight: 800; letter-spacing: .08em;
+    text-transform: uppercase; font-size: .68rem; color: #10AC84; }}
+.mc-vivo .en::before {{ content: ""; width: 8px; height: 8px; border-radius: 50%; background: #10AC84;
+    box-shadow: 0 0 0 0 rgba(16,172,132,.6); animation: mc-latido 2s ease-out infinite; }}
+@keyframes mc-latido {{ 0% {{ box-shadow: 0 0 0 0 rgba(16,172,132,.55); }} 100% {{ box-shadow: 0 0 0 8px rgba(16,172,132,0); }} }}
+@media (prefers-reduced-motion: reduce) {{ .mc-vivo .en::before {{ animation: none; }} }}
+.st-key-pie_datos button {{ min-height: 0 !important; padding: .28rem .8rem .28rem .65rem !important; border-radius: 999px !important;
+    border: 1px solid rgba(116,172,223,.45) !important; background: transparent !important; }}
+.st-key-pie_datos button p {{ font-size: .78rem !important; font-weight: 700; color: {CELESTE} !important; }}
+.st-key-pie_datos button [data-testid="stIconMaterial"] {{ color: {CELESTE}; font-size: 1rem; }}
+.st-key-pie_datos button:hover:not(:disabled) {{ background: rgba(116,172,223,.16) !important; border-color: {CELESTE} !important; }}
+/* cuerpo: marca a la izquierda, fuentes a la derecha */
+.mc-foot .main {{ display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 18px 36px; align-items: start; }}
+.mc-foot .logo {{ display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }}
+.mc-foot .logo b {{ display: block; font-size: .95rem; }}
+.mc-foot .logo span {{ display: block; font-size: .76rem; opacity: .75; }}
+.mc-foot a.mc-linkedin {{ display: inline-flex; align-items: center; gap: 5px; margin-left: auto; padding: 3px 10px;
+    border-radius: 999px; border: 1px solid rgba(116,172,223,.45); font-size: .74rem; }}
+.mc-foot a.mc-linkedin:hover {{ background: #0A66C2; border-color: #0A66C2; color: #fff; text-decoration: none; }}
+.mc-foot .marca p {{ opacity: .85; max-width: 46ch; }}
+.mc-foot .fuentes ul {{ list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 2px 14px; }}
+.mc-foot .fuentes li {{ white-space: nowrap; }}
+/* aviso largo: plegado, para no ocupar lugar (el texto completo sigue ahí) */
+.mc-foot details {{ margin-top: 10px; font-size: .78rem; }}
+.mc-foot summary {{ cursor: pointer; opacity: .85; width: fit-content; }}
+.mc-foot summary:hover {{ opacity: 1; color: {CELESTE}; }}
+.mc-foot details p {{ margin-top: 6px; opacity: .85; }}
+/* barra legal */
+.mc-foot .legal {{ display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 16px;
+    margin-top: 12px; padding-top: 8px; border-top: 1px solid rgba(128,128,128,.28); font-size: .74rem; opacity: .9; }}
+.mc-foot .made {{ font-weight: 800; letter-spacing: .12em; text-transform: uppercase; opacity: .7; font-size: .66rem; }}
 
 /* ── Resultado final: fichas ── */
 .mc-rf {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin: 6px 0 4px; }}
@@ -644,7 +700,7 @@ button[data-variant="segmented_control"][aria-checked="true"] p {{ color: #fff !
 .mc-rf .k {{ font-size: .7rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; opacity: .65; }}
 .mc-rf .v {{ font-size: 1.45rem; font-weight: 800; margin: 2px 0; letter-spacing: -.01em; }}
 .mc-rf .d {{ font-size: .8rem; opacity: .75; line-height: 1.35; }}
-@media (max-width: 860px) {{ .mc-foot .cols {{ grid-template-columns: 1fr; }} }}
+@media (max-width: 860px) {{ .mc-foot .main {{ grid-template-columns: 1fr; }} }}
 
 /* ── Páginas legales ── */
 .mc-legal {{ max-width: 860px; margin: 8px auto 0; }}
@@ -944,7 +1000,7 @@ h3 {{ font-weight: 700 !important; }}
     /* tablas anchas: se deslizan de costado en lugar de apretarse */
     [data-testid="stTable"], [data-testid="stDataFrame"] {{ overflow-x: auto; }}
     /* pie de página y fichas en una columna */
-    .mc-foot {{ padding: 20px 18px; margin-top: 32px; }}
+    .mc-foot {{ padding: 14px 14px 10px; margin-top: 28px; }}
     .mc-foot .legal {{ flex-direction: column; }}
     .mc-brand h1 {{ font-size: 1.3rem !important; }}
 }}
@@ -1273,12 +1329,13 @@ def _md_a_html(texto: str) -> str:
 def panorama(items: list[dict], fecha: str) -> str:
     """Informe «En pocas palabras»: una fila por tema con su cifra clave, el resumen y el tono (bien / mal / mixto)."""
     esc = html.escape
-    marcas = {"bien": ("Positivo", "↑"), "mal": ("Negativo", "↓"), "mixto": ("Mixto", "↕"), "estable": ("Estable", "→")}
+    marcas = {"bien": ("Positivo", "↑"), "mal": ("Negativo", "↓"), "mixto": ("Mixto", "↕"), "estable": ("Estable", "→"),
+              "sube": ("Sube", "↑"), "baja": ("Baja", "↓")}  # sube/baja: cotizaciones, que no se cuentan como buenas o malas
     cuenta = {k: sum(1 for i in items if i["tono"] == k) for k in marcas}
     plural = {"bien": "positivos", "mal": "negativos", "mixto": "mixtos", "estable": "estables"}
     resumen = "".join(f'<span class="cnt {k}">{cuenta[k]} '
                       f'{marcas[k][0].lower() if cuenta[k] == 1 else plural[k]}</span>'
-                      for k in marcas if cuenta[k])
+                      for k in marcas if cuenta[k] and k in plural)
     filas = "".join(
         f'<div class="fila {i["tono"]}"><div class="izq"><div class="tema">{esc(i["tema"])}</div>'
         f'<div class="cifra">{esc(i["cifra"])}</div><div class="det">{esc(i["detalle"])}</div></div>'
@@ -1289,7 +1346,7 @@ def panorama(items: list[dict], fecha: str) -> str:
             f'<div class="sub">Lo más importante de la economía · datos al {esc(fecha)}</div></div>'
             f'<div class="bal">{resumen}</div></div>{filas}'
             f'<div class="pie">Nota: resumen automático con el último dato publicado por cada fuente (algunos tienen semanas de '
-            f'rezago). Positivo / negativo según el efecto sobre la economía y el bolsillo.</div></div>')
+            f'rezago). Positivo / negativo según el efecto sobre la economía y el bolsillo; el dólar, como toda cotización, solo dice si subió o bajó.</div></div>')
 
 
 def pantalla_carga(termino: str, definicion: str) -> str:
@@ -1630,33 +1687,42 @@ FUENTES = [
 def footer() -> str:
     """Pie de página con color propio (celeste de la paleta): fuentes, aviso y crédito."""
     esc = html.escape
-    lista = "".join(f'<li><a href="{esc(u)}" target="_blank" rel="noopener noreferrer">{esc(n)}</a> — {esc(d)}</li>'
+    lista = "".join(f'<li><a href="{esc(u)}" title="{esc(d)}" target="_blank" rel="noopener noreferrer">{esc(n.split(" (")[0].split(" / ")[0])}</a></li>'
                     for n, d, u in FUENTES)
     return (
         '<div class="mc-foot">'
         + (f'<div class="bol"><div><b>Resumen semanal por mail</b><span>Todos los lunes, lo más importante de la '
-           'economía en un minuto. Gratis, sin publicidad y te das de baja cuando quieras.</span></div>'
+           'economía en un minuto. Gratis y sin publicidad.</span></div>'
            f'<a href="{esc(BOLETIN, quote=True)}" target="_blank" rel="noopener noreferrer">Suscribirme →</a></div>'
            if BOLETIN else '')
-        + '<div class="cols">'
-        f'<div><h5>Fuentes de datos</h5><ul>{lista}</ul></div>'
-        '<div><h5>Propósito de la página</h5><p>Reunir en un solo lugar los principales datos de la economía argentina, tomados de fuentes oficiales y actualizados en vivo, '
-        'para que cualquier persona pueda consultarlos, compararlos con su historia y entenderlos.</p>'
-        '<h5 style="margin-top:14px">Importante</h5><p><b>Algunos datos pueden tener un rezago</b> respecto de lo que difunden las fuentes en el día '
+        + '<div class="main">'
+        f'<div class="marca"><div class="logo">{bandera(30)}<div><b>MacroCenter</b><span>Creada por {esc(AUTOR)}</span></div>'
+        f'<a class="mc-linkedin" href="{esc(LINKEDIN, quote=True)}" target="_blank" rel="noopener noreferrer" '
+        f'aria-label="LinkedIn de {esc(AUTOR)}">{_ICONO_LINKEDIN} LinkedIn</a></div>'
+        '<p>Reunir en un solo lugar los principales datos de la economía argentina, tomados de fuentes oficiales y actualizados en vivo, '
+        'para que cualquier persona pueda consultarlos, compararlos con su historia y entenderlos.</p></div>'
+        f'<div class="fuentes"><div class="tit">Fuentes de datos</div><ul>{lista}</ul></div>'
+        '</div>'
+        '<details><summary>Importante: los datos pueden tener rezago y son de referencia</summary>'
+        '<p><b>Algunos datos pueden tener un rezago</b> respecto de lo que difunden las fuentes en el día '
         '(por ejemplo, las reservas del BCRA se publican con 1 o 2 días de demora). '
         'Los datos vienen de APIs y sitios públicos y pueden tener demoras o revisiones. '
         'Los valores son de referencia y no constituyen asesoramiento financiero. Las notas y las calificaciones son '
-        'medidas orientativas, con criterios propios.</p></div>'
-        f'<div class="fin">{bandera(46)}<p><b>MacroCenter</b><br>Creada por {esc(AUTOR)}</p>'
-        f'<a class="mc-linkedin" href="{esc(LINKEDIN, quote=True)}" target="_blank" rel="noopener noreferrer" '
-        f'aria-label="LinkedIn de {esc(AUTOR)}">{_ICONO_LINKEDIN} LinkedIn</a>'
-        '<p class="made">Hecho en Argentina</p></div>'
-        '</div>'
+        'medidas orientativas, con criterios propios.</p></details>'
         '<div class="legal"><span>© 2026 MacroCenter — Todos los derechos reservados.</span>'
+        '<span class="made">Hecho en Argentina</span>'
         '<span><a href="?legal=terminos" target="_self">Términos y condiciones</a>'
         ' · <a href="?legal=privacidad" target="_self">Política de privacidad</a></span></div>'
         '</div>'
     )
+
+
+def estado_datos(hora_dolar: str | None, oficiales: str) -> str:
+    """Franja del pie: «En vivo», a qué hora se actualizó el dólar y cuándo se bajaron las series oficiales."""
+    esc = html.escape
+    dolar = f"<span>Dólar: {esc(hora_dolar)}</span>" if hora_dolar else ""
+    return (f'<div class="mc-vivo"><span class="en">En vivo</span>{dolar}'
+            f'<span>Cripto y bolsas: cada 5 min</span><span>Series oficiales: {esc(oficiales)}</span></div>')
 
 
 def legal_pagina(doc: dict, actualizacion: str) -> str:

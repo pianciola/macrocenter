@@ -340,7 +340,7 @@ def pantalla_historica(d: dict, grafico) -> None:
     c1, c2 = st.columns([1, 2])
     monto = entrada_monto(c1, "Monto inicial", "inv_monto_hist", 1_000_000)
     with c2:
-        per = st.pills("Desde hace", list(PERIODOS), default="1 año", key="inv_periodo") or "1 año"
+        per = st.pills("Desde hace", list(PERIODOS), default="1 año", key="per_inv_hist") or "1 año"
     desde = _hoy() - pd.Timedelta(days=PERIODOS[per])
     tabla, series, faltan = alternativas(d, desde, monto)
     if not series:

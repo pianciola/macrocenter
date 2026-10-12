@@ -241,6 +241,31 @@ def dolar_historico() -> pd.DataFrame:
     return df.dropna().sort_values("fecha").reset_index(drop=True)
 
 
+DOLARAPI_URL = "https://dolarapi.com/v1/dolares"
+
+
+def dolares_ahora() -> pd.DataFrame:
+    """Cotización de cada dólar en este momento (DolarApi, del mismo autor que ArgentinaDatos): casa, compra, venta y
+    `actualizado` (hora de Argentina, sin zona). Es lo que permite mostrar el dólar del día sin esperar al cierre."""
+    filas = []
+    for d in _get(DOLARAPI_URL).json():
+        casa = str(d.get("casa") or "").strip()
+        venta = pd.to_numeric(d.get("venta"), errors="coerce")
+        cuando = pd.to_datetime(d.get("fechaActualizacion"), errors="coerce", utc=True)
+        if casa in CASAS_DOLAR and pd.notna(venta) and venta > 0 and pd.notna(cuando):
+            filas.append({"casa": casa, "compra": pd.to_numeric(d.get("compra"), errors="coerce"), "venta": float(venta),
+                          "actualizado": (cuando - pd.Timedelta(hours=3)).tz_localize(None)})
+    return pd.DataFrame(filas, columns=["casa", "compra", "venta", "actualizado"])
+
+
+def riesgo_pais_ahora() -> pd.DataFrame:
+    """Último valor del riesgo país (ArgentinaDatos). Columnas: fecha, valor."""
+    d = _get(f"{ARGDATOS_URL}/finanzas/indices/riesgo-pais/ultimo").json()
+    df = pd.DataFrame([{"fecha": pd.to_datetime(d.get("fecha"), errors="coerce"),
+                        "valor": pd.to_numeric(d.get("valor"), errors="coerce")}])
+    return df.dropna().reset_index(drop=True)
+
+
 def plazo_fijo_bancos() -> pd.DataFrame:
     """Tasa de plazo fijo a 30 días de cada banco (ArgentinaDatos, con datos del BCRA). TNA en %; 0 = no informa."""
     filas = [{"entidad": str(e.get("entidad") or "").strip(),
