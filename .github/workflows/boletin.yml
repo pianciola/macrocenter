@@ -1,13 +1,18 @@
 # Boletín semanal de MacroCenter: los lunes a las 8 de la mañana (hora de Argentina) arma el resumen de la semana y lo
-# manda por Buttondown a los suscriptores (monitor/boletin.py). Si falta algún dato, o si se corre a mano, queda como
-# BORRADOR en Buttondown para revisarlo y mandarlo desde ahí.
+# manda por Buttondown a los suscriptores (monitor/boletin.py). Si falta algún dato, o si se corre a mano sin tildar
+# «enviar», queda como BORRADOR en Buttondown para revisarlo y mandarlo desde ahí.
 # Necesita el secreto BUTTONDOWN_API_KEY (Settings → Secrets and variables → Actions).
 name: Boletín
 
 on:
   schedule:
     - cron: "0 11 * * 1"  # lunes 11:00 UTC = 08:00 en Argentina
-  workflow_dispatch:  # a mano (Actions → Boletín → Run workflow): solo crea un borrador, no manda nada
+  workflow_dispatch:  # a mano (Actions → Boletín → Run workflow): crea un borrador, salvo que se tilde «enviar»
+    inputs:
+      enviar:
+        description: "Mandar a los suscriptores (si no, queda como borrador)"
+        type: boolean
+        default: false
 
 permissions:
   contents: read  # solo lee el código; no puede modificar nada
@@ -32,5 +37,5 @@ jobs:
         env:
           TZ: America/Argentina/Buenos_Aires
           BUTTONDOWN_API_KEY: ${{ secrets.BUTTONDOWN_API_KEY }}
-          BOLETIN_ENVIAR: ${{ github.event_name == 'schedule' }}  # solo la corrida de los lunes manda
+          BOLETIN_ENVIAR: ${{ github.event_name == 'schedule' || inputs.enviar == true }}  # los lunes, o a mano con «enviar»
         run: python monitor/boletin.py
