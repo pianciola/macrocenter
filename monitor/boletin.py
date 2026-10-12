@@ -3,8 +3,8 @@
 Arma el resumen de la semana (macrocenter/boletin.py) y lo manda por Buttondown a todos los suscriptores.
 Queda como BORRADOR (sin mandarse) en dos casos, para que el dueño lo revise y lo mande desde buttondown.com:
   - si faltó algún dato (una fuente caída): mejor revisarlo que mandar un boletín incompleto;
-  - si BOLETIN_ENVIAR no es "true" (el workflow solo lo pone en la corrida automática de los lunes: al correrlo a mano
-    queda como borrador y así no se manda dos veces la misma semana).
+  - si BOLETIN_ENVIAR no es "true" (el workflow lo pone en la corrida automática de los lunes y, a mano, solo si se
+    tilda «enviar»: así no se manda dos veces la misma semana por error).
 Si Buttondown rechaza el envío (por ejemplo, cuenta todavía sin aprobar), lo deja como borrador y termina con error:
 GitHub le avisa al dueño por mail.
 
