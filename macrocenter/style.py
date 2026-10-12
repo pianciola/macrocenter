@@ -1349,6 +1349,26 @@ def panorama(items: list[dict], fecha: str) -> str:
             f'rezago). Positivo / negativo según el efecto sobre la economía y el bolsillo; el dólar, como toda cotización, solo dice si subió o bajó.</div></div>')
 
 
+def cargando(texto: str = "Cargando datos…", alto: str = "55vh") -> str:
+    """Círculo de carga para la zona principal mientras se bajan datos. Aparece recién a los 0,4 s: en las cargas rápidas
+    (casi todas) no llega a verse y no parpadea. Trae su propio estilo porque puede mostrarse antes que el de la página."""
+    return (
+        '<style>'
+        '.mc-cargando{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;'
+        f'min-height:{alto};opacity:0;animation:mc-aparece .3s ease .4s forwards}}'
+        '.mc-cargando .aro{width:46px;height:46px;border-radius:50%;border:4px solid rgba(116,172,223,.18);'
+        f'border-top-color:{CELESTE};border-right-color:{CELESTE};animation:mc-gira .8s linear infinite;position:relative}}'
+        f'.mc-cargando .aro::after{{content:"";position:absolute;top:-7px;left:50%;width:8px;height:8px;margin-left:-4px;'
+        f'border-radius:50%;background:{SOL};box-shadow:0 0 8px rgba(246,180,14,.8)}}'
+        '.mc-cargando .t{font-size:.86rem;opacity:.7;letter-spacing:.02em}'
+        '@keyframes mc-gira{to{transform:rotate(360deg)}}@keyframes mc-aparece{to{opacity:1}}'
+        '@media (prefers-reduced-motion:reduce){.mc-cargando .aro{animation-duration:2.4s}}'
+        '</style>'
+        f'<div class="mc-cargando" role="status" aria-live="polite"><div class="aro"></div>'
+        f'<div class="t">{html.escape(texto)}</div></div>'
+    )
+
+
 def pantalla_carga(termino: str, definicion: str) -> str:
     """Pantalla que se ve mientras se bajan los datos de todas las fuentes (servidor recién prendido). Trae sus propios
     estilos porque aparece antes de que se apliquen los de la página."""
