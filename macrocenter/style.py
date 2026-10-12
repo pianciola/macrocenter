@@ -12,6 +12,8 @@ CELESTE = "#74ACDF"  # celeste de la bandera argentina
 SOL = "#F6B40E"  # amarillo del Sol de Mayo
 AUTOR = "Juan Manuel Pianciola"
 LINKEDIN = "https://www.linkedin.com/in/jmp1412/"
+# página de suscripción al boletín semanal (Buttondown). Vacío = no se muestra la invitación en el pie.
+BOLETIN = "https://buttondown.com/macrocenter"
 _ICONO_LINKEDIN = ('<svg width="15" height="15" viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M20.45 '
                    '20.45h-3.56v-5.57c0-1.33-.03-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.35V9h3.41v1.56h.05c.48-.9 '
                    '1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28zM5.34 7.43a2.06 2.06 0 1 1 0-4.13 2.06 2.06 0 0 1 0 '
@@ -589,6 +591,15 @@ button[data-variant="segmented_control"][aria-checked="true"] p {{ color: #fff !
 .mc-foot a.mc-linkedin {{ display: inline-flex; align-items: center; gap: 7px; padding: 6px 14px; border-radius: 999px;
     border: 1px solid rgba(116,172,223,.45); background: rgba(116,172,223,.10); font-size: .82rem; color: {CELESTE}; }}
 .mc-foot a.mc-linkedin:hover {{ background: #0A66C2; border-color: #0A66C2; color: #fff; }}
+.mc-foot .bol {{ display: flex; align-items: center; justify-content: space-between; gap: 18px; flex-wrap: wrap;
+    margin: 0 0 24px; padding: 16px 20px; border-radius: 14px; border: 1px solid rgba(116,172,223,.35);
+    background: linear-gradient(120deg, rgba(116,172,223,.20) 0%, rgba(116,172,223,.06) 100%); }}
+.mc-foot .bol > div {{ flex: 1 1 320px; min-width: 0; }}
+.mc-foot .bol b {{ display: block; font-size: 1.02rem; color: {CELESTE}; }}
+.mc-foot .bol span {{ font-size: .86rem; opacity: .85; }}
+.mc-foot .bol a {{ flex: 0 0 auto; padding: 8px 18px; border-radius: 999px; border: 0; background: {CELESTE}; color: #0E1A2B;
+    font-size: .9rem; transition: transform .15s ease, box-shadow .15s ease; }}
+.mc-foot .bol a:hover {{ transform: translateY(-1px); box-shadow: 0 4px 12px rgba(74,143,212,.3); }}
 .mc-foot .made {{ font-size: .7rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; opacity: .75; }}
 .mc-foot .legal {{ display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; margin-top: 22px;
     padding-top: 14px; border-top: 1px solid rgba(128,128,128,.28); font-size: .8rem; opacity: .9; }}
@@ -1553,7 +1564,12 @@ def footer() -> str:
     lista = "".join(f'<li><a href="{esc(u)}" target="_blank" rel="noopener noreferrer">{esc(n)}</a> — {esc(d)}</li>'
                     for n, d, u in FUENTES)
     return (
-        '<div class="mc-foot"><div class="cols">'
+        '<div class="mc-foot">'
+        + (f'<div class="bol"><div><b>Resumen semanal por mail</b><span>Todos los lunes, lo más importante de la '
+           'economía en un minuto. Gratis, sin publicidad y te das de baja cuando quieras.</span></div>'
+           f'<a href="{esc(BOLETIN, quote=True)}" target="_blank" rel="noopener noreferrer">Suscribirme →</a></div>'
+           if BOLETIN else '')
+        + '<div class="cols">'
         f'<div><h5>Fuentes de datos</h5><ul>{lista}</ul></div>'
         '<div><h5>Propósito de la página</h5><p>Reunir en un solo lugar los principales datos de la economía argentina, tomados de fuentes oficiales y actualizados en vivo, '
         'para que cualquier persona pueda consultarlos, compararlos con su historia y entenderlos.</p>'
