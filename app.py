@@ -526,6 +526,13 @@ vista = st.session_state.setdefault("vista", "tablero")
 if vista not in VISTAS:  # estado viejo o inválido: se vuelve al tablero
     vista = st.session_state["vista"] = "tablero"
 
+# círculo de carga en la zona principal mientras se arma la barra lateral y se piden los datos del momento; se va
+# cuando empieza el contenido (ver «encabezado»). Solo en la primera carga de cada visita: en las siguientes la página
+# ya está a la vista y el círculo la empujaría hacia abajo. Si todo es rápido, no llega a verse.
+_cargando_inicio = st.empty()
+if not st.session_state.get("_ya_cargo"):
+    _cargando_inicio.html(style.cargando())
+
 with st.sidebar:
     st.markdown(style.marca(), unsafe_allow_html=True)
     nuevas = noticias_recientes()
@@ -1319,8 +1326,11 @@ def pantalla_calificacion() -> None:
 
 # ── Interactivo ──
 def pantalla_inversiones() -> None:
+    espera = st.empty()
+    espera.html(style.cargando("Buscando las tasas de hoy…", alto="40vh"))
     inv = cargar_inversiones()
     merc = cargar_mercados()
+    espera.empty()
 
     def tabla(x):
         return x if isinstance(x, pd.DataFrame) else None
@@ -1601,6 +1611,8 @@ def pie_pagina() -> None:
 
 
 # ───────────────────────── encabezado ─────────────────────────
+_cargando_inicio.empty()
+st.session_state["_ya_cargo"] = True
 try:
     st.markdown(style.ticker(construir_ticker()), unsafe_allow_html=True)
 except Exception:  # noqa: BLE001 — la franja es un adorno: si falla, la página sigue sin ella
