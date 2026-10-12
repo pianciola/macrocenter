@@ -40,7 +40,10 @@ def fuentes() -> tuple[dict, dict]:
                  "BCRA · euro": lambda: data.divisa("EUR"), "BCRA · libra": lambda: data.divisa("GBP")}
     secundarias = {"FRED · inflación EE. UU.": data.ipc_eeuu, "CoinGecko · criptomonedas": data.cripto_mercado,
                    "CriptoYa · USDT": data.usdt_exchanges, "Noticias · BCRA": news.bcra,
-                   "Noticias · Economía": news.economia}
+                   "Noticias · Economía": news.economia,
+                   "ArgentinaDatos · plazo fijo por banco": data.plazo_fijo_bancos,
+                   "ArgentinaDatos · rendimientos de plataformas": data.rendimientos_plataformas,
+                   "ArgentinaDatos · fondos money market": data.fci}
     secundarias |= {f"Yahoo · {nombre}": (lambda s=simbolo: data.indice(s)) for simbolo, nombre, *_ in data.INDICES}
     return criticas, secundarias
 
@@ -95,6 +98,8 @@ def revisar_pantallas() -> list[str]:
     pestanas = ["Inicio", "Dólar", "Cripto", "Bolsas", "Reservas", "Actividad y PBI", "Salarios", "Precios y UVA",
                 "Tasas y riesgo país", "Dinero y crédito", "Comercio exterior", "Resultado fiscal"]
     vistas = [(f"Tablero · {p}", {"pestana": p}) for p in pestanas]
+    vistas += [(f"Ahorro e inversiones · {sec}", {"vista": "inversiones", "inv_seccion": sec}) for sec in
+               ["Tasas de hoy", "Cómo les fue", "Plazo fijo vs. UVA", "Conceptos"]]
     vistas += [("Historia · Presidentes", {"vista": "historia"}),
                ("Historia · Ministros", {"vista": "historia", "hist_seccion": "Ministros de Economía"})]
     vistas += [(f"Herramientas · {m}", {"vista": "juegos", "inter_modo": m}) for m in
