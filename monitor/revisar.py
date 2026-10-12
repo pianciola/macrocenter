@@ -117,9 +117,13 @@ def revisar_pantallas() -> list[str]:
             continue
         for e in at.exception:
             problemas.append(f"{nombre}: error — {str(e.value)[:150]}")
-        for w in at.warning:
-            if any(t in w.value for t in ("No se pudo mostrar", "No se pudo armar", "No se pudieron cargar")):
-                problemas.append(f"{nombre}: {w.value[:150]}")
+        # la página no muestra avisos de falla: las anota en session_state["_fallas"] (ver macrocenter/avisos.py)
+        try:
+            fallas = list(at.session_state["_fallas"])
+        except (KeyError, AttributeError):
+            fallas = []
+        for f in dict.fromkeys(fallas):
+            problemas.append(f"{nombre}: {str(f)[:150]}")
     return problemas
 
 
