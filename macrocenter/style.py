@@ -209,11 +209,15 @@ section[data-testid="stSidebar"] [data-testid="stPills"] button {{ border-radius
 .mc-news-pie a {{ color: {CELESTE} !important; }}
 .mc-news-vacio {{ padding: 18px; opacity: .7; }}
 /* botón «Marcar todas como leídas» y su estado ya leído (verde) */
-.st-key-btn_marcar_leidas button {{ border: 1px solid rgba(116,172,223,.6) !important; border-radius: 10px; }}
+.st-key-btn_marcar_leidas button {{ border: 1px solid rgba(116,172,223,.45) !important; border-radius: 999px !important;
+    background: rgba(116,172,223,.08) !important; min-height: 0 !important; padding: .32rem .9rem !important; }}
+.st-key-btn_marcar_leidas button p {{ color: {CELESTE} !important; font-weight: 700; font-size: .84rem !important; }}
+.st-key-btn_marcar_leidas button:hover {{ background: rgba(116,172,223,.18) !important; border-color: {CELESTE} !important; }}
 .st-key-btn_todo_leido button {{
-    background: #10AC84 !important; border: 1px solid #10AC84 !important; border-radius: 10px;
-    box-shadow: 0 4px 14px rgba(16,172,132,.35);
+    background: #10AC84 !important; border: 1px solid #10AC84 !important; border-radius: 999px !important;
+    min-height: 0 !important; padding: .32rem .9rem !important;
 }}
+.st-key-btn_todo_leido button p {{ font-size: .84rem !important; }}
 .st-key-btn_todo_leido button p {{ color: #FFFFFF !important; font-weight: 700; }}
 .st-key-btn_todo_leido button:hover {{ background: #0E9673 !important; }}
 
@@ -282,14 +286,36 @@ section[data-testid="stSidebar"] [class*="st-key-atajo_"] {{ margin-top: -6px; }
     background: rgba(116,172,223,.18) !important; border-color: {CELESTE} !important;
     box-shadow: 0 4px 12px rgba(74,143,212,.2); transform: translateY(-1px);
 }}
+/* un solo criterio para los botones de acción que van a la derecha de un título (Personalizar, Ver otro análisis):
+   píldora celeste chica con ícono. Mismo diseño que «Refrescar datos» del pie. */
+.st-key-inicio_otro button {{
+    min-height: 0 !important; padding: .32rem .85rem .32rem .7rem !important; border-radius: 999px !important;
+    border: 1px solid rgba(116,172,223,.45) !important; background: rgba(116,172,223,.08) !important;
+    transition: background-color .18s ease, border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+}}
+.st-key-inicio_otro button p {{ font-size: .84rem !important; font-weight: 700; color: {CELESTE} !important; white-space: nowrap !important; }}
+.st-key-inicio_otro button [data-testid="stIconMaterial"] {{ color: {CELESTE}; font-size: 1.05rem; }}
+.st-key-inicio_otro button:hover {{
+    background: rgba(116,172,223,.18) !important; border-color: {CELESTE} !important;
+    box-shadow: 0 4px 12px rgba(74,143,212,.2); transform: translateY(-1px);
+}}
 /* títulos de sección: mismo tamaño y el mismo aire arriba en todas las pestañas y vistas (antes había títulos de
    28, 24 y 20 px según la pestaña, y ninguno se separaba de lo anterior más que el espacio común entre bloques) */
 [data-testid="stMain"] [data-testid="stElementContainer"]:has([data-testid="stHeadingWithActionElements"]):not(:first-child) {{
     margin-top: 14px; }}
-/* barra celeste a la izquierda: distingue los títulos de sección de los títulos de los gráficos (que son negrita chica) */
-[data-testid="stMain"] [data-testid="stHeadingWithActionElements"] :is(h3, h4) {{ font-size: 1.5rem !important;
+/* JERARQUÍA DE TÍTULOS (igual en todas las pestañas y vistas):
+   · sección (h3/h4): 24 px, negrita, con barra celeste a la izquierda; distingue la sección de los títulos de los gráficos
+   · subsección (h5): 18 px, negrita, sin barra
+   · gráfico: negrita chica, dentro de la figura
+   Quedan afuera los títulos de las tarjetas propias (línea de tiempo, ministros…): son componentes con su estilo. */
+[data-testid="stMain"] [data-testid="stHeadingWithActionElements"]:not([class*="mc-"] *) :is(h3, h4) {{
+    font-size: 1.5rem !important; font-weight: 700 !important; letter-spacing: -.01em;
     border-left: 4px solid {CELESTE}; padding-left: 12px !important; line-height: 1.25; }}
-[data-testid="stMain"] [data-testid="stHeadingWithActionElements"] h5 {{ font-size: 1.15rem !important; }}
+[data-testid="stMain"] [data-testid="stHeadingWithActionElements"]:not([class*="mc-"] *) h5 {{
+    font-size: 1.15rem !important; font-weight: 700 !important; line-height: 1.3; }}
+/* los títulos de las tarjetas propias no llevan la barra */
+[data-testid="stMain"] [class*="mc-"] [data-testid="stHeadingWithActionElements"] :is(h3, h4, h5) {{
+    border-left: none !important; padding-left: 0 !important; }}
 /* informe "En pocas palabras" de Inicio: neutral (no califica nada como bueno o malo). Título como los demás títulos
    de sección (barra celeste), filas numeradas separadas por líneas finas, misma letra que el resto de la página */
 .mc-pano {{ margin: 6px 0 10px; counter-reset: pano; }}
@@ -311,7 +337,7 @@ section[data-testid="stSidebar"] [class*="st-key-atajo_"] {{ margin-top: -6px; }
 :is(.mc-nota, .mc-aviso) .pos {{ color: #10AC84; font-weight: 700; }}
 :is(.mc-nota, .mc-aviso) .neg {{ color: #EE5253; font-weight: 700; }}
 .mc-pano .pie {{ font-size: .78rem; opacity: .55; padding: 10px 0 0; border-top: 1px solid rgba(128,128,128,.35); }}
-@media (max-width: 760px) {{
+@container principal (max-width: 640px) {{
     .mc-pano .fila {{ grid-template-columns: 1.8rem 1fr; gap: 4px 10px; padding: 13px 0; }}
     .mc-pano .izq {{ display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }}
     .mc-pano .txt {{ grid-column: 2; font-size: .9rem; }}
@@ -373,7 +399,7 @@ button[data-variant="segmented_control"][aria-checked="true"] p {{ color: #fff !
 [class*="st-key-per_"] button[data-variant="pills"][aria-checked="true"], .st-key-cal_anios button[data-variant="pills"][aria-checked="true"] {{
     background: rgba(246,180,14,.24) !important; box-shadow: inset 0 0 0 1px {SOL}; font-weight: 700;
 }}
-@media (max-width: 640px) {{
+@container principal (max-width: 560px) {{
     [class*="st-key-per_"] button[data-variant="pills"], .st-key-cal_anios button[data-variant="pills"] {{ padding: .2rem .55rem; }}
 }}
 
@@ -459,7 +485,15 @@ button[data-variant="segmented_control"][aria-checked="true"] p {{ color: #fff !
 :is(.st-key-hist_seccion, .st-key-inv_seccion) button[aria-checked="true"] p {{ color: #fff !important; }}
 
 /* con cuatro secciones, en pantallas angostas pasan a dos por fila */
-@media (max-width: 760px) {{
+/* selectores grandes de sección (Historia, Ahorro e inversiones) con poco ancho: letra algo menor y el texto puede bajar
+   de renglón en vez de cortarse */
+@container principal (max-width: 640px) {{
+    :is(.st-key-hist_seccion, .st-key-inv_seccion) button {{ padding: .5rem .55rem !important; min-height: 2.9rem; }}
+    :is(.st-key-hist_seccion, .st-key-inv_seccion) button p {{
+        font-size: .9rem !important; white-space: normal !important; overflow: visible !important;
+        text-overflow: clip !important; line-height: 1.2; text-align: center; }}
+}}
+@container principal (max-width: 640px) {{
     .st-key-inv_seccion [data-testid="stButtonGroup"] > div {{ flex-wrap: wrap; }}
     .st-key-inv_seccion button {{ flex: 1 1 calc(50% - 10px); min-height: 2.9rem; }}
     .st-key-inv_seccion button p {{ font-size: .9rem !important; }}
@@ -604,7 +638,7 @@ button[data-variant="segmented_control"][aria-checked="true"] p {{ color: #fff !
     position: absolute; top: 12px; right: 12px; font-size: .64rem; font-weight: 900; letter-spacing: .12em;
     padding: 3px 9px; border-radius: 999px; color: #3A2A00; background: linear-gradient(135deg, {SOL}, #F79F1F);
 }}
-@media (max-width: 860px) {{
+@container principal (max-width: 760px) {{
     .mc-min-hero {{ padding: 20px 18px 18px; }}
     .mc-min-hero h3 {{ font-size: 1.55rem; }}
     .mc-min-res {{ grid-template-columns: repeat(2, 1fr); }}
@@ -704,7 +738,7 @@ button[data-variant="segmented_control"][aria-checked="true"] p {{ color: #fff !
 .mc-rf .k {{ font-size: .7rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; opacity: .65; }}
 .mc-rf .v {{ font-size: 1.45rem; font-weight: 800; margin: 2px 0; letter-spacing: -.01em; }}
 .mc-rf .d {{ font-size: .8rem; opacity: .75; line-height: 1.35; }}
-@media (max-width: 860px) {{ .mc-foot .main {{ grid-template-columns: 1fr; }} }}
+@container principal (max-width: 760px) {{ .mc-foot .main {{ grid-template-columns: 1fr; }} }}
 
 /* ── Páginas legales ── */
 .mc-legal {{ max-width: 860px; margin: 8px auto 0; }}
@@ -806,7 +840,7 @@ button[data-variant="segmented_control"][aria-checked="true"] p {{ color: #fff !
 .mc-cmp td:first-child {{ font-weight: 400; opacity: .8; }}
 .mc-cmp .mejor {{ color: #10AC84; }}
 .mc-cmp .peor {{ color: #EE5253; }}
-@media (max-width: 640px) {{  /* en el celular, celdas más ajustadas para que la tabla entre en el ancho */
+@container principal (max-width: 560px) {{  /* con poco ancho, celdas más ajustadas para que la tabla entre */
     .mc-cmp {{ font-size: .8rem; }}
     .mc-cmp th {{ padding: 6px 5px; font-size: .62rem; letter-spacing: .03em; }}
     .mc-cmp td {{ padding: 7px 5px; }}
@@ -816,13 +850,14 @@ button[data-variant="segmented_control"][aria-checked="true"] p {{ color: #fff !
 [data-testid="stMetric"]:hover {{ border-color: rgba(116,172,223,.55); }}
 /* números de los indicadores: más peso y espaciado ajustado, como en los tableros financieros */
 [data-testid="stMetricValue"] {{ font-weight: 650 !important; letter-spacing: -.02em; }}
+/* un solo tamaño de cifra para todos los indicadores (antes, según la pestaña, 36, 23 o 19 px) */
+[data-testid="stMetricValue"] > div {{ font-size: 1.5rem !important; line-height: 1.2; }}
 /* indicadores angostos (tres o más por fila con poco ancho): el valor se achica en vez de cortarse con «…» y la
    etiqueta puede ocupar dos renglones */
 [data-testid="stMetric"] {{ container-type: inline-size; }}
 [data-testid="stMetricLabel"] p {{ white-space: normal !important; overflow: visible !important; line-height: 1.25; }}
-@container (max-width: 240px) {{ [data-testid="stMetricValue"] > div {{ font-size: 1.45rem !important; }} }}
-@container (max-width: 190px) {{ [data-testid="stMetricValue"] > div {{ font-size: 1.2rem !important; }} }}
-@container (max-width: 150px) {{ [data-testid="stMetricValue"] > div {{ font-size: 1.02rem !important; }} }}
+@container (max-width: 190px) {{ [data-testid="stMetricValue"] > div {{ font-size: 1.25rem !important; }} }}
+@container (max-width: 150px) {{ [data-testid="stMetricValue"] > div {{ font-size: 1.05rem !important; }} }}
 /* tarjetas de una misma fila, del mismo alto (con o sin variación debajo) */
 [data-testid="stColumn"]:has(> [data-testid="stVerticalBlock"] > [data-testid="stElementContainer"]:only-child > [data-testid="stMetric"])
     > [data-testid="stVerticalBlock"],
@@ -987,9 +1022,11 @@ h3 {{ font-weight: 700 !important; }}
     white-space: normal !important; overflow: visible !important; text-overflow: clip !important; height: auto !important;
 }}
 [data-testid="stMetricDelta"] {{ max-width: 100%; line-height: 1.25; word-break: normal; overflow-wrap: normal; }}
-/* pantallas medianas (notebook con la barra lateral abierta): los indicadores van de a tres por fila
-   en vez de apretarse cinco en una, que cortaba los valores con «…» */
-@media (min-width: 641px) and (max-width: 1250px) {{
+/* Los cortes dependen del ancho REAL del contenido (no de la ventana): con la barra lateral abierta el contenido queda
+   unos 460 px más angosto que la ventana. Con menos lugar, los indicadores pasan de cinco a tres por fila y después a dos,
+   y los gráficos que van de a dos se apilan. */
+[data-testid="stMainBlockContainer"] {{ container-type: inline-size; container-name: principal; }}
+@container principal (max-width: 820px) {{
     [data-testid="stHorizontalBlock"]:has(> [data-testid="stColumn"]:nth-child(4) [data-testid="stMetric"]) {{
         flex-wrap: wrap !important; gap: .75rem !important;
     }}
@@ -1008,6 +1045,22 @@ h3 {{ font-weight: 700 !important; }}
         flex: 1 1 100% !important; min-width: 100% !important; width: 100% !important;
     }}
 }}
+@container principal (max-width: 560px) {{
+    [data-testid="stHorizontalBlock"]:is(:has([data-testid="stMetric"]), :has(> [data-testid="stColumn"]:nth-child(4) [data-testid="stMetric"])) {{
+        flex-wrap: wrap !important; gap: .6rem !important; }}
+    [data-testid="stHorizontalBlock"]:is(:has([data-testid="stMetric"]), :has(> [data-testid="stColumn"]:nth-child(4) [data-testid="stMetric"]),
+        :has(> [data-testid="stColumn"]:nth-child(4):last-child [data-testid="stMetric"])) > [data-testid="stColumn"] {{
+        flex: 1 1 calc(50% - .6rem) !important; min-width: calc(50% - .6rem) !important; width: auto !important;
+    }}
+}}
+/* encabezado de Inicio: el título y el botón «Personalizar» van en una fila; el botón nunca se aplasta */
+[data-testid="stHorizontalBlock"]:is(:has(.st-key-personalizar), :has(.st-key-inicio_otro)) {{
+    flex-wrap: nowrap !important; gap: .75rem !important; }}
+[data-testid="stHorizontalBlock"]:is(:has(.st-key-personalizar), :has(.st-key-inicio_otro)) > [data-testid="stColumn"]:first-child {{
+    flex: 1 1 0 !important; min-width: 0 !important; width: auto !important; }}
+[data-testid="stHorizontalBlock"]:is(:has(.st-key-personalizar), :has(.st-key-inicio_otro)) > [data-testid="stColumn"]:last-child {{
+    flex: 0 0 auto !important; width: auto !important; min-width: max-content !important; }}
+.st-key-personalizar button, .st-key-personalizar p {{ white-space: nowrap !important; }}
 
 /* ── Celular y pantallas angostas: más aire, indicadores de a dos y todo legible ── */
 @media (max-width: 640px) {{
@@ -1016,14 +1069,9 @@ h3 {{ font-weight: 700 !important; }}
     h1 {{ font-size: 1.6rem !important; }}
     h2, [data-testid="stHeading"] h2 {{ font-size: 1.3rem !important; }}
     h3 {{ font-size: 1.15rem !important; }}
-    /* indicadores: dos por fila en vez de una tarjeta enorme por fila */
-    [data-testid="stHorizontalBlock"]:has([data-testid="stMetric"]) {{ flex-wrap: wrap !important; gap: .6rem !important; }}
-    [data-testid="stHorizontalBlock"]:has([data-testid="stMetric"]) > [data-testid="stColumn"] {{
-        flex: 1 1 calc(50% - .6rem) !important; min-width: calc(50% - .6rem) !important; width: auto !important;
-    }}
     [data-testid="stMetric"] {{ padding: .7rem .8rem !important; }}
     [data-testid="stMetric"] > div {{ padding: 0 !important; }}  /* Streamlit le suma otro relleno adentro */
-    [data-testid="stMetricValue"] {{ font-size: 1.45rem !important; }}
+    [data-testid="stMetricValue"] > div {{ font-size: 1.35rem !important; }}
     [data-testid="stMetricLabel"] p {{ font-size: .8rem !important; }}
     [data-testid="stMetricDelta"] {{ font-size: .72rem !important; }}
     /* pestañas y botones más cómodos al tacto */

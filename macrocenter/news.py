@@ -6,7 +6,7 @@ Cada fuente tiene varias rutas, que se prueban en orden hasta que una devuelve n
   BCRA          1) listado /noticias/   2) listado /category/noticias/   3) sitemap + metadatos de cada nota
   Economía      1) listado /economia/noticias   2) portada /economia + metadatos de cada nota
 
-Si todas fallan, se levanta un error con el detalle y la app muestra un aviso con el enlace a la fuente.
+Si todas fallan, se levanta un error con el detalle: la app no lo muestra (queda registrado) y la ventana de noticias sigue con lo que haya.
 Solo se toman título, fecha, bajada y enlace; la nota completa se lee en el sitio original.
 """
 from __future__ import annotations

@@ -304,7 +304,7 @@ def pantalla_tasas(d: dict) -> None:
             gana = None if rem_a is None else tea > rem_a
             filas.append([r["fondo"], _pct(r["tna"], 2),
                           (_pct(tea, 2), "" if gana is None else "mejor" if gana else "peor"),
-                          charts.num(r["patrimonio"] / 1e9, 0, pre="$ ", suf=" mil M")])
+                          charts.num(r["patrimonio"] / 1e9, 0, pre="$", suf=" mil M")])
         st.markdown(style.tabla(["Fondo", "TNA (30 días)", "TEA", "Patrimonio"], filas), unsafe_allow_html=True)
         st.caption(f"Los {len(fondos)} fondos money market en pesos con más patrimonio, con datos de la CAFCI. El "
                    "rendimiento es el de los últimos 30 días, llevado a tasa anual: el de los próximos días puede ser "
