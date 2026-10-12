@@ -30,11 +30,23 @@ Si cambiás el código, cerrá y volvé a abrir `run.bat`: Streamlit no recarga 
 | Dinero y crédito | Base monetaria, M2 privado, préstamos al sector privado |
 | Comercio exterior | Exportaciones, importaciones, saldo comercial |
 
-## Navegación: Tablero, Historia económica y Herramientas
+## Navegación: Tablero, Ahorro e inversiones, Herramientas e Historia económica
 
 La barra lateral tiene una sección **Explorar** que cambia la pantalla principal entre el **Tablero** (con sus pestañas),
-la **Historia económica** y las **Herramientas**. Estas dos últimas no ocupan pestañas; se vuelve con
-*← Volver al tablero*.
+**Ahorro e inversiones**, las **Herramientas** y la **Historia económica**. Las tres últimas no ocupan pestañas; se
+vuelve con *← Volver al tablero*.
+
+## Ahorro e inversiones
+
+Sección informativa (`macrocenter/inversiones.py`), sin recomendaciones: las listas van por orden alfabético y cada
+pantalla aclara sus supuestos.
+
+- **Tasas de hoy**: plazo fijo a 30 días por banco, fondos money market (rendimiento de los últimos 30 días) y
+  rendimientos que informan billeteras y plataformas, contra la inflación esperada (REM del BCRA). Datos de ArgentinaDatos.
+- **Cómo les fue**: cuánto valdría hoy un monto invertido hace 1 mes a 5 años en plazo fijo, UVA, dólar MEP, Merval,
+  S&P 500 y bitcoin, contra la inflación (CER).
+- **Plazo fijo vs. UVA**: calculadora con la inflación de empate entre los dos.
+- **Conceptos**: los términos básicos, tomados del glosario.
 
 ## Historia económica (línea de tiempo)
 

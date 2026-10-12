@@ -17,7 +17,7 @@ from pathlib import Path
 import pandas as pd
 import streamlit as st
 
-from macrocenter import charts, data, glosario, interactivo, legal, ministros, news, presidentes, score, style
+from macrocenter import charts, data, glosario, interactivo, inversiones, legal, ministros, news, presidentes, score, style
 
 st.set_page_config(page_title="MacroCenter", page_icon=style.favicon(), layout="wide")
 
@@ -209,6 +209,37 @@ def cargar_cripto() -> dict[str, pd.DataFrame | str]:
 
 def cargar_mercados() -> dict[str, pd.DataFrame | str]:
     return al_dia("mercados", _bajar_mercados, ttl=900)
+
+
+def cargar_inversiones() -> dict[str, pd.DataFrame | str]:
+    return al_dia("inversiones", _bajar_inversiones, ttl=1800)
+
+
+def _bajar_inversiones() -> dict[str, pd.DataFrame | str]:
+    """Tasas de plazo fijo por banco, rendimientos de plataformas, fondos money market (hoy y hace ~30 días, para
+    calcular cuánto rindieron) y bitcoin en dólares. Cada parte falla por separado. Dura 30 minutos."""
+    out: dict[str, pd.DataFrame | str] = {}
+    for clave, fn in (("bancos", data.plazo_fijo_bancos), ("rendimientos", data.rendimientos_plataformas),
+                      ("fci_hoy", data.fci), ("bitcoin", lambda: data.limpiar(data.indice("BTC-USD")))):
+        try:
+            out[clave] = fn()
+        except Exception as e:  # noqa: BLE001
+            out[clave] = error_corto(e)
+    out["fci_antes"] = "sin el dato de hoy"
+    hoy_f = out["fci_hoy"]
+    if isinstance(hoy_f, pd.DataFrame) and not hoy_f.empty:
+        base = hoy_f["fecha"].max() - pd.Timedelta(days=30)
+        for atras in range(7):  # fines de semana y feriados no tienen datos: se prueba el día hábil anterior
+            f = base - pd.Timedelta(days=atras)
+            try:
+                antes = data.fci("mercadoDinero", f.strftime("%Y/%m/%d"))
+            except Exception as e:  # noqa: BLE001
+                out["fci_antes"] = error_corto(e)
+                break
+            if not antes.empty:
+                out["fci_antes"] = antes
+                break
+    return out
 
 
 def _bajar_noticias() -> dict[str, list[news.Noticia] | str]:
@@ -441,11 +472,11 @@ style.aplicar()
 
 
 def ir_a(destino: str) -> None:
-    """Cambia la vista principal: 'tablero' (pestañas), 'historia' o 'juegos'."""
+    """Cambia la vista principal: 'tablero' (pestañas), 'inversiones', 'historia' o 'juegos'."""
     st.session_state["vista"] = destino
 
 
-VISTAS = ("tablero", "historia", "juegos")
+VISTAS = ("tablero", "inversiones", "historia", "juegos")
 vista = st.session_state.setdefault("vista", "tablero")
 if vista not in VISTAS:  # estado viejo o inválido: se vuelve al tablero
     vista = st.session_state["vista"] = "tablero"
@@ -463,8 +494,8 @@ with st.sidebar:
                       + (f" ({nuevas} publicadas hoy o ayer, sin leer)" if nuevas else "")):
         ver_noticias()
     st.markdown(style.etiqueta("Explorar"), unsafe_allow_html=True)
-    for clave_vista, texto in (("tablero", "Tablero"), ("juegos", "Herramientas"),
-                               ("historia", "Historia económica")):
+    for clave_vista, texto in (("tablero", "Tablero"), ("inversiones", "Ahorro e inversiones"),
+                               ("juegos", "Herramientas"), ("historia", "Historia económica")):
         st.button(texto, width="stretch", key=f"nav_{clave_vista}", on_click=ir_a, args=(clave_vista,),
                   type="primary" if vista == clave_vista else "secondary")
 
@@ -509,6 +540,7 @@ def grafico_periodo(clave: str, df: pd.DataFrame, armar, min_anios: int = 0, def
 def graficos_fiscales(f: pd.DataFrame) -> None:
     """Resultado fiscal: un solo selector de período para el acumulado de 12 meses y los dos mensuales (antes cada
     gráfico tenía el suyo y la pestaña quedaba cargada de botones repetidos)."""
+    st.markdown("#### Resultado mensual")
     per = selector_periodo("fis", "5 años", mensual=True)
     cols_12 = [c for c in ("primario_12m", "financiero_12m") if c in f and f[c].notna().any()]
     if cols_12:
@@ -1250,6 +1282,20 @@ def pantalla_calificacion() -> None:
 
 
 # ── Interactivo ──
+def pantalla_inversiones() -> None:
+    inv = cargar_inversiones()
+    merc = cargar_mercados()
+
+    def tabla(x):
+        return x if isinstance(x, pd.DataFrame) else None
+
+    d = {"bancos": inv.get("bancos"), "rendimientos": inv.get("rendimientos"), "fci_hoy": tabla(inv.get("fci_hoy")),
+         "fci_antes": tabla(inv.get("fci_antes")), "bitcoin": tabla(inv.get("bitcoin")),
+         "merval": tabla(merc.get("^MERV")), "sp500": tabla(merc.get("^GSPC")), "dolares": dol, "rem": rem,
+         "cer": get("bcra:cer"), "uva": uva, "depositos_30d": get("bcra:depositos_30d")}
+    inversiones.mostrar(d, grafico)
+
+
 def pantalla_juegos() -> None:
     try:
         dp_i, inds_i, faltan_i = historicos(DATOS, dol, ACTUALIZADO)
@@ -1301,6 +1347,7 @@ def pantalla_cripto() -> None:
         st.markdown(style.cotizaciones(tarjetas), unsafe_allow_html=True)
 
         monedas = mercado[~mercado["simbolo"].isin(["USDT", "USDC"])].head(6)  # las estables no tienen qué graficar
+        st.markdown("#### Historial de precios")
         c1, c2 = st.columns([3, 2], vertical_alignment="center")
         elegida = c1.pills("Moneda", list(monedas["simbolo"]), default=monedas["simbolo"].iloc[0], key="cripto_moneda",
                            label_visibility="collapsed") or monedas["simbolo"].iloc[0]
@@ -1458,6 +1505,9 @@ def seccion_actual() -> tuple[str, str]:
     if v == "historia":
         sub = st.session_state.get("hist_seccion") or "Presidentes"
         return f"/historia/{style.slug(sub)}", f"Historia económica · {sub}"
+    if v == "inversiones":
+        sub = st.session_state.get("inv_seccion") or inversiones.SECCIONES[0]
+        return f"/inversiones/{style.slug(sub)}", f"Ahorro e inversiones · {sub}"
     if v == "juegos":
         sub = st.session_state.get("inter_modo") or interactivo.MODOS[0]
         return f"/herramientas/{style.slug(sub)}", f"Herramientas · {sub}"
@@ -1488,8 +1538,8 @@ if isinstance(pagina_legal, str) and pagina_legal in legal.PAGINAS:
 
 if vista != "tablero":
     # Vistas aparte (Historia económica, Herramientas): reemplazan al tablero y no ocupan una pestaña.
-    titulos = {"historia": "Historia económica", "juegos": "Herramientas"}
-    pantallas = {"historia": pantalla_historia, "juegos": pantalla_juegos}
+    titulos = {"inversiones": "Ahorro e inversiones", "historia": "Historia económica", "juegos": "Herramientas"}
+    pantallas = {"inversiones": pantalla_inversiones, "historia": pantalla_historia, "juegos": pantalla_juegos}
     st.button("Volver al tablero", key="volver_tablero", icon=":material/arrow_back:", on_click=ir_a, args=("tablero",))
     st.subheader(titulos[vista])
     with protegido(titulos[vista]):
@@ -2080,6 +2130,7 @@ with t_dol, protegido("Dólar"):
             @st.fragment
             def graficos_dolar() -> None:
                 """Período + gráfico de cotizaciones + brecha: al cambiar el período se redibuja solo esto."""
+                st.markdown("#### Evolución del dólar")
                 r = con_periodo("dolar", dol_rec)
                 grafico(charts.lineas(r, {"Oficial": "oficial", "Mayorista": "mayorista", "Blue": "blue", "MEP": "bolsa",
                                           "CCL": "contadoconliqui", "Cripto": "cripto", "Tarjeta": "tarjeta"},
