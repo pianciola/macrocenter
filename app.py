@@ -1411,7 +1411,7 @@ def pantalla_cripto() -> None:
     cr = cargar_cripto()
     mercado, usdt = cr["mercado"], cr["usdt"]
     st.caption("Las principales criptomonedas, en dólares y en pesos, y a cuánto se compra y vende el USDT en los "
-               "exchanges argentinos. Se actualiza cada 5 minutos.")
+               "exchanges argentinos. Se actualiza cada 5 minutos. Verde: sube; rojo: baja.")
     if isinstance(mercado, str) or mercado.empty:
         falla(f"no se pudo cargar el mercado de criptomonedas ({mercado})")
     else:
@@ -1487,8 +1487,7 @@ def _var_pct(df: pd.DataFrame, dias: int | None = None) -> float | None:
 def pantalla_bolsas() -> None:
     mk = cargar_mercados()
     st.caption("Las principales bolsas del mundo y algunas materias primas que mueven a la Argentina. Datos de Yahoo "
-               "Finance (fuente no oficial, con demora); se actualizan cada 5 minutos. Al no ser un servicio oficial, "
-               "puede cambiar o dejar de funcionar sin aviso: si pasa, esta sección muestra un aviso y el resto sigue andando.")
+               "Finance (fuente no oficial, con demora); se actualizan cada 5 minutos. Verde: sube; rojo: baja.")
     tarjetas = []
     for simbolo, nombre, grupo, unidad in data.INDICES:
         df = mk.get(simbolo)
@@ -1498,7 +1497,7 @@ def pantalla_bolsas() -> None:
         tarjetas.append(dict(
             nombre=nombre, desc=grupo, valor=charts.num(ult, 0 if ult >= 1000 else 2), detalle=unidad,
             var=_var_pct(df), var_txt="1 d", extras=[("30 d", _var_pct(df, 30))],
-            sentido=("alto" if simbolo == "ZS=F" else "neutro") if grupo == "Materias primas" else "alto", spark=list(df.tail(30)["valor"])))
+            sentido="alto", spark=list(df.tail(30)["valor"])))  # cotización: verde si sube, rojo si baja
     if not tarjetas:
         falla("no se pudieron cargar las cotizaciones de las bolsas")
         return
@@ -1562,7 +1561,7 @@ def construir_ticker() -> list[dict]:
                 poner(sim, _usd_cripto(f.iloc[0]["usd"]), f.iloc[0]["cambio_24h"], "alto")
     mk = cargar_mercados()
     for simbolo, nombre, sentido in (("^MERV", "Merval", "alto"), ("^GSPC", "S&P 500", "alto"), ("^DJI", "Dow Jones", "alto"),
-                                     ("GC=F", "Oro", "neutro"), ("CL=F", "Petróleo", "neutro"), ("ZS=F", "Soja", "alto")):
+                                     ("GC=F", "Oro", "alto"), ("CL=F", "Petróleo", "alto"), ("ZS=F", "Soja", "alto")):
         df = mk.get(simbolo)
         if isinstance(df, pd.DataFrame) and len(df) >= 2:
             ult = float(df.iloc[-1]["valor"])
@@ -1829,31 +1828,12 @@ def _ult_y_hace(df: pd.DataFrame | None, col: str = "valor", dias: int = 30) -> 
     return float(d[col].iloc[-1]), (float(antes[col].iloc[-1]) if not antes.empty else None)
 
 
-def _tono(texto: str, bueno: bool | None) -> str:
-    """Pinta el texto según la regla de la app: verde si es buena noticia, rojo si es mala."""
-    return texto if bueno is None else (f":green[{texto}]" if bueno else f":red[{texto}]")
-
-
 def _mes(fecha: pd.Timestamp) -> str:
     return MESES_ES[fecha.month - 1]
 
 
-def _balance(*buenas: bool | None) -> str:
-    """Tono de un tema según sus señales (True = buena noticia, False = mala, None = sin cambios):
-    'bien' si todas las que cambiaron son buenas, 'mal' si todas son malas, 'mixto' si hay de las dos y 'estable' si
-    no cambió nada."""
-    s = [b for b in buenas if b is not None]
-    if not s:
-        return "estable"
-    if all(s):
-        return "bien"
-    if s and not any(s):
-        return "mal"
-    return "mixto"
-
-
 def panorama_inicio() -> list[dict]:
-    """La coyuntura, tema por tema, con los últimos datos publicados: {tema, cifra, detalle, texto, tono}. Cada tema
+    """La coyuntura, tema por tema, con los últimos datos publicados: {tema, cifra, detalle, texto}. Cada tema
     se omite si falta su dato."""
     frases = []
     try:
@@ -1864,16 +1844,13 @@ def panorama_inicio() -> list[dict]:
             v = pct(of, of_a)
             if v is not None:
                 f += (" (sin cambios en 30 días)" if abs(v) < 0.05 else
-                      f" ({_tono(('subió ' if v > 0 else 'bajó ') + charts.num(abs(v), 1, '%'), v > 0)} en 30 días)")
+                      f" ({(('subió ' if v > 0 else 'bajó ') + charts.num(abs(v), 1, '%'))} en 30 días)")
             if bl is not None:
                 br = (bl / of - 1) * 100
                 f += f" y el **blue**, en **{charts.num(bl, 0, pre='$')}**: una brecha de **{charts.num(br, 1, '%')}**"
                 if abs(br) < 5:
                     f += ", prácticamente sin diferencia entre los dos"
-            # el dólar es una cotización: no se juzga como buena o mala noticia, se dice si subió o bajó
-            tono_d = "estable" if v is None or abs(v) < 0.05 else ("sube" if v > 0 else "baja")
-            frases.append(dict(tema="Dólar", cifra=charts.num(of, 0, pre="$"), detalle="oficial", texto=f + ".",
-                               tono=tono_d))
+            frases.append(dict(tema="Dólar", cifra=charts.num(of, 0, pre="$"), detalle="oficial", texto=f + "."))
     except Exception:  # noqa: BLE001
         traceback.print_exc()
     try:
@@ -1886,9 +1863,8 @@ def panorama_inicio() -> list[dict]:
                 if abs(dd) < 0.05:
                     f += f", igual que en {_mes(a['fecha'])}"
                 else:
-                    f += (f", {_tono('más baja' if dd < 0 else 'más alta', dd < 0)} que en {_mes(a['fecha'])} "
+                    f += (f", {('más baja' if dd < 0 else 'más alta')} que en {_mes(a['fecha'])} "
                           f"({charts.num(a['valor'], 1, '%')})")
-                senal = None if abs(dd) < 0.05 else dd < 0
                 ia = ultimo(infl_ia) if infl_ia is not None else None
                 if ia is not None:
                     f += f". En los últimos 12 meses los precios subieron **{charts.num(ia, 1, '%')}**"
@@ -1896,32 +1872,30 @@ def panorama_inicio() -> list[dict]:
                 if esp is not None:
                     f += f" y las consultoras esperan **{charts.num(esp, 1, '%')}** para los próximos 12 (REM del BCRA)"
                 frases.append(dict(tema="Inflación", cifra=charts.num(u["valor"], 1, "%"), detalle=f"mensual · {_mes(u['fecha'])}",
-                                   texto=f + ".", tono=_balance(senal)))
+                                   texto=f + "."))
     except Exception:  # noqa: BLE001
         traceback.print_exc()
     try:
         rs, rs_a = _ult_y_hace(reservas)
         rp, rp_a = _ult_y_hace(riesgo)
-        partes, senales = [], []
+        partes = []
         if rs is not None:
             t_ = f"las **reservas** del Banco Central suman **USD {charts.num(rs, 0)} millones**"
             v = pct(rs, rs_a)
             if v is not None and abs(v) >= 0.05:
-                t_ += f" ({_tono(('subieron ' if v > 0 else 'bajaron ') + charts.num(abs(v), 1, '%'), v > 0)} en 30 días)"
-                senales.append(v > 0)
+                t_ += f" ({(('subieron ' if v > 0 else 'bajaron ') + charts.num(abs(v), 1, '%'))} en 30 días)"
             partes.append(t_)
         if rp is not None:
             t_ = f"el **riesgo país** está en **{charts.num(rp, 0)} puntos**"
             v = dif(rp, rp_a)
             if v is not None and abs(v) >= 1:
-                t_ += f" ({_tono(('subió ' if v > 0 else 'bajó ') + charts.num(abs(v), 0) + ' puntos', v < 0)} en 30 días)"
-                senales.append(v < 0)
+                t_ += f" ({(('subió ' if v > 0 else 'bajó ') + charts.num(abs(v), 0) + ' puntos')} en 30 días)"
             partes.append(t_)
         if partes:
             f = " y ".join(partes)
             frases.append(dict(tema="Reservas y riesgo", cifra=f"{charts.num(rp, 0)} pb" if rp is not None else
                                f"USD {charts.num(rs / 1000, 1)} mil M", detalle="riesgo país" if rp is not None else "reservas",
-                               texto=f[0].upper() + f[1:] + ".", tono=_balance(*senales)))
+                               texto=f[0].upper() + f[1:] + "."))
     except Exception:  # noqa: BLE001
         traceback.print_exc()
     try:
@@ -1929,8 +1903,7 @@ def panorama_inicio() -> list[dict]:
             u = sal_real_df.dropna(subset=["real"]).iloc[-1]
             r = float(u["real"])
             gana = r >= 0
-            senal_m = None
-            f = (f"Los **salarios** {_tono('le ganan' if gana else 'le pierden', gana)} a la inflación: en "
+            f = (f"Los **salarios** {('le ganan' if gana else 'le pierden')} a la inflación: en "
                  f"{_mes(u['fecha'])} compraban **{charts.num(abs(r), 1, '%')} {'más' if gana else 'menos'}** "
                  "que un año antes")
             # contra el mes inmediatamente anterior: suba del salario del mes descontada la inflación de ese mes
@@ -1939,14 +1912,13 @@ def panorama_inicio() -> list[dict]:
                 i_ = infl_m[infl_m["fecha"].dt.to_period("M") == u["fecha"].to_period("M")]
                 if len(s_) == 2 and not i_.empty and s_["valor"].iloc[0]:
                     m_ = ((s_["valor"].iloc[1] / s_["valor"].iloc[0]) / (1 + float(i_["valor"].iloc[0]) / 100) - 1) * 100
-                    senal_m = None if abs(m_) < 0.05 else m_ > 0
                     if abs(m_) < 0.05:
                         f += f" y lo mismo que en {_mes(s_['fecha'].iloc[0])}"
                     else:
-                        f += (f" y {_tono(charts.num(abs(m_), 1, '%') + (' más' if m_ > 0 else ' menos'), m_ > 0)} "
+                        f += (f" y {(charts.num(abs(m_), 1, '%') + (' más' if m_ > 0 else ' menos'))} "
                               f"que en {_mes(s_['fecha'].iloc[0])}")
             frases.append(dict(tema="Salarios", cifra=f"{'+' if r > 0 else ''}{charts.num(r, 1, '%')}",
-                               detalle=f"real interanual · {_mes(u['fecha'])}", texto=f + ".", tono=_balance(gana, senal_m)))
+                               detalle=f"real interanual · {_mes(u['fecha'])}", texto=f + "."))
     except Exception:  # noqa: BLE001
         traceback.print_exc()
     try:
@@ -1956,24 +1928,21 @@ def panorama_inicio() -> list[dict]:
             if not e.empty:
                 u = e.iloc[-1]
                 v = float(u["ia"])
-                senal_m = None
                 f = (f"La **actividad económica** (EMAE) de {_mes(u['fecha'])} quedó "
                      f"**{charts.num(abs(v), 1, '%')}** "
-                     f"{_tono('por encima' if v >= 0 else 'por debajo', v >= 0)} de un año antes")
+                     f"{('por encima' if v >= 0 else 'por debajo')} de un año antes")
                 # contra el mes inmediatamente anterior, con la serie sin estacionalidad (la original no se compara así)
                 if emae_sa is not None:
                     e_ = emae_sa[emae_sa["fecha"] <= u["fecha"]].dropna(subset=["valor"]).tail(2)
                     if len(e_) == 2 and e_["fecha"].iloc[1] == u["fecha"] and e_["valor"].iloc[0]:
                         m_ = (e_["valor"].iloc[1] / e_["valor"].iloc[0] - 1) * 100
-                        senal_m = None if abs(m_) < 0.05 else m_ > 0
                         if abs(m_) < 0.05:
                             f += f" y quedó igual que en {_mes(e_['fecha'].iloc[0])}"
                         else:
-                            f += (f" y {_tono(('creció ' if m_ > 0 else 'cayó ') + charts.num(abs(m_), 1, '%'), m_ > 0)} "
+                            f += (f" y {(('creció ' if m_ > 0 else 'cayó ') + charts.num(abs(m_), 1, '%'))} "
                                   f"frente a {_mes(e_['fecha'].iloc[0])} (sin estacionalidad)")
                 frases.append(dict(tema="Actividad", cifra=f"{'+' if v > 0 else ''}{charts.num(v, 1, '%')}",
-                                   detalle=f"EMAE interanual · {_mes(u['fecha'])}", texto=f + ".",
-                                   tono=_balance(v >= 0, senal_m)))
+                                   detalle=f"EMAE interanual · {_mes(u['fecha'])}", texto=f + "."))
     except Exception:  # noqa: BLE001
         traceback.print_exc()
     return frases
@@ -2178,7 +2147,7 @@ with t_res, protegido("Inicio"):
             titulo_a, dibujar = ANALISIS[i]
             h_, b_ = st.columns([5, 1.5], vertical_alignment="center")
             h_.subheader(titulo_a)
-            b_.button("Ver otro análisis", icon=":material/autorenew:", key="inicio_otro", width="stretch",
+            b_.button("Ver otro análisis", icon=":material/autorenew:", key="inicio_otro", width="content",
                       on_click=_otro_analisis)
             try:
                 dibujar()

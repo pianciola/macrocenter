@@ -129,5 +129,5 @@ su sesión. `run.bat` define `MACROCENTER_LOCAL=1`, que activa el guardado local
 
 ## Robustez
 
-Si una fuente se cae o devuelve datos raros, esa parte muestra un aviso y el resto de la página sigue funcionando; las fallas no quedan pegadas en el caché (se reintenta cada minuto).
+Si una fuente se cae o devuelve datos raros, esa parte se omite sin mostrar ningún aviso de error al visitante y el resto de la página sigue funcionando; las fallas quedan registradas (macrocenter/avisos.py) y el monitor te avisa por mail. No quedan pegadas en el caché: se reintenta cada minuto, y si la fuente devuelve una serie vacía se usa el último dato bueno guardado.
 Se probó con caídas de red, respuestas corruptas, datos nulos, ceros, duplicados y desordenados, entradas extremas, preferencias rotas y ráfagas de clics.
