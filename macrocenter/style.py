@@ -675,10 +675,9 @@ button[data-variant="segmented_control"][aria-checked="true"] p {{ color: #fff !
 :root {{ --mc-pad: 5rem; }}
 [data-testid="stMainBlockContainer"] {{ padding-bottom: 0 !important; padding-left: var(--mc-pad) !important;
     padding-right: var(--mc-pad) !important; }}
-.mc-foot, .st-key-pie_datos {{ margin-left: calc(-1 * var(--mc-pad)) !important; margin-right: calc(-1 * var(--mc-pad)) !important;
-    width: calc(100% + 2 * var(--mc-pad)) !important; border-radius: 0 !important; border-left: none !important;
-    border-right: none !important; padding-left: var(--mc-pad) !important; padding-right: var(--mc-pad) !important; }}
-.st-key-pie_datos {{ max-width: none !important; }}
+.st-key-pie_datos {{ margin-left: calc(-1 * var(--mc-pad)) !important; margin-right: calc(-1 * var(--mc-pad)) !important;
+    width: calc(100% + 2 * var(--mc-pad)) !important; max-width: none !important; border-radius: 0 !important;
+    padding-left: var(--mc-pad) !important; padding-right: var(--mc-pad) !important; }}
 /* suscripción: una franja finita */
 .mc-foot .bol {{ display: flex; align-items: center; justify-content: space-between; gap: 12px 18px; flex-wrap: wrap;
     margin: 0 0 14px; padding: 9px 14px; border-radius: 10px; border: 1px solid rgba(116,172,223,.30);
@@ -689,13 +688,30 @@ button[data-variant="segmented_control"][aria-checked="true"] p {{ color: #fff !
 .mc-foot .bol a {{ flex: 0 0 auto; padding: 5px 14px; border-radius: 999px; background: {CELESTE}; color: #0E1A2B;
     font-size: .8rem; font-weight: 700; transition: transform .15s ease; }}
 .mc-foot .bol a:hover {{ transform: translateY(-1px); text-decoration: none; }}
-/* franja final del pie (debajo del aviso legal): estado de los datos y botón «Refrescar datos». Es un contenedor de
-   Streamlit pegado al pie, con el mismo fondo y bordes */
-.st-key-pie_datos {{ margin-top: 0; padding: 8px 22px 12px; justify-content: space-between; flex-wrap: wrap;
-    gap: 8px 16px !important; background: rgba(116,172,223,.10); border: 1px solid rgba(116,172,223,.22); border-top: none; }}
+/* barra del pie: una sola franja fina, siempre pegada al borde inferior de la ventana (en la pestaña o pantalla que sea).
+   «sticky» y no «fixed»: el contenedor principal tiene contención de layout y un elemento fijo se ubicaría respecto de él.
+   Al final de una página corta queda en su lugar natural, apoyada abajo de todo */
+[data-testid="stLayoutWrapper"]:has(> .st-key-pie_datos) {{ display: contents; }}
+.st-key-pie_datos {{ position: sticky; bottom: 0; z-index: 90; margin-top: 28px; min-height: 52px; box-sizing: border-box;
+    padding-top: 8px; padding-bottom: 8px; justify-content: space-between; flex-wrap: nowrap; gap: 6px 16px !important;
+    background: color-mix(in srgb, var(--background-color, #0E1117) 86%, #74ACDF 14%); border: none;
+    border-top: 3px solid {CELESTE}; backdrop-filter: blur(6px); }}
 .st-key-pie_datos [data-testid="stElementContainer"] {{ width: auto !important; }}
-.st-key-pie_datos > [data-testid="stLayoutWrapper"] {{ flex: 1 1 260px; min-width: 0; }}
-.mc-vivo {{ display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; font-size: .78rem; opacity: .85; }}
+.st-key-pie_datos > [data-testid="stLayoutWrapper"], .st-key-pie_datos > [data-testid="stElementContainer"] {{ min-width: 0; }}
+.mc-pielinks {{ display: flex; flex-wrap: wrap; align-items: center; gap: 2px 14px; font-size: .76rem; white-space: nowrap; }}
+.mc-pielinks a {{ color: {CELESTE}; font-weight: 600; text-decoration: none; }}
+.mc-pielinks a:hover {{ text-decoration: underline; }}
+.mc-pielinks .c {{ opacity: .7; }}
+.st-key-pie_datos [data-testid="stPopover"] button {{ white-space: nowrap; }}
+.mc-vivo, .mc-vivo span {{ white-space: nowrap; }}
+@media (max-width: 1400px) {{ .mc-pielinks .c, .mc-vivo .sec {{ display: none; }} }}
+@media (max-width: 1100px) {{ .mc-pielinks a:first-child {{ display: none; }} }}
+@media (max-width: 560px) {{ .st-key-pie_datos {{ padding-left: 14px !important; padding-right: 14px !important; justify-content: center; }}
+    .mc-pielinks, .mc-vivo {{ display: none; }} }}
+/* el panel «Fuentes y aviso»: el contenido del pie, sin marco propio */
+[data-testid="stPopoverBody"] .mc-foot {{ margin: 0; padding: 4px 4px 8px; border: none; border-radius: 0; background: none;
+    width: min(620px, 80vw); }}
+.mc-vivo {{ display: flex; flex-wrap: nowrap; align-items: center; gap: 4px 14px; font-size: .78rem; opacity: .85; }}
 .mc-vivo .en {{ display: inline-flex; align-items: center; gap: 6px; font-weight: 800; letter-spacing: .08em;
     text-transform: uppercase; font-size: .68rem; color: #10AC84; }}
 .mc-vivo .en::before {{ content: ""; width: 8px; height: 8px; border-radius: 50%; background: #10AC84;
@@ -1804,8 +1820,7 @@ def footer() -> str:
         'medidas orientativas, con criterios propios.</p></details>'
         '<div class="legal"><span>© 2026 MacroCenter — Todos los derechos reservados.</span>'
         '<span class="made">Hecho en Argentina</span>'
-        '<span><a href="?legal=terminos" target="_self">Términos y condiciones</a>'
-        ' · <a href="?legal=privacidad" target="_self">Política de privacidad</a></span></div>'
+        '<span>Cripto y bolsas se renuevan cada 5 minutos; el dólar y el riesgo país, cada minuto.</span></div>'
         '</div>'
     )
 
@@ -1815,7 +1830,16 @@ def estado_datos(hora_dolar: str | None, oficiales: str) -> str:
     esc = html.escape
     dolar = f"<span>Dólar: {esc(hora_dolar)}</span>" if hora_dolar else ""
     return (f'<div class="mc-vivo"><span class="en">En vivo</span>{dolar}'
-            f'<span>Cripto y bolsas: cada 5 min</span><span>Series oficiales: {esc(oficiales)}</span></div>')
+            f'<span class="sec">Series oficiales: {esc(oficiales)}</span></div>')
+
+
+def pie_enlaces() -> str:
+    """Enlaces fijos de la barra inferior: suscripción, términos y privacidad."""
+    esc = html.escape
+    bol = (f'<a href="{esc(BOLETIN, quote=True)}" target="_blank" rel="noopener noreferrer">Resumen semanal por mail</a>'
+           if BOLETIN else '')
+    return (f'<div class="mc-pielinks">{bol}<a href="?legal=terminos" target="_self">Términos</a>'
+            '<a href="?legal=privacidad" target="_self">Privacidad</a><span class="c">© 2026 MacroCenter</span></div>')
 
 
 def legal_pagina(doc: dict, actualizacion: str) -> str:
