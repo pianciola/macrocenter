@@ -179,6 +179,8 @@ def al_dia(nombre: str, bajar, ttl: int, reintento: int = 60):
                   for k, v in nuevo.items()}
         falla = any(isinstance(v, str) for v in nuevo.values())
         e["t"] = time.time() - (ttl - reintento if falla else 0)
+        if not all(isinstance(v, str) for v in nuevo.values()):
+            e["ver"] = e.get("ver", 0) + 1  # la página abierta se redibuja sola cuando esto cambia (ver estado_vivo)
 
     if e["v"] is None:  # primera vez: no hay nada que mostrar, hay que esperar (si otra visita ya está bajando, a ella)
         with e["lock"]:
@@ -208,7 +210,50 @@ def cargar_cripto() -> dict[str, pd.DataFrame | str]:
 
 
 def cargar_mercados() -> dict[str, pd.DataFrame | str]:
-    return al_dia("mercados", _bajar_mercados, ttl=900)
+    return al_dia("mercados", _bajar_mercados, ttl=300)
+
+
+def cargar_vivo() -> dict[str, pd.DataFrame | str]:
+    return al_dia("vivo", _bajar_vivo, ttl=60)
+
+
+def _bajar_vivo() -> dict[str, pd.DataFrame | str]:
+    """Dólar (DolarApi) y riesgo país del momento. Se piden cada minuto y pisan el dato del día de las series."""
+    out: dict[str, pd.DataFrame | str] = {}
+    for clave, fn in (("dolares", data.dolares_ahora), ("riesgo", data.riesgo_pais_ahora)):
+        try:
+            out[clave] = fn()
+        except Exception as e:  # noqa: BLE001
+            out[clave] = error_corto(e)
+    return out
+
+
+def con_dolar_vivo(dol: pd.DataFrame | None, vivo) -> pd.DataFrame | None:
+    """Agrega a la serie de dólares la cotización del momento: cada casa va en la fila de su fecha de actualización
+    (si ya existe, se pisa; si es de hoy y no existe, se agrega). Nunca reemplaza un dato por uno más viejo."""
+    if dol is None or not isinstance(vivo, pd.DataFrame) or vivo.empty:
+        return dol
+    d = dol.set_index("fecha")
+    for _, r in vivo.iterrows():
+        casa, f = r["casa"], pd.Timestamp(r["actualizado"]).normalize()
+        if casa not in d or f > HOY:
+            continue
+        ultima = d[casa].dropna().index.max()
+        if pd.notna(ultima) and f < ultima:
+            continue
+        d.loc[f, casa] = float(r["venta"])
+        if f"{casa}_compra" in d and pd.notna(r["compra"]):
+            d.loc[f, f"{casa}_compra"] = float(r["compra"])
+    return d.sort_index().reset_index()
+
+
+def con_riesgo_vivo(riesgo: pd.DataFrame | None, vivo) -> pd.DataFrame | None:
+    if riesgo is None or not isinstance(vivo, pd.DataFrame) or vivo.empty:
+        return riesgo
+    u = vivo.iloc[-1]
+    if u["fecha"] > HOY or u["fecha"] < riesgo["fecha"].max():
+        return riesgo
+    return pd.concat([riesgo[riesgo["fecha"] != u["fecha"]], vivo[["fecha", "valor"]]]).sort_values("fecha").reset_index(drop=True)
 
 
 def cargar_inversiones() -> dict[str, pd.DataFrame | str]:
@@ -300,7 +345,7 @@ def cargar_fotos() -> dict[str, dict]:
 
 @st.cache_resource
 def _estado_actualizar() -> dict:
-    """Estado compartido por todas las sesiones: cuándo se usó por última vez «Actualizar datos»."""
+    """Estado compartido por todas las sesiones: cuándo se usó por última vez «Refrescar datos»."""
     return {"ultimo": 0.0}
 
 
@@ -509,12 +554,22 @@ def rec(df: pd.DataFrame, min_anios: int = 0, periodo: str = "2 años") -> pd.Da
     return out[out["fecha"] >= HOY - pd.Timedelta(days=max(dias, min_anios * 365))]
 
 
-def selector_periodo(clave: str, defecto: str = "2 años", mensual: bool = False) -> str:
+def selector_periodo(clave: str, defecto: str = "2 años", mensual: bool = False,
+                     opciones: list[str] | None = None) -> str:
     """Botones de período propios de un gráfico (cada gráfico importante tiene el suyo).
-    Con datos mensuales no se ofrece «1 mes» (quedaría un solo punto)."""
-    opciones = [o for o in PERIODOS if not (mensual and o == "1 mes")]
-    p = st.pills("Período", opciones, default=defecto, key=f"per_{clave}", label_visibility="collapsed")
+    Con datos mensuales no se ofrece «1 mes» (quedaría un solo punto). `opciones` permite un juego propio
+    (por ejemplo «1 mes / 3 meses / 1 año»). La clave empieza con `per_`: el estilo de style.py se engancha ahí."""
+    opciones = list(opciones) if opciones else [o for o in PERIODOS if not (mensual and o == "1 mes")]
+    p = st.pills("Período", opciones, default=defecto if defecto in opciones else opciones[0],
+                 key=f"per_{clave}", label_visibility="collapsed")
     return p if p in opciones else defecto
+
+
+def selector_categoria(etiqueta: str, opciones: list, clave: str, defecto=None, multi: bool = False):
+    """Fichas para elegir QUÉ se mira (un índice, una moneda, un gráfico). Se ven distinto del período a propósito.
+    La clave empieza con `cat_`: el estilo de style.py se engancha ahí. Devuelve el elegido (o la lista, si `multi`)."""
+    return st.pills(etiqueta, list(opciones), selection_mode="multi" if multi else "single", default=defecto,
+                    key=f"cat_{clave}", label_visibility="collapsed")
 
 
 def con_periodo(clave: str, df: pd.DataFrame, min_anios: int = 0, defecto: str = "2 años", mensual: bool = False) -> pd.DataFrame:
@@ -634,14 +689,15 @@ def grafico(fig, key: str | None = None):
 
 
 # ───────────────────────── carga de series ─────────────────────────
-dol = get("dolares")
+VIVO = cargar_vivo()
+dol = con_dolar_vivo(get("dolares"), VIVO.get("dolares"))
 if dol is not None:
     dol = dol.copy()
     dol["brecha_blue"] = ((dol["blue"] / dol["oficial"] - 1) * 100).replace([float("inf"), float("-inf")], float("nan"))
     dol["brecha_ccl"] = ((dol["contadoconliqui"] / dol["oficial"] - 1) * 100).replace([float("inf"), float("-inf")], float("nan"))
     dol_rec = dol.dropna(subset=["oficial"])
 
-riesgo = get("riesgo_pais")
+riesgo = con_riesgo_vivo(get("riesgo_pais"), VIVO.get("riesgo"))
 reservas = get("bcra:reservas")
 infl_m, infl_ia, rem = get("bcra:inflacion_mensual"), get("bcra:inflacion_interanual"), get("bcra:rem_12m")
 uva = get("bcra:uva")
@@ -874,26 +930,6 @@ with st.sidebar:
     termino, definicion = glosario.termino_del_dia(HOY)
     st.markdown(style.etiqueta("Término del día"), unsafe_allow_html=True)
     st.markdown(style.termino_del_dia(termino, definicion), unsafe_allow_html=True)
-    # al final: actualizar es una acción poco frecuente
-    st.markdown(style.etiqueta("Datos"), unsafe_allow_html=True)
-    # Los cachés son compartidos entre todas las visitas: vaciarlos obliga a volver a descargar para todos. Publicada, el botón
-    # tiene una espera de 10 minutos entre usos (para cualquiera), así nadie puede forzar descargas en cadena.
-    ESPERA_ACTUALIZAR = 0 if LOCAL else 600
-    _est = _estado_actualizar()
-    faltan = int(ESPERA_ACTUALIZAR - (time.time() - _est["ultimo"]))
-    if st.button("Actualizar datos", width="stretch", key="actualizar", disabled=faltan > 0,
-                 help=None if faltan <= 0 else f"Alguien actualizó hace poco. Podés volver a hacerlo en {faltan // 60 + 1} min."):
-        _est["ultimo"] = time.time()
-        _ultima_carga()["t"] = 0.0  # la descarga que sigue muestra la pantalla de carga
-        envejecer_disco()
-        cargar_todo.clear()
-        for e_ in _memoria().values():  # noticias, cripto y bolsas: se renuevan de fondo en la próxima carga
-            e_["t"] = 0.0
-        st.rerun()
-    st.markdown(
-        f'<div class="mc-status"><span class="dot">●</span> Actualizado {ACTUALIZADO:%d/%m/%Y %H:%M}</div>',
-        unsafe_allow_html=True,
-    )
 
 
 # (las cotizaciones del día van en la franja deslizante de arriba; el crédito y las fuentes, en el pie de la página)
@@ -1348,13 +1384,10 @@ def pantalla_cripto() -> None:
 
         monedas = mercado[~mercado["simbolo"].isin(["USDT", "USDC"])].head(6)  # las estables no tienen qué graficar
         st.markdown("#### Historial de precios")
-        c1, c2 = st.columns([3, 2], vertical_alignment="center")
-        elegida = c1.pills("Moneda", list(monedas["simbolo"]), default=monedas["simbolo"].iloc[0], key="cripto_moneda",
-                           label_visibility="collapsed") or monedas["simbolo"].iloc[0]
+        elegida = selector_categoria("Moneda", list(monedas["simbolo"]), "cripto",
+                                     defecto=monedas["simbolo"].iloc[0]) or monedas["simbolo"].iloc[0]
         rangos = {"1 mes": 30, "3 meses": 90, "1 año": 365}
-        with c2.container(horizontal_alignment="right"):
-            rango = st.pills("Rango", list(rangos), default="1 año", key="cripto_rango",
-                             label_visibility="collapsed") or "1 año"
+        rango = selector_periodo("cripto", "1 año", opciones=list(rangos))
         fila = monedas[monedas["simbolo"] == elegida]
         if not fila.empty:
             hist = historia_cripto(fila.iloc[0]["id"], rangos.get(rango, 365))
@@ -1434,9 +1467,8 @@ def pantalla_bolsas() -> None:
 
     st.subheader("Comparar")
     nombres = {n: s for s, n, g, _ in data.INDICES if g != "Materias primas" and isinstance(mk.get(s), pd.DataFrame)}
-    elegidas = st.pills("Bolsas a comparar", list(nombres), selection_mode="multi",
-                        default=[n for n in ("Merval", "S&P 500") if n in nombres], key="bolsas_sel",
-                        label_visibility="collapsed") or []
+    elegidas = selector_categoria("Bolsas a comparar", list(nombres), "bolsas", multi=True,
+                                  defecto=[n for n in ("Merval", "S&P 500") if n in nombres]) or []
     per_b = selector_periodo("bolsas", "1 año")
     series = {}
     for n in elegidas:
@@ -1466,11 +1498,11 @@ def construir_ticker() -> list[dict]:
             if clave in dol:
                 s = dol[["fecha", clave]].dropna().rename(columns={clave: "valor"})
                 if not s.empty:
-                    poner(nombre, charts.num(ultimo(s), 0, pre="$"), delta(s, dias=1), "bajo")
+                    poner(nombre, charts.num(ultimo(s), 0, pre="$"), delta(s, dias=1), "alto")
     for clave, nombre in (("fx:EUR", "Euro"), ("fx:GBP", "Libra")):
         d_ = DATOS.get(clave)
         if isinstance(d_, pd.DataFrame) and not d_.empty:
-            poner(nombre, charts.num(ultimo(d_), 0, pre="$"), delta(d_, dias=1), "bajo")
+            poner(nombre, charts.num(ultimo(d_), 0, pre="$"), delta(d_, dias=1), "alto")
     if riesgo is not None:
         poner("Riesgo país", charts.num(ultimo(riesgo), 0, suf=" pb"), delta(riesgo, dias=1), "bajo")
     if reservas is not None:
@@ -1515,8 +1547,53 @@ def seccion_actual() -> tuple[str, str]:
     return f"/tablero/{style.slug(str(sub))}", f"Tablero · {sub}"
 
 
+def refrescar_datos() -> None:
+    """Vacía los cachés (compartidos por todas las visitas) y vuelve a descargar todo."""
+    _estado_actualizar()["ultimo"] = time.time()
+    _ultima_carga()["t"] = 0.0  # la descarga que sigue muestra la pantalla de carga
+    envejecer_disco()
+    cargar_todo.clear()
+    for e_ in _memoria().values():  # dólar del momento, noticias, cripto y bolsas: se renuevan en la próxima carga
+        e_["t"] = 0.0
+
+
+def _firma_vivo() -> tuple:
+    """Versión de los datos que se renuevan solos: si cambia, hay algo nuevo para mostrar."""
+    mem = _memoria()
+    return tuple(mem[k].get("ver", 0) if k in mem else 0 for k in ("vivo", "cripto", "mercados"))
+
+
+@st.fragment(run_every=60)
+def estado_vivo() -> None:
+    """Cada minuto: pide (de fondo) el dólar del momento, cripto y bolsas y, si llegó algo nuevo, redibuja la página
+    entera para mostrarlo. Mientras tanto muestra cuándo se actualizó cada cosa."""
+    vivo = cargar_vivo()
+    cargar_cripto()
+    cargar_mercados()
+    firma, previa = _firma_vivo(), st.session_state.get("_firma_vivo")
+    st.session_state["_firma_vivo"] = firma
+    if previa is not None and firma != previa:
+        st.rerun(scope="app")
+    dv = vivo.get("dolares")
+    hora = None
+    if isinstance(dv, pd.DataFrame) and not dv.empty:
+        u = pd.Timestamp(dv["actualizado"].max())
+        hora = f"{u:%H:%M}" if u.normalize() == HOY else f"{u:%d/%m %H:%M}"
+    st.markdown(style.estado_datos(hora, f"{ACTUALIZADO:%d/%m %H:%M}"), unsafe_allow_html=True)
+
+
 def pie_pagina() -> None:
     st.markdown(style.footer(), unsafe_allow_html=True)
+    with st.container(key="pie_datos", horizontal=True, vertical_alignment="center"):
+        estado_vivo()
+        # Los cachés son compartidos: vaciarlos obliga a volver a descargar para todos. Publicada, el botón tiene una
+        # espera de 10 minutos entre usos (para cualquiera), así nadie puede forzar descargas en cadena.
+        espera = 0 if LOCAL else 600
+        faltan = int(espera - (time.time() - _estado_actualizar()["ultimo"]))
+        st.button("Refrescar datos", key="actualizar", icon=":material/refresh:", width="content", disabled=faltan > 0,
+                  on_click=refrescar_datos,
+                  help="Vuelve a descargar todo de las fuentes. El dólar, cripto y las bolsas ya se renuevan solos."
+                       if faltan <= 0 else f"Alguien refrescó hace poco. Podés volver a hacerlo en {faltan // 60 + 1} min.")
     try:
         st.html(style.contador_visitas(*seccion_actual()), unsafe_allow_javascript=True)
     except Exception:  # noqa: BLE001 — contar visitas nunca debe afectar la página
@@ -1580,10 +1657,10 @@ _MES = dict(dias=25, modo="abs", d_suf=" pp", d_txt="vs mes ant.")
 
 # clave -> (grupo, nombre, función). El orden de este diccionario es el orden del selector.
 CATALOGO = {
-    "oficial": ("Dólar", "Dólar oficial", _kpi(dol_s.get("oficial"), dec=0, pre="$", color="inverse", help="Precio de venta")),
-    "blue": ("Dólar", "Dólar blue", _kpi(dol_s.get("blue"), dec=0, pre="$", color="inverse", help="Precio de venta")),
-    "mep": ("Dólar", "Dólar MEP", _kpi(dol_s.get("bolsa"), dec=0, pre="$", color="inverse", help="Precio de venta")),
-    "ccl": ("Dólar", "Dólar CCL", _kpi(dol_s.get("contadoconliqui"), dec=0, pre="$", color="inverse", help="Precio de venta")),
+    "oficial": ("Dólar", "Dólar oficial", _kpi(dol_s.get("oficial"), dec=0, pre="$", help="Precio de venta")),
+    "blue": ("Dólar", "Dólar blue", _kpi(dol_s.get("blue"), dec=0, pre="$", help="Precio de venta")),
+    "mep": ("Dólar", "Dólar MEP", _kpi(dol_s.get("bolsa"), dec=0, pre="$", help="Precio de venta")),
+    "ccl": ("Dólar", "Dólar CCL", _kpi(dol_s.get("contadoconliqui"), dec=0, pre="$", help="Precio de venta")),
     "brecha": ("Dólar", "Brecha blue / oficial", _kpi(brecha_df, "brecha_blue", modo="abs", dec=1, suf="%", d_suf=" pp", color="inverse")),
     "reservas": ("Sector externo", "Reservas (USD M)", _kpi(reservas, dec=0, color="normal")),
     "riesgo": ("Sector externo", "Riesgo país (pb)", _kpi(riesgo, modo="abs", dec=0, d_suf=" pb", color="inverse", d_dec=0)),
@@ -1741,17 +1818,18 @@ def panorama_inicio() -> list[dict]:
         if of is not None:
             f = f"El **dólar oficial** está en **{charts.num(of, 0, pre='$')}**"
             v = pct(of, of_a)
-            senal = None if v is None or abs(v) < 0.05 else v < 0
             if v is not None:
                 f += (" (sin cambios en 30 días)" if abs(v) < 0.05 else
-                      f" ({_tono(('subió ' if v > 0 else 'bajó ') + charts.num(abs(v), 1, '%'), v < 0)} en 30 días)")
+                      f" ({_tono(('subió ' if v > 0 else 'bajó ') + charts.num(abs(v), 1, '%'), v > 0)} en 30 días)")
             if bl is not None:
                 br = (bl / of - 1) * 100
                 f += f" y el **blue**, en **{charts.num(bl, 0, pre='$')}**: una brecha de **{charts.num(br, 1, '%')}**"
                 if abs(br) < 5:
                     f += ", prácticamente sin diferencia entre los dos"
+            # el dólar es una cotización: no se juzga como buena o mala noticia, se dice si subió o bajó
+            tono_d = "estable" if v is None or abs(v) < 0.05 else ("sube" if v > 0 else "baja")
             frases.append(dict(tema="Dólar", cifra=charts.num(of, 0, pre="$"), detalle="oficial", texto=f + ".",
-                               tono=_balance(senal)))
+                               tono=tono_d))
     except Exception:  # noqa: BLE001
         traceback.print_exc()
     try:
@@ -1951,8 +2029,7 @@ with t_res, protegido("Inicio"):
             """Selector de gráfico + período: cambiar uno u otro redibuja solo esto."""
             OPC = list(GRAFICOS_INICIO)
             inicial = OPC[turno % len(OPC)]
-            elegido_i = st.segmented_control("Gráfico", OPC, default=inicial, key="inicio_grafico",
-                                             label_visibility="collapsed") or inicial
+            elegido_i = selector_categoria("Gráfico", OPC, "inicio_grafico", defecto=inicial) or inicial
             if elegido_i == "Dólar" and dol is not None:
                 _grafico_periodo("res_dolar", dol_rec, lambda d: charts.lineas(d, {"Oficial": "oficial", "Blue": "blue"}, "Dólar ($)",
                                                                                height=340))
@@ -1989,8 +2066,7 @@ with t_res, protegido("Inicio"):
         def que_le_gano() -> None:
             """Comparativo contra la inflación: cambiar el período redibuja solo esto."""
             ventanas = {"3 meses": 3, "6 meses": 6, "1 año": 12}
-            vent = st.segmented_control("Período", list(ventanas), default="1 año", key="rend_periodo",
-                                        label_visibility="collapsed") or "1 año"
+            vent = selector_periodo("rend", "1 año", opciones=list(ventanas))
             n_m = ventanas[vent]
             try:
                 corte = HOY - pd.DateOffset(months=n_m)
@@ -2082,8 +2158,8 @@ with t_bol, protegido("Bolsas"):
 # ── Dólar ──
 with t_dol, protegido("Dólar"):
     if t_dol.open:  # solo la pestaña abierta se calcula y se manda al navegador
-        st.caption("Todas las cotizaciones del dólar en la Argentina, del oficial a los financieros. Verde: el dólar baja; "
-                   "rojo: sube. El chip «vs oficial» muestra cuánto más caro está cada uno que el oficial.")
+        st.caption("Todas las cotizaciones del dólar en la Argentina, del oficial a los financieros. Verde: sube; "
+                   "rojo: baja. El chip «vs oficial» muestra cuánto más caro está cada uno que el oficial.")
         if dol is not None:
             TIPOS_DOLAR = [
                 ("oficial", "Dólar oficial", "Banco Nación, venta minorista"),
@@ -2104,7 +2180,7 @@ with t_dol, protegido("Dólar"):
                 tarjetas_usd.append(dict(
                     nombre=nombre, desc=desc, valor=charts.num(venta, 0, pre="$"),
                     detalle=f"Compra {charts.num(float(compra), 0, pre='$')} · Venta {charts.num(venta, 0, pre='$')}",
-                    var=delta(s.rename(columns={clave: "valor"})), sentido="bajo",  # que suba el dólar es mala noticia
+                    var=delta(s.rename(columns={clave: "valor"})), sentido="alto",  # cotización: verde si sube
                     spark=list(s.tail(30)[clave]),
                     chip=None if clave == "oficial" or not oficial_hoy else
                     f"{(venta / oficial_hoy - 1) * 100:+.0f}% vs oficial".replace(".", ","),
@@ -2121,7 +2197,7 @@ with t_dol, protegido("Dólar"):
                         nombre=nombre, desc="Cotización de referencia del BCRA",
                         valor=charts.num(float(u["valor"]), 0, pre="$"),
                         detalle=f"1 {simbolo} = US$ {charts.num(float(u['pase']), 2)}",
-                        var=delta(df_), sentido="bajo", chip=None, spark=list(df_.tail(30)["valor"])))
+                        var=delta(df_), sentido="alto", chip=None, spark=list(df_.tail(30)["valor"])))
             if tarjetas_fx:
                 st.markdown("#### Otras monedas")
                 st.markdown(style.cotizaciones(tarjetas_fx), unsafe_allow_html=True)
@@ -2332,13 +2408,26 @@ with t_prec, protegido("Precios y UVA"):
                                           {"Interanual observada": "Inflación interanual observada",
                                            "Expectativa 12 m (REM)": "Expectativa 12 m (REM)"},
                                           "Inflación interanual vs. expectativas del REM (%)", yfmt=",.0f"))
-        if uva is not None and dol is not None:
-            st.markdown("#### UVA contra el dólar")
-            comp = pd.merge_asof(rec(dol_rec).dropna(subset=["oficial"])[["fecha", "oficial", "blue"]],
-                                 uva.rename(columns={"valor": "uva"}), on="fecha")
-            comp = base100(comp, ["oficial", "blue", "uva"])
-            grafico(charts.lineas(comp, {"UVA": "uva", "Dólar oficial": "oficial", "Dólar blue": "blue"},
-                                  "UVA vs dólar — base 100 = inicio del período", yfmt=",.0f", height=340))
+        if infl_ia is not None and dol is not None:
+            st.markdown("#### ¿El dólar le ganó a la inflación?")
+            # dólar: último dato de cada mes y variación contra el mismo mes del año anterior (igual que la inflación interanual)
+            dm = dol_rec[dol_rec["fecha"] <= HOY][["fecha", "oficial", "blue"]].copy()
+            dm["mes"] = dm["fecha"].dt.to_period("M")
+            dm = dm.groupby("mes").last()
+            for c_ in ("oficial", "blue"):
+                dm[c_] = dm[c_].pct_change(12) * 100
+            ii = infl_ia[infl_ia["fecha"] <= HOY].assign(mes=lambda d: d["fecha"].dt.to_period("M")).set_index("mes")
+            comp = dm.join(ii["valor"].rename("inflacion"), how="outer")
+            # la fecha del punto es el fin de mes; el mes en curso (incompleto) queda en el último día con dato
+            fin = comp.index.to_timestamp(how="end").normalize()
+            comp["fecha"] = comp["fecha"].where(fin > HOY, fin).fillna(pd.Series(fin, index=comp.index))
+            comp = comp.reset_index(drop=True)
+            grafico_periodo("precios_dolar_infl", comp, lambda d: charts.lineas(
+                d, {"Inflación interanual": "inflacion", "Dólar oficial": "oficial", "Dólar blue": "blue"},
+                "Inflación vs. dólar — variación contra el mismo mes del año anterior (%)", yfmt=",.0f", height=340),
+                mensual=True)
+            st.caption("Si una línea del dólar queda por debajo de la inflación, el dólar subió menos que los precios: "
+                       "en términos reales, se abarató. La inflación se publica con un mes de rezago.")
         with st.expander("Índices de ajuste: UVA, CER, UVI e ICL"):
             pares = [("bcra:uva", "UVA (pesos)", ",.0f"), ("bcra:cer", "CER (base 2/2/2002 = 1)", ",.0f"),
                      ("bcra:uvi", "UVI (pesos)", ",.0f"), ("bcra:icl", "ICL — Índice para Contratos de Locación", ",.1f")]
