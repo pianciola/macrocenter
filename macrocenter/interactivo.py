@@ -299,7 +299,9 @@ def pantalla_alquileres(d: dict) -> None:
                "corresponde pagar hoy con cada índice. Es una referencia: vale lo que diga tu contrato.")
     indices = indices_alquiler(d)
     if not indices:
-        st.warning("No se pudieron cargar los índices de ajuste en este momento.")
+        from .avisos import actualizando, falla
+        falla("no se pudieron cargar los índices de ajuste de alquileres")
+        actualizando()
         return
     c1, c2, c3 = st.columns(3)
     monto = entrada_monto(c1, "Alquiler inicial ($)", "alq_monto", 500_000)

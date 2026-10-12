@@ -87,7 +87,24 @@ def _marcas(fmt: str | None) -> str | None:
     return fmt
 
 
+def _partir_titulo(titulo: str) -> tuple[str, str | None]:
+    """Los títulos largos no entran en pantallas angostas (Plotly no los parte y quedan cortados): lo que va después de
+    « — » o el último paréntesis pasa a una bajada más chica."""
+    if len(titulo) <= 44:
+        return titulo, None
+    if " — " in titulo:
+        a, b = titulo.split(" — ", 1)
+        return a, b[:1].upper() + b[1:]
+    i = titulo.rfind(" (")
+    if i > 15 and len(titulo) - i > 7:  # «(%)» o «($)» quedan en el título
+        return titulo[:i], titulo[i + 1:]
+    return titulo, None
+
+
 def _base(fig: go.Figure, titulo: str, yfmt: str | None, height: int) -> go.Figure:
+    titulo, bajada = _partir_titulo(titulo)
+    if bajada:
+        fig.update_layout(title_subtitle=dict(text=bajada, font=dict(size=12, color="rgba(128,128,128,1)")))
     fig.update_layout(
         font=dict(family="Segoe UI Variable Text, Segoe UI, system-ui, -apple-system, Helvetica Neue, Roboto, Arial, sans-serif"),
         title=dict(text=titulo, font=dict(size=16)),
@@ -101,6 +118,8 @@ def _base(fig: go.Figure, titulo: str, yfmt: str | None, height: int) -> go.Figu
                    separatethousands=True),
         separators=",.",  # formato argentino en ejes y etiquetas: 1.600,5
     )
+    if bajada:
+        fig.update_layout(margin_t=72)
     if _eje_x_fechas(fig):
         # fechas en formato numérico argentino (Plotly trae los meses en inglés: «Jan 2025»)
         fig.update_xaxes(

@@ -139,15 +139,21 @@ def serie(nombre: str, desde: str | None = None, hasta: str | None = None) -> pd
         params["start_date"] = desde
     if hasta:
         params["end_date"] = hasta
-    # La API a veces devuelve valores vacíos al azar (distintos en cada pedido y en cada formato). Se pide de nuevo,
-    # alternando JSON y CSV, y se completan los huecos hasta que una vuelta no agrega nada (los huecos reales quedan).
+    # La API a veces devuelve valores vacíos al azar (distintos en cada pedido y en cada formato) o la serie entera
+    # vacía. Se pide de nuevo, alternando JSON y CSV, y se completan los huecos hasta que una respuesta con datos no
+    # agrega nada (los huecos reales quedan). Las respuestas vacías no cuentan: se sigue probando.
     s = _serie_pedido(params, "json")
-    for formato in ("csv", "json") * 4:
-        huecos = int(s.isna().sum())
-        if not huecos:
+    for formato in ("csv", "json") * 5:
+        nuevo = None
+        if s.dropna().empty or s.isna().any():
+            nuevo = _serie_pedido(params, formato)
+        if nuevo is None:
             break
-        s = s.combine_first(_serie_pedido(params, formato))
-        if int(s.isna().sum()) == huecos:
+        if nuevo.dropna().empty:
+            continue
+        huecos = int(s.isna().sum()) if not s.dropna().empty else None
+        s = nuevo if s.dropna().empty else s.combine_first(nuevo)
+        if huecos is not None and int(s.isna().sum()) == huecos:
             break
     df = s.rename("valor").rename_axis("fecha").reset_index()
     return df.dropna().sort_values("fecha").reset_index(drop=True)

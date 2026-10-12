@@ -13,6 +13,7 @@ import pandas as pd
 import streamlit as st
 
 from . import charts, data, glosario, style
+from .avisos import falla
 from .interactivo import entrada_monto
 
 SECCIONES = ["Tasas de hoy", "Cómo les fue", "Plazo fijo vs. UVA", "Conceptos"]
@@ -265,7 +266,7 @@ def pantalla_tasas(d: dict) -> None:
     # plazo fijo por banco
     st.markdown("#### Plazo fijo a 30 días, banco por banco")
     if tb is None or tb.empty:
-        st.info(f"No se pudieron cargar las tasas de los bancos ahora. ({bancos if isinstance(bancos, str) else 'sin datos'})")
+        falla(f"no se pudieron cargar las tasas de los bancos ({bancos if isinstance(bancos, str) else 'sin datos'})")
     else:
         c1, _ = st.columns([1, 2])
         monto = entrada_monto(c1, "Monto para calcular cuánto rinde", "inv_monto_pf", 1_000_000)
@@ -295,7 +296,7 @@ def pantalla_tasas(d: dict) -> None:
     # fondos money market
     st.markdown("#### Fondos money market (rescate inmediato)")
     if fondos is None or fondos.empty:
-        st.info("No se pudieron calcular los rendimientos de los fondos ahora.")
+        falla("no se pudieron calcular los rendimientos de los fondos")
     else:
         filas = []
         for _, r in fondos.iterrows():
@@ -313,7 +314,7 @@ def pantalla_tasas(d: dict) -> None:
     # billeteras y plataformas
     st.markdown("#### Billeteras y plataformas")
     if not _ok(rend):
-        st.info("No se pudieron cargar los rendimientos de las plataformas ahora.")
+        falla("no se pudieron cargar los rendimientos de las plataformas")
     else:
         a, b = st.columns(2)
         for slot, monedas, titulo in ((a, MONEDAS_PESOS, "En pesos"), (b, MONEDAS_DOLAR, "En dólares")):
@@ -344,7 +345,7 @@ def pantalla_historica(d: dict, grafico) -> None:
     desde = _hoy() - pd.Timedelta(days=PERIODOS[per])
     tabla, series, faltan = alternativas(d, desde, monto)
     if not series:
-        st.info("No hay datos suficientes para este período.")
+        falla("no hay datos para «Cómo les fue» en este período")
         return
     infl_final = float(tabla["Inflación"].iloc[-1]) if "Inflación" in tabla else None
 
@@ -377,8 +378,8 @@ def pantalla_historica(d: dict, grafico) -> None:
 
 def pantalla_uva(d: dict, grafico) -> None:
     st.caption("Dos formas de hacer un plazo fijo: con una tasa fija (tradicional) o ajustado por inflación (UVA). Cuál "
-               "termina con más plata depende de la inflación que venga, que nadie sabe. Esta calculadora muestra a "
-               "partir de qué inflación conviene uno u otro.")
+               "termina con más plata depende de la inflación que venga, que nadie sabe. Esta calculadora muestra la "
+               "inflación a partir de la cual uno supera al otro.")
     rem_a, rem_m = inflacion_esperada_mensual(d.get("rem"))
     tb = tabla_bancos(d["bancos"]) if _ok(d.get("bancos")) else None
     tna_ref = promedio_grandes(tb) if tb is not None and not tb.empty else _ultimo(d.get("depositos_30d"))

@@ -5,7 +5,7 @@ borrador en Buttondown, el servicio que guarda la lista de suscriptores. La pág
 
 `armar()` devuelve (asunto, cuerpo, completo): `completo` es False si faltó algún dato (entonces no se manda solo,
 queda como borrador). El cuerpo es HTML simple con estilos en línea (lo que mejor se ve en los programas
-de correo). Verde = bueno, rojo = malo, gris = sin cambios.
+de correo). Es neutral, como la página: describe qué pasó, sin calificarlo como bueno o malo.
 """
 from __future__ import annotations
 
@@ -17,7 +17,7 @@ import pandas as pd
 from . import charts, data
 
 URL_PAGINA = "https://macrocenter-argentina.streamlit.app/"
-VERDE, ROJO, GRIS, CELESTE = "#10AC84", "#EE5253", "#8a94a3", "#4A8FD4"
+GRIS, CELESTE = "#8a94a3", "#4A8FD4"
 MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre",
          "noviembre", "diciembre"]
 
@@ -36,7 +36,7 @@ def _ult_y_hace(df: pd.DataFrame | None, col: str = "valor", dias: int = 7):
 
 
 def _fila(nombre: str, valor: str, cambio: str, bueno: bool | None, nota: str = "") -> str:
-    color = GRIS if bueno is None else VERDE if bueno else ROJO
+    color = "#334155"  # neutral: la flecha dice si subió o bajó, sin calificarlo
     esc = html.escape
     nota_html = f'<div style="font-size:12px;color:{GRIS};margin-top:2px">{esc(nota)}</div>' if nota else ""
     return (f'<tr><td style="padding:10px 0;border-bottom:1px solid #e3e8ef">'
@@ -104,31 +104,6 @@ def _b(t: str) -> str:
     return f"<b>{html.escape(t)}</b>"
 
 
-def _parrafo_balance(senales: list) -> str | None:
-    if not senales:
-        return None
-    buenas, malas = senales.count(True), senales.count(False)
-    palabra = ["ninguno", "uno", "dos", "tres", "cuatro", "cinco", "seis", "siete", "ocho", "nueve"]
-    n = lambda k: palabra[k] if k < len(palabra) else str(k)  # noqa: E731
-    if buenas + malas == 0:
-        return _p("<b>En pocas palabras: una semana sin grandes cambios.</b> Ninguno de los indicadores se movió de forma "
-                  "apreciable.")
-    if malas == 0:
-        tono = "una semana positiva"
-        detalle = ("El único indicador que se movió, mejoró." if buenas == 1 else
-                   f"Los {n(buenas)} indicadores que se movieron mejoraron.")
-    elif buenas == 0:
-        tono = "una semana negativa"
-        detalle = ("El único indicador que se movió, empeoró." if malas == 1 else
-                   f"Los {n(malas)} indicadores que se movieron empeoraron.")
-    else:
-        tono = ("una semana mayormente positiva" if buenas >= 2 * malas else
-                "una semana mayormente negativa" if malas >= 2 * buenas else "una semana de señales mixtas")
-        detalle = (f"De los indicadores que se movieron, {n(buenas)} {'mejoró' if buenas == 1 else 'mejoraron'} y "
-                   f"{n(malas)} {'empeoró' if malas == 1 else 'empeoraron'}.")
-    return _p(f"<b>En pocas palabras: {tono}.</b> {detalle}")
-
-
 def _parrafo_dolar(dol) -> str | None:
     of, of_a, _ = _ult_y_hace(dol, "oficial")
     bl, bl_a, _ = _ult_y_hace(dol, "blue")
@@ -167,7 +142,7 @@ def _parrafo_dolar(dol) -> str | None:
 
 
 def _parrafo_externo(riesgo, reservas) -> str | None:
-    partes, mejora = [], []
+    partes = []
     rp, rp_a, f_rp = _ult_y_hace(riesgo)
     if rp is not None and rp_a is not None:
         dif = rp - rp_a
@@ -177,7 +152,6 @@ def _parrafo_externo(riesgo, reservas) -> str | None:
             t = f"el riesgo país {_verbo(dif)} {_b(charts.num(abs(dif), 0) + ' puntos')}, a {_b(charts.num(rp, 0))}"
             r = _record(riesgo, "valor", rp, f_rp, minimo=dif < 0)
             partes.append(t + (f" ({html.escape(r)})" if r else ""))
-            mejora.append(dif < 0)
     rs, rs_a, f_rs = _ult_y_hace(reservas)
     if rs is not None and rs_a is not None:
         dif = rs - rs_a
@@ -188,16 +162,9 @@ def _parrafo_externo(riesgo, reservas) -> str | None:
                  f"{_b('USD ' + charts.num(abs(dif), 0) + ' millones')}, a {_b('USD ' + charts.num(rs, 0) + ' millones')}")
             r = _record(reservas, "valor", rs, f_rs, minimo=dif < 0)
             partes.append(t + (f" ({html.escape(r)})" if r else ""))
-            mejora.append(dif > 0)
     if not partes:
         return None
-    t = "En el frente externo, " + ", y ".join(partes) + "."
-    if len(mejora) == 2:
-        if mejora[0] == mejora[1]:
-            t += " Las dos señales van en la misma dirección: " + ("mejoran." if mejora[0] else "empeoran.")
-        else:
-            t += " Las dos señales van en direcciones opuestas."
-    return _p(t)
+    return _p("En el frente externo, " + ", y ".join(partes) + ".")
 
 
 def _parrafo_inflacion(infl_m, infl_ia, rem) -> str | None:
@@ -244,7 +211,7 @@ def _parrafo_inflacion(infl_m, infl_ia, rem) -> str | None:
 
 def _redaccion(dol, riesgo, reservas, infl_m, infl_ia, rem, senales: list) -> str:
     """La lectura de la semana en párrafos. Si una parte falla o le falta su dato, se omite y el resto sigue."""
-    partes = [lambda: _parrafo_balance(senales), lambda: _parrafo_dolar(dol),
+    partes = [lambda: _parrafo_dolar(dol),
               lambda: _parrafo_externo(riesgo, reservas), lambda: _parrafo_inflacion(infl_m, infl_ia, rem)]
     salida = []
     for parte in partes:
@@ -350,10 +317,7 @@ def armar() -> tuple[str, str, bool]:
         f'{_redaccion(dol, riesgo, reservas, infl_m, infl_ia, rem, senales)}'
         f'<h2 style="font-size:13px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:{GRIS};'
         'margin:24px 0 4px">Los números de la semana</h2>'
-        '<p style="font-size:13px;color:#475569;margin:0 0 6px">Cambio en los últimos 7 días. En los dólares, '
-        f'<span style="color:{VERDE};font-weight:700">verde</span> es que subió y '
-        f'<span style="color:{ROJO};font-weight:700">rojo</span> que bajó; en el resto, verde es que mejoró y rojo que '
-        'empeoró.</p>'
+        '<p style="font-size:13px;color:#475569;margin:0 0 6px">Cambio en los últimos 7 días.</p>'
         f'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse">'
         f'{"".join(filas)}</table>'
         f'<p style="margin:22px 0"><a href="{URL_PAGINA}" style="background:{CELESTE};color:#fff;text-decoration:none;'

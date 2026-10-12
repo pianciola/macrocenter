@@ -290,51 +290,33 @@ section[data-testid="stSidebar"] [class*="st-key-atajo_"] {{ margin-top: -6px; }
 [data-testid="stMain"] [data-testid="stHeadingWithActionElements"] :is(h3, h4) {{ font-size: 1.5rem !important;
     border-left: 4px solid {CELESTE}; padding-left: 12px !important; line-height: 1.25; }}
 [data-testid="stMain"] [data-testid="stHeadingWithActionElements"] h5 {{ font-size: 1.15rem !important; }}
-/* informe "En pocas palabras" de Inicio: estilo de columna de diario económico (filete arriba, título con serif,
-   filas numeradas separadas por líneas finas y el veredicto como palabra, sin cajas ni píldoras) */
-.mc-pano {{ margin: 6px 0 10px; border-top: 3px solid currentColor; padding-top: 2px; }}
-.mc-pano .cab {{ display: flex; justify-content: space-between; align-items: baseline; gap: 6px 18px; flex-wrap: wrap;
-    padding: 12px 0 10px; border-bottom: 1px solid rgba(128,128,128,.45); }}
-.stApp .mc-pano .cab .tit {{ font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif !important;
-    font-size: 1.65rem; font-weight: 700; letter-spacing: -.01em; line-height: 1.1; }}
-.stApp .mc-pano .cab .sub {{ font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif !important;
-    font-style: italic; font-size: .92rem; opacity: .7; margin-top: 4px; }}
-.mc-pano .bal {{ font-size: .82rem; opacity: .9; white-space: nowrap; }}
-.mc-pano .bal .cnt + .cnt::before {{ content: " · "; color: inherit; opacity: .5; font-weight: 400; }}
-.mc-pano .cnt {{ font-weight: 700; }}
-.mc-pano .cnt.bien {{ color: #10AC84; }} .mc-pano .cnt.mal {{ color: #EE5253; }} .mc-pano .cnt.mixto {{ color: {SOL}; }}
-.mc-pano .cnt.estable {{ opacity: .75; }}
-.mc-pano .fila {{ display: grid; grid-template-columns: 2.1rem 150px 1fr 104px; gap: 18px; align-items: baseline;
+/* informe "En pocas palabras" de Inicio: neutral (no califica nada como bueno o malo). Título como los demás títulos
+   de sección (barra celeste), filas numeradas separadas por líneas finas, misma letra que el resto de la página */
+.mc-pano {{ margin: 6px 0 10px; counter-reset: pano; }}
+.mc-pano .cab {{ padding: 4px 0 12px; border-bottom: 1px solid rgba(128,128,128,.35); }}
+.mc-pano .cab .tit {{ font-size: 1.5rem; font-weight: 700; letter-spacing: -.01em; line-height: 1.25;
+    border-left: 4px solid {CELESTE}; padding-left: 12px; }}
+.mc-pano .cab .sub {{ font-size: .84rem; opacity: .6; margin: 4px 0 0 16px; }}
+.mc-pano .fila {{ display: grid; grid-template-columns: 2.1rem 150px 1fr; gap: 18px; align-items: baseline;
     padding: 15px 2px; counter-increment: pano; }}
-.mc-pano {{ counter-reset: pano; }}
-.mc-pano .fila + .fila {{ border-top: 1px solid rgba(128,128,128,.22); }}
-.stApp .mc-pano .fila::before {{ content: counter(pano, decimal-leading-zero);
-    font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif !important;
-    font-size: 1.05rem; font-style: italic; opacity: .45; }}
+.mc-pano .fila + .fila {{ border-top: 1px solid rgba(128,128,128,.2); }}
+.mc-pano .fila::before {{ content: counter(pano, decimal-leading-zero); font-size: .9rem; font-weight: 700;
+    color: {CELESTE}; opacity: .8; font-variant-numeric: tabular-nums; }}
 .mc-pano .tema {{ font-size: .8rem; font-weight: 600; opacity: .7; }}
 .mc-pano .cifra {{ font-size: 1.45rem; font-weight: 700; letter-spacing: -.02em; line-height: 1.15;
     font-variant-numeric: tabular-nums; margin: 1px 0; }}
 .mc-pano .det {{ font-size: .74rem; opacity: .55; }}
 .mc-pano .txt {{ font-size: .94rem; line-height: 1.6; }}
-.mc-pano .txt strong {{ font-weight: 700; }}
-:is(.mc-pano, .mc-nota, .mc-aviso) .pos {{ color: #10AC84; font-weight: 700; }}
-:is(.mc-pano, .mc-nota, .mc-aviso) .neg {{ color: #EE5253; font-weight: 700; }}
-.mc-pano .tono {{ justify-self: end; font-size: .82rem; font-weight: 700; white-space: nowrap; }}
-.mc-pano .tono b {{ font-weight: 400; margin-right: 4px; }}
-.mc-pano :is(.bien, .sube) .tono {{ color: #10AC84; }} .mc-pano :is(.mal, .baja) .tono {{ color: #EE5253; }} .mc-pano .mixto .tono {{ color: {SOL}; }}
-.mc-pano .estable .tono {{ opacity: .6; }}
-.stApp .mc-pano .pie {{ font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif !important;
-    font-style: italic; font-size: .8rem; opacity: .6; padding: 10px 0 0; border-top: 1px solid rgba(128,128,128,.45); }}
+.mc-pano .txt strong, .mc-pano .txt :is(.pos, .neg) {{ font-weight: 700; color: inherit; }}
+:is(.mc-nota, .mc-aviso) .pos {{ color: #10AC84; font-weight: 700; }}
+:is(.mc-nota, .mc-aviso) .neg {{ color: #EE5253; font-weight: 700; }}
+.mc-pano .pie {{ font-size: .78rem; opacity: .55; padding: 10px 0 0; border-top: 1px solid rgba(128,128,128,.35); }}
 @media (max-width: 760px) {{
-    .mc-pano .fila {{ grid-template-columns: 1.8rem 1fr auto; gap: 4px 10px; padding: 13px 0; }}
+    .mc-pano .fila {{ grid-template-columns: 1.8rem 1fr; gap: 4px 10px; padding: 13px 0; }}
     .mc-pano .izq {{ display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }}
-    .mc-pano .txt {{ grid-column: 2 / -1; grid-row: 2; font-size: .9rem; }}
-    .mc-pano .tono {{ grid-column: 3; grid-row: 1; }}
-    .mc-pano .tono span {{ display: none; }}
+    .mc-pano .txt {{ grid-column: 2; font-size: .9rem; }}
     .mc-pano .cifra {{ font-size: 1.15rem; }}
-    .stApp .mc-pano .cab .tit {{ font-size: 1.35rem; }}
-    .mc-pano .bal {{ white-space: normal; }}
-}}
+    .mc-pano .cab .tit {{ font-size: 1.3rem; }}
 }}
 
 /* actualizar datos: discreto, al pie */
@@ -483,6 +465,14 @@ button[data-variant="segmented_control"][aria-checked="true"] p {{ color: #fff !
     .st-key-inv_seccion button p {{ font-size: .9rem !important; }}
 }}
 
+/* selector de Herramientas (cinco tarjetas): si no entran en una fila, pasan a la siguiente (antes, con poco ancho, el
+   texto de cada botón se partía letra por letra) */
+[data-testid="stHorizontalBlock"]:has(.st-key-modo_0) {{ flex-wrap: wrap !important; gap: .75rem !important; }}
+[data-testid="stHorizontalBlock"]:has(.st-key-modo_0) > [data-testid="stColumn"] {{
+    flex: 1 1 170px !important; min-width: 170px !important; width: auto !important;
+}}
+[class*="st-key-modo_"] button p {{ word-break: normal !important; overflow-wrap: normal !important; }}
+
 /* ── Ahorro e inversiones ── */
 .mc-aviso {{ display: flex; gap: 12px; align-items: flex-start; margin: 4px 0 18px; padding: 12px 16px; border-radius: 14px;
     border: 1px solid rgba(246,180,14,.45); background: rgba(246,180,14,.08); font-size: .88rem; line-height: 1.5; }}
@@ -528,6 +518,9 @@ button[data-variant="segmented_control"][aria-checked="true"] p {{ color: #fff !
 .mc-min-res .k {{ font-size: .7rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: rgba(255,255,255,.7); }}
 .mc-min-res .v {{ font-size: 1.3rem; font-weight: 900; margin-top: 2px; color: #fff; }}
 .mc-min-res .d {{ font-size: .76rem; color: rgba(255,255,255,.7); }}
+/* con poco ancho disponible (barra lateral abierta en una ventana mediana), los cuatro datos van de a dos */
+.mc-min-hero {{ container-type: inline-size; }}
+@container (max-width: 720px) {{ .mc-min-res {{ grid-template-columns: repeat(2, 1fr); }} }}
 
 .mc-min-grupo {{ display: flex; align-items: center; gap: 14px; margin: 30px 0 12px; }}
 .mc-min-grupo .pf {{
@@ -619,15 +612,19 @@ button[data-variant="segmented_control"][aria-checked="true"] p {{ color: #fff !
     .mc-min-card .ph {{ flex-basis: 64px; height: 64px; }}
 }}
 @media (prefers-reduced-motion: reduce) {{ .mc-min-card, :is(.st-key-hist_seccion, .st-key-inv_seccion) button {{ transition: none; }} }}
-@media (max-width: 860px) {{
+/* una sola columna según el ancho real disponible (con la barra lateral abierta, una ventana mediana ya no alcanza
+   para alternar tarjetas a los dos lados) */
+.mc-tlwrap {{ container-type: inline-size; }}
+@container (max-width: 760px) {{
     .mc-tl::before {{ left: 48px; }}
     .mc-tl-item {{ grid-template-columns: 96px 1fr; }}
     .mc-tl-dot {{ grid-column: 1; justify-self: start; }}
     .mc-tl-item.izq .mc-tl-card, .mc-tl-item.der .mc-tl-card {{ grid-column: 2; }}
     .mc-tl-anio {{ display: none; }}
-    .mc-foto {{ width: 76px; height: 76px; margin-left: 10px; }}
+    .mc-tl .mc-foto {{ width: 76px; height: 76px; margin-left: 10px; }}
     .mc-tl-hoy {{ margin-left: 10px; }}
 }}
+@media (max-width: 860px) {{ .mc-foto {{ width: 76px; height: 76px; margin-left: 10px; }} }}
 
 /* ── Pie de página: franja celeste de la paleta ── */
 .mc-foot {{
@@ -639,8 +636,15 @@ button[data-variant="segmented_control"][aria-checked="true"] p {{ color: #fff !
 .mc-foot a {{ color: {CELESTE}; font-weight: 600; text-decoration: none; }}
 .mc-foot a:hover {{ text-decoration: underline; }}
 .mc-foot p {{ margin: 0; line-height: 1.5; }}
-/* el pie cierra la página: sin el relleno que Streamlit deja al final */
-[data-testid="stMainBlockContainer"] {{ padding-bottom: 0 !important; }}
+/* el pie cierra la página: sin el relleno que Streamlit deja al final. El margen lateral va en una variable (--mc-pad)
+   para que el pie pueda salir de él y ocupar todo el ancho */
+:root {{ --mc-pad: 5rem; }}
+[data-testid="stMainBlockContainer"] {{ padding-bottom: 0 !important; padding-left: var(--mc-pad) !important;
+    padding-right: var(--mc-pad) !important; }}
+.mc-foot, .st-key-pie_datos {{ margin-left: calc(-1 * var(--mc-pad)) !important; margin-right: calc(-1 * var(--mc-pad)) !important;
+    width: calc(100% + 2 * var(--mc-pad)) !important; border-radius: 0 !important; border-left: none !important;
+    border-right: none !important; padding-left: var(--mc-pad) !important; padding-right: var(--mc-pad) !important; }}
+.st-key-pie_datos {{ max-width: none !important; }}
 /* suscripción: una franja finita */
 .mc-foot .bol {{ display: flex; align-items: center; justify-content: space-between; gap: 12px 18px; flex-wrap: wrap;
     margin: 0 0 14px; padding: 9px 14px; border-radius: 10px; border: 1px solid rgba(116,172,223,.30);
@@ -716,10 +720,21 @@ button[data-variant="segmented_control"][aria-checked="true"] p {{ color: #fff !
 /* ── Tarjetas de cotización ── */
 /* columnas según la cantidad de tarjetas (--cols, ver _columnas): filas parejas, sin tarjetas huérfanas */
 .mc-fxgrid {{ display: grid; grid-template-columns: repeat(var(--cols, 4), minmax(0, 1fr)); gap: 12px; margin: 8px 0 8px; }}
-@media (max-width: 1100px) {{ .mc-fxgrid {{ grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }} }}
-/* según el ancho real disponible (barra lateral abierta o no): con poco lugar, menos columnas */
+/* según el ancho real disponible (barra lateral abierta o no): con menos lugar, 3 y después 2 por fila. Si la última
+   fila queda incompleta, sus tarjetas se estiran para llenarla (nunca una tarjeta sola en un rincón). Con 3 por fila se
+   usa una grilla de 6 sub-columnas: cada tarjeta ocupa 2; una sola al final ocupa las 6 y dos, 3 cada una */
 .mc-fxwrap {{ container-type: inline-size; }}
-@container (max-width: 760px) {{ .mc-fxgrid {{ grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }} }}
+@container (max-width: 860px) {{
+    .mc-fxgrid {{ grid-template-columns: repeat(6, minmax(0, 1fr)); }}
+    .mc-fxgrid > * {{ grid-column: span 2; }}
+    .mc-fxgrid > :last-child:nth-child(3n+1) {{ grid-column: span 6; }}
+    .mc-fxgrid > :nth-last-child(2):nth-child(3n+1), .mc-fxgrid > :last-child:nth-child(3n+2) {{ grid-column: span 3; }}
+}}
+@container (max-width: 500px) {{
+    .mc-fxgrid {{ grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }}
+    .mc-fxgrid > *, .mc-fxgrid > :is(:last-child, :nth-last-child(2)):nth-child(n) {{ grid-column: span 1; }}
+    .mc-fxgrid > :last-child:nth-child(odd) {{ grid-column: span 2; }}
+}}
 .mc-fx {{
     padding: 14px 16px 12px; border-radius: 14px; background: rgba(128,128,128,.09); min-width: 0; overflow: hidden;
     border: 1px solid rgba(116,172,223,.32); border-top: 4px solid {CELESTE};
@@ -749,7 +764,6 @@ button[data-variant="segmented_control"][aria-checked="true"] p {{ color: #fff !
 }}
 @container (max-width: 150px) {{ .mc-fx .v {{ font-size: 1.1rem; }} }}
 @media (max-width: 640px) {{
-    .mc-fxgrid {{ grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }}
     .mc-fx {{ padding: 11px 12px 10px; }}
     .mc-fx .v {{ font-size: 1.15rem; }}
     .mc-fx .spark {{ display: none; }}
@@ -802,6 +816,13 @@ button[data-variant="segmented_control"][aria-checked="true"] p {{ color: #fff !
 [data-testid="stMetric"]:hover {{ border-color: rgba(116,172,223,.55); }}
 /* números de los indicadores: más peso y espaciado ajustado, como en los tableros financieros */
 [data-testid="stMetricValue"] {{ font-weight: 650 !important; letter-spacing: -.02em; }}
+/* indicadores angostos (tres o más por fila con poco ancho): el valor se achica en vez de cortarse con «…» y la
+   etiqueta puede ocupar dos renglones */
+[data-testid="stMetric"] {{ container-type: inline-size; }}
+[data-testid="stMetricLabel"] p {{ white-space: normal !important; overflow: visible !important; line-height: 1.25; }}
+@container (max-width: 240px) {{ [data-testid="stMetricValue"] > div {{ font-size: 1.45rem !important; }} }}
+@container (max-width: 190px) {{ [data-testid="stMetricValue"] > div {{ font-size: 1.2rem !important; }} }}
+@container (max-width: 150px) {{ [data-testid="stMetricValue"] > div {{ font-size: 1.02rem !important; }} }}
 /* tarjetas de una misma fila, del mismo alto (con o sin variación debajo) */
 [data-testid="stColumn"]:has(> [data-testid="stVerticalBlock"] > [data-testid="stElementContainer"]:only-child > [data-testid="stMetric"])
     > [data-testid="stVerticalBlock"],
@@ -975,10 +996,22 @@ h3 {{ font-weight: 700 !important; }}
     [data-testid="stHorizontalBlock"]:has(> [data-testid="stColumn"]:nth-child(4) [data-testid="stMetric"]) > [data-testid="stColumn"] {{
         flex: 1 1 calc(33.3% - .75rem) !important; min-width: calc(33.3% - .75rem) !important; width: auto !important;
     }}
+    /* justo cuatro: de a dos (2 + 2), no 3 + 1 con uno solo ocupando toda la fila */
+    [data-testid="stHorizontalBlock"]:has(> [data-testid="stColumn"]:nth-child(4):last-child [data-testid="stMetric"]) > [data-testid="stColumn"] {{
+        flex: 1 1 calc(50% - .75rem) !important; min-width: calc(50% - .75rem) !important;
+    }}
+    /* dos gráficos lado a lado: con este ancho los títulos se cortaban; van uno debajo del otro */
+    [data-testid="stHorizontalBlock"]:has(> [data-testid="stColumn"] [data-testid="stPlotlyChart"]) {{
+        flex-wrap: wrap !important;
+    }}
+    [data-testid="stHorizontalBlock"]:has(> [data-testid="stColumn"] [data-testid="stPlotlyChart"]) > [data-testid="stColumn"] {{
+        flex: 1 1 100% !important; min-width: 100% !important; width: 100% !important;
+    }}
 }}
 
 /* ── Celular y pantallas angostas: más aire, indicadores de a dos y todo legible ── */
 @media (max-width: 640px) {{
+    :root {{ --mc-pad: .85rem; }}
     .block-container {{ padding: 3.2rem .85rem 0 !important; }}
     h1 {{ font-size: 1.6rem !important; }}
     h2, [data-testid="stHeading"] h2 {{ font-size: 1.3rem !important; }}
@@ -1327,26 +1360,18 @@ def _md_a_html(texto: str) -> str:
 
 
 def panorama(items: list[dict], fecha: str) -> str:
-    """Informe «En pocas palabras»: una fila por tema con su cifra clave, el resumen y el tono (bien / mal / mixto)."""
+    """Informe «En pocas palabras»: una fila por tema con su cifra clave y el resumen. Es neutral: describe qué pasó, sin
+    calificarlo como bueno o malo."""
     esc = html.escape
-    marcas = {"bien": ("Positivo", "↑"), "mal": ("Negativo", "↓"), "mixto": ("Mixto", "↕"), "estable": ("Estable", "→"),
-              "sube": ("Sube", "↑"), "baja": ("Baja", "↓")}  # sube/baja: cotizaciones, que no se cuentan como buenas o malas
-    cuenta = {k: sum(1 for i in items if i["tono"] == k) for k in marcas}
-    plural = {"bien": "positivos", "mal": "negativos", "mixto": "mixtos", "estable": "estables"}
-    resumen = "".join(f'<span class="cnt {k}">{cuenta[k]} '
-                      f'{marcas[k][0].lower() if cuenta[k] == 1 else plural[k]}</span>'
-                      for k in marcas if cuenta[k] and k in plural)
     filas = "".join(
-        f'<div class="fila {i["tono"]}"><div class="izq"><div class="tema">{esc(i["tema"])}</div>'
+        f'<div class="fila"><div class="izq"><div class="tema">{esc(i["tema"])}</div>'
         f'<div class="cifra">{esc(i["cifra"])}</div><div class="det">{esc(i["detalle"])}</div></div>'
-        f'<div class="txt">{_md_a_html(i["texto"])}</div>'
-        f'<div class="tono" title="{marcas[i["tono"]][0]}"><b>{marcas[i["tono"]][1]}</b><span>{marcas[i["tono"]][0]}</span></div></div>'
+        f'<div class="txt">{_md_a_html(i["texto"])}</div></div>'
         for i in items)
-    return (f'<div class="mc-pano"><div class="cab"><div><div class="tit">En pocas palabras</div>'
-            f'<div class="sub">Lo más importante de la economía · datos al {esc(fecha)}</div></div>'
-            f'<div class="bal">{resumen}</div></div>{filas}'
-            f'<div class="pie">Nota: resumen automático con el último dato publicado por cada fuente (algunos tienen semanas de '
-            f'rezago). Positivo / negativo según el efecto sobre la economía y el bolsillo; el dólar, como toda cotización, solo dice si subió o bajó.</div></div>')
+    return (f'<div class="mc-pano"><div class="cab"><div class="tit">En pocas palabras</div>'
+            f'<div class="sub">Lo más importante de la economía · datos al {esc(fecha)}</div></div>{filas}'
+            '<div class="pie">Resumen automático con el último dato publicado por cada fuente (algunos tienen semanas de '
+            'rezago).</div></div>')
 
 
 def cargando(texto: str = "Cargando datos…", alto: str = "55vh") -> str:
@@ -1445,7 +1470,7 @@ def linea_tiempo(items: list[dict]) -> str:
     """Línea de tiempo vertical de presidentes. Cada item: nombre, periodo, anio, iniciales, hito, filas
     ([{'k','ini','fin','tend'}]), pico, nota, foto, pagina, actual."""
     esc = html.escape
-    out = ['<div class="mc-tl">']
+    out = ['<div class="mc-tlwrap"><div class="mc-tl">']
     for i, it in enumerate(items):
         lado = "izq" if i % 2 == 0 else "der"
         foto = (f'<img src="{esc(it["foto"])}" alt="{esc(it["nombre"])}" loading="lazy" decoding="async" referrerpolicy="no-referrer">'
@@ -1468,7 +1493,7 @@ def linea_tiempo(items: list[dict]) -> str:
             f'<div class="hito">{esc(it["hito"])}</div>{filas}{pico}{nota}</div>'
             f'<div class="mc-tl-dot">{dot}</div><div class="mc-tl-anio">{it["anio"]}</div></div>'
         )
-    out.append('<div class="mc-tl-hoy">HOY</div></div>')
+    out.append('<div class="mc-tl-hoy">HOY</div></div></div>')
     return "".join(out)
 
 
