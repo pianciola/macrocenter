@@ -296,6 +296,50 @@ def rendimientos(nombres: list[str], valores: list[float], inflacion: float | No
     return fig
 
 
+def evolucion_montos(df: pd.DataFrame, series: dict[str, str], referencia: str | None, titulo: str,
+                     height: int = 420) -> go.Figure:
+    """Cuánto valdría un monto invertido en cada alternativa, día a día. `referencia` (la inflación) va punteada y
+    dorada: lo que está arriba de esa línea ganó poder de compra."""
+    fig = go.Figure()
+    if referencia and referencia in df:
+        d = df[["fecha", referencia]].dropna()
+        fig.add_trace(go.Scatter(x=d["fecha"], y=d[referencia], name="Inflación (lo que hacía falta para no perder)",
+                                 mode="lines", line=dict(color="#F6B40E", width=2.5, dash="dash")))
+    # colores propios: ni dorado (la inflación) ni verde/rojo (que en la página significan mejor/peor)
+    colores = ["#2E86DE", "#A55EEA", "#00CEC9", "#FD79A8", "#8395A7", "#CD853F"]
+    for i, (nombre, col) in enumerate(series.items()):
+        d = df[["fecha", col]].dropna()
+        fig.add_trace(go.Scatter(x=d["fecha"], y=d[col], name=nombre, mode="lines",
+                                 line=dict(color=colores[i % len(colores)], width=2)))
+    fig = _base(fig, titulo, ",.0f", height)
+    fig.update_yaxes(tickprefix="$")
+    return fig
+
+
+def equilibrio_uva(infl: list[float], tradicional: list[float], uva: list[float], esperada: float | None,
+                   corte: float | None, titulo: str, height: int = 360) -> go.Figure:
+    """Monto final de un plazo fijo tradicional (horizontal: no depende de la inflación) y de uno UVA (sube con la
+    inflación) según la inflación mensual promedio. Se cruzan en el punto de equilibrio."""
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=infl, y=tradicional, name="Plazo fijo tradicional", mode="lines",
+                             line=dict(color="#4A8FD4", width=3)))
+    fig.add_trace(go.Scatter(x=infl, y=uva, name="Plazo fijo UVA", mode="lines", line=dict(color="#F79F1F", width=3)))
+    if corte is not None and infl[0] <= corte <= infl[-1]:
+        fig.add_vline(x=corte, line_width=1.5, line_dash="dot", line_color="rgba(128,128,128,.8)",
+                      annotation_text=f"Empate: {num(corte, 2, '%')}", annotation_position="top left",
+                      annotation_font=dict(size=12))
+    if esperada is not None and infl[0] <= esperada <= infl[-1]:
+        fig.add_vline(x=esperada, line_width=2, line_dash="dash", line_color="#F6B40E",
+                      annotation_text=f"Esperada (REM): {num(esperada, 2, '%')}", annotation_position="top right",
+                      annotation_font=dict(color="#F6B40E", size=12))
+    fig = _base(fig, titulo, ",.0f", height)
+    fig.update_layout(hovermode="x unified", margin=dict(l=10, r=10, t=70, b=45))
+    fig.update_xaxes(ticksuffix="%", hoverformat=",.2f", showgrid=True,
+                     gridcolor="rgba(128,128,128,.15)")
+    fig.update_yaxes(tickprefix="$")
+    return fig
+
+
 def inflacion_presidentes(df: pd.DataFrame, mandatos: list, cortos: dict[str, str], titulo: str,
                           height: int = 330, marca: pd.Timestamp | None = None) -> go.Figure:
     """Inflación anual en escala logarítmica (valores menores a 1% se dibujan en 1%)."""

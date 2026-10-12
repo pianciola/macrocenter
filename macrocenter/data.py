@@ -241,6 +241,40 @@ def dolar_historico() -> pd.DataFrame:
     return df.dropna().sort_values("fecha").reset_index(drop=True)
 
 
+def plazo_fijo_bancos() -> pd.DataFrame:
+    """Tasa de plazo fijo a 30 días de cada banco (ArgentinaDatos, con datos del BCRA). TNA en %; 0 = no informa."""
+    filas = [{"entidad": str(e.get("entidad") or "").strip(),
+              "tna_clientes": float(e.get("tnaClientes") or 0) * 100,
+              "tna_no_clientes": float(e.get("tnaNoClientes") or 0) * 100}
+             for e in _get(f"{ARGDATOS_URL}/finanzas/tasas/plazoFijo").json()]
+    df = pd.DataFrame(filas, columns=["entidad", "tna_clientes", "tna_no_clientes"])
+    return df[(df["entidad"] != "") & ((df["tna_clientes"] > 0) | (df["tna_no_clientes"] > 0))].reset_index(drop=True)
+
+
+def rendimientos_plataformas() -> pd.DataFrame:
+    """Rendimiento anual (APY, %) que informa cada billetera o plataforma cripto, por moneda (ArgentinaDatos)."""
+    filas = [{"entidad": str(e.get("entidad") or ""), "moneda": str(r.get("moneda") or "").upper(),
+              "apy": r.get("apy"), "fecha": r.get("fecha")}
+             for e in _get(f"{ARGDATOS_URL}/finanzas/rendimientos").json() for r in (e.get("rendimientos") or [])]
+    df = pd.DataFrame(filas, columns=["entidad", "moneda", "apy", "fecha"])
+    df["apy"] = pd.to_numeric(df["apy"], errors="coerce")
+    df["fecha"] = pd.to_datetime(df["fecha"], errors="coerce")
+    return df.dropna(subset=["apy", "fecha"]).reset_index(drop=True)
+
+
+def fci(tipo: str = "mercadoDinero", fecha: str = "ultimo") -> pd.DataFrame:
+    """Valor de la cuotaparte (vcp) y patrimonio de cada fondo común de inversión (ArgentinaDatos, datos de la CAFCI).
+    `fecha`: 'ultimo', 'penultimo' o 'AAAA/MM/DD'."""
+    if tipo not in ("mercadoDinero", "rentaFija", "rentaVariable", "rentaMixta"):
+        raise ValueError(f"tipo de fondo desconocido: {tipo}")
+    df = pd.DataFrame(_get(f"{ARGDATOS_URL}/finanzas/fci/{tipo}/{fecha}").json(),
+                      columns=["fondo", "horizonte", "fecha", "vcp", "patrimonio"])
+    df["fecha"] = pd.to_datetime(df["fecha"], errors="coerce")
+    for c in ("vcp", "patrimonio"):
+        df[c] = pd.to_numeric(df[c], errors="coerce")
+    return df.dropna(subset=["fondo", "fecha", "vcp"]).drop_duplicates("fondo").reset_index(drop=True)
+
+
 def inflacion_historica() -> pd.DataFrame:
     """IPC mensual (%) desde 1943 (ArgentinaDatos). Fecha = fin de mes."""
     df = pd.DataFrame(_get(f"{ARGDATOS_URL}/finanzas/indices/inflacion").json())

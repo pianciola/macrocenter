@@ -286,7 +286,9 @@ section[data-testid="stSidebar"] [class*="st-key-atajo_"] {{ margin-top: -6px; }
    28, 24 y 20 px según la pestaña, y ninguno se separaba de lo anterior más que el espacio común entre bloques) */
 [data-testid="stMain"] [data-testid="stElementContainer"]:has([data-testid="stHeadingWithActionElements"]):not(:first-child) {{
     margin-top: 14px; }}
-[data-testid="stMain"] [data-testid="stHeadingWithActionElements"] :is(h3, h4) {{ font-size: 1.5rem !important; }}
+/* barra celeste a la izquierda: distingue los títulos de sección de los títulos de los gráficos (que son negrita chica) */
+[data-testid="stMain"] [data-testid="stHeadingWithActionElements"] :is(h3, h4) {{ font-size: 1.5rem !important;
+    border-left: 4px solid {CELESTE}; padding-left: 12px !important; line-height: 1.25; }}
 [data-testid="stMain"] [data-testid="stHeadingWithActionElements"] h5 {{ font-size: 1.15rem !important; }}
 /* informe "En pocas palabras" de Inicio: estilo de columna de diario económico (filete arriba, título con serif,
    filas numeradas separadas por líneas finas y el veredicto como palabra, sin cajas ni píldoras) */
@@ -315,8 +317,8 @@ section[data-testid="stSidebar"] [class*="st-key-atajo_"] {{ margin-top: -6px; }
 .mc-pano .det {{ font-size: .74rem; opacity: .55; }}
 .mc-pano .txt {{ font-size: .94rem; line-height: 1.6; }}
 .mc-pano .txt strong {{ font-weight: 700; }}
-.mc-pano .pos {{ color: #10AC84; font-weight: 700; }}
-.mc-pano .neg {{ color: #EE5253; font-weight: 700; }}
+:is(.mc-pano, .mc-nota, .mc-aviso) .pos {{ color: #10AC84; font-weight: 700; }}
+:is(.mc-pano, .mc-nota, .mc-aviso) .neg {{ color: #EE5253; font-weight: 700; }}
 .mc-pano .tono {{ justify-self: end; font-size: .82rem; font-weight: 700; white-space: nowrap; }}
 .mc-pano .tono b {{ font-weight: 400; margin-right: 4px; }}
 .mc-pano .bien .tono {{ color: #10AC84; }} .mc-pano .mal .tono {{ color: #EE5253; }} .mc-pano .mixto .tono {{ color: {SOL}; }}
@@ -424,21 +426,49 @@ button[data-variant="segmented_control"][aria-checked="true"] p {{ color: #fff !
     letter-spacing: .14em; color: #3A2A00; background: linear-gradient(135deg, {SOL}, #F79F1F);
     box-shadow: 0 4px 12px rgba(246,180,14,.4); position: relative; z-index: 1;
 }}
-/* ── Selector de sección de Historia: dos pestañas grandes ── */
-.st-key-hist_seccion, .st-key-hist_seccion [data-testid="stButtonGroup"] {{ width: 100% !important; }}
-.st-key-hist_seccion [data-testid="stButtonGroup"] > div {{ width: 100% !important; max-width: none !important; display: flex; gap: 10px; }}
-.st-key-hist_seccion button {{
+/* ── Selector de sección de Historia y de Ahorro e inversiones: pestañas grandes ── */
+:is(.st-key-hist_seccion, .st-key-inv_seccion), :is(.st-key-hist_seccion, .st-key-inv_seccion) [data-testid="stButtonGroup"] {{ width: 100% !important; }}
+:is(.st-key-hist_seccion, .st-key-inv_seccion) [data-testid="stButtonGroup"] > div {{ width: 100% !important; max-width: none !important; display: flex; gap: 10px; }}
+:is(.st-key-hist_seccion, .st-key-inv_seccion) button {{
     flex: 1 1 0; min-width: 0; min-height: 3.3rem; border-radius: 16px !important; padding: .6rem 1.1rem !important;
     border: 1px solid rgba(116,172,223,.4) !important; background: rgba(116,172,223,.07) !important;
     transition: transform .18s ease, box-shadow .18s ease, background-color .18s ease;
 }}
-.st-key-hist_seccion button p {{ font-size: 1.02rem !important; font-weight: 800; }}
-.st-key-hist_seccion button:hover {{ transform: translateY(-2px); box-shadow: 0 6px 16px rgba(74,143,212,.2); }}
-.st-key-hist_seccion button[aria-checked="true"] {{
+:is(.st-key-hist_seccion, .st-key-inv_seccion) button p {{ font-size: 1.02rem !important; font-weight: 800; }}
+:is(.st-key-hist_seccion, .st-key-inv_seccion) button:hover {{ transform: translateY(-2px); box-shadow: 0 6px 16px rgba(74,143,212,.2); }}
+:is(.st-key-hist_seccion, .st-key-inv_seccion) button[aria-checked="true"] {{
     background: linear-gradient(135deg, {CELESTE} 0%, #4A8FD4 100%) !important; border-color: {CELESTE} !important;
     box-shadow: 0 8px 20px rgba(74,143,212,.35), inset 0 -3px 0 {SOL};
 }}
-.st-key-hist_seccion button[aria-checked="true"] p {{ color: #fff !important; }}
+:is(.st-key-hist_seccion, .st-key-inv_seccion) button[aria-checked="true"] p {{ color: #fff !important; }}
+
+/* con cuatro secciones, en pantallas angostas pasan a dos por fila */
+@media (max-width: 760px) {{
+    .st-key-inv_seccion [data-testid="stButtonGroup"] > div {{ flex-wrap: wrap; }}
+    .st-key-inv_seccion button {{ flex: 1 1 calc(50% - 10px); min-height: 2.9rem; }}
+    .st-key-inv_seccion button p {{ font-size: .9rem !important; }}
+}}
+
+/* ── Ahorro e inversiones ── */
+.mc-aviso {{ display: flex; gap: 12px; align-items: flex-start; margin: 4px 0 18px; padding: 12px 16px; border-radius: 14px;
+    border: 1px solid rgba(246,180,14,.45); background: rgba(246,180,14,.08); font-size: .88rem; line-height: 1.5; }}
+.mc-aviso b {{ color: {SOL}; }}
+.mc-aviso .ic {{ flex: 0 0 auto; font-size: 1.15rem; line-height: 1.3; }}
+.mc-nota {{ margin: 10px 0 14px; padding: 16px 20px; border-radius: 16px; border: 1px solid rgba(116,172,223,.35);
+    background: linear-gradient(135deg, rgba(116,172,223,.16) 0%, rgba(116,172,223,.05) 100%); }}
+.mc-nota .t {{ font-size: .74rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: {CELESTE}; }}
+.mc-nota .v {{ font-size: 1.9rem; font-weight: 800; letter-spacing: -.02em; margin: 2px 0 4px; }}
+.mc-nota p {{ margin: 0; font-size: .92rem; line-height: 1.55; }}
+.mc-cmp td.mejor, .mc-cmp td.peor {{ font-weight: 700; }}
+.mc-cmp td .sub {{ display: block; font-size: .72rem; font-weight: 400; opacity: .6; }}
+.mc-tablas {{ overflow-x: auto; }}
+.mc-conc-g {{ margin: 18px 0 6px; font-size: .76rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase;
+    color: {CELESTE}; }}
+.mc-conc {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px; }}
+.mc-conc .c {{ padding: 14px 16px; border-radius: 14px; background: rgba(128,128,128,.07);
+    border: 1px solid rgba(128,128,128,.18); border-top: 3px solid rgba(116,172,223,.6); }}
+.mc-conc .c b {{ display: block; font-size: 1rem; margin-bottom: 4px; }}
+.mc-conc .c span {{ font-size: .87rem; line-height: 1.5; opacity: .88; }}
 
 /* ── Ministros de Economía ── */
 .mc-min-hero {{
@@ -554,7 +584,7 @@ button[data-variant="segmented_control"][aria-checked="true"] p {{ color: #fff !
     .mc-min {{ grid-template-columns: 1fr; }}
     .mc-min-card .ph {{ flex-basis: 64px; height: 64px; }}
 }}
-@media (prefers-reduced-motion: reduce) {{ .mc-min-card, .st-key-hist_seccion button {{ transition: none; }} }}
+@media (prefers-reduced-motion: reduce) {{ .mc-min-card, :is(.st-key-hist_seccion, .st-key-inv_seccion) button {{ transition: none; }} }}
 @media (max-width: 860px) {{
     .mc-tl::before {{ left: 48px; }}
     .mc-tl-item {{ grid-template-columns: 96px 1fr; }}
@@ -1536,6 +1566,44 @@ def viaje(nombre: str, iniciales: str, periodo: str, hito: str, url: str | None,
             f'<div class="per">{esc(periodo)}</div><h3>{esc(nombre)}</h3><div class="hito">{esc(hito)}</div></div></div>')
 
 
+def aviso(texto_md: str) -> str:
+    """Recuadro de advertencia (dorado). Admite **negrita**; el resto se escapa."""
+    return f'<div class="mc-aviso"><span class="ic">⚠️</span><div>{_md_a_html(texto_md)}</div></div>'
+
+
+def nota_destacada(titulo: str, valor: str, texto_md: str) -> str:
+    """Recuadro celeste con un número grande: el dato clave de una pantalla."""
+    esc = html.escape
+    return (f'<div class="mc-nota"><div class="t">{esc(titulo)}</div><div class="v">{esc(valor)}</div>'
+            f'<p>{_md_a_html(texto_md)}</p></div>')
+
+
+def tabla(cabeceras: list[str], filas: list[list]) -> str:
+    """Como tabla_simple, pero cada celda puede ser texto o (texto, clase[, aclaración]): clase 'mejor' (verde) o
+    'peor' (rojo); la aclaración va en letra chica debajo."""
+    esc = html.escape
+
+    def celda(c) -> str:
+        if isinstance(c, tuple):
+            texto, clase, *resto = c
+            sub = f'<span class="sub">{esc(resto[0])}</span>' if resto and resto[0] else ""
+            return f'<td class="{esc(clase or "")}">{esc(str(texto))}{sub}</td>'
+        return f"<td>{esc(str(c))}</td>"
+
+    cab = "".join(f"<th>{esc(c)}</th>" for c in cabeceras)
+    cuerpo = "".join("<tr>" + "".join(celda(c) for c in f) + "</tr>" for f in filas)
+    return f'<div class="mc-tablas"><table class="mc-cmp"><thead><tr>{cab}</tr></thead><tbody>{cuerpo}</tbody></table></div>'
+
+
+def conceptos(grupos: list[tuple[str, list[tuple[str, str]]]]) -> str:
+    """Tarjetas de conceptos agrupadas: [(grupo, [(término, definición)])]."""
+    esc = html.escape
+    return "".join(
+        f'<div class="mc-conc-g">{esc(g)}</div><div class="mc-conc">'
+        + "".join(f'<div class="c"><b>{esc(t)}</b><span>{esc(d)}</span></div>' for t, d in items) + "</div>"
+        for g, items in grupos)
+
+
 def comparacion(filas: list[dict], a: str, b: str) -> str:
     """Tabla A vs B. filas: [{'k', 'a', 'b', 'cambio', 'tend'}]."""
     esc = html.escape
@@ -1549,7 +1617,8 @@ def comparacion(filas: list[dict], a: str, b: str) -> str:
 FUENTES = [
     ("BCRA", "Estadísticas y cotizaciones cambiarias", "https://www.bcra.gob.ar/"),
     ("INDEC / Ministerio de Economía", "Series de Tiempo (datos.gob.ar)", "https://datos.gob.ar/series/api/"),
-    ("ArgentinaDatos", "Dólares, inflación histórica y riesgo país", "https://argentinadatos.com/"),
+    ("ArgentinaDatos", "Dólares, inflación histórica, riesgo país, plazos fijos, fondos y rendimientos",
+     "https://argentinadatos.com/"),
     ("CoinGecko", "Criptomonedas", "https://www.coingecko.com/"),
     ("CriptoYa", "USDT por exchange argentino", "https://criptoya.com/"),
     ("Yahoo Finance", "Bolsas y materias primas (fuente no oficial)", "https://finance.yahoo.com/"),

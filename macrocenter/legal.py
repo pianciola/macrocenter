@@ -38,6 +38,10 @@ TERMINOS = {
           "ningún otro tipo, ni una oferta, invitación o recomendación para comprar, vender o mantener activos, divisas, valores "
           "negociables o criptoactivos, en los términos de la Ley N.º 26.831 de Mercado de Capitales y las normas de la Comisión "
           "Nacional de Valores.",
+          "En particular, la sección **Ahorro e inversiones** muestra tasas informadas por terceros, rendimientos pasados y "
+          "simulaciones con supuestos que elige el propio usuario. Las listas se ordenan alfabéticamente y no implican una "
+          "preferencia ni una valoración de las entidades mencionadas. **Los rendimientos pasados no garantizan rendimientos "
+          "futuros**, y los resultados de una simulación no son una promesa ni una estimación de lo que va a ocurrir.",
           "El usuario es el único responsable de las decisiones que adopte con base en la información del Sitio y deberá consultar "
           "con profesionales matriculados antes de tomar decisiones económicas."]),
         ("3. Fuentes, exactitud y actualización de los datos",
@@ -47,7 +51,9 @@ TERMINOS = {
           "oportunos o libres de errores.",
           "Los precios y cotizaciones se muestran **a modo de referencia**, pueden tener demoras o ser revisados por sus emisores, y "
           "no necesariamente reflejan los valores efectivos de una operación. Algunos valores (por ejemplo, el dólar blue, el dólar "
-          "cripto y los precios del USDT por plataforma) son relevamientos de terceros y no cotizaciones oficiales. Las series de "
+          "cripto, los precios del USDT por plataforma y los rendimientos que informan billeteras y plataformas) son "
+          "relevamientos de terceros y no cotizaciones oficiales. Las tasas de plazo fijo y los rendimientos de los fondos "
+          "comunes de inversión pueden diferir de los que ofrezca cada entidad al momento de operar. Las series de "
           "inflación del período 2007-2015 corresponden a las cifras oficiales difundidas por el INDEC en ese lapso, cuya "
           "confiabilidad fue cuestionada por diversos analistas."]),
         ("4. Indicadores propios y calificación macroeconómica",
