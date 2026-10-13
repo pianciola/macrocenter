@@ -611,13 +611,16 @@ with st.sidebar:
         etiqueta_noticias = "Noticias"
     # la clave distinta cuando hay novedades activa el puntito rojo pulsante (ver style.py)
     if st.button(etiqueta_noticias, width="stretch", key="btn_noticias_nuevas" if nuevas else "btn_noticias",
+                 icon=":material/newspaper:",
                  help="Últimas novedades del BCRA y del Ministerio de Economía"
                       + (f" ({nuevas} publicadas hoy o ayer, sin leer)" if nuevas else "")):
         ver_noticias()
     st.markdown(style.etiqueta("Explorar"), unsafe_allow_html=True)
-    for clave_vista, texto in (("tablero", "Tablero"), ("inversiones", "Ahorro e inversiones"),
-                               ("juegos", "Herramientas"), ("historia", "Historia económica")):
-        st.button(texto, width="stretch", key=f"nav_{clave_vista}", on_click=ir_a, args=(clave_vista,),
+    for clave_vista, texto, icono_v in (("tablero", "Tablero", ":material/dashboard:"),
+                                        ("inversiones", "Ahorro e inversiones", ":material/account_balance_wallet:"),
+                                        ("juegos", "Herramientas", ":material/handyman:"),
+                                        ("historia", "Historia económica", ":material/history_edu:")):
+        st.button(texto, width="stretch", key=f"nav_{clave_vista}", icon=icono_v, on_click=ir_a, args=(clave_vista,),
                   type="primary" if vista == clave_vista else "secondary")
 
 def rec(df: pd.DataFrame, min_anios: int = 0, periodo: str = "2 años") -> pd.DataFrame:
@@ -759,6 +762,9 @@ def grafico(fig, key: str | None = None):
     # sin la barra de herramientas de Plotly (tapa el gráfico, sobre todo en el celular) y sin zoom accidental al deslizar.
     # `key` hace falta cuando el mismo gráfico aparece en dos pantallas (por ejemplo, en Inicio y en su pestaña).
     fig.update_layout(dragmode=False)
+    titulo, bajada = charts.sacar_titulo(fig)
+    if titulo:
+        st.markdown(style.titulo_grafico(titulo, bajada), unsafe_allow_html=True)
     aligerar(fig)
     charts.compactar(fig)
     st.plotly_chart(fig, width="stretch", config={"displayModeBar": False, "scrollZoom": False}, key=key)
@@ -1002,7 +1008,8 @@ with st.sidebar:
                   args=(modo_a,))
     if dol is not None:
         st.markdown(style.etiqueta("Conversor"), unsafe_allow_html=True)
-        conversor_lateral()
+        with st.container(key="conv_caja"):
+            conversor_lateral()
     termino, definicion = glosario.termino_del_dia(HOY)
     st.markdown(style.etiqueta("Término del día"), unsafe_allow_html=True)
     st.markdown(style.termino_del_dia(termino, definicion), unsafe_allow_html=True)
@@ -1271,14 +1278,17 @@ def _calificacion_contenido() -> None:
 
     # ── 1) La nota ──
     etq_hoy, color_hoy = score.nivel(hoy_n["total"])
-    g, t = st.columns([1.1, 1.4], vertical_alignment="center")
+    with st.container(key="cal_nota"):  # en pantallas angostas, medidor arriba y lectura abajo (ver style.py)
+        g, t = st.columns([1.1, 1.4], vertical_alignment="center")
     with g:
         grafico(charts.medidor(hoy_n["total"], etq_hoy, color_hoy, score.NIVELES, height=260))
     with t:
         st.markdown(score.lectura(hoy_n, ref_n, ref_txt))
         if ref_n["total"] is not None:
             dif = round(hoy_n["total"] - ref_n["total"])
-            k1, k2 = st.columns(2)
+            # en fila si hay lugar; si no (celular, columna angosta), una debajo de la otra
+            with st.container(key="cal_kpis", horizontal=True):
+                k1, k2 = st.container(), st.container()
             k1.metric("Hoy", f"{hoy_n['total']:.0f}/100", border=True)
             k2.metric(ref_corto, f"{ref_n['total']:.0f}/100",
                       f"{dif:+d} pts hasta hoy" if dif else "sin cambios", delta_color="off",
