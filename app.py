@@ -237,7 +237,7 @@ def _precalentar() -> bool:
                 except Exception:  # noqa: BLE001 — si falla, la visita lo vuelve a intentar con al_dia
                     traceback.print_exc()
 
-    for nombre, bajar, ttl in (("vivo", _bajar_vivo, 60), ("cripto", _bajar_cripto, 300),
+    for nombre, bajar, ttl in (("vivo", _bajar_vivo, 30), ("cripto", _bajar_cripto, 300),
                                ("mercados", _bajar_mercados, 300), ("noticias", _bajar_noticias, 1800)):
         threading.Thread(target=uno, args=(nombre, bajar, ttl), daemon=True).start()
     return True
@@ -256,11 +256,11 @@ def cargar_mercados() -> dict[str, pd.DataFrame | str]:
 
 
 def cargar_vivo() -> dict[str, pd.DataFrame | str]:
-    return al_dia("vivo", _bajar_vivo, ttl=60)
+    return al_dia("vivo", _bajar_vivo, ttl=30, reintento=30)
 
 
 def _bajar_vivo() -> dict[str, pd.DataFrame | str]:
-    """Dólar (DolarApi) y riesgo país del momento. Se piden cada minuto y pisan el dato del día de las series."""
+    """Dólar (DolarApi + CriptoYa) y riesgo país del momento. Se piden cada 30 segundos y pisan el dato del día de las series."""
     out: dict[str, pd.DataFrame | str] = {}
     for clave, fn in (("dolares", data.dolares_ahora), ("riesgo", data.riesgo_pais_ahora)):
         try:
@@ -1653,9 +1653,9 @@ def _firma_vivo() -> tuple:
     return tuple(mem[k].get("ver", 0) if k in mem else 0 for k in ("vivo", "cripto", "mercados"))
 
 
-@st.fragment(run_every=60)
+@st.fragment(run_every=30)
 def estado_vivo() -> None:
-    """Cada minuto: pide (de fondo) el dólar del momento, cripto y bolsas y, si llegó algo nuevo, redibuja la página
+    """Cada 30 segundos: pide (de fondo) el dólar del momento, cripto y bolsas y, si llegó algo nuevo, redibuja la página
     entera para mostrarlo. Mientras tanto muestra cuándo se actualizó cada cosa."""
     vivo = cargar_vivo()
     cargar_cripto()
@@ -2253,7 +2253,7 @@ with t_dol, protegido("Dólar"):
                 ))
             st.markdown(style.cotizaciones(tarjetas_usd), unsafe_allow_html=True)
             dv_ = VIVO.get("dolares")
-            hora_ = (f" Último dato del día: {pd.Timestamp(dv_['actualizado'].max()):%d/%m %H:%M} (DolarApi); se renueva cada minuto."
+            hora_ = (f" Último dato del día: {pd.Timestamp(dv_['actualizado'].max()):%d/%m %H:%M} (DolarApi y CriptoYa: MEP y CCL de las operaciones del AL30); se renueva cada 30 segundos."
                      if isinstance(dv_, pd.DataFrame) and not dv_.empty else "")
             st.caption(f"Historia: ArgentinaDatos.{hora_} La variación compara con 30 días atrás.")
 

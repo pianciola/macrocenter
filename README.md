@@ -109,7 +109,7 @@ pases a 1 día como referencia vigente.
 - **Datos Argentina** — API de Series de Tiempo (`apis.datos.gob.ar/series/api`): INDEC / MECON
 - **ArgentinaDatos** — cotizaciones del dólar y riesgo país (`api.argentinadatos.com`)
 
-El dólar y el riesgo país se consultan cada minuto (DolarApi y ArgentinaDatos), cripto y bolsas cada 5 minutos, y la página abierta se redibuja sola cuando llega algo nuevo. Las series oficiales se cachean 1 hora; el botón *Refrescar datos* (en el pie) fuerza una nueva descarga de todo.
+El dólar y el riesgo país se consultan cada 30 segundos (DolarApi y CriptoYa, quedándose con el dato más reciente de cada dólar; ArgentinaDatos), cripto y bolsas cada 5 minutos, y la página abierta se redibuja sola cuando llega algo nuevo. Las series oficiales se cachean 1 hora; el botón *Refrescar datos* (en el pie) fuerza una nueva descarga de todo.
 
 ## Pie de página
 
