@@ -501,9 +501,21 @@ button[data-variant="segmented_control"][aria-checked="true"] p {{ color: #fff !
 
 /* selector de Herramientas (cinco tarjetas): si no entran en una fila, pasan a la siguiente (antes, con poco ancho, el
    texto de cada botón se partía letra por letra) */
-[data-testid="stHorizontalBlock"]:has(.st-key-modo_0) {{ flex-wrap: wrap !important; gap: .75rem !important; }}
-[data-testid="stHorizontalBlock"]:has(.st-key-modo_0) > [data-testid="stColumn"] {{
-    flex: 1 1 170px !important; min-width: 170px !important; width: auto !important;
+/* grilla según el ancho real: 5 en fila; si no entran, 3 + 2 (filas parejas, nunca una tarjeta sola estirada);
+   en el celular, de a 2 y la última a lo ancho */
+[data-testid="stHorizontalBlock"]:has(.st-key-modo_0) {{ display: grid !important; gap: .75rem !important;
+    grid-template-columns: repeat(5, minmax(0, 1fr)); }}
+[data-testid="stHorizontalBlock"]:has(.st-key-modo_0) > [data-testid="stColumn"] {{ width: auto !important; min-width: 0 !important; }}
+@container principal (max-width: 980px) {{
+    [data-testid="stHorizontalBlock"]:has(.st-key-modo_0) {{ grid-template-columns: repeat(6, minmax(0, 1fr)); }}
+    [data-testid="stHorizontalBlock"]:has(.st-key-modo_0) > [data-testid="stColumn"] {{ grid-column: span 2; }}
+    [data-testid="stHorizontalBlock"]:has(.st-key-modo_0) > [data-testid="stColumn"]:nth-child(n+4) {{ grid-column: span 3; }}
+}}
+@container principal (max-width: 520px) {{
+    [data-testid="stHorizontalBlock"]:has(.st-key-modo_0) {{ grid-template-columns: repeat(2, minmax(0, 1fr)); }}
+    [data-testid="stHorizontalBlock"]:has(.st-key-modo_0) > [data-testid="stColumn"],
+    [data-testid="stHorizontalBlock"]:has(.st-key-modo_0) > [data-testid="stColumn"]:nth-child(n+4) {{ grid-column: span 1; }}
+    [data-testid="stHorizontalBlock"]:has(.st-key-modo_0) > [data-testid="stColumn"]:last-child:nth-child(odd) {{ grid-column: span 2; }}
 }}
 [class*="st-key-modo_"] button p {{ word-break: normal !important; overflow-wrap: normal !important; }}
 
@@ -692,12 +704,15 @@ button[data-variant="segmented_control"][aria-checked="true"] p {{ color: #fff !
    «sticky» y no «fixed»: el contenedor principal tiene contención de layout y un elemento fijo se ubicaría respecto de él.
    Al final de una página corta queda en su lugar natural, apoyada abajo de todo */
 [data-testid="stLayoutWrapper"]:has(> .st-key-pie_datos) {{ display: contents; }}
-.st-key-pie_datos {{ position: sticky; bottom: 0; z-index: 90; margin-top: 28px; min-height: 52px; box-sizing: border-box;
-    padding-top: 8px; padding-bottom: 8px; justify-content: space-between; flex-wrap: nowrap; gap: 6px 16px !important;
+.st-key-pie_datos {{ position: sticky; bottom: 0; z-index: 90; margin-top: 28px; min-height: 60px; box-sizing: border-box;
+    padding-top: 9px; padding-bottom: calc(15px + env(safe-area-inset-bottom, 0px)); justify-content: space-between; flex-wrap: nowrap; gap: 6px 16px !important;
     background: color-mix(in srgb, var(--background-color, #0E1117) 86%, #74ACDF 14%); border: none;
     border-top: 3px solid {CELESTE}; backdrop-filter: blur(6px); }}
 .st-key-pie_datos [data-testid="stElementContainer"] {{ width: auto !important; }}
-.st-key-pie_datos > [data-testid="stLayoutWrapper"], .st-key-pie_datos > [data-testid="stElementContainer"] {{ min-width: 0; }}
+/* los enlaces y botones nunca se achican (antes se aplastaban y se pisaban); lo único que cede es el estado en vivo */
+.st-key-pie_datos > * {{ flex: 0 0 auto; }}
+.st-key-pie_datos [data-testid="stMarkdown"], .st-key-pie_datos [data-testid="stMarkdown"] > div {{ height: auto !important; }}
+.st-key-pie_datos > :first-child {{ flex: 1 1 auto; min-width: 0; overflow-x: clip; overflow-y: visible; }}
 .mc-pielinks {{ display: flex; flex-wrap: wrap; align-items: center; gap: 2px 14px; font-size: .76rem; white-space: nowrap; }}
 .mc-pielinks a {{ color: {CELESTE}; font-weight: 600; text-decoration: none; }}
 .mc-pielinks a:hover {{ text-decoration: underline; }}
@@ -709,10 +724,15 @@ button[data-variant="segmented_control"][aria-checked="true"] p {{ color: #fff !
 .mc-pielinks .c {{ opacity: .7; }}
 .st-key-pie_datos [data-testid="stPopover"] button {{ white-space: nowrap; }}
 .mc-vivo, .mc-vivo span {{ white-space: nowrap; }}
-@media (max-width: 1400px) {{ .mc-pielinks .c, .mc-vivo .sec {{ display: none; }} }}
-@media (max-width: 800px) {{ .mc-pielinks a.bol {{ display: none; }} }}
-@media (max-width: 560px) {{ .st-key-pie_datos {{ padding-left: 14px !important; padding-right: 14px !important; justify-content: center; }}
-    .mc-pielinks, .mc-vivo {{ display: none; }} }}
+/* lo que entra depende del ancho real de la barra (con la barra lateral abierta es bastante menos que la ventana):
+   se va ocultando lo secundario, nunca los botones. Términos y privacidad siguen en «Fuentes y aviso» */
+.st-key-pie_datos {{ container-type: inline-size; container-name: pie; }}
+@container pie (max-width: 1250px) {{ .mc-pielinks .c, .mc-vivo .sec {{ display: none; }} }}
+@container pie (max-width: 940px) {{ .mc-pielinks a:not(.bol) {{ display: none; }} }}
+@container pie (max-width: 760px) {{ .mc-vivo span:not(.en) {{ display: none; }} }}
+@container pie (max-width: 600px) {{ .mc-pielinks {{ display: none; }} }}
+@container pie (max-width: 430px) {{ .st-key-pie_datos .mc-vivo .en {{ font-size: 0; gap: 0; }} }}
+@media (max-width: 560px) {{ .st-key-pie_datos {{ padding-left: 14px !important; padding-right: 14px !important; justify-content: center; }} }}
 /* el panel «Fuentes y aviso»: el contenido del pie, sin marco propio */
 [data-testid="stPopoverBody"] .mc-foot {{ margin: 0; padding: 4px 4px 8px; border: none; border-radius: 0; background: none;
     width: min(620px, 80vw); }}
@@ -747,6 +767,7 @@ button[data-variant="segmented_control"][aria-checked="true"] p {{ color: #fff !
 /* barra legal */
 .mc-foot .legal {{ display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 16px;
     margin-top: 12px; padding-top: 8px; border-top: 1px solid rgba(128,128,128,.28); font-size: .74rem; opacity: .9; }}
+.mc-foot .frec {{ margin-top: 6px; font-size: .74rem; opacity: .7; }}
 .mc-foot .made {{ font-weight: 800; letter-spacing: .12em; text-transform: uppercase; opacity: .7; font-size: .66rem; }}
 
 /* ── Resultado final: fichas ── */
@@ -886,6 +907,14 @@ button[data-variant="segmented_control"][aria-checked="true"] p {{ color: #fff !
 [data-testid="stElementContainer"]:only-child > [data-testid="stMetric"] {{ height: 100%; }}
 /* menos aire muerto arriba: el contenido arranca justo debajo de la barra superior */
 [data-testid="stMainBlockContainer"] {{ padding-top: 3.6rem; }}
+/* al abrir una pestaña o tocar un control, Streamlit atenúa toda la página (opacidad .33) mientras recalcula: se veía
+   como un parpadeo. El contenido queda como está hasta que llega el nuevo */
+[data-stale="true"] {{ opacity: 1 !important; transition: none !important; }}
+/* pestaña recién abierta, todavía sin contenido: un círculo de carga en lugar de un hueco en blanco */
+[role="tabpanel"]:not(:has([data-testid="stElementContainer"]))::before {{
+    content: ""; display: block; width: 34px; height: 34px; margin: 72px auto; border-radius: 50%;
+    border: 3px solid rgba(116,172,223,.22); border-top-color: {CELESTE}; animation: mc-gira .8s linear infinite; }}
+@keyframes mc-gira {{ to {{ transform: rotate(360deg); }} }}
 /* sin el ícono de enlace que Streamlit agrega al pasar por los títulos */
 [data-testid="stHeaderActionElements"] {{ display: none !important; }}
 /* títulos de sección con un poco más de aire arriba */
@@ -1204,7 +1233,9 @@ JS_PESTANAS = """
   // instante (el pie salta y el scroll se pierde). Se mantiene el alto actual hasta que termina de cargar.
   let soltar = 0;
   const congelarAlto = () => {
-    const m = document.querySelector('[data-testid="stMainBlockContainer"]');
+    // se congela el bloque de las pestañas (no el contenedor general): la barra del pie va justo debajo y, si el
+    // bloque se encoge, sube con él aunque la página siga igual de alta
+    const m = document.querySelector('[data-testid="stTabs"]');
     if (!m) return;
     m.style.minHeight = m.offsetHeight + 'px';
     const t0 = Date.now(), mio = ++soltar;
@@ -1840,7 +1871,9 @@ def footer() -> str:
         'medidas orientativas, con criterios propios.</p></details>'
         '<div class="legal"><span>© 2026 MacroCenter — Todos los derechos reservados.</span>'
         '<span class="made">Hecho en Argentina</span>'
-        '<span>Cripto y bolsas se renuevan cada 5 minutos; el dólar y el riesgo país, cada minuto.</span></div>'
+        '<span><a href="?legal=terminos" target="_self">Términos y condiciones</a>'
+        ' · <a href="?legal=privacidad" target="_self">Política de privacidad</a></span></div>'
+        '<p class="frec">El dólar y el riesgo país se renuevan cada minuto; cripto y bolsas, cada 5 minutos.</p>'
         '</div>'
     )
 

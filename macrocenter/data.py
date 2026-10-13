@@ -66,7 +66,9 @@ SERIES_IDS = {
     "ipc_gba": "145.3_INGGBAGBA_DICI_M_10",  # IPC Gran Buenos Aires (INDEC), nivel general, base dic-2016 = 100
     "pib_corriente": "8.2_PIBPM_2004_T_38",  # PIB a precios de mercado en pesos corrientes, trimestral anualizado (millones)
     "fiscal_primario": "452.3_RESULTADO_RIO_0_M_18_54",  # resultado primario del sector público nacional, millones de $ corrientes
-    "fiscal_financiero": "452.3_RESULTADO_ERO_0_M_20_25",  # resultado financiero (después de intereses), millones de $
+    # resultado financiero (después de intereses), millones de $. Esquema Ahorro-Inversión-Financiamiento, metodología
+    # 2017: mismos valores que el IMIG (452.3_RESULTADO_ERO_0_M_20_25), que la API devolvía con la mitad de los meses vacíos
+    "fiscal_financiero": "379.9_RESULTADO_017__18_38",
 }
 
 
@@ -91,18 +93,20 @@ def hoy_argentina() -> str:
     return (pd.Timestamp.now(tz="UTC") - pd.Timedelta(hours=3)).strftime("%Y-%m-%d")
 
 
-def _get(url: str, **params) -> requests.Response:
+def _get(url: str, _intentos: int = 4, **params) -> requests.Response:
     """GET con reintentos: si la fuente responde «demasiados pedidos» (429) o un error pasajero del servidor (5xx),
-    espera un poco (más cada vez) y vuelve a probar, hasta 4 veces. Cualquier otro error se informa enseguida."""
+    espera un poco (más cada vez) y vuelve a probar, hasta `_intentos` veces. Cualquier otro error se informa enseguida.
+    Lo que se pide al tocar un control (y frena la pantalla mientras espera) usa menos intentos."""
     espera = 1.5
-    for intento in range(4):
+    ultimo = max(1, _intentos) - 1
+    for intento in range(ultimo + 1):
         try:
             resp = requests.get(url, params=params or None, timeout=TIMEOUT)
         except (requests.ConnectionError, requests.Timeout):
-            if intento == 3:
+            if intento == ultimo:
                 raise
         else:
-            if resp.status_code not in (429, 500, 502, 503, 504) or intento == 3:
+            if resp.status_code not in (429, 500, 502, 503, 504) or intento == ultimo:
                 resp.raise_for_status()
                 return resp
         time.sleep(espera)
@@ -139,29 +143,53 @@ def serie(nombre: str, desde: str | None = None, hasta: str | None = None) -> pd
         params["start_date"] = desde
     if hasta:
         params["end_date"] = hasta
-    # La API a veces devuelve valores vacíos al azar (distintos en cada pedido y en cada formato) o la serie entera
-    # vacía. Se pide de nuevo, alternando JSON y CSV, y se completan los huecos hasta que una respuesta con datos no
-    # agrega nada (los huecos reales quedan). Las respuestas vacías no cuentan: se sigue probando.
-    s = _serie_pedido(params, "json")
-    for formato in ("csv", "json") * 5:
-        nuevo = None
-        if s.dropna().empty or s.isna().any():
-            nuevo = _serie_pedido(params, formato)
-        if nuevo is None:
+    # La API a veces devuelve valores vacíos al azar o la serie entera vacía, y guarda esa respuesta rota para esa
+    # consulta exacta: repetirla trae siempre los mismos huecos. Variando un poco la consulta (orden, límite, fechas)
+    # y el formato llegan otras respuestas, que se combinan hasta no tener huecos o hasta que varias seguidas no
+    # agregan nada (los huecos reales quedan). Las respuestas vacías no cuentan. Después de la primera respuesta con
+    # datos, las variantes van sin reintentos y con un tope de tiempo: completar huecos nunca debe demorar la descarga.
+    inicio = time.monotonic()
+    s = None
+    sin_aporte = 0
+    error = None
+    for extra in _VARIANTES_SERIE:
+        if any(k in params for k in extra if k not in ("limit", "sort")):
+            continue  # no pisar un rango pedido a propósito
+        for formato in ("json", "csv"):
+            if s is not None and time.monotonic() - inicio > 20:
+                break
+            try:
+                nuevo = _serie_pedido({**params, **extra}, formato, intentos=4 if s is None else 1)
+            except Exception as e:  # noqa: BLE001 — se prueba con la variante siguiente
+                error = e
+                continue
+            if nuevo.dropna().empty:
+                continue
+            if s is None:
+                s = nuevo
+            else:
+                antes = int(s.notna().sum())
+                s = s.combine_first(nuevo)
+                sin_aporte = sin_aporte + 1 if int(s.notna().sum()) == antes else 0
+            if not s.isna().any() or sin_aporte >= 4:
+                break
+        if s is not None and (not s.isna().any() or sin_aporte >= 4 or time.monotonic() - inicio > 20):
             break
-        if nuevo.dropna().empty:
-            continue
-        huecos = int(s.isna().sum()) if not s.dropna().empty else None
-        s = nuevo if s.dropna().empty else s.combine_first(nuevo)
-        if huecos is not None and int(s.isna().sum()) == huecos:
-            break
+    if s is None:
+        if error is not None:
+            raise error
+        return pd.DataFrame(columns=["fecha", "valor"])
     df = s.rename("valor").rename_axis("fecha").reset_index()
     return df.dropna().sort_values("fecha").reset_index(drop=True)
 
 
-def _serie_pedido(params: dict, formato: str) -> pd.Series:
+_VARIANTES_SERIE = ({}, {"sort": "desc"}, {"limit": 4999}, {"end_date": "2100-12-31"}, {"limit": 4998, "sort": "desc"},
+                    {"start_date": "1900-01-01"})
+
+
+def _serie_pedido(params: dict, formato: str, intentos: int = 4) -> pd.Series:
     """Un pedido a la API de Series de Tiempo: valores indexados por fecha (NaN donde vino vacío)."""
-    resp = _get(SERIES_URL, **params, format=formato)
+    resp = _get(SERIES_URL, _intentos=intentos, **params, format=formato)
     if formato == "csv":
         df = pd.read_csv(io.StringIO(resp.text))
         fechas, valores = df.iloc[:, 0], pd.to_numeric(df.iloc[:, 1], errors="coerce")
@@ -378,13 +406,26 @@ def cripto_mercado(ids: tuple[str, ...] = CRIPTOS) -> pd.DataFrame:
     return df
 
 
+YAHOO_CRIPTO = {"bitcoin": "BTC-USD", "ethereum": "ETH-USD", "tether": "USDT-USD", "binancecoin": "BNB-USD",
+                "solana": "SOL-USD", "ripple": "XRP-USD", "usd-coin": "USDC-USD", "cardano": "ADA-USD",
+                "dogecoin": "DOGE-USD", "tron": "TRX-USD"}
+
+
 def cripto_historia(coin_id: str, dias: int = 365) -> pd.DataFrame:
-    """Precio diario en USD de una criptomoneda (CoinGecko público: hasta 365 días hacia atrás)."""
-    payload = _get(f"{COINGECKO_URL}/coins/{coin_id}/market_chart", vs_currency="usd", days=min(int(dias), 365),
-                   interval="daily").json()
-    df = pd.DataFrame(payload["prices"], columns=["fecha", "valor"])
-    df["fecha"] = pd.to_datetime(df["fecha"], unit="ms").dt.normalize()
-    return df
+    """Precio diario en USD de una criptomoneda (CoinGecko público: hasta 365 días hacia atrás). CoinGecko limita
+    seguido la cantidad de pedidos: si rechaza, se usa el cierre diario de Yahoo Finance."""
+    dias = min(int(dias), 365)
+    try:
+        payload = _get(f"{COINGECKO_URL}/coins/{coin_id}/market_chart", _intentos=1, vs_currency="usd",
+                       days=dias, interval="daily").json()
+        df = pd.DataFrame(payload["prices"], columns=["fecha", "valor"])
+        df["fecha"] = pd.to_datetime(df["fecha"], unit="ms").dt.normalize()
+        return df
+    except Exception:
+        if coin_id not in YAHOO_CRIPTO:
+            raise
+    df = indice(YAHOO_CRIPTO[coin_id], rango="1y")
+    return df[df["fecha"] >= df["fecha"].max() - pd.Timedelta(days=dias)].reset_index(drop=True)
 
 
 def usdt_exchanges() -> pd.DataFrame:

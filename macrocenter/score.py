@@ -67,10 +67,17 @@ def valor_en(s: pd.Series, t: pd.Timestamp) -> float | None:
 def puntaje_driver(s: pd.Series, t: pd.Timestamp, mejor: str, anios: int = ANIOS) -> float | None:
     if s.empty or not isinstance(s.index, pd.DatetimeIndex):
         return None
-    ventana = s[(s.index <= t) & (s.index > t - pd.DateOffset(years=anios))].dropna()
+    # la ventana se busca con búsqueda binaria sobre las fechas ordenadas (la historia de 5 años pide cientos de
+    # ventanas: filtrar la serie entera con máscaras cada vez era lo más lento de la primera carga)
+    s = s.dropna()
+    if not s.index.is_monotonic_increasing:
+        s = s.sort_index()
+    desde = s.index.searchsorted(t - pd.DateOffset(years=anios), side="right")
+    hasta = s.index.searchsorted(t, side="right")
+    ventana = s.to_numpy()[desde:hasta]
     if len(ventana) < MIN_OBS:
         return None
-    actual = ventana.iloc[-1]
+    actual = ventana[-1]
     p = ((ventana < actual).sum() + 0.5 * (ventana == actual).sum()) / len(ventana) * 100
     return float(p if mejor == "alto" else 100 - p)
 
