@@ -2249,7 +2249,7 @@ with t_dol, protegido("Dólar"):
                     var=delta(s.rename(columns={clave: "valor"})), sentido="alto",  # cotización: verde si sube
                     spark=list(s.tail(30)[clave]),
                     chip=None if clave == "oficial" or not oficial_hoy else
-                    f"{(venta / oficial_hoy - 1) * 100:+.0f}% vs oficial".replace(".", ","),
+                    f"{(venta / oficial_hoy - 1) * 100:+.1f}% vs oficial".replace(".", ","),
                 ))
             st.markdown(style.cotizaciones(tarjetas_usd), unsafe_allow_html=True)
             dv_ = VIVO.get("dolares")
