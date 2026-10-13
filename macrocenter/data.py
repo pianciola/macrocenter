@@ -279,8 +279,51 @@ DOLARAPI_URL = "https://dolarapi.com/v1/dolares"
 
 
 def dolares_ahora() -> pd.DataFrame:
-    """Cotización de cada dólar en este momento (DolarApi, del mismo autor que ArgentinaDatos): casa, compra, venta y
-    `actualizado` (hora de Argentina, sin zona). Es lo que permite mostrar el dólar del día sin esperar al cierre."""
+    """Cotización de cada dólar en este momento: casa, compra, venta y `actualizado` (hora de Argentina, sin zona).
+    Junta dos fuentes y, para cada dólar, se queda con el dato más reciente: DolarApi (del autor de ArgentinaDatos) y
+    CriptoYa, que toma el MEP y el CCL de las operaciones del bono AL30 y el cripto del USDT, minuto a minuto."""
+    partes = []
+    for fn in (_dolares_dolarapi, _dolares_criptoya):
+        try:
+            partes.append(fn())
+        except Exception:  # noqa: BLE001 — con una sola fuente alcanza
+            pass
+    if not partes:
+        raise RuntimeError("ninguna fuente del dólar en vivo respondió")
+    todo = pd.concat(partes, ignore_index=True)
+    todo = todo.sort_values("actualizado").drop_duplicates("casa", keep="last")
+    return todo.reset_index(drop=True)[["casa", "compra", "venta", "actualizado"]]
+
+
+def _dolares_criptoya() -> pd.DataFrame:
+    d = _get(f"{CRIPTOYA_URL}/dolar", _intentos=1).json()
+
+    def fila(casa, compra, venta, ts):
+        venta = pd.to_numeric(venta, errors="coerce")
+        if pd.isna(venta) or venta <= 0 or not ts:
+            return None
+        cuando = pd.to_datetime(ts, unit="s", utc=True) - pd.Timedelta(hours=3)
+        return {"casa": casa, "compra": pd.to_numeric(compra, errors="coerce"), "venta": float(venta),
+                "actualizado": cuando.tz_localize(None)}
+
+    def bono(tipo):
+        v = ((d.get(tipo) or {}).get("al30") or {}).get("ci") or {}
+        return v.get("price"), v.get("price"), v.get("timestamp")
+
+    usdt = (d.get("cripto") or {}).get("usdt") or {}
+    filas = [
+        fila("oficial", (d.get("oficial") or {}).get("bid"), (d.get("oficial") or {}).get("ask"), (d.get("oficial") or {}).get("timestamp")),
+        fila("blue", (d.get("blue") or {}).get("bid"), (d.get("blue") or {}).get("ask"), (d.get("blue") or {}).get("timestamp")),
+        fila("mayorista", None, (d.get("mayorista") or {}).get("price"), (d.get("mayorista") or {}).get("timestamp")),
+        fila("tarjeta", None, (d.get("tarjeta") or {}).get("price"), (d.get("tarjeta") or {}).get("timestamp")),
+        fila("bolsa", *bono("mep")),
+        fila("contadoconliqui", *bono("ccl")),
+        fila("cripto", usdt.get("bid"), usdt.get("ask"), usdt.get("timestamp")),
+    ]
+    return pd.DataFrame([f for f in filas if f], columns=["casa", "compra", "venta", "actualizado"])
+
+
+def _dolares_dolarapi() -> pd.DataFrame:
     filas = []
     for d in _get(DOLARAPI_URL).json():
         casa = str(d.get("casa") or "").strip()

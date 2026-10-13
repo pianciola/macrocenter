@@ -1938,7 +1938,7 @@ FUENTES = [
     ("ArgentinaDatos", "Dólares, inflación histórica, riesgo país, plazos fijos, fondos y rendimientos",
      "https://argentinadatos.com/"),
     ("CoinGecko", "Criptomonedas", "https://www.coingecko.com/"),
-    ("CriptoYa", "USDT por exchange argentino", "https://criptoya.com/"),
+    ("CriptoYa", "USDT por exchange y dólar MEP, CCL y cripto en vivo", "https://criptoya.com/"),
     ("Yahoo Finance", "Bolsas y materias primas (fuente no oficial)", "https://finance.yahoo.com/"),
     ("FRED (Reserva Federal de St. Louis)", "Inflación de EE. UU., para ajustar dólares", "https://fred.stlouisfed.org/"),
     ("Wikipedia / Wikimedia Commons", "Fotos de presidentes y ministros", "https://commons.wikimedia.org/"),
@@ -1974,7 +1974,7 @@ def footer() -> str:
         '<span class="made">Hecho en Argentina</span>'
         '<span><a href="?legal=terminos" target="_self">Términos y condiciones</a>'
         ' · <a href="?legal=privacidad" target="_self">Política de privacidad</a></span></div>'
-        '<p class="frec">El dólar y el riesgo país se renuevan cada minuto; cripto y bolsas, cada 5 minutos.</p>'
+        '<p class="frec">El dólar y el riesgo país se renuevan cada 30 segundos; cripto y bolsas, cada 5 minutos.</p>'
         '</div>'
     )
 
