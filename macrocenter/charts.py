@@ -79,6 +79,18 @@ def compactar(fig: go.Figure) -> go.Figure:
     return fig
 
 
+def sacar_titulo(fig: go.Figure) -> tuple[str | None, str | None]:
+    """Saca el título (y la bajada) de la figura para mostrarlo como texto de la página: Plotly no parte los títulos
+    largos en renglones y en el celular quedaban cortados. Achica el margen de arriba que ocupaba el título."""
+    titulo = fig.layout.title.text if fig.layout.title else None
+    if not titulo:
+        return None, None
+    bajada = fig.layout.title.subtitle.text if fig.layout.title.subtitle else None
+    arriba = fig.layout.margin.t if fig.layout.margin.t is not None else 80
+    fig.update_layout(title_text=None, title_subtitle_text=None, margin_t=max(12, arriba - (72 if bajada else 50)))
+    return titulo, bajada
+
+
 def _marcas(fmt: str | None) -> str | None:
     """Formato de las marcas del eje: el mismo que el de los valores pero sin ceros de relleno («25» y no «25,0»;
     «2,5» sigue igual). El formato completo queda para el recuadro que aparece al pasar el cursor."""
@@ -203,7 +215,7 @@ def medidor(puntaje: float, etiqueta: str, color: str, niveles: list[tuple[int, 
         gauge=dict(axis=dict(range=[0, 100], tickvals=[0, 25, 40, 60, 75, 100]),
                    bar=dict(color=color, thickness=0.32), steps=pasos, borderwidth=0),
     ))
-    fig.update_layout(height=height, margin=dict(l=25, r=25, t=60, b=10))
+    fig.update_layout(height=height, margin=dict(l=34, r=34, t=60, b=10))
     return fig
 
 
@@ -346,7 +358,7 @@ def equilibrio_uva(infl: list[float], tradicional: list[float], uva: list[float]
     if corte is not None and infl[0] <= corte <= infl[-1]:
         fig.add_vline(x=corte, line_width=1.5, line_dash="dot", line_color="rgba(128,128,128,.8)",
                       annotation_text=f"Empate: {num(corte, 2, '%')}", annotation_position="top left",
-                      annotation_font=dict(size=12))
+                      annotation_font=dict(size=12), annotation_yshift=-18)  # un renglón más abajo: no se pisa con la otra
     if esperada is not None and infl[0] <= esperada <= infl[-1]:
         fig.add_vline(x=esperada, line_width=2, line_dash="dash", line_color="#F6B40E",
                       annotation_text=f"Esperada (REM): {num(esperada, 2, '%')}", annotation_position="top right",

@@ -114,6 +114,48 @@ section[data-testid="stSidebar"] [data-testid="stPills"] button {{ border-radius
 .mc-brand .mc-flag svg {{ width: 46px; height: 46px; }}
 .mc-brand h1 {{ margin: 0; padding: 0; font-size: 1.45rem; font-weight: 800; letter-spacing: -.02em; color: inherit; }}
 .mc-brand h1 span {{ color: {CELESTE}; }}
+.mc-brand p.sub {{ margin: 2px 0 0; font-size: .74rem; font-weight: 500; opacity: .62; letter-spacing: .01em; }}
+
+/* ── Barra lateral: terminación propia ── */
+/* sin barra de desplazamiento (se veía la de Windows, gruesa y genérica): se sigue pudiendo deslizar, y el borde de
+   abajo se desvanece para indicar que hay más */
+[data-testid="stSidebarContent"] {{ scrollbar-width: none !important;
+    -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 56px), transparent);
+    mask-image: linear-gradient(to bottom, #000 calc(100% - 56px), transparent); }}
+[data-testid="stSidebarContent"]::-webkit-scrollbar {{ display: none !important; width: 0 !important; }}
+[data-testid="stSidebarUserContent"] {{ padding-bottom: 72px !important; }}
+/* títulos de sección: celestes, con una línea fina hasta el borde */
+section[data-testid="stSidebar"] .mc-label {{ display: flex; align-items: center; gap: 10px; color: {CELESTE}; opacity: .9;
+    margin: 22px 0 8px; font-size: .66rem; letter-spacing: .16em; }}
+section[data-testid="stSidebar"] .mc-label::after {{ content: ""; flex: 1; height: 1px; background: rgba(116,172,223,.22); }}
+/* menú: cada opción con su ícono en celeste; la elegida, en una píldora con el ícono resaltado */
+section[data-testid="stSidebar"] [class*="st-key-nav_"] button {{ position: relative; border-left: none !important; border-radius: 12px !important;
+    padding: .55rem .8rem !important; gap: .7rem; }}
+section[data-testid="stSidebar"] [class*="st-key-nav_"] button:hover {{ padding-left: .8rem !important; background: rgba(116,172,223,.10); }}
+section[data-testid="stSidebar"] [class*="st-key-nav_"] button [data-testid="stIconMaterial"] {{
+    color: {CELESTE}; font-size: 1.2rem; opacity: .85; }}
+section[data-testid="stSidebar"] [class*="st-key-nav_"] button[data-testid="stBaseButton-primary"] {{
+    background: rgba(116,172,223,.16) !important; box-shadow: inset 0 0 0 1px rgba(116,172,223,.35); }}
+section[data-testid="stSidebar"] [class*="st-key-nav_"] button[data-testid="stBaseButton-primary"] [data-testid="stIconMaterial"] {{
+    opacity: 1; }}
+section[data-testid="stSidebar"] [class*="st-key-nav_"] button[data-testid="stBaseButton-primary"]::after {{
+    content: ""; position: absolute; right: 12px; width: 6px; height: 6px; border-radius: 50%; background: {CELESTE}; }}
+section[data-testid="stSidebar"] [class*="st-key-nav_"] {{ margin-top: -4px; }}
+/* atajos: ícono en un recuadro y una flecha que aparece al pasar el mouse */
+section[data-testid="stSidebar"] [class*="st-key-atajo_"] button {{ gap: .6rem; position: relative; padding: .38rem .55rem !important; }}
+section[data-testid="stSidebar"] [class*="st-key-atajo_"] button [data-testid="stIconMaterial"] {{
+    color: {CELESTE}; font-size: 1rem; width: 28px; height: 28px; display: inline-flex; align-items: center;
+    justify-content: center; border-radius: 8px; background: rgba(116,172,223,.13); flex: 0 0 28px; }}
+section[data-testid="stSidebar"] [class*="st-key-atajo_"] button::after {{
+    content: "›"; position: absolute; right: 12px; font-size: 1.1rem; color: {CELESTE}; opacity: 0;
+    transform: translateX(-4px); transition: opacity .15s ease, transform .15s ease; }}
+section[data-testid="stSidebar"] [class*="st-key-atajo_"] button:hover::after {{ opacity: 1; transform: none; }}
+/* conversor: todo en una tarjeta */
+section[data-testid="stSidebar"] .st-key-conv_caja {{ padding: 12px; border-radius: 14px; gap: .6rem;
+    border: 1px solid rgba(116,172,223,.25); background: linear-gradient(180deg, rgba(116,172,223,.09), rgba(116,172,223,.03)); }}
+section[data-testid="stSidebar"] .st-key-conv_caja .mc-conv {{ border: none; background: none; padding: 0 2px; }}
+/* noticias: con ícono */
+[class*="st-key-btn_noticias"] button [data-testid="stIconMaterial"] {{ color: {SOL}; font-size: 1.1rem; }}
 
 [class*="st-key-btn_noticias"] button {{
     background: transparent !important; border: 1.5px solid {SOL} !important; box-shadow: none !important;
@@ -399,9 +441,28 @@ button[data-variant="segmented_control"][aria-checked="true"] p {{ color: #fff !
 [class*="st-key-per_"] button[data-variant="pills"][aria-checked="true"], .st-key-cal_anios button[data-variant="pills"][aria-checked="true"] {{
     background: rgba(246,180,14,.24) !important; box-shadow: inset 0 0 0 1px {SOL}; font-weight: 700;
 }}
+/* angosto: el selector ocupa todo el ancho y todas las opciones quedan a la vista (antes se deslizaba y escondía
+   «1 mes»); si igual no entran, pasan a otra fila parejas */
 @container principal (max-width: 560px) {{
-    [class*="st-key-per_"] button[data-variant="pills"], .st-key-cal_anios button[data-variant="pills"] {{ padding: .2rem .55rem; }}
+    [class*="st-key-per_"] [role="radiogroup"], .st-key-cal_anios [role="radiogroup"] {{ display: flex; width: 100%;
+        flex-wrap: wrap; overflow: visible; }}
+    [class*="st-key-per_"] button[data-variant="pills"], .st-key-cal_anios button[data-variant="pills"] {{
+        flex: 1 1 auto; padding: .22rem .28rem; justify-content: center; }}
+    [class*="st-key-per_"] button[data-variant="pills"] p, .st-key-cal_anios button[data-variant="pills"] p {{ font-size: .76rem !important; }}
 }}
+
+@container principal (max-width: 640px) {{
+    .st-key-cal_nota [data-testid="stHorizontalBlock"] {{ flex-direction: column !important; }}
+    .st-key-cal_nota [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] {{ width: 100% !important;
+        flex: 1 1 100% !important; min-width: 0 !important; }}
+}}
+/* título de gráfico (antes lo dibujaba Plotly): mismo aspecto, pero se parte en renglones; pegado a su gráfico */
+.mc-gtit {{ margin: 6px 0 0; padding-left: 2px; }}
+.mc-gtit .t {{ font-size: 16px; font-weight: 700; line-height: 1.3; }}
+.mc-gtit .b {{ font-size: 12px; opacity: .6; margin-top: 2px; }}
+.st-key-cal_kpis {{ flex-wrap: wrap; }}
+.st-key-cal_kpis > * {{ flex: 1 1 150px !important; min-width: 0; }}
+.st-key-cal_kpis [data-testid="stElementContainer"], .st-key-cal_kpis [data-testid="stMetric"] {{ height: auto !important; }}
 
 /* ── Zona principal ── */
 .mc-hero {{
@@ -689,7 +750,8 @@ button[data-variant="segmented_control"][aria-checked="true"] p {{ color: #fff !
     padding-right: var(--mc-pad) !important; }}
 .st-key-pie_datos {{ margin-left: calc(-1 * var(--mc-pad)) !important; margin-right: calc(-1 * var(--mc-pad)) !important;
     width: calc(100% + 2 * var(--mc-pad)) !important; max-width: none !important; border-radius: 0 !important;
-    padding-left: var(--mc-pad) !important; padding-right: var(--mc-pad) !important; }}
+    padding-left: var(--mc-pad) !important; padding-right: max(var(--mc-pad), 130px) !important; }}
+/* (a la derecha queda libre la esquina donde Streamlit Cloud pone sus insignias flotantes: avatar y corona) */
 /* suscripción: una franja finita */
 .mc-foot .bol {{ display: flex; align-items: center; justify-content: space-between; gap: 12px 18px; flex-wrap: wrap;
     margin: 0 0 14px; padding: 9px 14px; border-radius: 10px; border: 1px solid rgba(116,172,223,.30);
@@ -711,8 +773,20 @@ button[data-variant="segmented_control"][aria-checked="true"] p {{ color: #fff !
 .st-key-pie_datos [data-testid="stElementContainer"] {{ width: auto !important; }}
 /* los enlaces y botones nunca se achican (antes se aplastaban y se pisaban); lo único que cede es el estado en vivo */
 .st-key-pie_datos > * {{ flex: 0 0 auto; }}
+/* Streamlit les pone a los textos un margen inferior negativo (-1rem): en la barra corría todo hacia abajo */
+.st-key-pie_datos [data-testid="stMarkdownContainer"] {{ margin-bottom: 0 !important; }}
 .st-key-pie_datos [data-testid="stMarkdown"], .st-key-pie_datos [data-testid="stMarkdown"] > div {{ height: auto !important; }}
-.st-key-pie_datos > :first-child {{ flex: 1 1 auto; min-width: 0; overflow-x: clip; overflow-y: visible; }}
+/* overflow-clip-margin: el halo animado del punto «En vivo» sobresale ~8 px y antes quedaba cortado */
+.st-key-pie_datos > :first-child {{ flex: 1 1 auto; min-width: 0; overflow-x: clip; overflow-y: visible;
+    overflow-clip-margin: 12px; }}
+.st-key-pie_datos .mc-vivo {{ padding-left: 4px; justify-content: flex-end; }}
+/* botones a la izquierda y el estado en vivo a la derecha: la esquina inferior derecha la tapa el botón «Manage app»
+   que Streamlit Cloud le muestra al dueño de la app (no se puede mover desde acá) */
+.st-key-pie_datos {{ justify-content: flex-start !important; }}
+.st-key-pie_datos > :first-child {{ order: 9; }}
+.st-key-pie_datos > :nth-child(2) {{ order: 1; }}
+.st-key-pie_datos > :nth-child(3) {{ order: 2; }}
+.st-key-pie_datos > :nth-child(4) {{ order: 3; }}
 .mc-pielinks {{ display: flex; flex-wrap: wrap; align-items: center; gap: 2px 14px; font-size: .76rem; white-space: nowrap; }}
 .mc-pielinks a {{ color: {CELESTE}; font-weight: 600; text-decoration: none; }}
 .mc-pielinks a:hover {{ text-decoration: underline; }}
@@ -730,12 +804,29 @@ button[data-variant="segmented_control"][aria-checked="true"] p {{ color: #fff !
 @container pie (max-width: 1250px) {{ .mc-pielinks .c, .mc-vivo .sec {{ display: none; }} }}
 @container pie (max-width: 940px) {{ .mc-pielinks a:not(.bol) {{ display: none; }} }}
 @container pie (max-width: 760px) {{ .mc-vivo span:not(.en) {{ display: none; }} }}
-@container pie (max-width: 600px) {{ .mc-pielinks {{ display: none; }} }}
+/* angosto (celular): la suscripción sigue a la vista con un texto corto, y los otros dos botones quedan solo con su
+   ícono (el texto sigue ahí para los lectores de pantalla) */
+.mc-pielinks .bol .s {{ display: none; }}
+@container pie (max-width: 600px) {{
+    .mc-pielinks .bol .l {{ display: none; }}
+    .mc-pielinks .bol .s {{ display: inline; }}
+    .st-key-pie_datos button [data-testid="stMarkdownContainer"] {{ position: absolute; width: 1px; height: 1px;
+        overflow: hidden; clip-path: inset(50%); white-space: nowrap; }}
+    .st-key-pie_datos button {{ padding: .4rem .55rem !important; gap: 0 !important; }}
+    .st-key-pie_datos [data-testid="stPopover"] button div[aria-hidden="true"] {{ display: none; }}
+    .st-key-pie_datos button [data-testid="stIconMaterial"] {{ font-size: 1.15rem; }}
+}}
 @container pie (max-width: 430px) {{ .st-key-pie_datos .mc-vivo .en {{ font-size: 0; gap: 0; }} }}
-@media (max-width: 560px) {{ .st-key-pie_datos {{ padding-left: 14px !important; padding-right: 14px !important; justify-content: center; }} }}
+@media (max-width: 560px) {{ .st-key-pie_datos {{ padding-left: 14px !important; padding-right: 112px !important; gap: 8px !important; }}
+    .st-key-pie_datos > :first-child {{ display: none; }} }}
 /* el panel «Fuentes y aviso»: el contenido del pie, sin marco propio */
 [data-testid="stPopoverBody"] .mc-foot {{ margin: 0; padding: 4px 4px 8px; border: none; border-radius: 0; background: none;
     width: min(620px, 80vw); }}
+@media (max-width: 560px) {{
+    [data-testid="stPopoverBody"] .mc-foot {{ width: auto; }}
+    [data-testid="stPopoverBody"] .mc-foot .main {{ grid-template-columns: 1fr; gap: 14px; }}
+    [data-testid="stPopoverBody"] .mc-foot .marca p {{ max-width: none; }}
+}}
 .mc-vivo {{ display: flex; flex-wrap: nowrap; align-items: center; gap: 4px 14px; font-size: .78rem; opacity: .85; }}
 .mc-vivo .en {{ display: inline-flex; align-items: center; gap: 6px; font-weight: 800; letter-spacing: .08em;
     text-transform: uppercase; font-size: .68rem; color: #10AC84; }}
@@ -886,6 +977,8 @@ button[data-variant="segmented_control"][aria-checked="true"] p {{ color: #fff !
     .mc-cmp {{ font-size: .8rem; }}
     .mc-cmp th {{ padding: 6px 5px; font-size: .62rem; letter-spacing: .03em; }}
     .mc-cmp td {{ padding: 7px 5px; }}
+    .mc-cmp td:not(:first-child) {{ white-space: nowrap; }}  /* «+18,4 pp» en un solo renglón */
+    .mc-cmp td:first-child {{ hyphens: auto; }}
 }}
 
 [data-testid="stMetric"] {{ border-radius: 14px; transition: border-color .18s ease; }}
@@ -1407,7 +1500,8 @@ def _favicon_bandera():
 
 def marca() -> str:
     return (
-        f'<div class="mc-brand"><div class="mc-flag">{logo(46)}</div><h1>Macro<span>Center</span></h1></div>'
+        f'<div class="mc-brand"><div class="mc-flag">{logo(46)}</div><div><h1>Macro<span>Center</span></h1>'
+        '<p class="sub">La economía argentina, en datos</p></div></div>'
     )
 
 
@@ -1460,6 +1554,13 @@ def pie_noticias(sitios: list[tuple[str, str]]) -> str:
     links = " · ".join(f'<a href="{html.escape(u, quote=True)}" target="_blank" rel="noopener noreferrer">{html.escape(n)} ↗</a>'
                        for n, u in sitios)
     return f'<div class="mc-news-pie">Todo en los sitios oficiales: {links}</div>'
+
+
+def titulo_grafico(titulo: str, bajada: str | None = None) -> str:
+    """Título de un gráfico como texto de la página (se parte en renglones; el de Plotly se cortaba en el celular).
+    Los títulos son propios de la app; igual se escapan."""
+    b = f'<div class="b">{html.escape(bajada)}</div>' if bajada else ""
+    return f'<div class="mc-gtit"><div class="t">{html.escape(titulo)}</div>{b}</div>'
 
 
 def etiqueta(texto: str) -> str:
@@ -1889,7 +1990,8 @@ def estado_datos(hora_dolar: str | None, oficiales: str) -> str:
 def pie_enlaces() -> str:
     """Enlaces fijos de la barra inferior: suscripción, términos y privacidad."""
     esc = html.escape
-    bol = (f'<a class="bol" href="{esc(BOLETIN, quote=True)}" target="_blank" rel="noopener noreferrer">✉ Resumen semanal por mail</a>'
+    bol = (f'<a class="bol" href="{esc(BOLETIN, quote=True)}" target="_blank" rel="noopener noreferrer">✉ <span class="l">Resumen semanal por mail</span>'
+           '<span class="s">Suscribirme</span></a>'
            if BOLETIN else '')
     return (f'<div class="mc-pielinks">{bol}<a href="?legal=terminos" target="_self">Términos</a>'
             '<a href="?legal=privacidad" target="_self">Privacidad</a><span class="c">© 2026 MacroCenter</span></div>')

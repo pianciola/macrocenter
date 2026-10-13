@@ -24,6 +24,14 @@ FECHA_MIN = date(1992, 1, 2)  # desde la convertibilidad: antes las monedas eran
 
 
 # ───────────────────────── valores a una fecha ─────────────────────────
+
+def _grafico(fig) -> None:
+    """Como `grafico` de app.py: título como texto (se parte en renglones), sin barra de herramientas ni zoom."""
+    titulo, bajada = charts.sacar_titulo(fig.update_layout(dragmode=False))
+    if titulo:
+        st.markdown(style.titulo_grafico(titulo, bajada), unsafe_allow_html=True)
+    st.plotly_chart(charts.compactar(fig), width="stretch", config=GRAFICO_CFG)
+
 def serie_dolar(d: dict) -> pd.DataFrame:
     """Dólar oficial diario unificado (BCRA hasta 2010, ArgentinaDatos desde 2011)."""
     h, a = d["dolar_hist"], d["dolar_actual"]
@@ -215,9 +223,7 @@ def pantalla_pesos(d: dict, uva: pd.DataFrame | None) -> None:
 
     graf = indices_base100(d, f, uva)
     cols = {c: c for c in ("Precios", "Dólar oficial", "Dólar blue", "UVA") if c in graf}
-    st.plotly_chart(charts.compactar(charts.lineas(graf, cols, "Cómo evolucionó cada cosa (base 100 = la fecha elegida)",
-                                                   yfmt=",.0f", height=340).update_layout(dragmode=False)),
-                    width="stretch", config=GRAFICO_CFG)
+    _grafico(charts.lineas(graf, cols, "Cómo evolucionó cada cosa (base 100 = la fecha elegida)", yfmt=",.0f", height=340))
     st.caption("Valores mes a mes (aproximados). No es una recomendación de inversión: es solo mirar el pasado."
                + (" La fecha elegida cae en un período de cepo: al dólar oficial no se podía comprar libremente, así que "
                   "el cálculo usa el blue." if tipo0 == "blue" else ""))
@@ -443,10 +449,8 @@ def _cuadro_viaje(d: dict, fotos: dict, f: pd.Timestamp) -> None:
     k[3].metric("Riesgo país", _n(e["riesgo"]) if e["riesgo"] else "s/d", border=True)
     k[4].metric("Desocupación", P._pct(e["paro"]), border=True)
     anual = P.inflacion_anual_serie(d["inflacion"])
-    st.plotly_chart(charts.compactar(charts.inflacion_presidentes(anual[anual["fecha"] >= "1983-12-01"], P.MANDATOS,
-                                                                  P.CORTO, "Inflación anual: estás en la línea dorada",
-                                                                  height=300, marca=f).update_layout(dragmode=False)),
-                    width="stretch", config=GRAFICO_CFG)
+    _grafico(charts.inflacion_presidentes(anual[anual["fecha"] >= "1983-12-01"], P.MANDATOS, P.CORTO,
+                                          "Inflación anual: estás en la línea dorada", height=300, marca=f))
 
 
 def pantalla_viaje(d: dict, fotos: dict) -> None:
