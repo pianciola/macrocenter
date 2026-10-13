@@ -174,26 +174,34 @@ def _memoria() -> dict:
     return {}
 
 
+def _entrada(mem: dict, nombre: str) -> dict:
+    e = mem.get(nombre)
+    if e is None:
+        e = mem.setdefault(nombre, {"v": None, "t": 0.0, "lock": threading.Lock()})
+    return e
+
+
+def _bajar_y_guardar(e: dict, bajar, ttl: int, reintento: int) -> None:
+    nuevo = bajar()
+    viejo = e["v"] or {}
+    e["v"] = {k: (viejo[k] if isinstance(v, str) and k in viejo and not isinstance(viejo[k], str) else v)
+              for k, v in nuevo.items()}
+    falla = any(isinstance(v, str) for v in nuevo.values())
+    e["t"] = time.time() - (ttl - reintento if falla else 0)
+    if not all(isinstance(v, str) for v in nuevo.values()):
+        e["ver"] = e.get("ver", 0) + 1  # la página abierta se redibuja sola cuando esto cambia (ver estado_vivo)
+
+
 def al_dia(nombre: str, bajar, ttl: int, reintento: int = 60):
     """Devuelve lo último que se bajó con `bajar()` sin hacer esperar a nadie: si tiene más de `ttl` segundos, lo
     renueva de fondo y mientras tanto se muestra lo anterior. Solo la primera vez (servidor recién prendido) se espera.
     Si una parte falla, se conserva su último dato bueno y se reintenta en `reintento` segundos."""
-    mem = _memoria()
-    e = mem.get(nombre)
-    if e is None:
-        e = mem.setdefault(nombre, {"v": None, "t": 0.0, "lock": threading.Lock()})
+    e = _entrada(_memoria(), nombre)
     if e["v"] is not None and time.time() - e["t"] < ttl:
         return e["v"]
 
     def bajar_y_guardar() -> None:
-        nuevo = bajar()
-        viejo = e["v"] or {}
-        e["v"] = {k: (viejo[k] if isinstance(v, str) and k in viejo and not isinstance(viejo[k], str) else v)
-                  for k, v in nuevo.items()}
-        falla = any(isinstance(v, str) for v in nuevo.values())
-        e["t"] = time.time() - (ttl - reintento if falla else 0)
-        if not all(isinstance(v, str) for v in nuevo.values()):
-            e["ver"] = e.get("ver", 0) + 1  # la página abierta se redibuja sola cuando esto cambia (ver estado_vivo)
+        _bajar_y_guardar(e, bajar, ttl, reintento)
 
     if e["v"] is None:  # primera vez: no hay nada que mostrar, hay que esperar (si otra visita ya está bajando, a ella)
         with e["lock"]:
@@ -212,6 +220,27 @@ def al_dia(nombre: str, bajar, ttl: int, reintento: int = 60):
     if e["lock"].acquire(blocking=False):
         threading.Thread(target=de_fondo, daemon=True).start()
     return e["v"]
+
+
+@st.cache_resource
+def _precalentar() -> bool:
+    """Servidor recién prendido: las descargas que la primera visita tiene que esperar (dólar en vivo, cripto, bolsas,
+    noticias) arrancan todas juntas en paralelo, en vez de una detrás de otra. `al_dia` espera a que termine cada una."""
+    mem = _memoria()
+
+    def uno(nombre, bajar, ttl):
+        e = _entrada(mem, nombre)
+        with e["lock"]:
+            if e["v"] is None:
+                try:
+                    _bajar_y_guardar(e, bajar, ttl, 60)
+                except Exception:  # noqa: BLE001 — si falla, la visita lo vuelve a intentar con al_dia
+                    traceback.print_exc()
+
+    for nombre, bajar, ttl in (("vivo", _bajar_vivo, 60), ("cripto", _bajar_cripto, 300),
+                               ("mercados", _bajar_mercados, 300), ("noticias", _bajar_noticias, 1800)):
+        threading.Thread(target=uno, args=(nombre, bajar, ttl), daemon=True).start()
+    return True
 
 
 def cargar_noticias() -> dict[str, list[news.Noticia] | str]:
@@ -340,14 +369,23 @@ def _historia_cripto(coin_id: str, dias: int) -> pd.DataFrame:
     return data.limpiar(data.cripto_historia(coin_id, dias))  # si falla, la excepción no se guarda en el caché
 
 
+@st.cache_resource
+def _ultima_historia_cripto() -> dict:
+    """Último historial bueno de cada moneda: si CoinGecko rechaza un pedido, se sigue mostrando ese."""
+    return {}
+
+
 @st.cache_data(ttl=60, show_spinner=False)
 def historia_cripto(coin_id: str, dias: int) -> pd.DataFrame | str:
     """El error también se guarda (1 minuto): si CoinGecko rechaza por exceso de pedidos, no se reintenta en cada
-    clic (cada intento espera unos 10 s entre reintentos y frenaría toda la página)."""
+    clic. Mientras tanto se usa el último historial bueno, si lo hay."""
+    guardado = _ultima_historia_cripto()
     try:
-        return _historia_cripto(coin_id, dias)
+        d = _historia_cripto(coin_id, dias)
+        guardado[(coin_id, dias)] = d
+        return d
     except Exception as e:  # noqa: BLE001
-        return error_corto(e)
+        return guardado.get((coin_id, dias), error_corto(e))
 
 
 @st.cache_data(ttl=86400, show_spinner=False)
@@ -397,6 +435,7 @@ def _va_a_demorar() -> bool:
         return True
 
 
+_precalentar()  # en paralelo con la carga de las series (solo hace algo con el servidor recién prendido)
 if _va_a_demorar():
     _carga = st.empty()
     _carga.html(style.pantalla_carga(*glosario.termino_del_dia(HOY)))
@@ -2585,9 +2624,17 @@ with t_fis, protegido("Resultado fiscal"):
                 if col not in f:  # esa serie no se pudo cargar
                     kpi(slot, nombre, None)
                     continue
-                v = ult_f.get(col)
-                v = None if pd.isna(v) else float(v)
-                hace_un_anio = f[f["fecha"] <= ult_f["fecha"] - pd.DateOffset(months=12)][col].dropna()
+                # cada serie con su último dato propio: el financiero a veces llega un mes después que el primario
+                # (antes quedaba «s/d» aunque hubiera datos del mes anterior)
+                con_dato = f.dropna(subset=[col])
+                if con_dato.empty:
+                    kpi(slot, nombre, None)
+                    continue
+                fila = con_dato.iloc[-1]
+                v = float(fila[col])
+                if fila["fecha"] != ult_f["fecha"]:
+                    nombre = f"{nombre} ({fila['fecha']:%m/%Y})"
+                hace_un_anio = f[f["fecha"] <= fila["fecha"] - pd.DateOffset(months=12)][col].dropna()
                 antes = float(hace_un_anio.iloc[-1]) if not hace_un_anio.empty else None
                 kpi(slot, nombre, v, 1, suf="% del PBI", d=dif(v, antes), d_suf=" pp", d_txt="vs un año antes",
                     help=ayuda + " Verde: el resultado mejoró contra un año antes; rojo: empeoró.")

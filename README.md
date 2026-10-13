@@ -111,6 +111,12 @@ pases a 1 día como referencia vigente.
 
 El dólar y el riesgo país se consultan cada minuto (DolarApi y ArgentinaDatos), cripto y bolsas cada 5 minutos, y la página abierta se redibuja sola cuando llega algo nuevo. Las series oficiales se cachean 1 hora; el botón *Refrescar datos* (en el pie) fuerza una nueva descarga de todo.
 
+## Pie de página
+
+Una barra fina queda siempre pegada al borde inferior de la ventana, en cualquier pestaña o pantalla: estado en vivo,
+suscripción al resumen semanal, términos, privacidad, el panel **Fuentes y aviso** (marca, fuentes de datos, aviso de
+rezago) y *Refrescar datos*. Lo secundario se oculta según el ancho real disponible; los botones nunca se achican.
+
 ## Agregar un indicador
 
 1. Sumar el id en `BCRA_IDS` o `SERIES_IDS` (`macrocenter/data.py`). El catálogo del BCRA se lista en
@@ -130,4 +136,5 @@ su sesión. `run.bat` define `MACROCENTER_LOCAL=1`, que activa el guardado local
 ## Robustez
 
 Si una fuente se cae o devuelve datos raros, esa parte se omite sin mostrar ningún aviso de error al visitante y el resto de la página sigue funcionando; las fallas quedan registradas (macrocenter/avisos.py) y el monitor te avisa por mail. No quedan pegadas en el caché: se reintenta cada minuto, y si la fuente devuelve una serie vacía se usa el último dato bueno guardado.
+Con el servidor recién prendido, las descargas en vivo (dólar, cripto, bolsas, noticias) arrancan todas juntas y en paralelo con las series. Si CoinGecko limita pedidos, el historial de cada cripto sale de Yahoo Finance (y si ambos fallan, del último historial bueno).
 Se probó con caídas de red, respuestas corruptas, datos nulos, ceros, duplicados y desordenados, entradas extremas, preferencias rotas y ráfagas de clics.
