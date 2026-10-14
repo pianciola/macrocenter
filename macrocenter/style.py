@@ -471,6 +471,12 @@ button[data-variant="segmented_control"][aria-checked="true"] p {{ color: #fff !
     transition: opacity .15s ease, transform .15s ease, bottom .3s ease, width .3s ease, height .3s ease,
     border-radius .3s ease; }}
 .mc-pie-btn:hover, .mc-pie-btn:focus-visible {{ opacity: 1; transform: translateY(-1px); }}
+/* íconos de Streamlit: hasta que llega su fuente (la primera vez que se entra desde un navegador) se veía su nombre como
+   texto («newspaper», «tune»...). Quedan invisibles y recortados hasta que JS_PESTANAS confirma que la fuente cargó;
+   si el script no corriera, aparecen igual a los 3 segundos */
+[data-testid="stIconMaterial"] {{ overflow: hidden; white-space: nowrap; }}
+html:not([data-iconos]) [data-testid="stIconMaterial"] {{ opacity: 0; animation: mc-icono-ver 0s linear 3s forwards; }}
+@keyframes mc-icono-ver {{ to {{ opacity: 1; }} }}
 html[data-pie] .mc-pie-btn {{ bottom: 0; width: 56px; height: 22px; border-radius: 10px 10px 0 0; border-bottom: 0;
     opacity: .85; }}
 html[data-pie="oculto"] .st-key-pie_datos {{ display: none !important; }}
@@ -854,11 +860,14 @@ html[data-tema="claro"] .mc-aviso .ic {{ background: #FBE7B5; color: #8A5A00; }}
 .mc-pielinks {{ display: flex; flex-wrap: wrap; align-items: center; gap: 2px 14px; font-size: .78rem; white-space: nowrap; }}
 .mc-pielinks a {{ color: {CELESTE}; font-weight: 600; text-decoration: none; }}
 .mc-pielinks a:hover {{ text-decoration: underline; }}
-.mc-pielinks a.bol {{ padding: 5px 14px; border-radius: 999px; background: {CELESTE}; color: #0E1A2B; font-weight: 800;
+/* compacto: texto corto, un poco más alto que ancho de relleno, así no se ve como una franja estirada */
+.mc-pielinks a.bol {{ display: inline-flex; align-items: center; gap: 6px; padding: 6px 13px 6px 11px; border-radius: 999px;
+    background: {CELESTE}; color: #0E1A2B; font-weight: 700; line-height: 1.15;
     box-shadow: 0 0 0 0 rgba(116,172,223,.6); animation: mc-resalta 2.6s ease-out infinite; transition: transform .15s ease; }}
 .mc-pielinks a.bol:hover {{ text-decoration: none; transform: translateY(-1px); filter: brightness(1.08); }}
 @keyframes mc-resalta {{ 0% {{ box-shadow: 0 0 0 0 rgba(116,172,223,.55); }} 70%, 100% {{ box-shadow: 0 0 0 9px rgba(116,172,223,0); }} }}
 @media (prefers-reduced-motion: reduce) {{ .mc-pielinks a.bol {{ animation: none; }} }}
+.mc-pielinks a.bol .ic {{ font-size: .95em; line-height: 1; }}
 .mc-pielinks .c {{ opacity: .85; }}
 .st-key-pie_datos [data-testid="stPopover"] button {{ white-space: nowrap; }}
 .mc-vivo, .mc-vivo span {{ white-space: nowrap; }}
@@ -1344,6 +1353,17 @@ CSS = _minificar_css(CSS)
 # medio no mueven nada. Se instala una sola vez por página y también sigue a las flechas del teclado.
 JS_PESTANAS = """
 <script>
+(() => {
+  // Íconos: se muestran recién cuando cargó su fuente (ver el CSS de stIconMaterial)
+  const raiz = document.documentElement;
+  if (raiz.dataset.iconos) return;
+  const listo = () => { raiz.dataset.iconos = 'listos'; };
+  try {
+    if (!document.fonts || !document.fonts.load) { listo(); return; }
+    document.fonts.load('24px "Material Symbols Rounded"').then(() => document.fonts.ready).then(listo, listo);
+    setTimeout(listo, 3000);
+  } catch (e) { listo(); }
+})();
 (() => {
   // Botón para ocultar la barra del pie (y volver a mostrarla). La elección se recuerda en este navegador.
   if (window.__mcPie) return;
@@ -2189,7 +2209,7 @@ def estado_datos(hora_dolar: str | None, oficiales: str) -> str:
 def pie_enlaces() -> str:
     """Enlaces fijos de la barra inferior: suscripción, términos y privacidad."""
     esc = html.escape
-    bol = (f'<a class="bol" href="{esc(BOLETIN, quote=True)}" target="_blank" rel="noopener noreferrer">✉ <span class="l">Resumen semanal por mail</span>'
+    bol = (f'<a class="bol" href="{esc(BOLETIN, quote=True)}" target="_blank" rel="noopener noreferrer" title="Resumen semanal por mail"><span class="ic" aria-hidden="true">✉</span><span class="l">Resumen semanal</span>'
            '<span class="s">Suscribirme</span></a>'
            if BOLETIN else '')
     return (f'<div class="mc-pielinks">{bol}<a href="?legal=terminos" target="_self">Términos</a>'
