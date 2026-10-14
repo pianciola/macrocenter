@@ -322,7 +322,10 @@ section[data-testid="stSidebar"] [class*="st-key-nav_"] button[data-testid="stBa
 .mc-conv .k {{ font-size: .92rem; font-weight: 600; display: flex; flex-direction: column; line-height: 1.2; }}
 .mc-conv .k small {{ font-size: .84rem; font-weight: 500; opacity: .85; }}
 .mc-conv .v {{ font-size: 1.1rem; font-weight: 800; white-space: nowrap; }}
-.mc-conv .nota {{ font-size: .84rem; opacity: .85; margin-top: 4px; text-align: right; }}
+.mc-conv .nota {{ font-size: .84rem; opacity: .85; margin: 6px 0 0; padding: 8px 0 4px; text-align: center;
+    border-top: 1px solid rgba(116,172,223,.2); }}
+/* Streamlit le resta un margen inferior al texto de la caja: sin este relleno la nota quedaba pegada al borde */
+section[data-testid="stSidebar"] .st-key-conv_caja .mc-conv {{ padding-bottom: 12px !important; }}
 section[data-testid="stSidebar"] .st-key-conv_sentido button {{ padding: .25rem .5rem; font-size: .8rem; flex: 1 1 0; }}
 section[data-testid="stSidebar"] .st-key-conv_sentido [data-baseweb="button-group"],
 section[data-testid="stSidebar"] .st-key-conv_sentido [role="radiogroup"] {{ width: 100%; flex-wrap: nowrap; }}
