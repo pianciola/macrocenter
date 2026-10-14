@@ -1628,6 +1628,20 @@ JS_PESTANAS = """
     const tab = e.target.closest && e.target.closest('[role="tablist"] [role="tab"]');
     if (tab) { mover(destinoPara(tab)); congelarAlto(); }
   }, true);
+  // flechas de la fila: van directo a una punta (la de la derecha muestra el último marcador; la de la izquierda, el
+  // primero). Los del medio siempre se ven, así que avanzar de a poco no sumaba nada. Se corta el manejo de Streamlit
+  // (que corre la fila un tramo) para que no haya dos movimientos a la vez.
+  document.addEventListener('click', (e) => {
+    const flecha = e.target.closest && e.target.closest('[data-testid="stTabsScrollLeft"], [data-testid="stTabsScrollRight"]');
+    if (!flecha) return;
+    const c = flecha.parentElement && flecha.parentElement.querySelector('[role="tablist"]')
+      || document.querySelector('[role="tablist"]');
+    if (!c) return;
+    e.stopPropagation();
+    e.preventDefault();
+    const fin = flecha.getAttribute('data-testid') === 'stTabsScrollRight' ? c.scrollWidth - c.clientWidth : 0;
+    mover({c, left: fin});
+  }, true);
   // si la persona mueve la fila a mano (flechitas, rueda, dedo), eso manda sobre cualquier movimiento pendiente
   const aMano = (e) => { if (e.target.closest && e.target.closest('[data-testid^="stTabsScroll"], [role="tablist"]')) turno++; };
   document.addEventListener('pointerdown', (e) => { if (e.target.closest && e.target.closest('[data-testid^="stTabsScroll"]')) turno++; }, true);
