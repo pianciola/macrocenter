@@ -5,7 +5,7 @@ from __future__ import annotations
 import pandas as pd
 import streamlit as st
 
-from macrocenter import charts
+from macrocenter import charts, style
 
 
 def mostrar(*, actualizando, dif, falla, fiscal_anual, fiscal_df, grafico, graficos_fiscales, kpi) -> None:
@@ -15,8 +15,10 @@ def mostrar(*, actualizando, dif, falla, fiscal_anual, fiscal_df, grafico, grafi
         actualizando()
     else:
         ult_f = f.iloc[-1]
-        st.caption(f"Sector público nacional no financiero, base caja, como porcentaje del PBI. Último dato: {ult_f['fecha']:%m/%Y}. "
-                   "Positivo = superávit, negativo = déficit.")
+        st.markdown(style.intro(
+            "Las cuentas del **sector público nacional**: cuánto le sobra o le falta, como porcentaje del PBI (base caja). "
+            "Positivo = superávit; negativo = déficit.", [("bien", "Mejora"), ("mal", "Empeora")],
+            f"Último dato: {ult_f['fecha']:%m/%Y}."), unsafe_allow_html=True)
         k = st.columns(4)
         for slot, (nombre, col, ayuda) in zip(k, [
                 ("Primario 12 meses", "primario_12m", "Suma de los últimos 12 meses sobre el PBI de ese período."),

@@ -4,14 +4,14 @@ from __future__ import annotations
 
 import streamlit as st
 
-from macrocenter import charts
+from macrocenter import charts, style
 
 
 def mostrar(
     *, _ult_y_hace, dif, get, grafico, grafico_periodo, kpi, panel_plazo_fijo, pases, rec, riesgo, tpm,
 ) -> None:
-    st.caption("Cuánto cuesta el dinero en pesos (**tasas de interés**) y cuánto le cuesta a la Argentina endeudarse "
-               "(**riesgo país**). En el riesgo país, verde: baja; rojo: sube.")
+    st.markdown(style.intro("Cuánto cuesta el dinero en pesos (**tasas de interés**) y cuánto le cuesta a la Argentina endeudarse "
+                            "(**riesgo país**).", [("bien", "El riesgo país baja"), ("mal", "Sube")]), unsafe_allow_html=True)
     k = st.columns(4)
     v, a_ = _ult_y_hace(riesgo)
     kpi(k[0], "Riesgo país", v, 0, suf=" pb", d=dif(v, a_), d_suf=" pb", d_dec=0, color="inverse",

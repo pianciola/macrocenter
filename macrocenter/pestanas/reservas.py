@@ -4,12 +4,12 @@ from __future__ import annotations
 
 import streamlit as st
 
-from macrocenter import charts
+from macrocenter import charts, style
 
 
 def mostrar(*, HOY, bloque_cambiario, delta, grafico, kpi, rec, reservas, selector_periodo, ultimo) -> None:
-    st.caption("Los dólares y el oro que tiene el Banco Central para pagar deuda e intervenir en el mercado cambiario. "
-               "Verde: suben; rojo: bajan.")
+    st.markdown(style.intro("Los dólares y el oro que tiene el **Banco Central** para pagar deuda e intervenir en el mercado cambiario.",
+                            [("bien", "Suben"), ("mal", "Bajan")]), unsafe_allow_html=True)
     if reservas is not None:
         @st.fragment
         def bloque_reservas() -> None:

@@ -5,15 +5,16 @@ from __future__ import annotations
 import pandas as pd
 import streamlit as st
 
-from macrocenter import charts
+from macrocenter import charts, style
 
 
 def mostrar(
     *, HOY, delta, dif, dol, dol_rec, get, grafico, grafico_periodo, infl_ia, infl_m, inflacion_distritos, kpi,
     rec, rem, ult_y_ant, ultimo, uva,
 ) -> None:
-    st.caption("La inflación (IPC del INDEC), lo que espera el mercado para los próximos 12 meses (REM del BCRA) y la "
-               "**UVA**, la unidad que ajusta créditos y plazos fijos por inflación. Verde: la inflación baja; rojo: sube.")
+    st.markdown(style.intro("La inflación (**IPC** del INDEC), lo que espera el mercado para los próximos 12 meses (**REM** del BCRA) y la "
+                            "**UVA**, la unidad que ajusta créditos y plazos fijos por inflación.",
+                            [("bien", "La inflación baja"), ("mal", "Sube")]), unsafe_allow_html=True)
     k = st.columns(4)
     v, a_ = ult_y_ant(infl_m)
     kpi(k[0], "Inflación mensual", v, 1, suf="%", d=dif(v, a_), d_suf=" pp", d_txt="vs mes ant.", color="inverse")

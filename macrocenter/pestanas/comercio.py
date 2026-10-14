@@ -4,12 +4,12 @@ from __future__ import annotations
 
 import streamlit as st
 
-from macrocenter import charts
+from macrocenter import charts, style
 
 
 def mostrar(*, comercio, dif, grafico, kpi, pct, rec, ult_y_ant) -> None:
-    st.caption("Lo que la Argentina le vende al mundo (**exportaciones**) y le compra (**importaciones**), en dólares. "
-               "El saldo positivo trae dólares al país: verde si mejora, rojo si empeora.")
+    st.markdown(style.intro("Lo que la Argentina le vende al mundo (**exportaciones**) y le compra (**importaciones**), en dólares. "
+                            "El saldo positivo trae dólares al país.", [("bien", "El saldo mejora"), ("mal", "Empeora")]), unsafe_allow_html=True)
     if comercio is not None:
         c = comercio
         k = st.columns(4)

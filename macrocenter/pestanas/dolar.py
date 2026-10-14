@@ -9,8 +9,9 @@ from macrocenter import charts, style
 
 
 def mostrar(*, VIVO, base100, con_periodo, delta, dol, dol_rec, get, grafico, ultimo) -> None:
-    st.caption("Todas las cotizaciones del dólar en la Argentina, del oficial a los financieros. Verde: sube; "
-               "rojo: baja. El chip «vs oficial» muestra cuánto más caro está cada uno que el oficial.")
+    st.markdown(style.intro("Todas las cotizaciones del dólar en la Argentina, del oficial a los financieros.",
+                            [("bien", "Sube"), ("mal", "Baja")],
+                            "El chip **vs oficial** muestra cuánto más caro está cada uno que el oficial."), unsafe_allow_html=True)
     if dol is not None:
         TIPOS_DOLAR = [
             ("oficial", "Dólar oficial", "Banco Nación, venta minorista"),

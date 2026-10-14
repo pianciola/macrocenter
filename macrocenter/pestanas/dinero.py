@@ -4,13 +4,14 @@ from __future__ import annotations
 
 import streamlit as st
 
-from macrocenter import charts
+from macrocenter import charts, style
 
 
 def mostrar(*, _ult_y_hace, delta, dif, get, grafico, kpi, rec, ultimo) -> None:
     bm, pr, m2 = get("bcra:base_monetaria"), get("bcra:prestamos_privados"), get("bcra:m2_privado_ia")
-    st.caption("Cuántos pesos hay en la economía (**base monetaria** y **M2**) y cuánto le prestan los bancos a empresas y "
-               "familias. Verde en el crédito: crece; rojo: cae. El dinero se muestra sin color: crecer no es bueno ni malo en sí.")
+    st.markdown(style.intro("Cuántos pesos hay en la economía (**base monetaria** y **M2**) y cuánto le prestan los bancos a empresas y "
+                            "familias.", [("bien", "El crédito crece"), ("mal", "Cae")],
+                            "El dinero se muestra sin color: crecer no es bueno ni malo en sí."), unsafe_allow_html=True)
     k = st.columns(3)
     kpi(k[0], "Base monetaria", ultimo(bm) / 1e6 if bm is not None and ultimo(bm) else None, 1, pre="$", suf=" bill.",
         d=delta(bm) if bm is not None else None, color="off", help="Billones de pesos. Variación contra 30 días atrás.")

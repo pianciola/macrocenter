@@ -12,8 +12,9 @@ from macrocenter import charts, data, style
 
 def mostrar(*, _var_pct, cargar_mercados, falla, grafico, rec, selector_categoria, selector_periodo) -> None:
     mk = cargar_mercados()
-    st.caption("Las principales bolsas del mundo y algunas materias primas que mueven a la Argentina. Datos de Yahoo "
-               "Finance (fuente no oficial, con demora); se actualizan cada 5 minutos. Verde: sube; rojo: baja.")
+    st.markdown(style.intro("Las principales bolsas del mundo y algunas materias primas que mueven a la Argentina.",
+                            [("bien", "Sube"), ("mal", "Baja")],
+                            "Yahoo Finance (fuente no oficial, con demora). Se actualiza cada 5 minutos."), unsafe_allow_html=True)
     tarjetas = []
     for simbolo, nombre, grupo, unidad in data.INDICES:
         df = mk.get(simbolo)

@@ -4,15 +4,15 @@ from __future__ import annotations
 
 import streamlit as st
 
-from macrocenter import charts
+from macrocenter import charts, style
 
 
 def mostrar(
     *, bloque_pobreza, dif, grafico, haber_min, kpi, pct, rec, ripte, sal, sal_ia, sal_priv, sal_pub, salario_real,
     smvm, ult_y_ant,
 ) -> None:
-    st.caption("Cuánto suben los sueldos y si le ganan a la inflación (**salario real**). Verde: el poder de compra mejora; "
-               "rojo: empeora.")
+    st.markdown(style.intro("Cuánto suben los sueldos y si le ganan a la inflación (**salario real**).",
+                            [("bien", "El poder de compra mejora"), ("mal", "Empeora")]), unsafe_allow_html=True)
     sr_k = salario_real()
     k = st.columns(4)
     v, a_ = ult_y_ant(sal_ia)

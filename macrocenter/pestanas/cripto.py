@@ -16,8 +16,8 @@ def mostrar(
 ) -> None:
     cr = cargar_cripto()
     mercado, usdt = cr["mercado"], cr["usdt"]
-    st.caption("Las principales criptomonedas, en dólares y en pesos, y a cuánto se compra y vende el USDT en los "
-               "exchanges argentinos. Se actualiza cada 5 minutos. Verde: sube; rojo: baja.")
+    st.markdown(style.intro("Las principales criptomonedas, en dólares y en pesos, y a cuánto se compra y vende el **USDT** en los "
+                            "exchanges argentinos.", [("bien", "Sube"), ("mal", "Baja")], "Se actualiza cada 5 minutos."), unsafe_allow_html=True)
     if isinstance(mercado, str) or mercado.empty:
         falla(f"no se pudo cargar el mercado de criptomonedas ({mercado})")
     else:

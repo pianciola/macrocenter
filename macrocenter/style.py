@@ -685,6 +685,23 @@ html[data-alertas="anotado"] .mc-alerta {{ display: none !important; }}
 }}
 [class*="st-key-modo_"] button p {{ word-break: normal !important; overflow-wrap: normal !important; }}
 
+/* presentación de cada pestaña (style.intro): tarjeta liviana con la frase y la leyenda de colores */
+.mc-intro {{ margin: 2px 0 16px; padding: 12px 16px 12px 18px; border-radius: 12px; position: relative;
+    background: linear-gradient(90deg, rgba(116,172,223,.10), rgba(116,172,223,.03) 70%);
+    border: 1px solid rgba(116,172,223,.18); }}
+.mc-intro::before {{ content: ""; position: absolute; left: 0; top: 10px; bottom: 10px; width: 3px; border-radius: 3px;
+    background: {CELESTE}; }}
+.mc-intro p {{ margin: 0; font-size: 1rem; line-height: 1.55; }}
+.mc-intro b {{ color: {CELESTE}; font-weight: 700; }}
+.mc-intro .ley {{ display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 8px; font-size: .88rem; font-weight: 600; }}
+.mc-intro .ley span {{ display: inline-flex; align-items: center; gap: 8px; opacity: .92; }}
+.mc-intro .ley span::before {{ content: ""; width: 9px; height: 9px; border-radius: 50%; background: #8A9BB0; }}
+.mc-intro .ley .bien::before {{ background: #10AC84; box-shadow: 0 0 0 3px rgba(16,172,132,.18); }}
+.mc-intro .ley .mal::before {{ background: #EE5253; box-shadow: 0 0 0 3px rgba(238,82,83,.18); }}
+.mc-intro .nota {{ margin-top: 6px; font-size: .88rem; opacity: .9; }}
+html[data-tema="claro"] .mc-intro {{ background: linear-gradient(90deg, #EEF5FC, #F8FBFE 70%); border-color: #D6E5F4; }}
+html[data-tema="claro"] .mc-intro::before {{ background: #2E6DB4; }}
+html[data-tema="claro"] .mc-intro b {{ color: #2E6DB4; }}
 /* ── Ahorro e inversiones ── */
 .mc-aviso {{ display: flex; gap: 14px; align-items: flex-start; margin: 6px 0 22px; padding: 14px 18px 14px 16px;
     border-radius: 12px; border: 1px solid rgba(246,180,14,.28); border-left: 4px solid {SOL};
@@ -2249,6 +2266,14 @@ def viaje(nombre: str, iniciales: str, periodo: str, hito: str, url: str | None,
     esc = html.escape
     return (f'<div class="mc-viaje">{foto_html(nombre, iniciales, url, pagina, actual)}<div>'
             f'<div class="per">{esc(periodo)}</div><h3>{esc(nombre)}</h3><div class="hito">{esc(hito)}</div></div></div>')
+
+
+def intro(texto_md: str, leyenda: list[tuple[str, str]] | None = None, nota_md: str = "") -> str:
+    """Presentación de una pestaña: una tarjeta liviana con la frase principal y, debajo, qué significan los colores
+    (leyenda: [(«bien»|«mal»|«neutro», texto)]) y una nota opcional. Admite **negrita**."""
+    ley = "".join(f'<span class="{html.escape(c)}">{html.escape(t)}</span>' for c, t in (leyenda or []))
+    pie = (f'<div class="ley">{ley}</div>' if ley else "") + (f'<div class="nota">{_md_a_html(nota_md)}</div>' if nota_md else "")
+    return f'<div class="mc-intro"><p>{_md_a_html(texto_md)}</p>{pie}</div>'
 
 
 def aviso(texto_md: str, titulo: str = "") -> str:
