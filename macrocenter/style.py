@@ -1304,10 +1304,17 @@ JS_PESTANAS = """
   const b = document.createElement('button');
   b.type = 'button';
   b.className = 'mc-pie-btn';
+  // (sin HTML dentro del script: el sanitizador de Streamlit descarta los scripts que contienen etiquetas)
+  const icono = document.createElement('span');
+  icono.className = 'i';
+  icono.setAttribute('aria-hidden', 'true');
+  const texto = document.createElement('span');
+  texto.className = 't';
+  b.append(icono, texto);
   const pintar = () => {
     const oculto = raiz.classList.contains('mc-pie-oculto');
-    b.innerHTML = '<span class="i" aria-hidden="true">' + (oculto ? '▲' : '▼') + '</span><span class="t">' +
-      (oculto ? 'Mostrar barra' : 'Ocultar barra') + '</span>';
+    icono.textContent = oculto ? '▲' : '▼';
+    texto.textContent = oculto ? 'Mostrar barra' : 'Ocultar barra';
     b.setAttribute('aria-label', oculto ? 'Mostrar la barra inferior' : 'Ocultar la barra inferior');
     b.setAttribute('aria-pressed', oculto ? 'true' : 'false');
   };

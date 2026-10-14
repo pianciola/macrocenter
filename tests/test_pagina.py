@@ -80,3 +80,12 @@ def test_mapa_distritos_por_provincia():
     assert mapa.distritos_de("Ciudad Autónoma de Buenos Aires") == ["Ciudad de Buenos Aires", "Gran Buenos Aires"]
     assert mapa.distritos_de("Tierra del Fuego") == ["Región Patagonia"]
     assert all(mapa.distritos_de(p) for p in mapa.REGION)
+
+
+def test_el_script_de_la_pagina_no_lleva_etiquetas_html():
+    # Streamlit sanea el HTML de st.html y descarta los scripts que contienen algo como «<span»: el script entero
+    # dejaba de correr sin ningún error (pasó con el botón del pie). Los elementos se arman con createElement.
+    import re
+
+    cuerpo = style.JS_PESTANAS.replace("<script>", "").replace("</script>", "")
+    assert not re.search(r"<[/\w!]", cuerpo)
