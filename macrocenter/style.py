@@ -1127,7 +1127,8 @@ html[data-tema="claro"] :is(.mc-tl-card, .mc-min-card, .mc-viaje, .mc-nota, .mc-
 [data-testid="stTabsScrollLeft"], [data-testid="stTabsScrollRight"] {{
     width: 52px !important; height: 3.4rem !important; display: flex; align-items: center; cursor: pointer;
 }}
-[data-testid="stTabsScrollLeft"] {{ justify-content: flex-start; }}
+/* la flecha izquierda va a la derecha de «Inicio», que queda fija en el borde (ver más abajo) */
+[data-testid="stTabsScrollLeft"] {{ justify-content: flex-start; left: 8.9rem !important; z-index: 4; }}
 [data-testid="stTabsScrollRight"] {{ justify-content: flex-end; }}
 [data-testid="stTabsScrollLeft"] svg, [data-testid="stTabsScrollRight"] svg {{
     width: 32px !important; height: 32px !important; padding: 5px; box-sizing: border-box; border-radius: 50%;
@@ -1163,9 +1164,10 @@ html[data-tema="claro"] :is(.mc-tl-card, .mc-min-card, .mc-viaje, .mc-nota, .mc-
 }}
 /* "Inicio" (primer marcador): la casa de la app. Píldora celeste con el Sol de Mayo, como la bandera; se rellena
    cuando está elegida y queda separada del resto por una línea vertical */
-/* fija a la izquierda de la fila: al desplazar las pestañas, «Inicio» queda siempre a mano (al lado de la flecha) */
+/* fija a la izquierda de la fila: al desplazar las pestañas, «Inicio» queda siempre a mano. (left = su margen
+   izquierdo: un valor mayor la corría sobre «Dólar» con la fila sin desplazar) */
 [role="tablist"] [data-testid="stTab"]:first-of-type {{
-    position: sticky; left: 3.4rem; z-index: 3; height: 2.6rem; margin: .4rem 1.25rem .4rem 1.1rem; padding: 0 1.15rem 0 2.45rem;
+    position: sticky; left: 1.1rem; z-index: 3; height: 2.6rem; margin: .4rem 1.25rem .4rem 1.1rem; padding: 0 1.15rem 0 2.45rem;
     border-radius: 999px; border: 1px solid rgba(116,172,223,.55);
     background: linear-gradient(135deg, rgba(116,172,223,.20), rgba(116,172,223,.07));
     box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
