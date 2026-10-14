@@ -56,8 +56,8 @@ TERMINOS = {
           "comunes de inversión pueden diferir de los que ofrezca cada entidad al momento de operar. Las series de "
           "inflación del período 2007-2015 corresponden a las cifras oficiales difundidas por el INDEC en ese lapso, cuya "
           "confiabilidad fue cuestionada por diversos analistas."]),
-        ("4. Indicadores propios y calificación macroeconómica",
-         ["La «calificación macroeconómica», los puntajes, la comparación entre mandatos y demás indicadores elaborados por el "
+        ("4. Indicadores propios",
+         ["Los resúmenes, la comparación entre mandatos y demás indicadores elaborados por el "
           "Sitio son medidas **orientativas**, construidas con una metodología propia y con criterios que implican decisiones "
           "discrecionales (ventanas de comparación, ponderaciones, selección de variables). No son una calificación crediticia, "
           "una opinión técnica oficial ni un pronóstico."]),

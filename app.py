@@ -19,7 +19,7 @@ import pandas as pd
 import streamlit as st
 
 from macrocenter import (charts, data, glosario, interactivo, inversiones, legal, mapa, ministros, news, pestanas,
-                         presidentes, score, style)
+                         presidentes, style)
 from macrocenter.avisos import actualizando, falla
 from macrocenter.carga import (  # descarga, cachés y copia de respaldo
     _estado_actualizar, _memoria, _precalentar, _ultima_carga, _va_a_demorar, cargar_cripto, cargar_fotos,
@@ -238,7 +238,7 @@ HIST_SECCIONES = ["Presidentes", "Ministros de Economía"]
 # las visitas, ver seccion_actual). Se lee una sola vez por visita; después la dirección sigue a lo que se mira.
 RUTAS = {"tablero": ("tablero", "pestana", PESTANAS), "inversiones": ("inversiones", "inv_seccion", inversiones.SECCIONES),
          "historia": ("historia", "hist_seccion", HIST_SECCIONES),
-         "herramientas": ("juegos", "inter_modo", interactivo.MODOS + ["Calificación macro"])}
+         "herramientas": ("juegos", "inter_modo", interactivo.MODOS)}
 
 
 def abrir_ruta(ruta) -> None:
@@ -586,62 +586,6 @@ if ex is not None and im is not None:
     comercio["saldo_12m"] = comercio["saldo"].rolling(12).sum()
 
 
-def series_calificacion() -> dict[str, pd.Series]:
-    """Series que alimentan la calificación macro (clave = Driver.clave de macrocenter.score)."""
-    out: dict[str, pd.Series] = {}
-
-    def poner(clave: str, df: pd.DataFrame | None, col: str = "valor") -> None:
-        if df is not None and not df.empty:
-            out[clave] = df.dropna(subset=[col]).drop_duplicates("fecha").set_index("fecha")[col].sort_index()
-
-    poner("infl_m", infl_m)
-    poner("rem", rem)
-    poner("reservas", reservas)
-    poner("riesgo", riesgo)
-    if dol is not None:
-        poner("brecha", dol.dropna(subset=["brecha_blue"]).assign(valor=lambda x: x["brecha_blue"].abs()))
-    if comercio is not None:
-        poner("saldo12", comercio, "saldo_12m")
-    if emae is not None:
-        poner("emae", yoy(emae))
-    if paro is not None:
-        poner("paro", paro.assign(valor=paro["valor"] * 100))
-    sr_ = salario_real()
-    if sr_ is not None:
-        poner("salario_real", sr_, "real")
-    return out
-
-
-COMPARACIONES = {
-    "Hoy": HOY,
-    "Hace 3 meses": HOY - pd.DateOffset(months=3),
-    "Hace 6 meses": HOY - pd.DateOffset(months=6),
-    "Hace 1 año": HOY - pd.DateOffset(years=1),
-    "Hace 2 años": HOY - pd.DateOffset(years=2),
-    "Hace 3 años": HOY - pd.DateOffset(years=3),
-    "Hace 5 años": HOY - pd.DateOffset(years=5),
-}
-
-
-@st.cache_data(show_spinner=False)
-def calcular_notas(_series: dict[str, pd.Series], descarga: datetime, anios: int = score.ANIOS,
-                   pesos: tuple = ()):
-    """Notas a cada fecha de COMPARACIONES + historia mensual. `descarga` invalida el cache al actualizar."""
-    p = dict(pesos) if pesos else None
-    notas = {k: score.calificar(_series, t, anios, p) for k, t in COMPARACIONES.items()}
-    return notas, score.historia(_series, HOY, meses=60, anios=anios, pesos=p)
-
-
-try:
-    SERIES_NOTA = series_calificacion()
-    NOTAS, HIST_NOTA = calcular_notas(SERIES_NOTA, ACTUALIZADO)
-except Exception:  # noqa: BLE001 — sin la calificación el resto del tablero tiene que seguir andando
-    traceback.print_exc()
-    SERIES_NOTA = {}
-    NOTAS = {k: {"total": None, "pilares": {}, "drivers": {}} for k in COMPARACIONES}
-    HIST_NOTA = pd.DataFrame()
-
-
 # ───────────────────────── barra lateral (segunda parte: necesita los datos) ─────────────────────────
 # el término del día sale de macrocenter/glosario.py (365 términos, uno por día del año)
 
@@ -736,16 +680,6 @@ def seccion_ministros(dp: dict | None) -> None:
     abrir(pestanas.ministros_economia, dp)
 
 
-# ── Calificación macro (dentro de Herramientas) ──
-def _calificacion_contenido() -> None:
-    abrir(pestanas.calificacion)
-
-
-def pantalla_calificacion() -> None:
-    with protegido("Calificación"):
-        _calificacion_contenido()
-
-
 # ── Interactivo ──
 def pantalla_inversiones() -> None:
     espera = st.empty()
@@ -773,13 +707,12 @@ def pantalla_juegos() -> None:
     if faltan_i:
         falla("no se pudieron cargar los datos de las herramientas: falta " + ", ".join(faltan_i))
         actualizando()
-        pantalla_calificacion()
     else:
         dp_i = {**dp_i, "uva": uva,
                 "icl": get("bcra:icl"), "cer": get("bcra:cer"), "infl_m": infl_m, "ipc_gba": get("serie:ipc_gba"),
                 "salarios": sal,
                 "dolar_blue": None if dol is None else dol[["fecha", "blue"]].dropna().rename(columns={"blue": "valor"})}
-        interactivo.mostrar(dp_i, inds_i, fotos_presidentes(), uva, extra={"Calificación macro": pantalla_calificacion})
+        interactivo.mostrar(dp_i, inds_i, fotos_presidentes(), uva)
 
 
 # ── Criptomonedas ──

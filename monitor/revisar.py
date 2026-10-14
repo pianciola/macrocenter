@@ -141,8 +141,7 @@ def revisar_pantallas() -> list[str]:
     vistas += [("Historia · Presidentes", {"vista": "historia"}),
                ("Historia · Ministros", {"vista": "historia", "hist_seccion": "Ministros de Economía"})]
     vistas += [(f"Herramientas · {m}", {"vista": "juegos", "inter_modo": m}) for m in
-               ["¿Cuánto valían tus pesos?", "Ajuste de alquileres", "Comparador de épocas", "Viaje en el tiempo",
-                "Calificación macro"]]
+               ["¿Cuánto valían tus pesos?", "Ajuste de alquileres", "Comparador de épocas", "Viaje en el tiempo"]]
     problemas = []
     for nombre, estado in vistas:
         at = AppTest.from_file(str(RAIZ / "app.py"), default_timeout=300)

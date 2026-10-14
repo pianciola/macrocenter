@@ -237,42 +237,6 @@ def _rgba(hex_color: str, alpha: float) -> str:
     return f"rgba({r},{g},{b},{alpha})"
 
 
-def medidor(puntaje: float, etiqueta: str, color: str, niveles: list[tuple[int, str, str]], height: int = 250) -> go.Figure:
-    """Medidor semicircular 0-100 con las franjas de cada nivel de calificación."""
-    cortes = [n[0] for n in niveles][::-1] + [100]  # ascendente
-    colores = [n[2] for n in niveles][::-1]
-    pasos = [dict(range=[cortes[i], cortes[i + 1]], color=_rgba(colores[i], 0.28)) for i in range(len(colores))]
-    fig = go.Figure(go.Indicator(
-        mode="gauge+number",
-        value=puntaje,
-        number=dict(suffix="/100", valueformat=".0f", font=dict(size=40)),
-        title=dict(text=f"<b>{etiqueta}</b>", font=dict(size=17, color=color)),
-        gauge=dict(axis=dict(range=[0, 100], tickvals=[0, 25, 40, 60, 75, 100]),
-                   bar=dict(color=color, thickness=0.32), steps=pasos, borderwidth=0),
-    ))
-    fig.update_layout(height=height, margin=dict(l=34, r=34, t=60, b=10))
-    return fig
-
-
-def evolucion_nota(df: pd.DataFrame, niveles: list[tuple[int, str, str]], titulo: str, height: int = 400) -> go.Figure:
-    """Nota total (línea gruesa) y por pilar (finas) con las franjas de nivel de fondo."""
-    fig = go.Figure()
-    cortes = [n[0] for n in niveles][::-1] + [100]
-    for i, (_, _, color) in enumerate(niveles[::-1]):
-        fig.add_hrect(y0=cortes[i], y1=cortes[i + 1], fillcolor=_rgba(color, 0.10), line_width=0, layer="below")
-    pilares = [c for c in df.columns if c not in ("fecha", "Total")]
-    for i, p in enumerate(pilares):
-        fig.add_trace(go.Scatter(x=df["fecha"], y=df[p], name=p, mode="lines",
-                                 line=dict(color=PALETA[(i + 1) % len(PALETA)], width=1.3), opacity=0.75))
-    fig.add_trace(go.Scatter(x=df["fecha"], y=df["Total"], name="Nota total", mode="lines",
-                             line=dict(color=PALETA[0], width=3.5)))
-    fig = _base(fig, titulo, ",.0f", height)
-    fig.update_layout(legend=dict(orientation="h", yanchor="top", y=-0.08, xanchor="center", x=0.5),
-                      margin=dict(l=10, r=10, t=50, b=40))
-    fig.update_yaxes(range=[0, 100])
-    return fig
-
-
 def serie_presidentes(df: pd.DataFrame, mandatos: list, cortos: dict[str, str], titulo: str, height: int = 330,
                       marca: pd.Timestamp | None = None, log: bool = False, yfmt: str = ",.0f",
                       ticks: tuple[list, list] | None = None, minimo_log: float | None = None, cero: bool = False,

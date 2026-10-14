@@ -22,7 +22,6 @@ de `macrocenter/pestanas/`.
 | Pestaña | Contenido |
 |---|---|
 | Resumen | Indicadores clave personalizables, un gráfico a elección |
-| Calificación | Nota 0-100 hoy vs. hace 3 m / 6 m / 1 año / 2 años, evolución, detalle por pilar y driver |
 | Salarios | Índice de salarios INDEC, salario real vs inflación, RIPTE, salario mínimo, haber mínimo; pobreza (EPH, por semestre) y canastas básicas de una familia tipo |
 | Cripto | Principales criptomonedas en USD y pesos, historial por moneda y precio del USDT en cada exchange argentino |
 | Bolsas | Merval, bolsas de EE. UU., Europa, Asia y Latinoamérica, más oro, petróleo y soja; comparación base 100 |
@@ -61,7 +60,7 @@ los criterios y límites (por ejemplo, la inflación 2007-2015 es la del INDEC i
 
 ## Interactivo
 
-La sección **Herramientas** (barra lateral → *Explorar*; `macrocenter/interactivo.py`) tiene cuatro herramientas y la calificación macro, de a una por vez:
+La sección **Herramientas** (barra lateral → *Explorar*; `macrocenter/interactivo.py`) tiene cuatro herramientas, de a una por vez:
 
 - **¿Cuánto valían tus pesos?** — un monto y una fecha (desde 1992): qué fue de esa plata según la inflación, el dólar
   oficial y la UVA.
@@ -101,14 +100,6 @@ RSS de noticias, así que se lee el listado público de cada sitio (`macrocenter
 
 Menú **⋮ → Settings → Theme**: *Light*, *Dark* o *Use system setting* (por defecto sigue al sistema). Las paletas
 están definidas en `.streamlit/config.toml`.
-
-## Calificación macro
-
-Cada driver (inflación, REM, reservas, riesgo país, brecha, saldo comercial, EMAE, desocupación, salario real)
-recibe un puntaje de 0 a 100 según qué tan bien queda su valor frente a su propia historia de los últimos
-5 años (percentil, invertido si "menos es mejor"). Se promedian por pilar (Precios, Externo, Actividad,
-Ingresos) y los pilares, con igual peso, dan la nota total. El mismo cálculo "a una fecha pasada" permite comparar
-con períodos anteriores. Es una medida relativa y descriptiva, no un pronóstico. Ver `macrocenter/score.py`.
 
 Nota: el BCRA no registra tasa de política monetaria después del 10/7/2025; se muestra esa historia y la tasa de
 pases a 1 día como referencia vigente.

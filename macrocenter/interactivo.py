@@ -478,7 +478,6 @@ TARJETAS = {  # ícono (Material) y descripción corta de cada herramienta
     "Ajuste de alquileres": (":material/home:", "Cuánto queda tu alquiler según ICL, IPC, CER o salarios."),
     "Comparador de épocas": (":material/compare_arrows:", "Dos momentos de la economía, lado a lado."),
     "Viaje en el tiempo": (":material/history:", "Elegí una fecha y mirá cómo estaba el país."),
-    "Calificación macro": (":material/speed:", "Una nota de 0 a 100: hoy contra el pasado reciente."),
 }
 
 
@@ -495,7 +494,6 @@ def mostrar(d: dict, inds: dict, fotos: dict, uva: pd.DataFrame | None, extra: d
         st.session_state["inter_modo"] = nombre
 
     # selector en tarjetas: ícono, nombre y una línea de qué hace; la elegida queda resaltada
-    st.caption("Elegí una herramienta:")
     for i, (col, nombre) in enumerate(zip(st.columns(len(opciones)), opciones)):
         icono, desc = TARJETAS.get(nombre, (":material/apps:", ""))
         with col:
