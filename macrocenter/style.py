@@ -1089,13 +1089,18 @@ html[data-tema="claro"] :is(.mc-tl-card, .mc-min-card, .mc-viaje, .mc-nota, .mc-
 /* números de los indicadores: más peso y espaciado ajustado, como en los tableros financieros */
 [data-testid="stMetricValue"] {{ font-weight: 650 !important; letter-spacing: -.02em; }}
 /* un solo tamaño de cifra para todos los indicadores (antes, según la pestaña, 36, 23 o 19 px) */
-[data-testid="stMetricValue"] > div {{ font-size: 1.5rem !important; line-height: 1.2; }}
+/* (también el <p> de adentro: la regla general del texto corrido le ponía 1.02rem y la cifra quedaba chica) */
+[data-testid="stMetricValue"] > div, [data-testid="stMetricValue"] p {{ font-size: 1.85rem !important; line-height: 1.15; }}
+[data-testid="stMetricDelta"], [data-testid="stMetricDelta"] p {{ font-size: .95rem !important; }}
+[data-testid="stMetricDelta"] {{ margin-top: 4px; padding: 2px 9px !important; }}
+[data-testid="stMetricDelta"] svg {{ width: 1rem; height: 1rem; }}
 /* indicadores angostos (tres o más por fila con poco ancho): el valor se achica en vez de cortarse con «…» y la
    etiqueta puede ocupar dos renglones */
 [data-testid="stMetric"] {{ container-type: inline-size; }}
 [data-testid="stMetricLabel"] p {{ white-space: normal !important; overflow: visible !important; line-height: 1.25; }}
-@container (max-width: 190px) {{ [data-testid="stMetricValue"] > div {{ font-size: 1.25rem !important; }} }}
-@container (max-width: 150px) {{ [data-testid="stMetricValue"] > div {{ font-size: 1.05rem !important; }} }}
+@container (max-width: 190px) {{ [data-testid="stMetricValue"] > div, [data-testid="stMetricValue"] p {{ font-size: 1.45rem !important; }}
+    [data-testid="stMetricDelta"], [data-testid="stMetricDelta"] p {{ font-size: .85rem !important; }} }}
+@container (max-width: 150px) {{ [data-testid="stMetricValue"] > div, [data-testid="stMetricValue"] p {{ font-size: 1.2rem !important; }} }}
 /* tarjetas de una misma fila, del mismo alto (con o sin variación debajo) */
 [data-testid="stColumn"]:has(> [data-testid="stVerticalBlock"] > [data-testid="stElementContainer"]:only-child > [data-testid="stMetric"])
     > [data-testid="stVerticalBlock"],
@@ -1317,9 +1322,9 @@ h3 {{ font-weight: 700 !important; }}
     h3 {{ font-size: 1.15rem !important; }}
     [data-testid="stMetric"] {{ padding: .7rem .8rem !important; }}
     [data-testid="stMetric"] > div {{ padding: 0 !important; }}  /* Streamlit le suma otro relleno adentro */
-    [data-testid="stMetricValue"] > div {{ font-size: 1.35rem !important; }}
-    [data-testid="stMetricLabel"] p {{ font-size: .8rem !important; }}
-    [data-testid="stMetricDelta"] {{ font-size: .78rem !important; }}
+    [data-testid="stMetricValue"] > div, [data-testid="stMetricValue"] p {{ font-size: 1.5rem !important; }}
+    [data-testid="stMetricLabel"] p {{ font-size: .88rem !important; }}
+    [data-testid="stMetricDelta"], [data-testid="stMetricDelta"] p {{ font-size: .85rem !important; }}
     /* pestañas y botones más cómodos al tacto */
     [data-testid="stTab"] {{ height: 3rem; padding: 0 .85rem; }}
     [data-testid="stTab"] p {{ font-size: 1rem; }}
