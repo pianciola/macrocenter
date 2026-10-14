@@ -137,7 +137,7 @@ def revisar_pantallas() -> list[str]:
                 "Tasas y riesgo país", "Dinero y crédito", "Comercio exterior", "Resultado fiscal"]
     vistas = [(f"Tablero · {p}", {"pestana": p}) for p in pestanas]
     vistas += [(f"Ahorro e inversiones · {sec}", {"vista": "inversiones", "inv_seccion": sec}) for sec in
-               ["Tasas de hoy", "Cómo les fue", "Plazo fijo vs. UVA", "Glosario"]]
+               ["Tasas de hoy", "Rendimientos pasados", "Plazo fijo vs. UVA", "Glosario"]]
     vistas += [("Historia · Presidentes", {"vista": "historia"}),
                ("Historia · Ministros", {"vista": "historia", "hist_seccion": "Ministros de Economía"})]
     vistas += [(f"Herramientas · {m}", {"vista": "juegos", "inter_modo": m}) for m in

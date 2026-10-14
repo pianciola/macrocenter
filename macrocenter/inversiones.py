@@ -16,7 +16,7 @@ from . import charts, data, glosario, style
 from .avisos import falla
 from .interactivo import entrada_monto
 
-SECCIONES = ["Tasas de hoy", "Cómo les fue", "Plazo fijo vs. UVA", "Glosario"]
+SECCIONES = ["Tasas de hoy", "Rendimientos pasados", "Plazo fijo vs. UVA", "Glosario"]
 AVISO_TITULO = "Información, no recomendación"
 AVISO = ("Tasas, resultados pasados y simulaciones para comparar opciones. No es asesoramiento financiero: antes de "
          "invertir, revisá las condiciones de cada producto y, si lo necesitás, consultá a un asesor registrado en la CNV.")
@@ -345,7 +345,7 @@ def pantalla_historica(d: dict, grafico) -> None:
     desde = _hoy() - pd.Timedelta(days=PERIODOS[per])
     tabla, series, faltan = alternativas(d, desde, monto)
     if not series:
-        falla("no hay datos para «Cómo les fue» en este período")
+        falla("no hay datos para «Rendimientos pasados» en este período")
         return
     infl_final = float(tabla["Inflación"].iloc[-1]) if "Inflación" in tabla else None
 
@@ -468,7 +468,7 @@ def mostrar(d: dict, grafico) -> None:
     sec = st.segmented_control("Sección", SECCIONES, key="inv_seccion", label_visibility="collapsed") or SECCIONES[0]
     if sec == "Tasas de hoy":
         pantalla_tasas(d)
-    elif sec == "Cómo les fue":
+    elif sec == "Rendimientos pasados":
         pantalla_historica(d, grafico)
     elif sec == "Plazo fijo vs. UVA":
         pantalla_uva(d, grafico)
