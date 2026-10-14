@@ -476,6 +476,10 @@ html[data-pie="oculto"] .st-key-pie_datos {{ display: none !important; }}
 html[data-pie="oculto"] [data-testid="stMainBlockContainer"] {{ padding-bottom: 2rem !important; }}
 @media (max-width: 560px) {{ .mc-pie-btn {{ right: 12px; }} }}
 @media (prefers-reduced-motion: reduce) {{ .mc-pie-btn {{ transition: none; }} }}
+/* quien ya se anotó en las alertas no vuelve a ver el formulario (lo marca JS_PESTANAS en este navegador) */
+html[data-alertas="anotado"] .mc-alerta {{ display: none !important; }}
+.mc-alerta-ok {{ margin: 10px 0 18px; padding: 12px 16px; border-radius: 14px; font-size: 14px;
+    border: 1px solid rgba(16,172,132,.45); background: rgba(16,172,132,.10); }}
 /* formulario de alertas del dólar (pestaña Dólar) */
 .mc-alerta {{
     display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin: 10px 0 18px; padding: 14px 16px;
@@ -1325,6 +1329,26 @@ JS_PESTANAS = """
   });
   pintar();
   document.body.appendChild(b);
+})();
+(() => {
+  // Alertas por mail: al anotarse, el formulario se reemplaza por un aviso y no vuelve a aparecer en este navegador.
+  // (el mail sigue yendo directo a Buttondown; acá solo se guarda que ya se anotó, nunca la dirección)
+  if (window.__mcAlertas) return;
+  window.__mcAlertas = true;
+  const raiz = document.documentElement;
+  try { if (localStorage.getItem('mc_alertas_anotado') === '1') raiz.dataset.alertas = 'anotado'; } catch (e) {}
+  document.addEventListener('submit', (ev) => {
+    const f = ev.target;
+    if (!(f instanceof HTMLFormElement) || !f.classList.contains('mc-alerta')) return;
+    try { localStorage.setItem('mc_alertas_anotado', '1'); } catch (e) {}
+    setTimeout(() => {
+      const ok = document.createElement('div');
+      ok.className = 'mc-alerta-ok';
+      ok.textContent = '✅ Listo. Revisá tu mail y confirmá la suscripción desde el enlace que te mandó Buttondown.';
+      f.replaceWith(ok);
+      raiz.dataset.alertas = 'anotado';  // si Streamlit vuelve a dibujar el formulario, queda oculto
+    }, 0);
+  }, true);
 })();
 (() => {
   // La franja de cotizaciones se pausa cuando no se ve (al bajar por la página): ahorra batería en el celular.

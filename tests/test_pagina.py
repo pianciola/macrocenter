@@ -96,3 +96,8 @@ def test_titulos_de_seccion_no_dependen_de_una_clase_en_html():
     # del pie va en un atributo de <html>, nunca en una clase (con una clase, los títulos perdían la barra celeste)
     assert "mc-pie-oculto" not in style.CSS and "mc-pie-oculto" not in style.JS_PESTANAS
     assert 'html[data-pie="oculto"]' in style.CSS and "dataset.pie" in style.JS_PESTANAS
+
+
+def test_formulario_de_alertas_se_oculta_al_anotarse():
+    assert 'html[data-alertas="anotado"] .mc-alerta' in style.CSS
+    assert "mc_alertas_anotado" in style.JS_PESTANAS and "dataset.alertas" in style.JS_PESTANAS
