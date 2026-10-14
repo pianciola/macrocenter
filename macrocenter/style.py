@@ -702,6 +702,21 @@ html[data-alertas="anotado"] .mc-alerta {{ display: none !important; }}
 html[data-tema="claro"] .mc-intro {{ background: linear-gradient(90deg, #EEF5FC, #F8FBFE 70%); border-color: #D6E5F4; }}
 html[data-tema="claro"] .mc-intro::before {{ background: #2E6DB4; }}
 html[data-tema="claro"] .mc-intro b {{ color: #2E6DB4; }}
+/* botón discreto para ocultarla: una flechita arriba a la derecha. Oculta, queda solo una píldora para volver a abrirla */
+.mc-intro {{ padding-right: 46px; }}
+.mc-intro .mc-intro-x {{ position: absolute; top: 8px; right: 10px; min-width: 28px; height: 28px; padding: 0 6px;
+    display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; cursor: pointer;
+    color: {CELESTE}; opacity: .55; font-size: .9rem; font-weight: 700; user-select: none;
+    transition: opacity .15s ease, background-color .15s ease; }}
+.mc-intro .mc-intro-x::after {{ content: "▴"; font-size: 1rem; line-height: 1; }}
+.mc-intro .mc-intro-x:hover, .mc-intro .mc-intro-x:focus-visible {{ opacity: 1; background: rgba(116,172,223,.16); outline: none; }}
+html[data-intros="ocultas"] .mc-intro {{ display: inline-flex; padding: 0; margin: 0 0 12px; background: none;
+    border: 1px solid rgba(116,172,223,.30); border-radius: 999px; }}
+html[data-intros="ocultas"] .mc-intro::before, html[data-intros="ocultas"] .mc-intro > p,
+html[data-intros="ocultas"] .mc-intro .ley, html[data-intros="ocultas"] .mc-intro .nota {{ display: none; }}
+html[data-intros="ocultas"] .mc-intro .mc-intro-x {{ position: static; height: 30px; padding: 0 12px; opacity: .8; }}
+html[data-intros="ocultas"] .mc-intro .mc-intro-x::after {{ content: "ⓘ  Ver presentación"; font-size: .88rem; }}
+html[data-tema="claro"] .mc-intro .mc-intro-x {{ color: #2E6DB4; }}
 /* ── Ahorro e inversiones ── */
 .mc-aviso {{ display: flex; gap: 14px; align-items: flex-start; margin: 6px 0 22px; padding: 14px 18px 14px 16px;
     border-radius: 12px; border: 1px solid rgba(246,180,14,.28); border-left: 4px solid {SOL};
@@ -1749,6 +1764,25 @@ JS_PESTANAS = """
     if (e.target && e.target.closest && e.target.closest('[role="tablist"], [data-testid^="stTabsScroll"]')) setTimeout(medir, 60);
   }, { passive: true, capture: true });
 })();
+(() => {
+  // Presentaciones de las pestañas: se pueden ocultar con su flechita (y volver a abrir). La elección se recuerda en
+  // este navegador y vale para todas las pestañas.
+  if (window.__mcIntros) return;
+  window.__mcIntros = true;
+  const raiz = document.documentElement;
+  try { if (localStorage.getItem('mc_intros') === 'ocultas') raiz.dataset.intros = 'ocultas'; } catch (e) {}
+  const alternar = () => {
+    const ocultas = raiz.dataset.intros !== 'ocultas';
+    if (ocultas) raiz.dataset.intros = 'ocultas'; else delete raiz.dataset.intros;
+    try { localStorage.setItem('mc_intros', ocultas ? 'ocultas' : 'visibles'); } catch (e) {}
+  };
+  document.addEventListener('click', (e) => {
+    if (e.target.closest && e.target.closest('.mc-intro-x')) { e.preventDefault(); alternar(); }
+  });
+  document.addEventListener('keydown', (e) => {
+    if ((e.key === 'Enter' || e.key === ' ') && e.target.closest && e.target.closest('.mc-intro-x')) { e.preventDefault(); alternar(); }
+  });
+})();
 </script>
 """
 
@@ -2287,7 +2321,9 @@ def intro(texto_md: str, leyenda: list[tuple[str, str]] | None = None, nota_md: 
     (leyenda: [(«bien»|«mal»|«neutro», texto)]) y una nota opcional. Admite **negrita**."""
     ley = "".join(f'<span class="{html.escape(c)}">{html.escape(t)}</span>' for c, t in (leyenda or []))
     pie = (f'<div class="ley">{ley}</div>' if ley else "") + (f'<div class="nota">{_md_a_html(nota_md)}</div>' if nota_md else "")
-    return f'<div class="mc-intro"><p>{_md_a_html(texto_md)}</p>{pie}</div>'
+    # botón para ocultarla (o volver a mostrarla): lo maneja JS_PESTANAS y la elección vale para todas las pestañas
+    boton = '<span class="mc-intro-x" role="button" tabindex="0" title="Ocultar o mostrar la presentación"></span>'
+    return f'<div class="mc-intro">{boton}<p>{_md_a_html(texto_md)}</p>{pie}</div>'
 
 
 def aviso(texto_md: str, titulo: str = "") -> str:
