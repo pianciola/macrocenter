@@ -461,6 +461,37 @@ button[data-variant="segmented_control"][aria-checked="true"] p {{ color: #fff !
 .mc-gtit {{ margin: 6px 0 0; padding-left: 2px; }}
 .mc-gtit .t {{ font-size: 16px; font-weight: 700; line-height: 1.3; }}
 .mc-gtit .b {{ font-size: 12px; opacity: .6; margin-top: 2px; }}
+/* formulario de alertas del dólar (pestaña Dólar) */
+.mc-alerta {{
+    display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin: 10px 0 18px; padding: 14px 16px;
+    border: 1px solid rgba(74,143,212,.35); border-radius: 14px; background: rgba(74,143,212,.07);
+}}
+.mc-alerta .tx {{ flex: 1 1 320px; min-width: 0; display: flex; flex-direction: column; gap: 3px; }}
+.mc-alerta .tx b {{ font-size: 15px; }}
+.mc-alerta .tx span {{ font-size: 12.5px; opacity: .72; line-height: 1.4; }}
+.mc-alerta .cp {{ display: flex; gap: 8px; flex: 1 1 280px; max-width: 420px; }}
+.mc-alerta input[type=email] {{
+    flex: 1 1 auto; min-width: 0; padding: 9px 12px; border-radius: 10px; font: inherit; font-size: 14px;
+    border: 1px solid rgba(128,128,128,.45); background: rgba(0,0,0,.18); color: inherit;
+}}
+.mc-alerta input[type=email]:focus {{ outline: 2px solid #4A8FD4; outline-offset: 1px; }}
+.mc-alerta button {{
+    flex: 0 0 auto; padding: 9px 16px; border-radius: 10px; border: 0; cursor: pointer; font: inherit;
+    font-size: 14px; font-weight: 700; color: #fff; background: #2E86DE;
+}}
+.mc-alerta button:hover {{ background: #4A8FD4; }}
+@container principal (max-width: 560px) {{ .mc-alerta .cp {{ max-width: none; }} }}
+/* fila del título de cada gráfico: el título ocupa lo que haya y «CSV» (bajar los datos) queda chico a la derecha */
+[class*="st-key-gtit_"] {{ flex-wrap: nowrap !important; gap: 6px !important; }}
+[class*="st-key-gtit_"] > div:first-child {{ flex: 1 1 auto !important; min-width: 0; }}
+[class*="st-key-gtit_"] > div:last-child:not(:first-child) {{ flex: 0 0 auto !important; width: auto !important; }}
+[class*="st-key-gtit_"] [data-testid="stMarkdownContainer"] {{ margin-bottom: 0 !important; }}
+[class*="st-key-gtit_"] [data-testid="stDownloadButton"] button {{
+    min-height: 0 !important; padding: 2px 6px !important; opacity: .5; transition: opacity .15s;
+}}
+[class*="st-key-gtit_"] [data-testid="stDownloadButton"] button p {{ font-size: 12px !important; font-weight: 600; }}
+[class*="st-key-gtit_"] [data-testid="stDownloadButton"] button:hover,
+[class*="st-key-gtit_"] [data-testid="stDownloadButton"] button:focus-visible {{ opacity: 1; }}
 .st-key-cal_kpis {{ flex-wrap: wrap; }}
 .st-key-cal_kpis > * {{ flex: 1 1 150px !important; min-width: 0; }}
 .st-key-cal_kpis [data-testid="stElementContainer"], .st-key-cal_kpis [data-testid="stMetric"] {{ height: auto !important; }}
@@ -1996,6 +2027,22 @@ def pie_enlaces() -> str:
            if BOLETIN else '')
     return (f'<div class="mc-pielinks">{bol}<a href="?legal=terminos" target="_self">Términos</a>'
             '<a href="?legal=privacidad" target="_self">Privacidad</a><span class="c">© 2026 MacroCenter</span></div>')
+
+
+def form_alertas() -> str:
+    """Formulario para anotarse en las alertas del dólar. El mail va directo del navegador a Buttondown (con la
+    etiqueta «alertas»): la página nunca lo ve ni lo guarda."""
+    if not BOLETIN:
+        return ""
+    usuario = BOLETIN.rstrip("/").rsplit("/", 1)[-1]
+    accion = f"https://buttondown.com/api/emails/embed-subscribe/{usuario}"
+    return (f'<form class="mc-alerta" action="{html.escape(accion, quote=True)}" method="post" target="_blank">'
+            '<div class="tx"><b>🔔 Alertas del dólar por mail</b>'
+            '<span>Un aviso cuando el dólar o el riesgo país se mueven fuerte en el día (también te llega el resumen '
+            'semanal). Tu mail va directo a Buttondown: MacroCenter no lo ve ni lo guarda.</span></div>'
+            '<div class="cp"><input type="email" name="email" required placeholder="tu@mail.com" aria-label="Tu mail" '
+            'autocomplete="email" maxlength="254"><input type="hidden" name="tag" value="alertas">'
+            '<input type="hidden" name="embed" value="1"><button type="submit">Anotarme</button></div></form>')
 
 
 def legal_pagina(doc: dict, actualizacion: str) -> str:

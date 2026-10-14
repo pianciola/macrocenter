@@ -79,6 +79,41 @@ def compactar(fig: go.Figure) -> go.Figure:
     return fig
 
 
+def trazas_de(fig: go.Figure) -> list[tuple]:
+    """Los datos de cada línea o barra, tal como están ahora (antes de aligerar el gráfico): [(nombre, eje, valores)].
+    Solo guarda referencias, no copia nada: el CSV se arma recién si alguien lo pide (ver `csv_de`)."""
+    out = []
+    for i, tr in enumerate(fig.data):
+        if getattr(tr, "type", "") not in ("scatter", "bar") or tr.x is None or tr.y is None or len(tr.x) != len(tr.y):
+            continue
+        eje, valores = (tr.y, tr.x) if getattr(tr, "orientation", None) == "h" else (tr.x, tr.y)
+        out.append((tr.name or f"Serie {i + 1}", eje, valores))
+    largo = max((len(e) for _, e, _ in out), default=0)
+    # marcas sueltas (el último punto, un promedio) no van: un punto solo, o dos al lado de series largas
+    return [t for t in out if largo <= 1 or (len(t[1]) > 1 and (len(t[1]) > 2 or largo <= 10))]
+
+
+def csv_de(trazas: list[tuple]) -> bytes:
+    """CSV para Excel en castellano: separado por punto y coma, con coma decimal y fechas AAAA-MM-DD."""
+    columnas = {}
+    for nombre, eje, valores in trazas:
+        s = pd.Series(pd.to_numeric(pd.Series(list(valores)), errors="coerce").to_numpy(), index=list(eje))
+        s = s[~pd.Index(s.index).duplicated(keep="last")]
+        clave, n = str(nombre), 2
+        while clave in columnas:
+            clave, n = f"{nombre} ({n})", n + 1
+        columnas[clave] = s
+    df = pd.DataFrame(columnas)
+    try:
+        idx = pd.to_datetime(df.index, format="ISO8601")
+        df.index = idx.strftime("%Y-%m-%d" if bool((idx == idx.normalize()).all()) else "%Y-%m-%d %H:%M")
+        df = df.sort_index()
+        df.index.name = "fecha"
+    except (TypeError, ValueError):
+        df.index.name = "categoría"
+    return df.to_csv(sep=";", decimal=",").encode("utf-8-sig")
+
+
 def sacar_titulo(fig: go.Figure) -> tuple[str | None, str | None]:
     """Saca el título (y la bajada) de la figura para mostrarlo como texto de la página: Plotly no parte los títulos
     largos en renglones y en el celular quedaban cortados. Achica el margen de arriba que ocupaba el título."""

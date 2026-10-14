@@ -15,17 +15,21 @@ Si cambiás el código, cerrá y volvé a abrir `run.bat`: Streamlit no recarga 
 
 ## Qué muestra
 
+Orden de las pestañas: Inicio, después el ala financiera (Dólar, Bolsas, Cripto, Tasas y riesgo país, Dinero y crédito) y
+luego Inflación, Actividad y PBI, Reservas, Salarios, Resultado fiscal y Comercio exterior. Cada una vive en su archivo
+de `macrocenter/pestanas/`.
+
 | Pestaña | Contenido |
 |---|---|
 | Inicio | Indicadores clave personalizables, un gráfico a elección |
 | Calificación | Nota 0-100 hoy vs. hace 3 m / 6 m / 1 año / 2 años, evolución, detalle por pilar y driver |
-| Salarios | Índice de salarios INDEC, salario real vs inflación, RIPTE, salario mínimo, haber mínimo |
+| Salarios | Índice de salarios INDEC, salario real vs inflación, RIPTE, salario mínimo, haber mínimo; pobreza (EPH, por semestre) y canastas básicas de una familia tipo |
 | Cripto | Principales criptomonedas en USD y pesos, historial por moneda y precio del USDT en cada exchange argentino |
 | Bolsas | Merval, bolsas de EE. UU., Europa, Asia y Latinoamérica, más oro, petróleo y soja; comparación base 100 |
-| Dólar | Los 7 dólares (oficial, mayorista, blue, MEP, CCL, cripto, tarjeta) con compra, venta, variación y brecha; euro y libra esterlina (referencia BCRA); gráficos y brecha cambiaria |
-| Reservas | Reservas brutas del BCRA y variación mensual |
+| Dólar | Los 7 dólares (oficial, mayorista, blue, MEP, CCL, cripto, tarjeta) con compra, venta, variación y brecha; euro y libra esterlina (referencia BCRA); gráficos y brecha cambiaria; formulario para anotarse en las alertas por mail |
+| Reservas | Reservas brutas del BCRA y variación mensual; balance cambiario (cuenta corriente, cuenta financiera y compra neta de dólares de personas y empresas) |
 | Actividad y PBI | PBI trimestral, EMAE (original y desestacionalizado), desocupación |
-| Inflación | Inflación mensual/interanual, REM, por región (INDEC) y por provincia (Ciudad de Buenos Aires, Santa Fe, Mendoza, Tucumán, San Luis, Chaco), UVA, CER, UVI, ICL, dólar vs inflación |
+| Inflación | Inflación mensual/interanual, REM, por región (INDEC) y por provincia (Ciudad de Buenos Aires, Santa Fe, Mendoza, Tucumán, San Luis, Chaco y Neuquén; una provincia con más de 6 meses sin publicar no se muestra), UVA, CER, UVI, ICL, dólar vs inflación |
 | Tasas y riesgo país | BADLAR, TAMAR, plazo fijo, préstamos personales, riesgo país |
 | Dinero y crédito | Base monetaria, M2 privado, préstamos al sector privado |
 | Comercio exterior | Exportaciones, importaciones, saldo comercial |
@@ -67,9 +71,15 @@ La sección **Herramientas** (barra lateral → *Explorar*; `macrocenter/interac
 - **Viaje en el tiempo** — un deslizador de fecha (1984 a hoy) que muestra quién gobernaba y cómo estaba el país, con
   botón para reproducirlo hasta hoy.
 
-## Período de los gráficos
+## Período de los gráficos y descargas
 
 Cada gráfico importante (el de Inicio, el del dólar, el de reservas y el de bolsas) tiene sus propios botones de período.
+Cada gráfico tiene al lado del título un botón **CSV** que baja sus datos para Excel (punto y coma, coma decimal).
+
+## Enlaces para compartir
+
+La dirección sigue a lo que se mira: `?ver=tablero/dolar`, `?ver=herramientas/ajuste-de-alquileres`,
+`?ver=inversiones/conceptos`, etc. Copiarla y mandarla abre la misma pantalla. Un enlace inválido abre el tablero.
 
 ## Indicadores personalizables
 
@@ -122,7 +132,9 @@ rezago) y *Refrescar datos*. Lo secundario se oculta según el ancho real dispon
 1. Sumar el id en `BCRA_IDS` o `SERIES_IDS` (`macrocenter/data.py`). El catálogo del BCRA se lista en
    `https://api.bcra.gob.ar/estadisticas/v4.0/monetarias`; las series del INDEC se buscan en
    `https://apis.datos.gob.ar/series/api/search/?q=...`.
-2. Se descarga solo con `cargar_todo()`; graficarlo con `charts.lineas` / `charts.barras` en `app.py`.
+2. Se descarga solo con `cargar_todo()`; graficarlo con `charts.lineas` / `charts.barras` en la pestaña que corresponda
+   (`macrocenter/pestanas/`). Si la función de la pestaña necesita algo nuevo de `app.py`, se suma como parámetro de
+   `mostrar` (después del asterisco) y `abrir` se lo pasa solo.
 
 ## Publicarla en internet (Streamlit Community Cloud)
 
@@ -138,3 +150,28 @@ su sesión. `run.bat` define `MACROCENTER_LOCAL=1`, que activa el guardado local
 Si una fuente se cae o devuelve datos raros, esa parte se omite sin mostrar ningún aviso de error al visitante y el resto de la página sigue funcionando; las fallas quedan registradas (macrocenter/avisos.py) y el monitor te avisa por mail. No quedan pegadas en el caché: se reintenta cada minuto, y si la fuente devuelve una serie vacía se usa el último dato bueno guardado.
 Con el servidor recién prendido, las descargas en vivo (dólar, cripto, bolsas, noticias) arrancan todas juntas y en paralelo con las series. Si CoinGecko limita pedidos, el historial de cada cripto sale de Yahoo Finance (y si ambos fallan, del último historial bueno).
 Se probó con caídas de red, respuestas corruptas, datos nulos, ceros, duplicados y desordenados, entradas extremas, preferencias rotas y ráfagas de clics.
+Si la API de datos.gob.ar devuelve una serie sin sus últimos meses (pasa: guarda respuestas viejas), se completa con el
+archivo oficial de esa serie en la misma plataforma.
+
+## Copia de respaldo
+
+Cada 3 horas GitHub Actions baja todas las series (`monitor/semilla.py`) y deja una copia en la rama `datos`
+(`semilla.json.gz`, JSON comprimido: leerla no puede ejecutar código). Con el servidor recién prendido la página arranca
+con esa copia y actualiza de fondo, y si una fuente se cae usa su último dato de ahí. Publicar en `datos` no reinicia la
+página (Streamlit Cloud solo mira `main`).
+
+## Alertas por mail
+
+En la pestaña Dólar hay un campo para anotarse: el mail va directo del navegador a Buttondown con la etiqueta
+`alertas` (la página no lo ve). Cada 30 minutos, de lunes a viernes de 10 a 18, `monitor/alertas.py` revisa si el
+dólar oficial se movió 2 % o más contra el cierre anterior, el blue, el MEP o el CCL 3 % o más, o el riesgo país 5 % o
+más, y avisa una vez por día por instrumento. El mail se crea como borrador con el filtro de la etiqueta y solo se manda
+si Buttondown confirma ese filtro: nunca le llega a toda la lista por error.
+
+## Pruebas y monitor
+
+- `python -m pytest tests` corre las pruebas sin red; con `MACROCENTER_RED=1` también la app entera con datos reales.
+  GitHub las corre en cada publicación (`.github/workflows/pruebas.yml`).
+- El monitor (cada 6 horas) revisa la página, que cada fuente responda, que **ninguna serie esté desactualizada** para
+  su frecuencia (diaria: 10 días; mensual: 180; trimestral: 300; anual: 900) y que todas las pantallas se dibujen. Si
+  algo falla, GitHub te manda un mail.

@@ -1,0 +1,36 @@
+# Pruebas automáticas: en cada cambio publicado corre tests/ (las piezas sueltas sin red y la app entera con datos
+# reales). Si algo falla, el trabajo termina en rojo y GitHub le manda un mail al dueño del repositorio.
+name: Pruebas
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read  # solo lee el código; no puede modificar nada
+
+concurrency:
+  group: pruebas-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  probar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Instalar dependencias
+        run: pip install -r requirements.txt pytest
+      - name: Pruebas sin red
+        run: python -m pytest -q tests
+      - name: La app entera con datos reales
+        env:
+          TZ: America/Argentina/Buenos_Aires
+          MACROCENTER_RED: "1"
+        run: python -m pytest -q tests/test_app.py

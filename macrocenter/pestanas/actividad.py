@@ -1,0 +1,61 @@
+"""Pestaña «Actividad y PBI» del tablero. app.py la dibuja cuando está abierta y le pasa, por nombre, los datos y las
+funciones de la página que usa (los parámetros de `mostrar`)."""
+from __future__ import annotations
+
+import streamlit as st
+
+from macrocenter import charts
+
+
+def mostrar(*, dif, emae, emae_sa, get, grafico, kpi, paro, paro_pct, pib, rec, ult_y_ant) -> None:
+    st.caption("Cómo viene la producción: el **PBI** (trimestral, con unos tres meses de demora) y el **EMAE**, el indicador "
+               "mensual del INDEC que lo anticipa. Verde: la actividad mejora; rojo: empeora.")
+    p = None
+    if pib is not None:
+        p = pib.copy()
+        p["interanual"] = p["valor"].pct_change(4) * 100
+        p["trimestral"] = p["valor"].pct_change() * 100
+    mom = get("serie:emae_sa_mom")
+    if mom is not None and mom["valor"].abs().max() < 1:  # datos.gob.ar la publica como fracción (-0,029 = -2,9%)
+        mom = mom.assign(valor=mom["valor"] * 100)
+    e_ia = emae.assign(interanual=emae["valor"].pct_change(12) * 100).dropna() if emae is not None else None
+    k = st.columns(4)
+    v, a_ = ult_y_ant(p, "interanual")
+    kpi(k[0], "PBI · var. interanual", v, 1, suf="%", d=dif(v, a_), d_suf=" pp", d_txt="vs trim. ant.",
+        help="Último trimestre publicado contra el mismo trimestre del año anterior.")
+    v, a_ = ult_y_ant(mom)
+    kpi(k[1], "EMAE · var. mensual", v, 1, suf="%", d=dif(v, a_), d_suf=" pp", d_txt="vs mes ant.",
+        help="Desestacionalizada: compara con el mes anterior sin el efecto de la época del año.")
+    v, a_ = ult_y_ant(e_ia, "interanual")
+    kpi(k[2], "EMAE · var. interanual", v, 1, suf="%", d=dif(v, a_), d_suf=" pp", d_txt="vs mes ant.")
+    v, a_ = ult_y_ant(paro_pct)
+    kpi(k[3], "Desocupación (EPH)", v, 1, suf="%", d=dif(v, a_), d_suf=" pp", d_txt="vs trim. ant.", color="inverse")
+    if p is not None:
+        st.markdown("#### PBI trimestral")
+        a, b = st.columns(2)
+        with a:
+            grafico(charts.lineas(rec(p, 5), {"PBI real": "valor"}, "PBI trimestral a precios constantes de 2004 (millones de $)"))
+        with b:
+            grafico(charts.barras(rec(p.dropna(subset=["interanual"]), 5), "interanual",
+                                  "PBI — variación interanual (%)"))
+        st.caption("Serie trimestral sin desestacionalizar de Cuentas Nacionales (INDEC). "
+                   f"Último trimestre disponible: {p['fecha'].iloc[-1]:%m/%Y} (inicio de trimestre).")
+    if emae_sa is not None:
+        st.markdown("#### Actividad mes a mes (EMAE)")
+        a, b = st.columns(2)
+        with a:
+            grafico(charts.lineas(rec(emae_sa, 3), {"EMAE desestacionalizado": "valor"},
+                                  "EMAE desestacionalizado (base 2004 = 100)", yfmt=",.0f"))
+        with b:
+            if mom is not None:
+                grafico(charts.barras(rec(mom, 3), "valor", "EMAE — variación mensual desestacionalizada (%)", yfmt=",.1f"))
+    if emae is not None:
+        with st.expander("EMAE interanual y desocupación"):
+            e = emae.assign(interanual=emae["valor"].pct_change(12) * 100).dropna()
+            a, b = st.columns(2)
+            with a:
+                grafico(charts.barras(rec(e, 3), "interanual", "EMAE — variación interanual (%)"))
+            with b:
+                if paro is not None:
+                    grafico(charts.lineas(rec(paro.assign(valor=paro["valor"] * 100), 5), {"Desocupación": "valor"},
+                                          "Tasa de desocupación (EPH, %)", yfmt=",.1f"))

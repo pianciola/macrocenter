@@ -6,7 +6,6 @@ intervenido.
 """
 from __future__ import annotations
 
-import random
 import time
 from datetime import date
 

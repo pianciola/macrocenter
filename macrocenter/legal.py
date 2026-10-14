@@ -13,7 +13,7 @@ from __future__ import annotations
 
 MARCA = "MacroCenter"
 RESPONSABLE = "Juan Manuel Pianciola"
-ACTUALIZACION = "12 de octubre de 2026"
+ACTUALIZACION = "14 de octubre de 2026"
 CONTACTO = "juanpianciola06@gmail.com"
 DOMICILIO = "Ciudad Autónoma de Buenos Aires"
 
@@ -112,10 +112,10 @@ PRIVACIDAD = {
               f"demás normativa aplicable. El responsable del tratamiento es **{RESPONSABLE}**."),
     "secciones": [
         ("1. Qué datos personales recopilamos",
-         ["**Ninguno de forma deliberada.** El Sitio no exige registro, no tiene cuentas de usuario ni formularios, y no solicita "
+         ["**Ninguno de forma deliberada.** El Sitio no exige registro, no tiene cuentas de usuario ni guarda lo que se escribe en él, y no solicita "
           "nombre, correo electrónico, documento, datos de pago ni ningún otro dato personal. Tampoco incorpora publicidad "
-          "ni mecanismos de seguimiento individual del comportamiento de los usuarios. La única excepción es el boletín "
-          "semanal opcional, que gestiona un tercero y se describe más abajo.",
+          "ni mecanismos de seguimiento individual del comportamiento de los usuarios. Las únicas excepciones son el boletín "
+          "semanal y las alertas del dólar, ambos opcionales, que gestiona un tercero y se describen más abajo.",
           "Para saber cuántas personas usan el Sitio y qué secciones resultan más útiles, se cuentan las visitas de forma "
           "**agregada y anónima** con **GoatCounter** (goatcounter.com), un servicio de estadísticas que **no usa cookies** ni "
           "identifica a las personas. Registra la sección visitada, la página de procedencia, el tipo de navegador y de sistema "
@@ -128,7 +128,12 @@ PRIVACIDAD = {
           "recibe ni almacena direcciones de correo. Solo se pide la dirección de correo; la suscripción requiere confirmarla "
           "desde un enlace enviado a esa casilla, y cada correo incluye un enlace para darse de baja en un clic. El Responsable "
           "puede ver la lista de direcciones suscriptas y estadísticas de envío (por ejemplo, cantidad de aperturas), y la usa "
-          "**exclusivamente** para enviar el boletín: no la vende, no la cede y no la usa para otros fines."]),
+          "**exclusivamente** para enviar el boletín: no la vende, no la cede y no la usa para otros fines.",
+          "**Alertas del dólar (opcional).** En la sección del dólar hay un campo para anotarse en avisos por correo cuando "
+          "el dólar o el riesgo país se mueven fuerte en el día. Ese campo envía la dirección **directamente desde el "
+          "navegador a Buttondown**, con la marca «alertas»: tampoco pasa por el Sitio ni queda guardada en él. Quien se "
+          "anota recibe también el boletín semanal, y puede darse de baja de todo en un clic desde cualquier correo. La "
+          "dirección se usa solo para esos envíos, en las mismas condiciones que el boletín."]),
         ("2. Información técnica",
          ["Como ocurre en cualquier servicio web, el servidor donde se ejecuta la aplicación puede registrar de forma automática "
           "datos técnicos de la conexión (por ejemplo, dirección IP, fecha y hora, tipo de navegador) en registros operativos "

@@ -2,7 +2,8 @@
 
 Revisa tres cosas y, si alguna está mal, termina con error: GitHub le manda un mail al dueño del repositorio.
   1. Que la página publicada responda.
-  2. Que cada fuente de datos funcione (con un reintento: una falla de un minuto no es motivo de alarma).
+  2. Que cada fuente de datos funcione (con un reintento: una falla de un minuto no es motivo de alarma) y que su
+     último dato no esté desactualizado para lo que se espera de esa serie (diaria, mensual, trimestral o anual).
      Las fuentes «críticas» (oficiales) disparan el aviso; las «secundarias» (no oficiales, que a veces rechazan
      pedidos desde servidores de GitHub) solo quedan anotadas en el resumen.
   3. Que todas las pantallas de la app se dibujen sin errores con los datos de ese momento.
@@ -48,13 +49,50 @@ def fuentes() -> tuple[dict, dict]:
     return criticas, secundarias
 
 
-def probar(fn) -> str | None:
-    """None si anda (y trae datos); si no, el error en pocas palabras."""
+# Series de archivo (terminan a propósito) o que la fuente dejó de publicar: no cuentan como desactualizadas.
+# (reservas_hist es el saldo mensual desde 1940 para la historia de presidentes: lo reciente sale de la serie diaria
+# del BCRA, así que su atraso no se ve en la página. ipc_neuquen: la página la muestra solo cuando está al día)
+SIN_FRESCURA = {"BCRA · tpm", "INDEC/Economía · pib_1986", "INDEC/Economía · pib_1993", "ArgentinaDatos · dólar histórico",
+                "INDEC/Economía · reservas_hist", "INDEC/Economía · ipc_neuquen"}
+
+
+def dias_maximos(paso_dias: float) -> int:
+    """Cuántos días puede tener el último dato según cada cuánto se publica la serie (con el retraso habitual de cada
+    organismo: el INDEC publica un trimestre casi tres meses después de terminado; algunas provincias, dos meses)."""
+    if paso_dias <= 3:
+        return 10      # diarias (contando feriados largos)
+    if paso_dias <= 45:
+        return 180     # mensuales
+    if paso_dias <= 120:
+        return 300     # trimestrales
+    return 900         # anuales
+
+
+def antiguedad(r) -> str | None:
+    """Si la serie tiene fechas y su último dato es más viejo de lo esperable, lo dice; si no, None."""
+    if not hasattr(r, "columns") or "fecha" not in r.columns or len(r) < 3:
+        return None
+    import pandas as pd
+
+    f = pd.to_datetime(r["fecha"], errors="coerce").dropna().sort_values()
+    hoy = pd.Timestamp(data.hoy_argentina())
+    f_pasado = f[f <= hoy]
+    if f_pasado.empty:
+        return None
+    paso = float(f.diff().dt.days.median())
+    edad = (hoy - f_pasado.iloc[-1]).days
+    if edad > dias_maximos(paso):
+        return f"desactualizada: último dato del {f_pasado.iloc[-1]:%d/%m/%Y} ({edad} días)"
+    return None
+
+
+def probar(fn, nombre: str = "") -> str | None:
+    """None si anda (y trae datos al día); si no, el error en pocas palabras."""
     try:
         r = fn()
         if r is None or (hasattr(r, "empty") and r.empty) or (isinstance(r, (list, dict)) and not r):
             return "respondió vacío"
-        return None
+        return None if nombre in SIN_FRESCURA else antiguedad(r)
     except Exception as e:  # noqa: BLE001 — cualquier falla cuenta como falla de la fuente
         return f"{type(e).__name__}: {str(e)[:120]}"
 
@@ -62,12 +100,12 @@ def probar(fn) -> str | None:
 def revisar_fuentes(tareas: dict) -> dict[str, str]:
     """Prueba todas en paralelo; las que fallan se reintentan una vez después de REINTENTO_S segundos."""
     with ThreadPoolExecutor(max_workers=8) as pool:
-        res = dict(zip(tareas, pool.map(probar, tareas.values())))
+        res = dict(zip(tareas, pool.map(probar, tareas.values(), tareas)))
     fallan = {k: v for k, v in res.items() if v}
     if fallan:
         time.sleep(REINTENTO_S)
         with ThreadPoolExecutor(max_workers=8) as pool:
-            res2 = dict(zip(fallan, pool.map(probar, (tareas[k] for k in fallan))))
+            res2 = dict(zip(fallan, pool.map(probar, (tareas[k] for k in fallan), fallan)))
         fallan = {k: v for k, v in res2.items() if v}
     return fallan
 

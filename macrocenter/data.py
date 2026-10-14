@@ -81,6 +81,18 @@ SERIES_IDS = {
     "ipc_tucuman": "199.1_NIVEL_GENERAL_2014_0_13",
     "ipc_sanluis": "197.1_NIVEL_GENERAL_2014_0_13",
     "ipc_chaco": "464.1_IPC_CHACO_NG_0_0_22_93",  # Gran Resistencia
+    "ipc_neuquen": "196.1_NIVEL_GENERAL_2014_0_13",  # se muestra solo si está al día (ver inflacion_distritos)
+    # pobreza (EPH, % de personas, por semestre: la fecha es el comienzo del semestre SIGUIENTE al medido) y canastas
+    "pobreza": "64.2_POBLACION_NUA_0_0_34_74",
+    "cba_adulto": "150.1_CSTA_BARIA_0_D_26",  # canasta básica alimentaria, por adulto equivalente ($)
+    "linea_pobreza": "150.1_LA_POBREZA_0_D_13",  # canasta básica total de una familia tipo de 4 integrantes ($)
+    "linea_indigencia": "150.1_LA_INDICIA_0_D_16",  # canasta alimentaria de esa misma familia ($)
+    # balance cambiario del BCRA (millones de USD por mes)
+    "cambiario_cc": "182.1_TOTAL_CUENRIA_0_M_32",  # cuenta corriente cambiaria
+    "cambiario_bienes": "182.1_CUENTA_CORNES_0_M_39",
+    "cambiario_servicios": "182.1_CUENTA_CORIOS_0_M_42",
+    "cambiario_financiera": "182.1_TOTAL_CUENRIA_0_M_41",  # cuenta capital y financiera cambiaria
+    "cambiario_fae": "182.1_C_K_FINC_CINC_0_M_56",  # formación de activos externos de personas y empresas (neto)
 }
 
 
@@ -164,6 +176,7 @@ def serie(nombre: str, desde: str | None = None, hasta: str | None = None) -> pd
     s = None
     sin_aporte = 0
     error = None
+    meta: dict = {}
     for extra in _VARIANTES_SERIE:
         if any(k in params for k in extra if k not in ("limit", "sort")):
             continue  # no pisar un rango pedido a propósito
@@ -171,7 +184,8 @@ def serie(nombre: str, desde: str | None = None, hasta: str | None = None) -> pd
             if s is not None and time.monotonic() - inicio > 20:
                 break
             try:
-                nuevo = _serie_pedido({**params, **extra}, formato, intentos=4 if s is None else 1)
+                nuevo = _serie_pedido({**params, **extra}, formato, intentos=4 if s is None else 1,
+                                      meta=meta if not meta and formato == "json" else None)
             except Exception as e:  # noqa: BLE001 — se prueba con la variante siguiente
                 error = e
                 continue
@@ -187,6 +201,14 @@ def serie(nombre: str, desde: str | None = None, hasta: str | None = None) -> pd
                 break
         if s is not None and (not s.isna().any() or sin_aporte >= 4 or time.monotonic() - inicio > 20):
             break
+    # La API también puede quedarse con respuestas viejas (el RIPTE llegaba hasta abril con julio ya publicado). Su
+    # propia ficha dice hasta qué fecha hay datos: si falta el final, se completa con el archivo oficial de la serie
+    # (la misma plataforma, infra.datos.gob.ar).
+    if not desde and not hasta and meta:
+        try:
+            s = _completar_con_archivo(s, meta)
+        except Exception:  # noqa: BLE001 — es un complemento: sin él queda lo que trajo la API
+            pass
     if s is None:
         if error is not None:
             raise error
@@ -197,16 +219,44 @@ def serie(nombre: str, desde: str | None = None, hasta: str | None = None) -> pd
 
 _VARIANTES_SERIE = ({}, {"sort": "desc"}, {"limit": 4999}, {"end_date": "2100-12-31"}, {"limit": 4998, "sort": "desc"},
                     {"start_date": "1900-01-01"})
+ARCHIVOS_URL = "https://infra.datos.gob.ar/"
 
 
-def _serie_pedido(params: dict, formato: str, intentos: int = 4) -> pd.Series:
-    """Un pedido a la API de Series de Tiempo: valores indexados por fecha (NaN donde vino vacío)."""
+def _completar_con_archivo(s: pd.Series | None, meta: dict) -> pd.Series | None:
+    """Si la API no trajo hasta la última fecha que dice tener, baja el archivo CSV de la serie y suma lo que falte."""
+    fin, columna, url = meta.get("fin"), meta.get("columna"), meta.get("url") or ""
+    if not fin or not columna or not url.startswith(ARCHIVOS_URL):
+        return s
+    if s is not None and not s.dropna().empty and s.dropna().index.max() >= pd.Timestamp(fin):
+        return s
+    df = pd.read_csv(io.StringIO(_get(url, _intentos=2).text))
+    if columna not in df.columns:
+        return s
+    arch = pd.Series(pd.to_numeric(df[columna], errors="coerce").to_numpy(dtype=float),
+                     index=pd.to_datetime(df.iloc[:, 0], errors="coerce"))
+    arch = arch[arch.index.notna() & ~arch.index.duplicated()]
+    return arch if s is None else s.combine_first(arch)
+
+
+def _serie_pedido(params: dict, formato: str, intentos: int = 4, meta: dict | None = None) -> pd.Series:
+    """Un pedido a la API de Series de Tiempo: valores indexados por fecha (NaN donde vino vacío). Con `meta`, pide
+    también la ficha de la serie y anota ahí su última fecha, el nombre de la columna y el archivo oficial."""
+    if meta is not None:
+        params = {**params, "metadata": "full"}
     resp = _get(SERIES_URL, _intentos=intentos, **params, format=formato)
     if formato == "csv":
         df = pd.read_csv(io.StringIO(resp.text))
         fechas, valores = df.iloc[:, 0], pd.to_numeric(df.iloc[:, 1], errors="coerce")
     else:
-        df = pd.DataFrame(resp.json()["data"], columns=["fecha", "valor"])
+        cuerpo = resp.json()
+        if meta is not None:
+            try:
+                ficha = cuerpo["meta"][1]
+                meta.update(fin=ficha["field"].get("time_index_end"), columna=ficha["field"].get("title"),
+                            url=ficha["distribution"].get("downloadURL"))
+            except (KeyError, IndexError, TypeError, AttributeError):
+                pass
+        df = pd.DataFrame(cuerpo["data"], columns=["fecha", "valor"])
         fechas, valores = df["fecha"], pd.to_numeric(df["valor"], errors="coerce")
     s = pd.Series(valores.to_numpy(dtype=float), index=pd.to_datetime(fechas))
     return s[~s.index.duplicated()]
@@ -502,3 +552,18 @@ def riesgo_pais() -> pd.DataFrame:
     df = pd.DataFrame(_get(f"{ARGDATOS_URL}/finanzas/indices/riesgo-pais").json())
     df["fecha"] = pd.to_datetime(df["fecha"])
     return df.sort_values("fecha").reset_index(drop=True)
+
+
+def tareas_principales(desde_bcra: str = "2016-01-01") -> dict:
+    """Todas las series que carga la página al arrancar: clave -> función que la descarga. La usan app.py y la copia
+    de respaldo (monitor/semilla.py), así las dos piden exactamente lo mismo."""
+    tareas = {f"bcra:{k}": (lambda k=k: bcra(k, desde=desde_bcra)) for k in BCRA_IDS}
+    tareas |= {f"serie:{k}": (lambda k=k: serie(k)) for k in SERIES_IDS}
+    tareas["dolares"] = dolares
+    tareas["riesgo_pais"] = riesgo_pais
+    tareas["fx:EUR"] = lambda: divisa("EUR")
+    tareas["fx:GBP"] = lambda: divisa("GBP")
+    tareas["fred:ipc_eeuu"] = ipc_eeuu
+    tareas["dolar_hist"] = dolar_historico
+    tareas["inflacion_hist"] = inflacion_historica
+    return tareas

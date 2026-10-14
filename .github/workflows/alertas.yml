@@ -1,0 +1,34 @@
+# Alertas por mail: cada 30 minutos, de lunes a viernes entre las 10 y las 18 (hora de Argentina), revisa si el dólar o
+# el riesgo país se movieron fuerte en el día y, si es así, avisa por Buttondown solo a quienes se anotaron en las
+# alertas (monitor/alertas.py). Necesita el secreto BUTTONDOWN_API_KEY.
+name: Alertas
+
+on:
+  schedule:
+    - cron: "5,35 13-21 * * 1-5"  # 13:05 a 21:35 UTC = 10:05 a 18:35 en Argentina
+  workflow_dispatch:
+
+permissions:
+  contents: read  # solo lee el código; no puede modificar nada
+
+concurrency:
+  group: alertas
+  cancel-in-progress: false
+
+jobs:
+  revisar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Instalar dependencias
+        run: pip install -r requirements.txt
+      - name: Revisar movimientos y avisar
+        env:
+          TZ: America/Argentina/Buenos_Aires
+          BUTTONDOWN_API_KEY: ${{ secrets.BUTTONDOWN_API_KEY }}
+        run: python monitor/alertas.py
