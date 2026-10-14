@@ -1393,8 +1393,18 @@ JS_PESTANAS = """
       if (!quieto()) raiz.dataset.pieAnim = 'entra';
       pintar();
       if (barra) {
-        const alto = barra.getBoundingClientRect().height;
-        desplazable(barra).scrollBy({ top: alto, behavior: quieto() ? 'auto' : 'smooth' });
+        // (a mano y no con scrollBy «smooth»: ese no se mueve en todos los navegadores dentro de Streamlit)
+        const caja = desplazable(barra);
+        const desde = caja.scrollTop;
+        const hasta = desde + barra.getBoundingClientRect().height;
+        const t0 = performance.now();
+        const paso = (t) => {
+          const k = quieto() ? 1 : Math.min(1, (t - t0) / MS);
+          caja.scrollTop = desde + (hasta - desde) * (1 - Math.pow(1 - k, 3));
+          if (k < 1) requestAnimationFrame(paso);
+        };
+        requestAnimationFrame(paso);
+        setTimeout(() => { if (caja.scrollTop < hasta - 1) caja.scrollTop = hasta; }, MS + 80);
       }
       reloj = setTimeout(() => { delete raiz.dataset.pieAnim; }, MS);
     }
