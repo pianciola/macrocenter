@@ -1677,10 +1677,12 @@ JS_PESTANAS = """
   let v = '';
   try { v = localStorage.getItem('mc_leidas') || ''; } catch (e) { return; }
   if (!/^[0-9a-f]{8}(,[0-9a-f]{8})*$/.test(v)) return;
+  // la app puede tardar en armarse y redibujar la barra: se reintenta hasta que el valor queda puesto (máx. ~1 min)
   let intentos = 0;
   const pasar = () => {
+    if (intentos++ > 150) return;
     const inp = document.querySelector('.st-key-puente_leidas input');
-    if (!inp) { if (intentos++ < 40) setTimeout(pasar, 250); return; }
+    if (!inp) { setTimeout(pasar, 400); return; }
     if (inp.value === v) return;
     const set = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
     inp.focus({ preventScroll: true });
@@ -1688,8 +1690,9 @@ JS_PESTANAS = """
     inp.dispatchEvent(new Event('input', { bubbles: true }));
     inp.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true }));
     inp.blur();
+    setTimeout(pasar, 2500);  // si la app lo pisó al redibujar, se vuelve a poner
   };
-  pasar();
+  setTimeout(pasar, 800);
 })();
 </script>
 """
