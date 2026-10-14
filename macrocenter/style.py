@@ -122,8 +122,13 @@ section[data-testid="stSidebar"] [data-testid="stPills"] button {{ border-radius
    Next en Apple). Sin descargar fuentes de terceros. Gana a la regla general que fija la letra de toda la página */
 .stApp section[data-testid="stSidebar"] .mc-brand h1.mc-wm, .stApp section[data-testid="stSidebar"] .mc-brand h1.mc-wm span {{
     font-family: "Bahnschrift", "Avenir Next", "Avenir", "DIN Alternate", "Segoe UI Variable Display", system-ui, sans-serif !important;
-    font-weight: 600; font-stretch: 100%; letter-spacing: .005em; font-size: 1.6rem; }}
-.stApp section[data-testid="stSidebar"] .mc-brand h1.mc-wm span {{ font-weight: 300; font-size: 1em; }}
+    font-weight: 600; font-variation-settings: "wght" 600; letter-spacing: .005em; font-size: 1.6rem; }}
+/* (Bahnschrift trae sus pesos como variantes con nombre: sin pedirlas por nombre, Windows la mostraba fina) */
+.stApp section[data-testid="stSidebar"] .mc-brand h1.mc-wm {{
+    font-family: "Bahnschrift SemiBold", "Bahnschrift", "Avenir Next", "Avenir", "DIN Alternate", system-ui, sans-serif !important; }}
+.stApp section[data-testid="stSidebar"] .mc-brand h1.mc-wm span {{
+    font-family: "Bahnschrift Light", "Bahnschrift", "Avenir Next", "Avenir", "DIN Alternate", system-ui, sans-serif !important;
+    font-weight: 300; font-variation-settings: "wght" 300; font-size: 1em; }}
 .mc-brand p.sub {{ margin: 6px 0 0; font-size: .78rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
     line-height: 1.2; opacity: .85; }}
 
