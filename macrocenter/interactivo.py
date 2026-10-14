@@ -343,7 +343,7 @@ def pantalla_alquileres(d: dict) -> None:
         "Dato usado": "—" if f["dato"] is None else (f["dato"].strftime("%d/%m/%Y") if tipo == "diario"
                                                      else MESES[f["dato"].month - 1] + f" {f['dato'].year}"),
     } for f in filas])
-    st.dataframe(tabla, hide_index=True, width="stretch")
+    st.markdown(style.tabla(list(tabla.columns), tabla.values.tolist()), unsafe_allow_html=True)
 
     # comparación: el mismo contrato con cada índice
     comp = []

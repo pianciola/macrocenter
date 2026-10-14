@@ -85,5 +85,7 @@ def mostrar(*, VIVO, base100, con_periodo, delta, dol, dol_rec, get, grafico, ul
                 "fecha": "Fecha", "oficial": "Oficial", "blue": "Blue", "bolsa": "MEP",
                 "contadoconliqui": "CCL", "mayorista": "Mayorista", "cripto": "Cripto", "tarjeta": "Tarjeta",
                 "brecha_blue": "Brecha blue %", "brecha_ccl": "Brecha CCL %"})
-            st.dataframe(tabla, hide_index=True, width="stretch",
-                         column_config={"Fecha": st.column_config.DateColumn(format="DD/MM/YYYY")})
+            filas = [[f"{r['Fecha']:%d/%m/%Y}"] + [charts.num(r[c], 1, suf="%") if c.startswith("Brecha")
+                                                   else charts.num(r[c], 0, pre="$") for c in tabla.columns[1:]]
+                     for _, r in tabla.iterrows()]
+            st.markdown(style.tabla(list(tabla.columns), filas), unsafe_allow_html=True)

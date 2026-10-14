@@ -7,7 +7,7 @@ from __future__ import annotations
 import pandas as pd
 import streamlit as st
 
-from macrocenter import charts, score
+from macrocenter import charts, score, style
 
 
 def mostrar(
@@ -147,8 +147,9 @@ def mostrar(
                 "Lectura": "s/d" if ahora is None else score.etiqueta_driver(ahora),
                 "Puntaje": ahora,
             })
-        st.dataframe(pd.DataFrame(filas), hide_index=True, width="stretch",
-                     column_config={"Puntaje": st.column_config.ProgressColumn(min_value=0, max_value=100, format="%.0f")})
+        cab = list(filas[0]) if filas else []
+        st.markdown(style.tabla(cab, [[("s/d" if v is None else f"{v:.0f} / 100") if k == "Puntaje" else v
+                                        for k, v in f.items()] for f in filas]), unsafe_allow_html=True)
         movimientos = [(hoy_n["drivers"][d.clave] - ref_n["drivers"][d.clave], d) for d in ordenados
                        if ref_n["drivers"].get(d.clave) is not None]
         movimientos.sort(key=lambda m: m[0])
