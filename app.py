@@ -106,7 +106,6 @@ MESES_ES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "ago
 # Los archivos de preferencias solo se usan al correr en la propia computadora (run.bat define MACROCENTER_LOCAL=1).
 # Publicada en internet, cada visita guarda sus elecciones solo en su sesión: nada se comparte entre usuarios.
 LOCAL = os.environ.get("MACROCENTER_LOCAL") == "1"
-COOKIE_LEIDAS = "mc_leidas"  # noticias leídas: la guarda el navegador de cada visitante
 
 
 def _id_nota(url: str) -> str:
@@ -114,27 +113,30 @@ def _id_nota(url: str) -> str:
     return hashlib.sha1(url.encode("utf-8")).hexdigest()[:8]
 
 
+def _ids_validos(texto) -> set[str]:
+    return {x for x in str(texto or "").split(",") if re.fullmatch(r"[0-9a-f]{8}", x)}
+
+
 def leidas() -> set[str]:
-    """Identificadores de las noticias que este navegador marcó como leídas. Se recuerdan en una cookie del propio
-    navegador (el servidor no guarda nada): al abrir la página se leen de ahí."""
+    """Identificadores de las noticias que este navegador marcó como leídas. Los guarda el propio navegador
+    (almacenamiento local, nunca el servidor): al abrir la página, un script los copia en un campo oculto de la
+    barra lateral («puente_leidas») y desde ahí llegan acá."""
     if "noticias_leidas" not in st.session_state:
-        try:
-            crudo = st.context.cookies.get(COOKIE_LEIDAS, "")
-        except Exception:  # noqa: BLE001
-            crudo = ""
-        st.session_state["noticias_leidas"] = {x for x in str(crudo).split(",") if re.fullmatch(r"[0-9a-f]{8}", x)}
+        st.session_state["noticias_leidas"] = set()
+    puente = _ids_validos(st.session_state.get("leidas_cli"))
+    if not puente <= st.session_state["noticias_leidas"]:
+        st.session_state["noticias_leidas"] = st.session_state["noticias_leidas"] | puente
     return st.session_state["noticias_leidas"]
 
 
-def script_cookie_leidas() -> str:
-    """Script que deja las leídas en la cookie del navegador (un año). Solo lleva identificadores hexadecimales: no hay
-    nada de la persona ni de la nota. Se mantienen las de las noticias que están hoy y, de las demás, las más recientes."""
+def script_guardar_leidas() -> str:
+    """Script que deja las leídas en el almacenamiento local del navegador. Solo lleva identificadores hexadecimales:
+    nada de la persona ni de la nota. Se mantienen las de las noticias que están hoy y, de las demás, hasta 150."""
     hoy = {_id_nota(x.url) for items in cargar_noticias().values() if isinstance(items, list) for x in items}
     todas = sorted(leidas(), key=lambda i: i not in hoy)[:150]
-    valor = ",".join(todas)
     st.session_state["noticias_leidas"] = set(todas)
-    return ("<script>(() => { try { document.cookie = 'mc_leidas=' + " + json.dumps(valor) + " + '; Max-Age=31536000; "
-            "Path=/; SameSite=Lax' + (location.protocol === 'https:' ? '; Secure' : ''); } catch (e) {} })();</script>")
+    return ("<script>(() => { try { localStorage.setItem('mc_leidas', " + json.dumps(",".join(todas)) + "); "
+            "document.cookie = 'mc_leidas=; Max-Age=0; Path=/'; } catch (e) {} })();</script>")
 
 
 def marcar_leidas() -> None:
@@ -180,7 +182,7 @@ def ver_noticias() -> None:
     fuentes = {"bcra": "BCRA", "economia": "Economía", "indec": "INDEC"}
     pares = [(n, k) for k in fuentes for n in (noticias.get(k) if isinstance(noticias.get(k), list) else [])]
     hay_sin_leer = any(es_nueva(n) for n, _ in pares)
-    st.html(script_cookie_leidas(), unsafe_allow_javascript=True)  # recuerda lo leído en este navegador
+    st.html(script_guardar_leidas(), unsafe_allow_javascript=True)  # recuerda lo leído en este navegador
 
     c_filtro, c_boton = st.columns([3, 1.4], vertical_alignment="center")
     filtro = c_filtro.segmented_control("Fuente", ["Todas", *fuentes.values()], default="Todas", key="news_filtro",
@@ -270,6 +272,9 @@ if not st.session_state.get("_ya_cargo"):
 
 with st.sidebar:
     st.markdown(style.marca(), unsafe_allow_html=True)
+    # campo oculto: por acá el navegador le pasa a la app las noticias que ya marcó como leídas (ver leidas())
+    with st.container(key="puente_leidas"):
+        st.text_input("Noticias leídas", key="leidas_cli", label_visibility="collapsed", max_chars=1400)
     nuevas = noticias_recientes()
     if nuevas:
         etiqueta_noticias = f"Noticias · {nuevas} {'nueva' if nuevas == 1 else 'nuevas'}"

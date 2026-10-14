@@ -143,9 +143,9 @@ PRIVACIDAD = {
          ["Para recordar preferencias, la aplicación puede guardar en archivos locales del equipo donde se ejecuta (i) la selección "
           "de indicadores que el usuario elige ver. No contienen datos personales y "
           "pueden eliminarse en cualquier momento borrando el archivo «.macrocenter_prefs.json».",
-          "Las noticias que marcás como leídas se recuerdan con una cookie funcional de tu propio navegador («mc_leidas», un año) "
-          "que solo contiene identificadores técnicos de esas noticias; no es de seguimiento y podés borrarla desde la "
-          "configuración del navegador.",
+          "Las noticias que marcás como leídas se recuerdan en el almacenamiento local de tu propio navegador («mc_leidas»), "
+          "que solo contiene identificadores técnicos de esas noticias. No es una cookie, no es de seguimiento y podés "
+          "borrarlo desde la configuración del navegador.",
           "El navegador puede conservar, además, almacenamiento técnico estrictamente necesario para el funcionamiento (por ejemplo, "
           "la preferencia de tema claro u oscuro y la sesión de la interfaz). No se utilizan cookies publicitarias ni de seguimiento."]),
         ("4. Servicios y conexiones con terceros",

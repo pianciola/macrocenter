@@ -525,6 +525,11 @@ html[data-pie="oculto"] [data-testid="stMainBlockContainer"] {{ padding-bottom: 
 .mc-lift.arriba .mc-lift-sombra {{ opacity: .45 !important; transform: translate(3px, 4px); }}
 .mc-lift.arriba .mc-lift-tapa {{ transform: translate(-2px, -6px) scale(1.06); }}
 @media (prefers-reduced-motion: reduce) {{ .mc-lift path {{ transition: none; }} }}
+/* campo oculto por el que el navegador le pasa a la app las noticias leídas (no se ve ni ocupa lugar) */
+.st-key-puente_leidas {{ position: absolute !important; left: -9999px !important; width: 1px !important; height: 1px !important;
+    overflow: hidden !important; opacity: 0 !important; pointer-events: none !important; }}
+[data-testid="stElementContainer"]:has(> .st-key-puente_leidas), [data-testid="stLayoutWrapper"]:has(> .st-key-puente_leidas) {{
+    position: absolute !important; height: 0 !important; margin: 0 !important; overflow: hidden !important; }}
 /* quien ya se anotó en las alertas no vuelve a ver el formulario (lo marca JS_PESTANAS en este navegador) */
 html[data-alertas="anotado"] .mc-alerta {{ display: none !important; }}
 .mc-alerta-ok {{ margin: 10px 0 18px; padding: 12px 16px; border-radius: 14px; font-size: 14px;
@@ -1663,6 +1668,28 @@ JS_PESTANAS = """
     const gd = e.target && e.target.closest ? e.target.closest('.js-plotly-plot') : null;
     if (gd && !gd.__mcLift && gd.querySelector('.choroplethlayer')) enganchar(gd);
   }, { passive: true });
+})();
+(() => {
+  // Noticias leídas: el navegador las guarda en su almacenamiento local y, al abrir la página, las copia en el campo
+  // oculto de la barra lateral para que la app las conozca. Se hace una sola vez por carga.
+  if (window.__mcLeidas) return;
+  window.__mcLeidas = true;
+  let v = '';
+  try { v = localStorage.getItem('mc_leidas') || ''; } catch (e) { return; }
+  if (!/^[0-9a-f]{8}(,[0-9a-f]{8})*$/.test(v)) return;
+  let intentos = 0;
+  const pasar = () => {
+    const inp = document.querySelector('.st-key-puente_leidas input');
+    if (!inp) { if (intentos++ < 40) setTimeout(pasar, 250); return; }
+    if (inp.value === v) return;
+    const set = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
+    inp.focus({ preventScroll: true });
+    set.call(inp, v);
+    inp.dispatchEvent(new Event('input', { bubbles: true }));
+    inp.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true }));
+    inp.blur();
+  };
+  pasar();
 })();
 </script>
 """
