@@ -468,14 +468,21 @@ button[data-variant="segmented_control"][aria-checked="true"] p {{ color: #fff !
     display: flex; align-items: center; justify-content: center; border-radius: 50%; cursor: pointer;
     border: 1px solid rgba(116,172,223,.6); background: #13233a; color: {CELESTE};
     font: 700 13px/1 inherit; opacity: .85; box-shadow: 0 2px 8px rgba(0,0,0,.35);
-    transition: opacity .15s ease, transform .15s ease; }}
+    transition: opacity .15s ease, transform .15s ease, bottom .3s ease, width .3s ease, height .3s ease,
+    border-radius .3s ease; }}
 .mc-pie-btn:hover, .mc-pie-btn:focus-visible {{ opacity: 1; transform: translateY(-1px); }}
-html[data-pie="oculto"] .mc-pie-btn {{ bottom: 0; width: 56px; height: 22px; border-radius: 10px 10px 0 0; border-bottom: 0;
+html[data-pie] .mc-pie-btn {{ bottom: 0; width: 56px; height: 22px; border-radius: 10px 10px 0 0; border-bottom: 0;
     opacity: .85; }}
 html[data-pie="oculto"] .st-key-pie_datos {{ display: none !important; }}
+/* apertura y cierre animados: la barra sube desde el borde inferior o baja hasta desaparecer (lo marca JS_PESTANAS) */
+@keyframes mc-pie-entra {{ from {{ transform: translateY(100%); opacity: 0; }} to {{ transform: none; opacity: 1; }} }}
+@keyframes mc-pie-sale {{ from {{ transform: none; opacity: 1; }} to {{ transform: translateY(100%); opacity: 0; }} }}
+html[data-pie-anim="entra"] .st-key-pie_datos {{ animation: mc-pie-entra .3s ease-out; }}
+html[data-pie-anim="sale"] .st-key-pie_datos {{ animation: mc-pie-sale .3s ease-in forwards; }}
 html[data-pie="oculto"] [data-testid="stMainBlockContainer"] {{ padding-bottom: 2rem !important; }}
 @media (max-width: 560px) {{ .mc-pie-btn {{ right: 12px; }} }}
-@media (prefers-reduced-motion: reduce) {{ .mc-pie-btn {{ transition: none; }} }}
+@media (prefers-reduced-motion: reduce) {{ .mc-pie-btn {{ transition: none; }}
+    html[data-pie-anim] .st-key-pie_datos {{ animation: none; }} }}
 /* quien ya se anotó en las alertas no vuelve a ver el formulario (lo marca JS_PESTANAS en este navegador) */
 html[data-alertas="anotado"] .mc-alerta {{ display: none !important; }}
 .mc-alerta-ok {{ margin: 10px 0 18px; padding: 12px 16px; border-radius: 14px; font-size: 14px;
@@ -632,10 +639,17 @@ html[data-alertas="anotado"] .mc-alerta {{ display: none !important; }}
 [class*="st-key-modo_"] button p {{ word-break: normal !important; overflow-wrap: normal !important; }}
 
 /* ── Ahorro e inversiones ── */
-.mc-aviso {{ display: flex; gap: 12px; align-items: flex-start; margin: 4px 0 18px; padding: 12px 16px; border-radius: 14px;
-    border: 1px solid rgba(246,180,14,.45); background: rgba(246,180,14,.08); font-size: .88rem; line-height: 1.5; }}
+.mc-aviso {{ display: flex; gap: 14px; align-items: flex-start; margin: 6px 0 22px; padding: 14px 18px 14px 16px;
+    border-radius: 12px; border: 1px solid rgba(246,180,14,.28); border-left: 4px solid {SOL};
+    background: linear-gradient(90deg, rgba(246,180,14,.12), rgba(246,180,14,.03) 60%); font-size: .95rem; line-height: 1.55; }}
+.mc-aviso .ic {{ flex: 0 0 auto; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center;
+    justify-content: center; background: rgba(246,180,14,.18); color: {SOL}; font: 800 16px/1 Georgia, serif; font-style: italic; }}
+.mc-aviso .t {{ font-weight: 800; font-size: 1rem; color: {SOL}; margin-bottom: 2px; }}
+.mc-aviso p {{ margin: 0; }}
 .mc-aviso b {{ color: {SOL}; }}
-.mc-aviso .ic {{ flex: 0 0 auto; font-size: 1.15rem; line-height: 1.3; }}
+html[data-tema="claro"] .mc-aviso {{ background: #FFF8E6; border-color: #F1D58C; border-left-color: #C98A00; }}
+html[data-tema="claro"] .mc-aviso .t, html[data-tema="claro"] .mc-aviso b {{ color: #8A5A00; }}
+html[data-tema="claro"] .mc-aviso .ic {{ background: #FBE7B5; color: #8A5A00; }}
 .mc-nota {{ margin: 10px 0 14px; padding: 16px 20px; border-radius: 16px; border: 1px solid rgba(116,172,223,.35);
     background: linear-gradient(135deg, rgba(116,172,223,.16) 0%, rgba(116,172,223,.05) 100%); }}
 .mc-nota .t {{ font-size: .78rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: {CELESTE}; }}
@@ -1343,18 +1357,47 @@ JS_PESTANAS = """
   b.className = 'mc-pie-btn';
   // (sin HTML dentro del script: el sanitizador de Streamlit descarta los scripts que contienen etiquetas)
   const pintar = () => {
-    const oculto = raiz.dataset.pie === 'oculto';
+    const oculto = !!raiz.dataset.pie;  // 'oculto' o 'cerrando'
     b.textContent = oculto ? '▲' : '▼';
     b.title = oculto ? 'Mostrar la barra inferior' : 'Ocultar la barra inferior';
     b.setAttribute('aria-label', b.title);
     b.setAttribute('aria-pressed', oculto ? 'true' : 'false');
   };
   poner(leer());
+  const quieto = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const MS = 300;  // lo mismo que dura la animación en el CSS
+  let reloj = 0;
+  // el elemento que de verdad se desplaza (en Streamlit es el contenedor principal, no la ventana)
+  const desplazable = (el) => {
+    for (let p = el && el.parentElement; p; p = p.parentElement) {
+      const o = getComputedStyle(p).overflowY;
+      if ((o === 'auto' || o === 'scroll') && p.scrollHeight > p.clientHeight) return p;
+    }
+    return document.scrollingElement || document.documentElement;
+  };
   b.addEventListener('click', () => {
-    const oculto = raiz.dataset.pie !== 'oculto';
-    poner(oculto);
+    const oculto = !raiz.dataset.pie;
+    clearTimeout(reloj);
     guardar(oculto);
-    pintar();
+    const barra = document.querySelector('.st-key-pie_datos');
+    if (oculto) {
+      // cierre: la barra baja y recién después se saca
+      if (!barra || quieto()) { delete raiz.dataset.pieAnim; poner(true); pintar(); return; }
+      raiz.dataset.pieAnim = 'sale';
+      raiz.dataset.pie = 'cerrando';
+      pintar();
+      reloj = setTimeout(() => { poner(true); delete raiz.dataset.pieAnim; pintar(); }, MS);
+    } else {
+      // apertura: la barra sube y la página baja lo mismo que mide, así no tapa lo que se estaba leyendo
+      poner(false);
+      if (!quieto()) raiz.dataset.pieAnim = 'entra';
+      pintar();
+      if (barra) {
+        const alto = barra.getBoundingClientRect().height;
+        desplazable(barra).scrollBy({ top: alto, behavior: quieto() ? 'auto' : 'smooth' });
+      }
+      reloj = setTimeout(() => { delete raiz.dataset.pieAnim; }, MS);
+    }
   });
   pintar();
   document.body.appendChild(b);
@@ -2028,9 +2071,11 @@ def viaje(nombre: str, iniciales: str, periodo: str, hito: str, url: str | None,
             f'<div class="per">{esc(periodo)}</div><h3>{esc(nombre)}</h3><div class="hito">{esc(hito)}</div></div></div>')
 
 
-def aviso(texto_md: str) -> str:
-    """Recuadro de advertencia (dorado). Admite **negrita**; el resto se escapa."""
-    return f'<div class="mc-aviso"><span class="ic">⚠️</span><div>{_md_a_html(texto_md)}</div></div>'
+def aviso(texto_md: str, titulo: str = "") -> str:
+    """Recuadro de aclaración (dorado), con título opcional. Admite **negrita**; el resto se escapa."""
+    tit = f'<div class="t">{html.escape(titulo)}</div>' if titulo else ""
+    return (f'<div class="mc-aviso" role="note"><span class="ic" aria-hidden="true">i</span>'
+            f'<div>{tit}<p>{_md_a_html(texto_md)}</p></div></div>')
 
 
 def nota_destacada(titulo: str, valor: str, texto_md: str) -> str:

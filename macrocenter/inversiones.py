@@ -17,9 +17,9 @@ from .avisos import falla
 from .interactivo import entrada_monto
 
 SECCIONES = ["Tasas de hoy", "Cómo les fue", "Plazo fijo vs. UVA", "Glosario"]
-AVISO = ("**Información, no recomendación.** Acá hay tasas, datos del pasado y simulaciones para entender las opciones. "
-         "No es asesoramiento financiero ni una sugerencia de inversión: antes de invertir, informate bien sobre cada "
-         "producto y, si hace falta, consultá a un asesor registrado en la CNV.")
+AVISO_TITULO = "Información, no recomendación"
+AVISO = ("Tasas, resultados pasados y simulaciones para comparar opciones. No es asesoramiento financiero: antes de "
+         "invertir, revisá las condiciones de cada producto y, si lo necesitás, consultá a un asesor registrado en la CNV.")
 
 
 def _hoy() -> pd.Timestamp:
@@ -462,7 +462,7 @@ def pantalla_conceptos() -> None:
 
 def mostrar(d: dict, grafico) -> None:
     """Pantalla completa. `d`: las series y tablas (ver app.py); `grafico`: la función de la app que dibuja figuras."""
-    st.markdown(style.aviso(AVISO), unsafe_allow_html=True)
+    st.markdown(style.aviso(AVISO, AVISO_TITULO), unsafe_allow_html=True)
     if st.session_state.get("inv_seccion") not in SECCIONES:
         st.session_state["inv_seccion"] = SECCIONES[0]
     sec = st.segmented_control("Sección", SECCIONES, key="inv_seccion", label_visibility="collapsed") or SECCIONES[0]
