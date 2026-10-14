@@ -1167,8 +1167,9 @@ html[data-tema="claro"] :is(.mc-tl-card, .mc-min-card, .mc-viaje, .mc-nota, .mc-
 [data-testid="stTabsScrollLeft"], [data-testid="stTabsScrollRight"] {{
     width: 52px !important; height: 3.4rem !important; display: flex; align-items: center; cursor: pointer;
 }}
-/* la flecha izquierda va a la derecha de «Inicio», que queda fija en el borde (ver más abajo) */
-[data-testid="stTabsScrollLeft"] {{ justify-content: flex-start; left: 8.9rem !important; z-index: 4; }}
+/* la flecha izquierda va a la derecha de «Resumen», que queda fija en el borde: JS_PESTANAS mide la píldora y
+   pone --mc-flecha (con un nombre más largo o la letra más grande, una posición fija la tapaba) */
+[data-testid="stTabsScrollLeft"] {{ justify-content: flex-start; left: var(--mc-flecha, 11rem) !important; z-index: 4; }}
 [data-testid="stTabsScrollRight"] {{ justify-content: flex-end; }}
 [data-testid="stTabsScrollLeft"] svg, [data-testid="stTabsScrollRight"] svg {{
     width: 32px !important; height: 32px !important; padding: 5px; box-sizing: border-box; border-radius: 50%;
@@ -1693,6 +1694,29 @@ JS_PESTANAS = """
     setTimeout(pasar, 2500);  // si la app lo pisó al redibujar, se vuelve a poner
   };
   setTimeout(pasar, 800);
+})();
+(() => {
+  // Flecha izquierda de las pestañas: justo a la derecha de «Resumen» (que queda fija). Se mide la píldora y se
+  // guarda en --mc-flecha; solo se recalcula al cambiar el tamaño de la ventana o al tocar la fila.
+  if (window.__mcFlecha) return;
+  window.__mcFlecha = true;
+  const raiz = document.documentElement;
+  const medir = () => {
+    const lista = document.querySelector('[role="tablist"]');
+    const res = lista && lista.querySelector('[data-testid="stTab"]');
+    if (!res) return false;
+    const x = Math.round(res.getBoundingClientRect().right - lista.getBoundingClientRect().left + 14);
+    const valor = Math.max(x, 60) + 'px';
+    if (raiz.style.getPropertyValue('--mc-flecha') !== valor) raiz.style.setProperty('--mc-flecha', valor);
+    return true;
+  };
+  let n = 0;
+  const arrancar = () => { if (!medir() && n++ < 60) setTimeout(arrancar, 500); };
+  arrancar();
+  window.addEventListener('resize', () => setTimeout(medir, 120), { passive: true });
+  document.addEventListener('pointerdown', (e) => {
+    if (e.target && e.target.closest && e.target.closest('[role="tablist"], [data-testid^="stTabsScroll"]')) setTimeout(medir, 60);
+  }, { passive: true, capture: true });
 })();
 </script>
 """
