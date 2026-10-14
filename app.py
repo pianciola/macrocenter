@@ -1720,11 +1720,11 @@ if vista != "tablero":
     pie_pagina()
     st.stop()
 
-# de más a menos importante para leer la macro: precios, tipo de cambio, actividad, sector externo, tasas, ingresos,
-# cuentas públicas y dinero; los mercados (bolsas y cripto) al final
-t_res, t_prec, t_dol, t_act, t_res_i, t_tasas, t_sal, t_fis, t_com, t_din, t_bol, t_cri = st.tabs(
-    ["Inicio", "Inflación", "Dólar", "Actividad y PBI", "Reservas", "Tasas y riesgo país", "Salarios",
-     "Resultado fiscal", "Comercio exterior", "Dinero y crédito", "Bolsas", "Cripto"],
+# primero el ala financiera (lo que más se usa): dólar, bolsas, cripto, tasas y dinero; después precios, actividad,
+# sector externo, ingresos y cuentas públicas
+t_res, t_dol, t_bol, t_cri, t_tasas, t_din, t_prec, t_act, t_res_i, t_sal, t_fis, t_com = st.tabs(
+    ["Inicio", "Dólar", "Bolsas", "Cripto", "Tasas y riesgo país", "Dinero y crédito", "Inflación",
+     "Actividad y PBI", "Reservas", "Salarios", "Resultado fiscal", "Comercio exterior"],
     # cada pestaña se calcula y se manda recién al abrirla: la primera carga pesa una fracción (clave en el celular)
     key="pestana", on_change="rerun",
 )
