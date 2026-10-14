@@ -461,6 +461,18 @@ button[data-variant="segmented_control"][aria-checked="true"] p {{ color: #fff !
 .mc-gtit {{ margin: 6px 0 0; padding-left: 2px; }}
 .mc-gtit .t {{ font-size: 16px; font-weight: 700; line-height: 1.3; }}
 .mc-gtit .b {{ font-size: 12px; opacity: .6; margin-top: 2px; }}
+/* botón para ocultar / mostrar la barra del pie (lo crea JS_PESTANAS; el estado queda en la clase mc-pie-oculto) */
+.mc-pie-btn {{ position: fixed; left: 14px; bottom: 72px; z-index: 95; display: flex; align-items: center; gap: 6px;
+    padding: 4px 11px 4px 9px; border-radius: 999px; border: 1px solid rgba(116,172,223,.45); cursor: pointer;
+    background: rgba(14,26,43,.92); color: {CELESTE}; font: 700 12px/1.2 inherit; opacity: .75;
+    transition: opacity .15s ease, bottom .2s ease; }}
+.mc-pie-btn:hover, .mc-pie-btn:focus-visible {{ opacity: 1; }}
+.mc-pie-btn .i {{ font-size: 13px; line-height: 1; }}
+html.mc-pie-oculto .mc-pie-btn {{ bottom: 10px; }}
+html.mc-pie-oculto .st-key-pie_datos {{ display: none !important; }}
+html.mc-pie-oculto [data-testid="stMainBlockContainer"] {{ padding-bottom: 3.5rem !important; }}
+@media (max-width: 560px) {{ .mc-pie-btn .t {{ display: none; }} .mc-pie-btn {{ padding: 5px 9px; left: 10px; }} }}
+@media (prefers-reduced-motion: reduce) {{ .mc-pie-btn {{ transition: none; }} }}
 /* formulario de alertas del dólar (pestaña Dólar) */
 .mc-alerta {{
     display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin: 10px 0 18px; padding: 14px 16px;
@@ -1282,6 +1294,32 @@ CSS = _minificar_css(CSS)
 # medio no mueven nada. Se instala una sola vez por página y también sigue a las flechas del teclado.
 JS_PESTANAS = """
 <script>
+(() => {
+  // Botón para ocultar la barra del pie (y volver a mostrarla). La elección se recuerda en este navegador.
+  if (window.__mcPie) return;
+  window.__mcPie = true;
+  const raiz = document.documentElement;
+  const leer = () => { try { return localStorage.getItem('mc_pie_oculto') === '1'; } catch (e) { return false; } };
+  const guardar = (v) => { try { localStorage.setItem('mc_pie_oculto', v ? '1' : '0'); } catch (e) {} };
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.className = 'mc-pie-btn';
+  const pintar = () => {
+    const oculto = raiz.classList.contains('mc-pie-oculto');
+    b.innerHTML = '<span class="i" aria-hidden="true">' + (oculto ? '▲' : '▼') + '</span><span class="t">' +
+      (oculto ? 'Mostrar barra' : 'Ocultar barra') + '</span>';
+    b.setAttribute('aria-label', oculto ? 'Mostrar la barra inferior' : 'Ocultar la barra inferior');
+    b.setAttribute('aria-pressed', oculto ? 'true' : 'false');
+  };
+  raiz.classList.toggle('mc-pie-oculto', leer());
+  b.addEventListener('click', () => {
+    const oculto = raiz.classList.toggle('mc-pie-oculto');
+    guardar(oculto);
+    pintar();
+  });
+  pintar();
+  document.body.appendChild(b);
+})();
 (() => {
   // La franja de cotizaciones se pausa cuando no se ve (al bajar por la página): ahorra batería en el celular.
   if (window.__mcFranja) return;

@@ -17,8 +17,8 @@ from pathlib import Path
 import pandas as pd
 import streamlit as st
 
-from macrocenter import (charts, data, glosario, interactivo, inversiones, legal, ministros, news, pestanas, presidentes,
-                         score, style)
+from macrocenter import (charts, data, glosario, interactivo, inversiones, legal, mapa, ministros, news, pestanas,
+                         presidentes, score, style)
 from macrocenter.avisos import actualizando, falla
 from macrocenter.carga import (  # descarga, cachés y copia de respaldo
     _estado_actualizar, _memoria, _precalentar, _ultima_carga, _va_a_demorar, cargar_cripto, cargar_fotos,
@@ -1065,6 +1065,7 @@ def inflacion_distritos() -> None:
     if len(series) < 2:
         return
     st.markdown("#### Inflación por región y provincia")
+    mapa.mostrar(series)
     filas = []
     for nombre, (fuente, v) in series.items():
         u = v.dropna(subset=["mensual"]).iloc[-1]
