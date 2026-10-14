@@ -124,13 +124,14 @@ a.mc-brand:hover .mc-flag svg {{ transform: translateY(-1px) scale(1.04); box-sh
 /* el nombre: misma familia que la página, en negrita con «Center» celeste y algo más liviano. Las reglas apuntan a
    .c y no a «h1 span»: Streamlit envuelve el texto del título en su propio <span>, y con «h1 span» todo el nombre
    quedaba fino y celeste */
-.stApp section[data-testid="stSidebar"] .mc-brand h1.mc-wm {{ font-size: 1.6rem; font-weight: 800 !important;
+.mc-brand .txt {{ display: flex; flex-direction: column; min-width: 0; }}
+.stApp section[data-testid="stSidebar"] .mc-brand .mc-wm {{ display: block; line-height: 1.05; font-size: 1.6rem; font-weight: 800 !important;
     letter-spacing: -.025em; color: #FFFFFF; }}
-.stApp section[data-testid="stSidebar"] .mc-brand h1.mc-wm * {{ font-weight: inherit !important; color: inherit; }}
-.stApp section[data-testid="stSidebar"] .mc-brand h1.mc-wm .c {{ color: {CELESTE} !important; font-weight: 700 !important; }}
-html[data-tema="claro"] .stApp section[data-testid="stSidebar"] .mc-brand h1.mc-wm {{ color: #0E1A2B; }}
-html[data-tema="claro"] .stApp section[data-testid="stSidebar"] .mc-brand h1.mc-wm .c {{ color: #2E6DB4 !important; }}
-.mc-brand p.sub {{ margin: 6px 0 0; font-size: .78rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
+.stApp section[data-testid="stSidebar"] .mc-brand .mc-wm * {{ font-weight: inherit !important; color: inherit; }}
+.stApp section[data-testid="stSidebar"] .mc-brand .mc-wm .c {{ color: {CELESTE} !important; font-weight: 700 !important; }}
+html[data-tema="claro"] .stApp section[data-testid="stSidebar"] .mc-brand .mc-wm {{ color: #0E1A2B; }}
+html[data-tema="claro"] .stApp section[data-testid="stSidebar"] .mc-brand .mc-wm .c {{ color: #2E6DB4 !important; }}
+.mc-brand .sub {{ display: block; margin: 6px 0 0; font-size: .78rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
     line-height: 1.2; opacity: .85; }}
 
 /* ── Barra lateral: terminación propia ── */
@@ -907,7 +908,7 @@ html[data-tema="claro"] .mc-aviso .ic {{ background: #FBE7B5; color: #8A5A00; }}
 .st-key-pie_datos [data-testid="stPopover"] button {{ white-space: nowrap; }}
 .mc-vivo, .mc-vivo span {{ white-space: nowrap; }}
 /* lo que entra depende del ancho real de la barra (con la barra lateral abierta es bastante menos que la ventana):
-   se va ocultando lo secundario, nunca los botones. Términos y privacidad siguen en «Fuentes y aviso» */
+   se va ocultando lo secundario, nunca los botones. Términos y privacidad siguen en «Fuentes y legales» */
 .st-key-pie_datos {{ container-type: inline-size; container-name: pie; }}
 @container pie (max-width: 1380px) {{ .mc-pielinks .c, .mc-vivo .sec {{ display: none; }} }}
 @container pie (max-width: 1040px) {{ .mc-pielinks a:not(.bol) {{ display: none; }} }}
@@ -927,7 +928,7 @@ html[data-tema="claro"] .mc-aviso .ic {{ background: #FBE7B5; color: #8A5A00; }}
 @container pie (max-width: 430px) {{ .st-key-pie_datos .mc-vivo .en {{ font-size: 0; gap: 0; }} }}
 @media (max-width: 560px) {{ .st-key-pie_datos {{ padding-left: 14px !important; padding-right: 112px !important; gap: 8px !important; }}
     .st-key-pie_datos > :first-child {{ display: none; }} }}
-/* el panel «Fuentes y aviso»: el contenido del pie, sin marco propio */
+/* el panel «Fuentes y legales»: el contenido del pie, sin marco propio */
 [data-testid="stPopoverBody"] .mc-foot {{ margin: 0; padding: 4px 4px 8px; border: none; border-radius: 0; background: none;
     width: min(620px, 80vw); }}
 @media (max-width: 560px) {{
@@ -1373,7 +1374,7 @@ h3 {{ font-weight: 700 !important; }}
     /* pie de página y fichas en una columna */
     .mc-foot {{ padding: 14px 14px 10px; margin-top: 28px; }}
     .mc-foot .legal {{ flex-direction: column; }}
-    .mc-brand h1 {{ font-size: 1.3rem !important; }}
+    .stApp section[data-testid="stSidebar"] .mc-brand .mc-wm {{ font-size: 1.35rem !important; }}
 }}
 </style>
 """
@@ -1810,8 +1811,10 @@ def _favicon_bandera():
 def marca() -> str:
     return (
         f'<a class="mc-brand" href="?ver=tablero/resumen" target="_self" title="Ir al resumen" aria-label="MacroCenter: ir al resumen">'
-        f'<div class="mc-flag">{logo(46)}</div><div><h1 class="mc-wm">Macro<span class="c">Center</span></h1>'
-        '<p class="sub">El pulso de la economía</p></div></a>'
+        # todo en elementos de línea (span): con bloques (div, h1, p) adentro de un enlace, el Markdown de Streamlit
+        # partía la marca en pedazos
+        f'<span class="mc-flag">{logo(46)}</span><span class="txt"><span class="mc-wm" role="heading" aria-level="1">'
+        'Macro<span class="c">Center</span></span><span class="sub">El pulso de la economía</span></span></a>'
     )
 
 
