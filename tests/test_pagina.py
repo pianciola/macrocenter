@@ -101,3 +101,24 @@ def test_titulos_de_seccion_no_dependen_de_una_clase_en_html():
 def test_formulario_de_alertas_se_oculta_al_anotarse():
     assert 'html[data-alertas="anotado"] .mc-alerta' in style.CSS
     assert "mc_alertas_anotado" in style.JS_PESTANAS and "dataset.alertas" in style.JS_PESTANAS
+
+
+def test_noticias_del_indec(monkeypatch):
+    # del calendario de difusión se toma solo lo ya publicado, y solo fecha, título y enlace
+    from macrocenter import news
+
+    crudo = ('[{"fechaPublicacion":"2026-10-13T16:00:00","titulo_espaniol":"\u00cdndice de precios al consumidor",'
+             '"urlArchivo":"uploads/informesdeprensa/ipc.pdf","publicado":1,"DNI_alta":"1"},'
+             '{"fechaPublicacion":"2999-01-01T16:00:00","titulo_espaniol":"Futuro","urlArchivo":"x.pdf","publicado":1},'
+             '{"fechaPublicacion":"2026-10-12T16:00:00","titulo_espaniol":"Borrador","urlArchivo":"y.pdf","publicado":0}]')
+
+    class R:
+        content = ("<script>var CalendarJson = '" + crudo + "';</script>").encode("utf-8")
+
+        def raise_for_status(self):
+            pass
+
+    monkeypatch.setattr(news.requests, "get", lambda *a, **k: R())
+    notas = news.indec()
+    assert [n.titulo for n in notas] == ["Índice de precios al consumidor"]
+    assert notas[0].url == "https://www.indec.gob.ar/uploads/informesdeprensa/ipc.pdf" and news.url_segura(notas[0].url)

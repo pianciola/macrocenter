@@ -243,6 +243,7 @@ section[data-testid="stSidebar"] .st-key-conv_caja .mc-conv {{ border: none; bac
     border-radius: 999px; }}
 .mc-news .tag.bcra {{ color: {CELESTE}; background: rgba(116,172,223,.15); }}
 .mc-news .tag.economia {{ color: #A9B8C9; background: rgba(169,184,201,.13); }}
+.mc-news .tag.indec {{ color: #C3A6F0; background: rgba(195,166,240,.14); }}
 .mc-news .tag.nueva {{ color: #3A2A00; background: {SOL}; }}
 .mc-news-txt a {{ font-weight: 700; font-size: .98rem; line-height: 1.35; color: inherit !important; text-decoration: none; }}
 .mc-news-txt a:hover {{ color: {CELESTE} !important; text-decoration: underline; text-underline-offset: 3px; }}
@@ -1748,7 +1749,7 @@ def resultado_final(fichas: list[tuple[str, str, str, str]]) -> str:
 
 def lista_noticias(items: list[dict], meses: list[str]) -> str:
     """Lista de noticias: fecha a la izquierda, fuente y «Nueva» como etiquetas, título y resumen corto.
-    items: {titulo, url, fecha, resumen, fuente, clase ('bcra'|'economia'), nueva}. Todo el texto viene de afuera: se escapa."""
+    items: {titulo, url, fecha, resumen, fuente, clase ('bcra'|'economia'|'indec'), nueva}. Todo el texto viene de afuera: se escapa."""
     from macrocenter.news import url_segura
 
     if not items:

@@ -41,7 +41,7 @@ def fuentes() -> tuple[dict, dict]:
                  "BCRA · euro": lambda: data.divisa("EUR"), "BCRA · libra": lambda: data.divisa("GBP")}
     secundarias = {"FRED · inflación EE. UU.": data.ipc_eeuu, "CoinGecko · criptomonedas": data.cripto_mercado,
                    "CriptoYa · USDT": data.usdt_exchanges, "Noticias · BCRA": news.bcra,
-                   "Noticias · Economía": news.economia,
+                   "Noticias · Economía": news.economia, "Noticias · INDEC": news.indec,
                    "ArgentinaDatos · plazo fijo por banco": data.plazo_fijo_bancos,
                    "ArgentinaDatos · rendimientos de plataformas": data.rendimientos_plataformas,
                    "ArgentinaDatos · fondos money market": data.fci}

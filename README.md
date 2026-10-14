@@ -93,9 +93,9 @@ Arriba de todo desliza una franja con datos clave (dólares, euro, riesgo país,
 
 ## Noticias
 
-El botón **Noticias BCRA y Economía** de la barra lateral abre una ventana con las últimas novedades del Banco
-Central y del Ministerio de Economía. Ninguno ofrece API ni RSS de noticias, así que se lee el listado público de
-cada sitio (`macrocenter/news.py`); si cambian el diseño, la ventana avisa y deja el enlace a la fuente.
+El botón **Noticias** de la barra lateral abre una ventana con las últimas novedades del Banco Central, del
+Ministerio de Economía y del INDEC (sus informes técnicos, según el calendario de difusión). Ninguno ofrece API ni
+RSS de noticias, así que se lee el listado público de cada sitio (`macrocenter/news.py`); si cambian el diseño, la ventana avisa y deja el enlace a la fuente.
 
 ## Modo oscuro
 

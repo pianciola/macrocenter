@@ -161,12 +161,12 @@ def es_nueva(n: news.Noticia) -> bool:
 @st.dialog("Noticias oficiales", width="large")
 def ver_noticias() -> None:
     noticias = cargar_noticias()
-    fuentes = {"bcra": "BCRA", "economia": "Economía"}
+    fuentes = {"bcra": "BCRA", "economia": "Economía", "indec": "INDEC"}
     pares = [(n, k) for k in fuentes for n in (noticias.get(k) if isinstance(noticias.get(k), list) else [])]
     hay_sin_leer = any(es_nueva(n) for n, _ in pares)
 
     c_filtro, c_boton = st.columns([3, 1.4], vertical_alignment="center")
-    filtro = c_filtro.segmented_control("Fuente", ["Todas", "BCRA", "Economía"], default="Todas", key="news_filtro",
+    filtro = c_filtro.segmented_control("Fuente", ["Todas", *fuentes.values()], default="Todas", key="news_filtro",
                                         label_visibility="collapsed") or "Todas"
     if hay_sin_leer:
         # al tocarlo se marca todo y el diálogo se redibuja solo: el botón pasa a verde
@@ -184,7 +184,8 @@ def ver_noticias() -> None:
     st.markdown(style.lista_noticias([
         dict(titulo=n.titulo, url=n.url, fecha=n.fecha, resumen=n.resumen, fuente=fuentes[k], clase=k, nueva=es_nueva(n))
         for n, k in visibles[:14]], MESES_ES), unsafe_allow_html=True)
-    st.markdown(style.pie_noticias([("Banco Central", news.BCRA_URL), ("Ministerio de Economía", news.ECONOMIA_URL)]),
+    st.markdown(style.pie_noticias([("Banco Central", news.BCRA_URL), ("Ministerio de Economía", news.ECONOMIA_URL),
+                                      ("INDEC", news.INDEC_URL)]),
                 unsafe_allow_html=True)
 
 

@@ -1,22 +1,25 @@
-"""Noticias oficiales del BCRA y del Ministerio de Economía.
+"""Noticias oficiales del BCRA, del Ministerio de Economía y del INDEC.
 
-Ninguno de los dos organismos ofrece API ni RSS de noticias, así que se leen sus sitios públicos (HTML).
+Ninguno de los tres organismos ofrece API ni RSS de noticias, así que se leen sus sitios públicos (HTML).
 Cada fuente tiene varias rutas, que se prueban en orden hasta que una devuelve notas:
 
   BCRA          1) listado /noticias/   2) listado /category/noticias/   3) sitemap + metadatos de cada nota
   Economía      1) listado /economia/noticias   2) portada /economia + metadatos de cada nota
+  INDEC         el calendario de difusión que trae su portada (los informes técnicos ya publicados)
 
 Si todas fallan, se levanta un error con el detalle: la app no lo muestra (queda registrado) y la ventana de noticias sigue con lo que haya.
 Solo se toman título, fecha, bajada y enlace; la nota completa se lee en el sitio original.
 """
 from __future__ import annotations
 
+import json
 import re
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, replace
 from datetime import datetime
 from typing import Callable
 from urllib.parse import urlparse
+from zoneinfo import ZoneInfo
 
 import requests
 from bs4 import BeautifulSoup
@@ -30,13 +33,17 @@ BCRA_SITEMAP = "https://www.bcra.gob.ar/post-sitemap.xml"
 ECONOMIA_URL = "https://www.argentina.gob.ar/economia/noticias"
 ECONOMIA_PORTADA = "https://www.argentina.gob.ar/economia"
 ECONOMIA_BASE = "https://www.argentina.gob.ar"
+INDEC_URL = "https://www.indec.gob.ar/indec/web/Calendario-Fecha-0"
+INDEC_PORTADA = "https://www.indec.gob.ar/indec/Portada"
+INDEC_BASE = "https://www.indec.gob.ar/"
 
 MESES = {m: i for i, m in enumerate(
     ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre",
      "noviembre", "diciembre"], start=1)}
 
 
-HOSTS_PERMITIDOS = {"www.bcra.gob.ar", "bcra.gob.ar", "www.argentina.gob.ar", "argentina.gob.ar"}
+HOSTS_PERMITIDOS = {"www.bcra.gob.ar", "bcra.gob.ar", "www.argentina.gob.ar", "argentina.gob.ar", "www.indec.gob.ar",
+                    "indec.gob.ar"}
 
 
 def url_segura(url: str | None) -> bool:
@@ -196,3 +203,33 @@ def economia(limite: int = 12) -> list[Noticia]:
         ("listado /economia/noticias", _economia_listado),
         ("portada /economia", _economia_portada),
     ], limite)
+
+
+# ───────────────────────── INDEC ─────────────────────────
+def _indec_calendario() -> list[Noticia]:
+    """La portada del INDEC trae, dentro de un script, todo su calendario de difusión (pasado y futuro). De cada
+    informe se toman solo la fecha, el título y el enlace al PDF; el resto de los campos no se lee ni se guarda."""
+    r = requests.get(INDEC_PORTADA, headers=HEADERS, timeout=TIMEOUT)
+    r.raise_for_status()
+    m = re.search(rb"CalendarJson\s*=\s*'(.*?)';", r.content, re.S)
+    if not m:
+        raise ValueError("no se encontró el calendario de difusión")
+    ahora = datetime.now(ZoneInfo("America/Argentina/Buenos_Aires")).replace(tzinfo=None)
+    out = []
+    for x in json.loads(m.group(1).decode("utf-8")):
+        try:
+            if x.get("publicado") != 1:
+                continue
+            fecha = datetime.fromisoformat(str(x["fechaPublicacion"]))
+            titulo, archivo = str(x["titulo_espaniol"]).strip(), str(x.get("urlArchivo") or "").strip().lstrip("/")
+        except (KeyError, TypeError, ValueError):
+            continue
+        if fecha > ahora or not titulo or not archivo:  # lo programado para más adelante todavía no salió
+            continue
+        out.append(Noticia(fuente="INDEC", fecha=fecha, titulo=titulo, resumen="", url=INDEC_BASE + archivo,
+                           etiquetas="Informe técnico"))
+    return out
+
+
+def indec(limite: int = 12) -> list[Noticia]:
+    return _con_respaldo([("calendario de difusión", _indec_calendario)], limite)

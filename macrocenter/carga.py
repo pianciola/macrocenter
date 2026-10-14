@@ -348,7 +348,7 @@ def _bajar_inversiones() -> dict[str, pd.DataFrame | str]:
 def _bajar_noticias() -> dict[str, list[news.Noticia] | str]:
     """Cada fuente falla por separado: si una cambia su sitio, la otra se sigue mostrando."""
     out: dict[str, list[news.Noticia] | str] = {}
-    for clave, fn in (("bcra", news.bcra), ("economia", news.economia)):
+    for clave, fn in (("bcra", news.bcra), ("economia", news.economia), ("indec", news.indec)):
         try:
             out[clave] = fn()
         except Exception as e:  # noqa: BLE001
