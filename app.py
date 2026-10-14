@@ -1720,9 +1720,11 @@ if vista != "tablero":
     pie_pagina()
     st.stop()
 
-t_res, t_dol, t_cri, t_bol, t_res_i, t_act, t_sal, t_prec, t_tasas, t_din, t_com, t_fis = st.tabs(
-    ["Inicio", "Dólar", "Cripto", "Bolsas", "Reservas", "Actividad y PBI", "Salarios", "Precios y UVA",
-     "Tasas y riesgo país", "Dinero y crédito", "Comercio exterior", "Resultado fiscal"],
+# de más a menos importante para leer la macro: precios, tipo de cambio, actividad, sector externo, tasas, ingresos,
+# cuentas públicas y dinero; los mercados (bolsas y cripto) al final
+t_res, t_prec, t_dol, t_act, t_res_i, t_tasas, t_sal, t_fis, t_com, t_din, t_bol, t_cri = st.tabs(
+    ["Inicio", "Inflación", "Dólar", "Actividad y PBI", "Reservas", "Tasas y riesgo país", "Salarios",
+     "Resultado fiscal", "Comercio exterior", "Dinero y crédito", "Bolsas", "Cripto"],
     # cada pestaña se calcula y se manda recién al abrirla: la primera carga pesa una fracción (clave en el celular)
     key="pestana", on_change="rerun",
 )
@@ -1807,6 +1809,70 @@ def restablecer_prefs() -> None:
 
 if "kpis_sel" not in st.session_state:
     st.session_state["kpis_sel"] = cargar_prefs()
+
+# Inflación por región (INDEC) y por provincia (institutos provinciales): (nombre, clave, quién la mide)
+DISTRITOS_IPC = [
+    ("Ciudad de Buenos Aires", "serie:ipc_caba", "Instituto de Estadística de la Ciudad"),
+    ("Gran Buenos Aires", "serie:ipc_gba", "INDEC"),
+    ("Santa Fe", "serie:ipc_santafe", "Estadística provincial"),
+    ("Mendoza", "serie:ipc_mendoza", "Estadística provincial"),
+    ("Tucumán", "serie:ipc_tucuman", "Estadística provincial"),
+    ("San Luis", "serie:ipc_sanluis", "Estadística provincial"),
+    ("Chaco (Gran Resistencia)", "serie:ipc_chaco", "Estadística provincial"),
+    ("Región Pampeana", "serie:ipc_pampeana", "INDEC"),
+    ("Región Noreste", "serie:ipc_noreste", "INDEC"),
+    ("Región Noroeste", "serie:ipc_noroeste", "INDEC"),
+    ("Región Cuyo", "serie:ipc_cuyo", "INDEC"),
+    ("Región Patagonia", "serie:ipc_patagonia", "INDEC"),
+]
+
+
+def variaciones_ipc(df: pd.DataFrame) -> pd.DataFrame:
+    """De un nivel de precios mensual: variación mensual e interanual (%). Los meses que faltan quedan vacíos."""
+    s = df[df["fecha"] <= HOY].drop_duplicates("fecha").set_index("fecha")["valor"].sort_index().asfreq("MS")
+    out = pd.DataFrame({"mensual": s.pct_change(fill_method=None) * 100,
+                        "interanual": s.pct_change(12, fill_method=None) * 100})
+    return out.rename_axis("fecha").reset_index().dropna(subset=["mensual"])
+
+
+@st.fragment
+def inflacion_distritos() -> None:
+    """Tabla con el último dato de cada distrito y gráfico para comparar la interanual de los que se elijan."""
+    series = {}
+    if infl_m is not None and infl_ia is not None:
+        n = infl_m.merge(infl_ia, on="fecha", suffixes=("_m", "_ia"))
+        series["Nacional"] = ("INDEC", n.rename(columns={"valor_m": "mensual", "valor_ia": "interanual"}))
+    for nombre, clave, fuente in DISTRITOS_IPC:
+        d = DATOS.get(clave)  # sin aviso si falta: el distrito simplemente no aparece
+        if isinstance(d, pd.DataFrame) and not d.empty:
+            v = variaciones_ipc(d)
+            if not v.empty:
+                series[nombre] = (fuente, v)
+    if len(series) < 2:
+        return
+    st.markdown("#### Inflación por región y provincia")
+    filas = []
+    for nombre, (fuente, v) in series.items():
+        u = v.dropna(subset=["mensual"]).iloc[-1]
+        filas.append([(nombre, "", fuente), f"{MESES_ES[u['fecha'].month - 1][:3]} {u['fecha']:%Y}",
+                      charts.num(u["mensual"], 1, suf="%"),
+                      charts.num(u["interanual"], 1, suf="%") if pd.notna(u["interanual"]) else "s/d"])
+    st.markdown(style.tabla(["Distrito", "Dato de", "Mensual", "Interanual"], filas), unsafe_allow_html=True)
+    st.caption("Cada instituto mide con su propia canasta y publica en su propia fecha, por eso el último mes no es el "
+               "mismo para todos. Las regiones del INDEC cubren todo el país (Córdoba, por ejemplo, está en la Pampeana: "
+               "su índice provincial no está en la API de datos abiertos).")
+    nombres = list(series)
+    defecto = [n for n in ("Nacional", "Ciudad de Buenos Aires", "Santa Fe", "Mendoza") if n in series]
+    elegidos = selector_categoria("Distritos", nombres, "infl_distritos", defecto=defecto, multi=True) or defecto
+    per = selector_periodo("infl_distritos", "2 años", mensual=True)
+    tabla_ia = None
+    for nombre in elegidos:
+        v = series[nombre][1][["fecha", "interanual"]].rename(columns={"interanual": nombre})
+        tabla_ia = v if tabla_ia is None else tabla_ia.merge(v, on="fecha", how="outer")
+    if tabla_ia is not None:
+        grafico(charts.lineas(rec(tabla_ia.sort_values("fecha"), 0, per), {n: n for n in elegidos},
+                              "Inflación interanual por distrito (%)", yfmt=",.1f", height=360), key="graf_infl_distritos")
+
 
 def ult_y_ant(df: pd.DataFrame | None, col: str = "valor", atras: int = 1) -> tuple[float | None, float | None]:
     """Último dato y el de `atras` períodos antes (None si no hay)."""
@@ -2447,8 +2513,8 @@ with t_sal, protegido("Salarios"):
         st.caption("Índice de salarios y RIPTE: INDEC / Secretaría de Seguridad Social, con rezago de ~2 meses. "
                    "El salario real se calcula como (1 + salario nominal) / (1 + inflación) − 1, interanual.")
 
-# ── Precios y UVA ──
-with t_prec, protegido("Precios y UVA"):
+# ── Inflación ──
+with t_prec, protegido("Inflación"):
     if t_prec.open:  # solo la pestaña abierta se calcula y se manda al navegador
         st.caption("La inflación (IPC del INDEC), lo que espera el mercado para los próximos 12 meses (REM del BCRA) y la "
                    "**UVA**, la unidad que ajusta créditos y plazos fijos por inflación. Verde: la inflación baja; rojo: sube.")
@@ -2477,6 +2543,7 @@ with t_prec, protegido("Precios y UVA"):
                                           {"Interanual observada": "Inflación interanual observada",
                                            "Expectativa 12 m (REM)": "Expectativa 12 m (REM)"},
                                           "Inflación interanual vs. expectativas del REM (%)", yfmt=",.0f"))
+        inflacion_distritos()
         if infl_ia is not None and dol is not None:
             st.markdown("#### ¿El dólar le ganó a la inflación?")
             # dólar: último dato de cada mes y variación contra el mismo mes del año anterior (igual que la inflación interanual)

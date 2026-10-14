@@ -25,7 +25,7 @@ Si cambiás el código, cerrá y volvé a abrir `run.bat`: Streamlit no recarga 
 | Dólar | Los 7 dólares (oficial, mayorista, blue, MEP, CCL, cripto, tarjeta) con compra, venta, variación y brecha; euro y libra esterlina (referencia BCRA); gráficos y brecha cambiaria |
 | Reservas | Reservas brutas del BCRA y variación mensual |
 | Actividad y PBI | PBI trimestral, EMAE (original y desestacionalizado), desocupación |
-| Precios y UVA | Inflación mensual/interanual, REM, UVA, CER, UVI, ICL, UVA vs dólar |
+| Inflación | Inflación mensual/interanual, REM, por región (INDEC) y por provincia (Ciudad de Buenos Aires, Santa Fe, Mendoza, Tucumán, San Luis, Chaco), UVA, CER, UVI, ICL, dólar vs inflación |
 | Tasas y riesgo país | BADLAR, TAMAR, plazo fijo, préstamos personales, riesgo país |
 | Dinero y crédito | Base monetaria, M2 privado, préstamos al sector privado |
 | Comercio exterior | Exportaciones, importaciones, saldo comercial |
