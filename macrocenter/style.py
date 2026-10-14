@@ -1731,7 +1731,8 @@ JS_PESTANAS = """
   // (además de la regla del CSS de la página, que Streamlit vuelve a armar en cada redibujado y por un instante deja el
   // botón a la vista, se usa una hoja propia que no se toca hasta estar listo)
   const hoja = document.createElement('style');
-  hoja.textContent = '[class*="st-key-btn_noticias"] { opacity: 0 !important; }';
+  // (el selector es más específico que «[data-stale] {opacity:1 !important}» de la página, que se activa en cada redibujado)
+  hoja.textContent = 'html body [class*="st-key-btn_noticias"][class*="st-key"] { opacity: 0 !important; }';
   document.head.appendChild(hoja);
   const listo = () => { document.documentElement.dataset.leidas = 'listo'; hoja.remove(); };
   let v = '';
