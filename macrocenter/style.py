@@ -1163,8 +1163,9 @@ html[data-tema="claro"] :is(.mc-tl-card, .mc-min-card, .mc-viaje, .mc-nota, .mc-
 }}
 /* "Inicio" (primer marcador): la casa de la app. Píldora celeste con el Sol de Mayo, como la bandera; se rellena
    cuando está elegida y queda separada del resto por una línea vertical */
+/* fija a la izquierda de la fila: al desplazar las pestañas, «Inicio» queda siempre a mano (al lado de la flecha) */
 [role="tablist"] [data-testid="stTab"]:first-of-type {{
-    position: relative; height: 2.6rem; margin: .4rem 1.25rem .4rem 1.1rem; padding: 0 1.15rem 0 2.45rem;
+    position: sticky; left: 3.4rem; z-index: 3; height: 2.6rem; margin: .4rem 1.25rem .4rem 1.1rem; padding: 0 1.15rem 0 2.45rem;
     border-radius: 999px; border: 1px solid rgba(116,172,223,.55);
     background: linear-gradient(135deg, rgba(116,172,223,.20), rgba(116,172,223,.07));
     box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
@@ -1199,9 +1200,15 @@ html[data-tema="claro"] :is(.mc-tl-card, .mc-min-card, .mc-viaje, .mc-nota, .mc-
     filter: drop-shadow(0 0 4px rgba(246,180,14,.9));
 }}
 [role="tablist"] [data-testid="stTab"]:first-of-type p {{ font-weight: 800; letter-spacing: .02em; }}
+/* detrás de la píldora, un fondo del color de la página (con la línea divisoria a la derecha) tapa las pestañas que
+   pasan por debajo al desplazar la fila */
 [role="tablist"] [data-testid="stTab"]:first-of-type::after {{
-    content: ""; position: absolute; right: -0.75rem; top: 15%; height: 70%; width: 1px;
-    background: rgba(128,128,128,.45);
+    content: ""; position: absolute; z-index: -1; left: -3.6rem; right: -0.8rem; top: -.5rem; bottom: -.5rem;
+    pointer-events: none;
+    background: linear-gradient(90deg, #0E1420 calc(100% - 1px), rgba(128,128,128,.45) 0) ;
+}}
+html[data-tema="claro"] [role="tablist"] [data-testid="stTab"]:first-of-type::after {{
+    background: linear-gradient(90deg, #FFFFFF calc(100% - 1px), rgba(128,128,128,.45) 0);
 }}
 /* pestaña recién tocada (se arma en el servidor): esqueleto de tarjetas y gráfico con un brillo que pasa, en lugar de
    un hueco vacío con el pie de página subiendo */
