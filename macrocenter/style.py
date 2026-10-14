@@ -142,7 +142,8 @@ section[data-testid="stSidebar"] [class*="st-key-nav_"] button[data-testid="stBa
     content: ""; position: absolute; right: 12px; width: 6px; height: 6px; border-radius: 50%; background: {CELESTE}; }}
 section[data-testid="stSidebar"] [class*="st-key-nav_"] {{ margin-top: -4px; }}
 /* atajos: ícono en un recuadro y una flecha que aparece al pasar el mouse */
-section[data-testid="stSidebar"] [class*="st-key-atajo_"] button {{ gap: .6rem; position: relative; padding: .38rem .55rem !important; }}
+section[data-testid="stSidebar"] [class*="st-key-atajo_"] button > div > span {{ gap: 1.2rem !important; align-items: center; }}
+section[data-testid="stSidebar"] [class*="st-key-atajo_"] button {{ position: relative; padding: .38rem .55rem !important; }}
 section[data-testid="stSidebar"] [class*="st-key-atajo_"] button [data-testid="stIconMaterial"] {{
     color: {CELESTE}; font-size: 1rem; width: 28px; height: 28px; display: inline-flex; align-items: center;
     justify-content: center; border-radius: 8px; background: rgba(116,172,223,.13); flex: 0 0 28px; }}

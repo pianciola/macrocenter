@@ -69,6 +69,18 @@ SERIES_IDS = {
     # resultado financiero (después de intereses), millones de $. Esquema Ahorro-Inversión-Financiamiento, metodología
     # 2017: mismos valores que el IMIG (452.3_RESULTADO_ERO_0_M_20_25), que la API devolvía con la mitad de los meses vacíos
     "fiscal_financiero": "379.9_RESULTADO_017__18_38",
+    # inflación por región (INDEC) y de las provincias que publican su propio índice (nivel de precios, mensual)
+    "ipc_pampeana": "145.3_INGPAMANA_DICI_M_15",
+    "ipc_noreste": "145.3_INGNEANEA_DICI_M_10",
+    "ipc_noroeste": "145.3_INGNOANOA_DICI_M_10",
+    "ipc_cuyo": "145.3_INGCUYUYO_DICI_M_11",
+    "ipc_patagonia": "145.3_INGPATNIA_DICI_M_16",
+    "ipc_caba": "193.2_NIVEL_GENERAL_2021_0_13_2",  # IPCBA, Instituto de Estadística de la Ciudad
+    "ipc_santafe": "198.1_NIVEL_GENERAL_2014_0_13",
+    "ipc_mendoza": "195.1_NIVEL_GENERAL_0_0_13",
+    "ipc_tucuman": "199.1_NIVEL_GENERAL_2014_0_13",
+    "ipc_sanluis": "197.1_NIVEL_GENERAL_2014_0_13",
+    "ipc_chaco": "464.1_IPC_CHACO_NG_0_0_22_93",  # Gran Resistencia
 }
 
 
