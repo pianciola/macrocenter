@@ -133,7 +133,7 @@ def revisar_pantallas() -> list[str]:
     """Dibuja cada pantalla con AppTest y devuelve los problemas (excepciones o secciones que no se pudieron mostrar)."""
     from streamlit.testing.v1 import AppTest
 
-    pestanas = ["Inicio", "Dólar", "Cripto", "Bolsas", "Reservas", "Actividad y PBI", "Salarios", "Inflación",
+    pestanas = ["Resumen", "Dólar", "Cripto", "Bolsas", "Reservas", "Actividad y PBI", "Salarios", "Inflación",
                 "Tasas y riesgo país", "Dinero y crédito", "Comercio exterior", "Resultado fiscal"]
     vistas = [(f"Tablero · {p}", {"pestana": p}) for p in pestanas]
     vistas += [(f"Ahorro e inversiones · {sec}", {"vista": "inversiones", "inv_seccion": sec}) for sec in

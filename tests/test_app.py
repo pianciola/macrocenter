@@ -29,6 +29,7 @@ def test_inicio_sin_errores_ni_secciones_caidas():
 
 @pytest.mark.parametrize("ruta,clave,valor", [
     ("tablero/dolar", "pestana", "Dólar"),
+    ("tablero/inicio", "pestana", "Resumen"),  # enlaces viejos
     ("tablero/inflacion", "pestana", "Inflación"),
     ("herramientas/ajuste-de-alquileres", "inter_modo", "Ajuste de alquileres"),
     ("inversiones/glosario", "inv_seccion", "Glosario"),

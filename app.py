@@ -187,9 +187,10 @@ def ver_noticias() -> None:
                                         label_visibility="collapsed") or "Todas"
     if hay_sin_leer:
         # al tocarlo se marca todo y el diálogo se redibuja solo: el botón pasa a verde
-        c_boton.button("Marcar todas como leídas", key="btn_marcar_leidas", on_click=marcar_leidas, width="stretch",
+        c_boton.button("Marcar todas como leídas", key="btn_marcar_leidas", icon=":material/done_all:", on_click=marcar_leidas,
+                       width="stretch",
                        help="Apaga el aviso del botón de noticias hasta que haya novedades.")
-    elif c_boton.button("✓ Todo leído", key="btn_todo_leido", width="stretch",
+    elif c_boton.button("Todo leído", key="btn_todo_leido", icon=":material/check_circle:", width="stretch",
                         help="No hay novedades sin leer. Tocalo para cerrar y actualizar el aviso."):
         st.rerun()  # cierra el diálogo y refresca el botón de la barra lateral
 
@@ -207,7 +208,7 @@ def ver_noticias() -> None:
             # cada nota nueva trae su propio botón: al tocarlo solo esa pasa a leída y el diálogo se redibuja
             c_nota, c_leer = st.columns([6, 1.3], vertical_alignment="center", gap="small")
             c_nota.markdown(item, unsafe_allow_html=True)
-            c_leer.button("✓ Leída", key=f"leer_{hashlib.sha1(n.url.encode()).hexdigest()[:12]}", on_click=marcar_leida,
+            c_leer.button("Leída", icon=":material/check:", key=f"leer_{hashlib.sha1(n.url.encode()).hexdigest()[:12]}", on_click=marcar_leida,
                           args=(n.url,), width="stretch", help="Marca solo esta noticia como leída.")
         else:
             st.markdown(item, unsafe_allow_html=True)
@@ -228,7 +229,7 @@ def ir_a(destino: str) -> None:
 VISTAS = ("tablero", "inversiones", "historia", "juegos")
 # primero el ala financiera (lo que más se usa): dólar, bolsas, cripto, tasas y dinero; después precios, actividad,
 # sector externo, ingresos y cuentas públicas
-PESTANAS = ["Inicio", "Dólar", "Bolsas", "Cripto", "Tasas y riesgo país", "Dinero y crédito", "Inflación",
+PESTANAS = ["Resumen", "Dólar", "Bolsas", "Cripto", "Tasas y riesgo país", "Dinero y crédito", "Inflación",
             "Actividad y PBI", "Reservas", "Salarios", "Resultado fiscal", "Comercio exterior"]
 HIST_SECCIONES = ["Presidentes", "Ministros de Economía"]
 # Enlaces para compartir: ?ver=tablero/dolar, ?ver=herramientas/ajuste-de-alquileres, etc. (la misma ruta que cuenta
@@ -247,7 +248,7 @@ def abrir_ruta(ruta) -> None:
         return
     vista_, clave, opciones = RUTAS[base]
     st.session_state["vista"] = vista_
-    sub = {"conceptos": "glosario", "como-les-fue": "rendimientos-pasados"}.get(sub, sub)  # enlaces viejos (la sección se llamaba «Conceptos»)
+    sub = {"conceptos": "glosario", "como-les-fue": "rendimientos-pasados", "inicio": "resumen"}.get(sub, sub)  # enlaces viejos (la sección se llamaba «Conceptos»)
     elegida = next((o for o in opciones if style.slug(o) == sub), None)
     if elegida:
         st.session_state[clave] = elegida
@@ -666,20 +667,25 @@ def conversor_lateral() -> None:
                     unsafe_allow_html=True)
 
 
-def ir_a_herramienta(nombre: str) -> None:
-    """Atajo de la barra lateral: abre Herramientas directo en la herramienta elegida."""
-    st.session_state["vista"] = "juegos"
-    st.session_state["inter_modo"] = nombre
+def ir_a(vista_: str, clave: str, valor: str) -> None:
+    """Atajo de la barra lateral: abre una pantalla directo en la sección elegida."""
+    st.session_state["vista"] = vista_
+    st.session_state[clave] = valor
 
+
+# lo más buscado de la página, sin repetir lo que ya está a la vista (cotizaciones, menú): pocos y a mano
+ATAJOS = (
+    ("tasas", "Tasas de plazo fijo hoy", ":material/percent:", ("inversiones", "inv_seccion", "Tasas de hoy")),
+    ("alquiler", "Ajustar un alquiler", ":material/home:", ("juegos", "inter_modo", "Ajuste de alquileres")),
+    ("pesos", "¿Cuánto valían tus pesos?", ":material/savings:", ("juegos", "inter_modo", "¿Cuánto valían tus pesos?")),
+    ("mapa", "Inflación por provincia", ":material/map:", ("tablero", "pestana", "Inflación")),
+    ("presidentes", "La economía de cada presidente", ":material/account_balance:", ("historia", "hist_seccion", "Presidentes")),
+)
 
 with st.sidebar:
     st.markdown(style.etiqueta("Atajos"), unsafe_allow_html=True)
-    for clave_a, texto_a, icono_a, modo_a in (
-            ("alquiler", "Ajustar un alquiler", ":material/home:", "Ajuste de alquileres"),
-            ("pesos", "¿Cuánto valían tus pesos?", ":material/savings:", "¿Cuánto valían tus pesos?"),
-            ("epocas", "Comparar dos épocas", ":material/compare_arrows:", "Comparador de épocas")):
-        st.button(texto_a, key=f"atajo_{clave_a}", icon=icono_a, width="stretch", on_click=ir_a_herramienta,
-                  args=(modo_a,))
+    for clave_a, texto_a, icono_a, destino_a in ATAJOS:
+        st.button(texto_a, key=f"atajo_{clave_a}", icon=icono_a, width="stretch", on_click=ir_a, args=destino_a)
     if dol is not None:
         st.markdown(style.etiqueta("Conversor"), unsafe_allow_html=True)
         with st.container(key="conv_caja"):
@@ -870,7 +876,7 @@ def seccion_actual() -> tuple[str, str]:
     if v == "juegos":
         sub = st.session_state.get("inter_modo") or interactivo.MODOS[0]
         return f"/herramientas/{style.slug(sub)}", f"Herramientas · {sub}"
-    sub = st.session_state.get("pestana") or "Inicio"
+    sub = st.session_state.get("pestana") or "Resumen"
     return f"/tablero/{style.slug(str(sub))}", f"Tablero · {sub}"
 
 
@@ -1459,7 +1465,7 @@ def bloque_fiscal() -> None:
 
 
 # ── Inicio ──
-with t_res, protegido("Inicio"):
+with t_res, protegido("Resumen"):
     if t_res.open:  # solo la pestaña abierta se calcula y se manda al navegador
         abrir(pestanas.inicio)
 

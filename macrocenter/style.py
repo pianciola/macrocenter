@@ -112,23 +112,24 @@ section[data-testid="stSidebar"] [data-testid="stPills"] button {{ border-radius
     content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 1px;
     background: linear-gradient(90deg, rgba(116,172,223,.75), rgba(116,172,223,.25) 60%, rgba(116,172,223,0));
 }}
+/* toda la marca es un enlace al resumen */
+a.mc-brand, a.mc-brand:hover {{ text-decoration: none !important; color: inherit !important; cursor: pointer; }}
 .mc-brand .mc-flag {{ line-height: 0; }}
+.mc-brand .mc-flag svg {{ transition: transform .18s ease, box-shadow .18s ease; }}
+a.mc-brand:hover .mc-flag svg {{ transform: translateY(-1px) scale(1.04); box-shadow: 0 8px 20px rgba(0,0,0,.4), 0 0 0 1px {CELESTE}; }}
 .mc-brand .mc-flag svg {{ width: 46px; height: 46px; border-radius: 13px;
     box-shadow: 0 6px 16px rgba(0,0,0,.35), 0 0 0 1px rgba(116,172,223,.35); }}
 .mc-brand h1 {{ margin: 0; padding: 0; font-size: 1.5rem; font-weight: 800; letter-spacing: -.03em; line-height: 1.05;
     color: inherit; }}
-.mc-brand h1 span {{ color: {CELESTE}; }}
-/* el nombre con una letra propia, de estilo técnico (fuentes que ya trae cada sistema: Bahnschrift en Windows, Avenir
-   Next en Apple). Sin descargar fuentes de terceros. Gana a la regla general que fija la letra de toda la página */
-.stApp section[data-testid="stSidebar"] .mc-brand h1.mc-wm, .stApp section[data-testid="stSidebar"] .mc-brand h1.mc-wm span {{
-    font-family: "Bahnschrift", "Avenir Next", "Avenir", "DIN Alternate", "Segoe UI Variable Display", system-ui, sans-serif !important;
-    font-weight: 600; font-variation-settings: "wght" 600; letter-spacing: .005em; font-size: 1.6rem; }}
-/* (Bahnschrift trae sus pesos como variantes con nombre: sin pedirlas por nombre, Windows la mostraba fina) */
-.stApp section[data-testid="stSidebar"] .mc-brand h1.mc-wm {{
-    font-family: "Bahnschrift SemiBold", "Bahnschrift", "Avenir Next", "Avenir", "DIN Alternate", system-ui, sans-serif !important; }}
-.stApp section[data-testid="stSidebar"] .mc-brand h1.mc-wm span {{
-    font-family: "Bahnschrift Light", "Bahnschrift", "Avenir Next", "Avenir", "DIN Alternate", system-ui, sans-serif !important;
-    font-weight: 300; font-variation-settings: "wght" 300; font-size: 1em; }}
+/* el nombre: misma familia que la página, en negrita con «Center» celeste y algo más liviano. Las reglas apuntan a
+   .c y no a «h1 span»: Streamlit envuelve el texto del título en su propio <span>, y con «h1 span» todo el nombre
+   quedaba fino y celeste */
+.stApp section[data-testid="stSidebar"] .mc-brand h1.mc-wm {{ font-size: 1.6rem; font-weight: 800 !important;
+    letter-spacing: -.025em; color: #FFFFFF; }}
+.stApp section[data-testid="stSidebar"] .mc-brand h1.mc-wm * {{ font-weight: inherit !important; color: inherit; }}
+.stApp section[data-testid="stSidebar"] .mc-brand h1.mc-wm .c {{ color: {CELESTE} !important; font-weight: 700 !important; }}
+html[data-tema="claro"] .stApp section[data-testid="stSidebar"] .mc-brand h1.mc-wm {{ color: #0E1A2B; }}
+html[data-tema="claro"] .stApp section[data-testid="stSidebar"] .mc-brand h1.mc-wm .c {{ color: #2E6DB4 !important; }}
 .mc-brand p.sub {{ margin: 6px 0 0; font-size: .78rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
     line-height: 1.2; opacity: .85; }}
 
@@ -142,7 +143,7 @@ section[data-testid="stSidebar"] [data-testid="stPills"] button {{ border-radius
 [data-testid="stSidebarUserContent"] {{ padding-bottom: 72px !important; }}
 /* títulos de sección: celestes, con una línea fina hasta el borde */
 section[data-testid="stSidebar"] .mc-label {{ display: flex; align-items: center; gap: 10px; color: {CELESTE}; opacity: .9;
-    margin: 22px 0 8px; font-size: .78rem; letter-spacing: .16em; }}
+    margin: 22px 0 8px; font-size: .84rem; font-weight: 700; letter-spacing: .14em; }}
 section[data-testid="stSidebar"] .mc-label::after {{ content: ""; flex: 1; height: 1px; background: rgba(116,172,223,.22); }}
 /* menú: cada opción con su ícono en celeste; la elegida, en una píldora con el ícono resaltado */
 section[data-testid="stSidebar"] [class*="st-key-nav_"] button {{ position: relative; border-left: none !important; border-radius: 12px !important;
@@ -161,8 +162,8 @@ section[data-testid="stSidebar"] [class*="st-key-nav_"] {{ margin-top: -4px; }}
 section[data-testid="stSidebar"] [class*="st-key-atajo_"] button > div > span {{ gap: 1.2rem !important; align-items: center; }}
 section[data-testid="stSidebar"] [class*="st-key-atajo_"] button {{ position: relative; padding: .38rem .55rem !important; }}
 section[data-testid="stSidebar"] [class*="st-key-atajo_"] button [data-testid="stIconMaterial"] {{
-    color: {CELESTE}; font-size: 1rem; width: 28px; height: 28px; display: inline-flex; align-items: center;
-    justify-content: center; border-radius: 8px; background: rgba(116,172,223,.13); flex: 0 0 28px; }}
+    color: {CELESTE}; font-size: 1.1rem; width: 30px; height: 30px; display: inline-flex; align-items: center;
+    justify-content: center; border-radius: 8px; background: rgba(116,172,223,.13); flex: 0 0 30px; }}
 section[data-testid="stSidebar"] [class*="st-key-atajo_"] button::after {{
     content: "›"; position: absolute; right: 12px; font-size: 1.1rem; color: {CELESTE}; opacity: 0;
     transform: translateX(-4px); transition: opacity .15s ease, transform .15s ease; }}
@@ -268,18 +269,26 @@ section[data-testid="stSidebar"] .st-key-conv_caja .mc-conv {{ border: none; bac
 .mc-news-pie {{ font-size: .8rem; opacity: .8; margin-top: 12px; }}
 .mc-news-pie a {{ color: {CELESTE} !important; }}
 .mc-news-vacio {{ padding: 18px; opacity: .85; }}
-/* botón «Marcar todas como leídas» y su estado ya leído (verde) */
-.st-key-btn_marcar_leidas button {{ border: 1px solid rgba(116,172,223,.45) !important; border-radius: 999px !important;
-    background: rgba(116,172,223,.08) !important; min-height: 0 !important; padding: .32rem .9rem !important; }}
-.st-key-btn_marcar_leidas button p {{ color: {CELESTE} !important; font-weight: 700; font-size: .84rem !important; }}
-.st-key-btn_marcar_leidas button:hover {{ background: rgba(116,172,223,.18) !important; border-color: {CELESTE} !important; }}
-.st-key-btn_todo_leido button {{
-    background: #10AC84 !important; border: 1px solid #10AC84 !important; border-radius: 999px !important;
-    min-height: 0 !important; padding: .32rem .9rem !important;
+/* botones de la ventana de noticias: la misma familia (altura, esquinas, letra e ícono). «Marcar todas» y «Leída»,
+   celestes con contorno; «Todo leído», verde suave */
+:is(.st-key-btn_marcar_leidas, .st-key-btn_todo_leido, [class*="st-key-leer_"]) button {{
+    min-height: 40px !important; padding: .45rem 1rem !important; border-radius: 10px !important; gap: .4rem;
+    border: 1px solid rgba(116,172,223,.5) !important; background: rgba(116,172,223,.10) !important;
+    transition: background-color .15s ease, border-color .15s ease, transform .15s ease;
 }}
-.st-key-btn_todo_leido button p {{ font-size: .84rem !important; }}
-.st-key-btn_todo_leido button p {{ color: #FFFFFF !important; font-weight: 700; }}
-.st-key-btn_todo_leido button:hover {{ background: #0E9673 !important; }}
+:is(.st-key-btn_marcar_leidas, .st-key-btn_todo_leido, [class*="st-key-leer_"]) button p {{
+    font-size: .95rem !important; font-weight: 700; color: {CELESTE} !important; white-space: nowrap; }}
+:is(.st-key-btn_marcar_leidas, .st-key-btn_todo_leido, [class*="st-key-leer_"]) button [data-testid="stIconMaterial"] {{
+    color: {CELESTE}; font-size: 1.15rem; }}
+:is(.st-key-btn_marcar_leidas, [class*="st-key-leer_"]) button:hover {{
+    background: rgba(116,172,223,.2) !important; border-color: {CELESTE} !important; transform: translateY(-1px); }}
+.st-key-btn_todo_leido button {{ background: rgba(16,172,132,.14) !important; border-color: rgba(16,172,132,.55) !important; }}
+.st-key-btn_todo_leido button p, .st-key-btn_todo_leido button [data-testid="stIconMaterial"] {{ color: #2ED3A0 !important; }}
+.st-key-btn_todo_leido button:hover {{ background: rgba(16,172,132,.22) !important; border-color: #10AC84 !important; }}
+html[data-tema="claro"] .st-key-btn_todo_leido button p,
+html[data-tema="claro"] .st-key-btn_todo_leido button [data-testid="stIconMaterial"] {{ color: #0B7A5E !important; }}
+html[data-tema="claro"] :is(.st-key-btn_marcar_leidas, [class*="st-key-leer_"]) button p,
+html[data-tema="claro"] :is(.st-key-btn_marcar_leidas, [class*="st-key-leer_"]) button [data-testid="stIconMaterial"] {{ color: #2E6DB4 !important; }}
 
 /* menú de navegación: filas planas, la activa con barra celeste a la izquierda */
 section[data-testid="stSidebar"] [class*="st-key-nav_"] button {{
@@ -309,18 +318,18 @@ section[data-testid="stSidebar"] [class*="st-key-nav_"] button[data-testid="stBa
 .mc-conv .f {{ display: flex; justify-content: space-between; align-items: baseline; gap: 8px; padding: 5px 0;
     border-bottom: 1px dashed rgba(128,128,128,.25); }}
 .mc-conv .f:has(+ .nota) {{ border-bottom: none; }}
-.mc-conv .k {{ font-size: .82rem; font-weight: 600; display: flex; flex-direction: column; line-height: 1.2; }}
-.mc-conv .k small {{ font-size: .78rem; font-weight: 500; opacity: .85; }}
-.mc-conv .v {{ font-size: .98rem; font-weight: 800; white-space: nowrap; }}
-.mc-conv .nota {{ font-size: .78rem; opacity: .85; margin-top: 4px; text-align: right; }}
+.mc-conv .k {{ font-size: .92rem; font-weight: 600; display: flex; flex-direction: column; line-height: 1.2; }}
+.mc-conv .k small {{ font-size: .84rem; font-weight: 500; opacity: .85; }}
+.mc-conv .v {{ font-size: 1.1rem; font-weight: 800; white-space: nowrap; }}
+.mc-conv .nota {{ font-size: .84rem; opacity: .85; margin-top: 4px; text-align: right; }}
 section[data-testid="stSidebar"] .st-key-conv_sentido button {{ padding: .25rem .5rem; font-size: .8rem; flex: 1 1 0; }}
 section[data-testid="stSidebar"] .st-key-conv_sentido [data-baseweb="button-group"],
 section[data-testid="stSidebar"] .st-key-conv_sentido [role="radiogroup"] {{ width: 100%; flex-wrap: nowrap; }}
 section[data-testid="stSidebar"] .st-key-conv_pesos input, section[data-testid="stSidebar"] .st-key-conv_usd input {{
     font-weight: 700; }}
 .mc-termino {{ border-left: 3px solid {SOL}; }}
-.mc-termino-t {{ font-weight: 800; font-size: .95rem; margin-bottom: 4px; color: {SOL}; }}
-.mc-termino-d {{ font-size: .82rem; line-height: 1.45; opacity: .9; }}
+.mc-termino-t {{ font-weight: 800; font-size: 1.05rem; margin-bottom: 4px; color: {SOL}; }}
+.mc-termino-d {{ font-size: .92rem; line-height: 1.5; opacity: .92; }}
 /* atajos: como el menú, pero más chicos y con ícono */
 section[data-testid="stSidebar"] [class*="st-key-atajo_"] button {{
     justify-content: flex-start; background: transparent; border: none; border-radius: 10px;
@@ -330,7 +339,7 @@ section[data-testid="stSidebar"] [class*="st-key-atajo_"] button > div,
 section[data-testid="stSidebar"] [class*="st-key-atajo_"] button [data-testid="stMarkdownContainer"] {{
     justify-content: flex-start !important; text-align: left !important;
 }}
-section[data-testid="stSidebar"] [class*="st-key-atajo_"] button p {{ font-size: .86rem; font-weight: 500; }}
+section[data-testid="stSidebar"] [class*="st-key-atajo_"] button p {{ font-size: .95rem; font-weight: 600; }}
 section[data-testid="stSidebar"] [class*="st-key-atajo_"] button:hover {{ background: rgba(116,172,223,.12); }}
 section[data-testid="stSidebar"] [class*="st-key-atajo_"] {{ margin-top: -6px; }}
 /* botón «Personalizar» de Indicadores clave: píldora chica alineada a la derecha, con ícono de ajustes */
@@ -1800,8 +1809,9 @@ def _favicon_bandera():
 
 def marca() -> str:
     return (
-        f'<div class="mc-brand"><div class="mc-flag">{logo(46)}</div><div><h1 class="mc-wm">Macro<span>Center</span></h1>'
-        '<p class="sub">El pulso de la economía</p></div></div>'
+        f'<a class="mc-brand" href="?ver=tablero/resumen" target="_self" title="Ir al resumen" aria-label="MacroCenter: ir al resumen">'
+        f'<div class="mc-flag">{logo(46)}</div><div><h1 class="mc-wm">Macro<span class="c">Center</span></h1>'
+        '<p class="sub">El pulso de la economía</p></div></a>'
     )
 
 

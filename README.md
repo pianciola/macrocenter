@@ -15,13 +15,13 @@ Si cambiás el código, cerrá y volvé a abrir `run.bat`: Streamlit no recarga 
 
 ## Qué muestra
 
-Orden de las pestañas: Inicio, después el ala financiera (Dólar, Bolsas, Cripto, Tasas y riesgo país, Dinero y crédito) y
+Orden de las pestañas: Resumen, después el ala financiera (Dólar, Bolsas, Cripto, Tasas y riesgo país, Dinero y crédito) y
 luego Inflación, Actividad y PBI, Reservas, Salarios, Resultado fiscal y Comercio exterior. Cada una vive en su archivo
 de `macrocenter/pestanas/`.
 
 | Pestaña | Contenido |
 |---|---|
-| Inicio | Indicadores clave personalizables, un gráfico a elección |
+| Resumen | Indicadores clave personalizables, un gráfico a elección |
 | Calificación | Nota 0-100 hoy vs. hace 3 m / 6 m / 1 año / 2 años, evolución, detalle por pilar y driver |
 | Salarios | Índice de salarios INDEC, salario real vs inflación, RIPTE, salario mínimo, haber mínimo; pobreza (EPH, por semestre) y canastas básicas de una familia tipo |
 | Cripto | Principales criptomonedas en USD y pesos, historial por moneda y precio del USDT en cada exchange argentino |
@@ -73,7 +73,7 @@ La sección **Herramientas** (barra lateral → *Explorar*; `macrocenter/interac
 
 ## Período de los gráficos y descargas
 
-Cada gráfico importante (el de Inicio, el del dólar, el de reservas y el de bolsas) tiene sus propios botones de período.
+Cada gráfico importante (el de Resumen, el del dólar, el de reservas y el de bolsas) tiene sus propios botones de período.
 Cada gráfico tiene al lado del título un botón **CSV** que baja sus datos para Excel (punto y coma, coma decimal).
 
 ## Enlaces para compartir
@@ -83,7 +83,7 @@ La dirección sigue a lo que se mira: `?ver=tablero/dolar`, `?ver=herramientas/a
 
 ## Indicadores personalizables
 
-En Inicio, **Personalizar** permite elegir cuáles de los ~20 indicadores se muestran en "Indicadores clave"
+En Resumen, **Personalizar** permite elegir cuáles de los ~20 indicadores se muestran en "Indicadores clave"
 y en qué orden. La elección se guarda en `.macrocenter_prefs.json` (junto a `app.py`); borrar ese archivo
 restablece los de siempre. Para sumar uno al catálogo, agregarlo en `CATALOGO` dentro de `app.py`.
 
