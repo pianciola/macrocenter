@@ -118,6 +118,12 @@ section[data-testid="stSidebar"] [data-testid="stPills"] button {{ border-radius
 .mc-brand h1 {{ margin: 0; padding: 0; font-size: 1.5rem; font-weight: 800; letter-spacing: -.03em; line-height: 1.05;
     color: inherit; }}
 .mc-brand h1 span {{ color: {CELESTE}; }}
+/* el nombre con una letra propia, de estilo técnico (fuentes que ya trae cada sistema: Bahnschrift en Windows, Avenir
+   Next en Apple). Sin descargar fuentes de terceros. Gana a la regla general que fija la letra de toda la página */
+.stApp section[data-testid="stSidebar"] .mc-brand h1.mc-wm, .stApp section[data-testid="stSidebar"] .mc-brand h1.mc-wm span {{
+    font-family: "Bahnschrift", "Avenir Next", "Avenir", "DIN Alternate", "Segoe UI Variable Display", system-ui, sans-serif !important;
+    font-weight: 600; font-stretch: 100%; letter-spacing: .005em; font-size: 1.6rem; }}
+.stApp section[data-testid="stSidebar"] .mc-brand h1.mc-wm span {{ font-weight: 300; font-size: 1em; }}
 .mc-brand p.sub {{ margin: 6px 0 0; font-size: .78rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
     line-height: 1.2; opacity: .85; }}
 
@@ -1789,7 +1795,7 @@ def _favicon_bandera():
 
 def marca() -> str:
     return (
-        f'<div class="mc-brand"><div class="mc-flag">{logo(46)}</div><div><h1>Macro<span>Center</span></h1>'
+        f'<div class="mc-brand"><div class="mc-flag">{logo(46)}</div><div><h1 class="mc-wm">Macro<span>Center</span></h1>'
         '<p class="sub">El pulso de la economía</p></div></div>'
     )
 
