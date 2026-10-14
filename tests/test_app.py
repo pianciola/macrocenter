@@ -31,7 +31,8 @@ def test_inicio_sin_errores_ni_secciones_caidas():
     ("tablero/dolar", "pestana", "Dólar"),
     ("tablero/inflacion", "pestana", "Inflación"),
     ("herramientas/ajuste-de-alquileres", "inter_modo", "Ajuste de alquileres"),
-    ("inversiones/conceptos", "inv_seccion", "Conceptos"),
+    ("inversiones/glosario", "inv_seccion", "Glosario"),
+    ("inversiones/conceptos", "inv_seccion", "Glosario"),  # enlaces viejos
     ("historia/ministros-de-economia", "hist_seccion", "Ministros de Economía"),
 ])
 def test_los_enlaces_abren_la_seccion(ruta, clave, valor):

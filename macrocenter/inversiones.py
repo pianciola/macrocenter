@@ -16,7 +16,7 @@ from . import charts, data, glosario, style
 from .avisos import falla
 from .interactivo import entrada_monto
 
-SECCIONES = ["Tasas de hoy", "Cómo les fue", "Plazo fijo vs. UVA", "Conceptos"]
+SECCIONES = ["Tasas de hoy", "Cómo les fue", "Plazo fijo vs. UVA", "Glosario"]
 AVISO = ("**Información, no recomendación.** Acá hay tasas, datos del pasado y simulaciones para entender las opciones. "
          "No es asesoramiento financiero ni una sugerencia de inversión: antes de invertir, informate bien sobre cada "
          "producto y, si hace falta, consultá a un asesor registrado en la CNV.")

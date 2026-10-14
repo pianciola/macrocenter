@@ -48,8 +48,8 @@ section[data-testid="stSidebar"] .block-container, section[data-testid="stSideba
 .mc-brand p {{ margin: 0; font-size: .8rem; opacity: .92; line-height: 1.35; }}
 
 .mc-label {{
-    font-size: .68rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
-    opacity: .6; margin: 18px 0 6px;
+    font-size: .78rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
+    opacity: .85; margin: 18px 0 6px;
 }}
 
 /* cotizaciones rápidas */
@@ -60,19 +60,19 @@ section[data-testid="stSidebar"] .block-container, section[data-testid="stSideba
 }}
 .mc-tick .n {{ font-size: .82rem; opacity: .85; }}
 .mc-tick .v {{ font-weight: 700; font-size: .95rem; text-align: right; }}
-.mc-tick .d {{ font-size: .68rem; font-weight: 600; display: block; }}
-.mc-up {{ color: #10AC84; }} .mc-down {{ color: #EE5253; }} .mc-flat {{ opacity: .55; }}
+.mc-tick .d {{ font-size: .78rem; font-weight: 600; display: block; }}
+.mc-up {{ color: #10AC84; }} .mc-down {{ color: #EE5253; }} .mc-flat {{ opacity: .85; }}
 
-.mc-status {{ font-size: .75rem; opacity: .75; margin-top: 6px; }}
+.mc-status {{ font-size: .78rem; opacity: .85; margin-top: 6px; }}
 .mc-status .dot {{ color: #10AC84; }}
 
 .mc-footer {{
     margin-top: 22px; padding-top: 14px; border-top: 3px double {CELESTE};
-    font-size: .76rem; text-align: center; line-height: 1.5;
+    font-size: .78rem; text-align: center; line-height: 1.5;
     display: flex; flex-direction: column; align-items: center; gap: 6px;
 }}
 .mc-footer b {{ color: {CELESTE}; }}
-.mc-footer .mc-made {{ font-size: .68rem; letter-spacing: .1em; text-transform: uppercase; opacity: .6; }}
+.mc-footer .mc-made {{ font-size: .78rem; letter-spacing: .1em; text-transform: uppercase; opacity: .85; }}
 
 /* botón de noticias: dorado (Sol de Mayo), distinto del resto */
 [class*="st-key-btn_noticias"] button {{
@@ -114,7 +114,7 @@ section[data-testid="stSidebar"] [data-testid="stPills"] button {{ border-radius
 .mc-brand .mc-flag svg {{ width: 46px; height: 46px; }}
 .mc-brand h1 {{ margin: 0; padding: 0; font-size: 1.45rem; font-weight: 800; letter-spacing: -.02em; color: inherit; }}
 .mc-brand h1 span {{ color: {CELESTE}; }}
-.mc-brand p.sub {{ margin: 2px 0 0; font-size: .74rem; font-weight: 500; opacity: .62; letter-spacing: .01em; }}
+.mc-brand p.sub {{ margin: 2px 0 0; font-size: .78rem; font-weight: 500; opacity: .85; letter-spacing: .01em; }}
 
 /* ── Barra lateral: terminación propia ── */
 /* sin barra de desplazamiento (se veía la de Windows, gruesa y genérica): se sigue pudiendo deslizar, y el borde de
@@ -126,7 +126,7 @@ section[data-testid="stSidebar"] [data-testid="stPills"] button {{ border-radius
 [data-testid="stSidebarUserContent"] {{ padding-bottom: 72px !important; }}
 /* títulos de sección: celestes, con una línea fina hasta el borde */
 section[data-testid="stSidebar"] .mc-label {{ display: flex; align-items: center; gap: 10px; color: {CELESTE}; opacity: .9;
-    margin: 22px 0 8px; font-size: .66rem; letter-spacing: .16em; }}
+    margin: 22px 0 8px; font-size: .78rem; letter-spacing: .16em; }}
 section[data-testid="stSidebar"] .mc-label::after {{ content: ""; flex: 1; height: 1px; background: rgba(116,172,223,.22); }}
 /* menú: cada opción con su ícono en celeste; la elegida, en una píldora con el ícono resaltado */
 section[data-testid="stSidebar"] [class*="st-key-nav_"] button {{ position: relative; border-left: none !important; border-radius: 12px !important;
@@ -237,20 +237,20 @@ section[data-testid="stSidebar"] .st-key-conv_caja .mc-conv {{ border: none; bac
     border-radius: 12px; border: 1px solid rgba(116,172,223,.35); background: rgba(116,172,223,.08);
 }}
 .mc-news-fecha b {{ font-size: 1.35rem; line-height: 1; }}
-.mc-news-fecha span {{ font-size: .7rem; letter-spacing: .1em; text-transform: uppercase; opacity: .75; margin-top: 3px; }}
+.mc-news-fecha span {{ font-size: .78rem; letter-spacing: .1em; text-transform: uppercase; opacity: .85; margin-top: 3px; }}
 .mc-news-tags {{ display: flex; gap: 6px; margin-bottom: 5px; }}
-.mc-news .tag {{ font-size: .66rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; padding: 2px 8px;
+.mc-news .tag {{ font-size: .78rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; padding: 2px 8px;
     border-radius: 999px; }}
 .mc-news .tag.bcra {{ color: {CELESTE}; background: rgba(116,172,223,.15); }}
 .mc-news .tag.economia {{ color: #A9B8C9; background: rgba(169,184,201,.13); }}
 .mc-news .tag.nueva {{ color: #3A2A00; background: {SOL}; }}
 .mc-news-txt a {{ font-weight: 700; font-size: .98rem; line-height: 1.35; color: inherit !important; text-decoration: none; }}
 .mc-news-txt a:hover {{ color: {CELESTE} !important; text-decoration: underline; text-underline-offset: 3px; }}
-.mc-news-txt p {{ margin: 5px 0 0; font-size: .84rem; opacity: .72; line-height: 1.45;
+.mc-news-txt p {{ margin: 5px 0 0; font-size: .84rem; opacity: .85; line-height: 1.45;
     display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }}
 .mc-news-pie {{ font-size: .8rem; opacity: .8; margin-top: 12px; }}
 .mc-news-pie a {{ color: {CELESTE} !important; }}
-.mc-news-vacio {{ padding: 18px; opacity: .7; }}
+.mc-news-vacio {{ padding: 18px; opacity: .85; }}
 /* botón «Marcar todas como leídas» y su estado ya leído (verde) */
 .st-key-btn_marcar_leidas button {{ border: 1px solid rgba(116,172,223,.45) !important; border-radius: 999px !important;
     background: rgba(116,172,223,.08) !important; min-height: 0 !important; padding: .32rem .9rem !important; }}
@@ -293,9 +293,9 @@ section[data-testid="stSidebar"] [class*="st-key-nav_"] button[data-testid="stBa
     border-bottom: 1px dashed rgba(128,128,128,.25); }}
 .mc-conv .f:has(+ .nota) {{ border-bottom: none; }}
 .mc-conv .k {{ font-size: .82rem; font-weight: 600; display: flex; flex-direction: column; line-height: 1.2; }}
-.mc-conv .k small {{ font-size: .68rem; font-weight: 500; opacity: .6; }}
+.mc-conv .k small {{ font-size: .78rem; font-weight: 500; opacity: .85; }}
 .mc-conv .v {{ font-size: .98rem; font-weight: 800; white-space: nowrap; }}
-.mc-conv .nota {{ font-size: .66rem; opacity: .55; margin-top: 4px; text-align: right; }}
+.mc-conv .nota {{ font-size: .78rem; opacity: .85; margin-top: 4px; text-align: right; }}
 section[data-testid="stSidebar"] .st-key-conv_sentido button {{ padding: .25rem .5rem; font-size: .8rem; flex: 1 1 0; }}
 section[data-testid="stSidebar"] .st-key-conv_sentido [data-baseweb="button-group"],
 section[data-testid="stSidebar"] .st-key-conv_sentido [role="radiogroup"] {{ width: 100%; flex-wrap: nowrap; }}
@@ -365,21 +365,21 @@ section[data-testid="stSidebar"] [class*="st-key-atajo_"] {{ margin-top: -6px; }
 .mc-pano .cab {{ padding: 4px 0 12px; border-bottom: 1px solid rgba(128,128,128,.35); }}
 .mc-pano .cab .tit {{ font-size: 1.5rem; font-weight: 700; letter-spacing: -.01em; line-height: 1.25;
     border-left: 4px solid {CELESTE}; padding-left: 12px; }}
-.mc-pano .cab .sub {{ font-size: .84rem; opacity: .6; margin: 4px 0 0 16px; }}
+.mc-pano .cab .sub {{ font-size: .84rem; opacity: .85; margin: 4px 0 0 16px; }}
 .mc-pano .fila {{ display: grid; grid-template-columns: 2.1rem 150px 1fr; gap: 18px; align-items: baseline;
     padding: 15px 2px; counter-increment: pano; }}
 .mc-pano .fila + .fila {{ border-top: 1px solid rgba(128,128,128,.2); }}
 .mc-pano .fila::before {{ content: counter(pano, decimal-leading-zero); font-size: .9rem; font-weight: 700;
     color: {CELESTE}; opacity: .8; font-variant-numeric: tabular-nums; }}
-.mc-pano .tema {{ font-size: .8rem; font-weight: 600; opacity: .7; }}
+.mc-pano .tema {{ font-size: .8rem; font-weight: 600; opacity: .85; }}
 .mc-pano .cifra {{ font-size: 1.45rem; font-weight: 700; letter-spacing: -.02em; line-height: 1.15;
     font-variant-numeric: tabular-nums; margin: 1px 0; }}
-.mc-pano .det {{ font-size: .74rem; opacity: .55; }}
+.mc-pano .det {{ font-size: .78rem; opacity: .85; }}
 .mc-pano .txt {{ font-size: .94rem; line-height: 1.6; }}
 .mc-pano .txt strong, .mc-pano .txt :is(.pos, .neg) {{ font-weight: 700; color: inherit; }}
 :is(.mc-nota, .mc-aviso) .pos {{ color: #10AC84; font-weight: 700; }}
 :is(.mc-nota, .mc-aviso) .neg {{ color: #EE5253; font-weight: 700; }}
-.mc-pano .pie {{ font-size: .78rem; opacity: .55; padding: 10px 0 0; border-top: 1px solid rgba(128,128,128,.35); }}
+.mc-pano .pie {{ font-size: .78rem; opacity: .85; padding: 10px 0 0; border-top: 1px solid rgba(128,128,128,.35); }}
 @container principal (max-width: 640px) {{
     .mc-pano .fila {{ grid-template-columns: 1.8rem 1fr; gap: 4px 10px; padding: 13px 0; }}
     .mc-pano .izq {{ display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }}
@@ -449,7 +449,7 @@ button[data-variant="segmented_control"][aria-checked="true"] p {{ color: #fff !
         flex-wrap: wrap; overflow: visible; }}
     [class*="st-key-per_"] button[data-variant="pills"], .st-key-cal_anios button[data-variant="pills"] {{
         flex: 1 1 auto; padding: .22rem .28rem; justify-content: center; }}
-    [class*="st-key-per_"] button[data-variant="pills"] p, .st-key-cal_anios button[data-variant="pills"] p {{ font-size: .76rem !important; }}
+    [class*="st-key-per_"] button[data-variant="pills"] p, .st-key-cal_anios button[data-variant="pills"] p {{ font-size: .78rem !important; }}
 }}
 
 @container principal (max-width: 640px) {{
@@ -460,18 +460,18 @@ button[data-variant="segmented_control"][aria-checked="true"] p {{ color: #fff !
 /* título de gráfico (antes lo dibujaba Plotly): mismo aspecto, pero se parte en renglones; pegado a su gráfico */
 .mc-gtit {{ margin: 6px 0 0; padding-left: 2px; }}
 .mc-gtit .t {{ font-size: 16px; font-weight: 700; line-height: 1.3; }}
-.mc-gtit .b {{ font-size: 12px; opacity: .6; margin-top: 2px; }}
+.mc-gtit .b {{ font-size: 13px; opacity: .85; margin-top: 2px; }}
 /* botón para ocultar / mostrar la barra del pie (lo crea JS_PESTANAS). Discreto: solo una flechita casi transparente.
    El estado va en html[data-pie="oculto"] y NO en una clase con «mc-»: varios estilos (títulos de sección) excluyen todo lo
    que está dentro de un elemento con «mc-» en la clase, y con una clase en <html> perdían su estilo */
 .mc-pie-btn {{ position: fixed; right: 140px; bottom: 66px; z-index: 95; width: 32px; height: 32px; padding: 0;
     display: flex; align-items: center; justify-content: center; border-radius: 50%; cursor: pointer;
     border: 1px solid rgba(116,172,223,.6); background: #13233a; color: {CELESTE};
-    font: 700 13px/1 inherit; opacity: .7; box-shadow: 0 2px 8px rgba(0,0,0,.35);
+    font: 700 13px/1 inherit; opacity: .85; box-shadow: 0 2px 8px rgba(0,0,0,.35);
     transition: opacity .15s ease, transform .15s ease; }}
 .mc-pie-btn:hover, .mc-pie-btn:focus-visible {{ opacity: 1; transform: translateY(-1px); }}
 html[data-pie="oculto"] .mc-pie-btn {{ bottom: 0; width: 56px; height: 22px; border-radius: 10px 10px 0 0; border-bottom: 0;
-    opacity: .7; }}
+    opacity: .85; }}
 html[data-pie="oculto"] .st-key-pie_datos {{ display: none !important; }}
 html[data-pie="oculto"] [data-testid="stMainBlockContainer"] {{ padding-bottom: 2rem !important; }}
 @media (max-width: 560px) {{ .mc-pie-btn {{ right: 12px; }} }}
@@ -487,7 +487,7 @@ html[data-alertas="anotado"] .mc-alerta {{ display: none !important; }}
 }}
 .mc-alerta .tx {{ flex: 1 1 320px; min-width: 0; display: flex; flex-direction: column; gap: 3px; }}
 .mc-alerta .tx b {{ font-size: 15px; }}
-.mc-alerta .tx span {{ font-size: 12.5px; opacity: .72; line-height: 1.4; }}
+.mc-alerta .tx span {{ font-size: 13px; opacity: .85; line-height: 1.4; }}
 .mc-alerta .cp {{ display: flex; gap: 8px; flex: 1 1 280px; max-width: 420px; }}
 .mc-alerta input[type=email] {{
     flex: 1 1 auto; min-width: 0; padding: 9px 12px; border-radius: 10px; font: inherit; font-size: 14px;
@@ -530,8 +530,8 @@ html[data-alertas="anotado"] .mc-alerta {{ display: none !important; }}
     box-shadow: 0 0 0 1px rgba(116,172,223,.55);
 }}
 .mc-title h1 {{ margin: 0; padding: 0; font-size: 1.8rem; font-weight: 800; letter-spacing: -.8px; }}
-.mc-title .sub {{ opacity: .7; font-size: .92rem; }}
-.mc-by {{ font-size: .82rem; opacity: .7; text-align: right; }}
+.mc-title .sub {{ opacity: .85; font-size: .92rem; }}
+.mc-by {{ font-size: .82rem; opacity: .85; text-align: right; }}
 .mc-by b {{ color: {CELESTE}; opacity: 1; }}
 
 /* ── Línea de tiempo de presidentes ── */
@@ -559,22 +559,22 @@ html[data-alertas="anotado"] .mc-alerta {{ display: none !important; }}
 }}
 .mc-foto img {{ position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: top center; }}
 .mc-tl-item.actual .mc-foto {{ box-shadow: 0 0 0 3px {SOL}, 0 0 20px rgba(246,180,14,.65); }}
-.mc-tl-anio {{ grid-row: 1; font-size: 2rem; font-weight: 800; letter-spacing: -1px; opacity: .28; }}
+.mc-tl-anio {{ grid-row: 1; font-size: 2rem; font-weight: 800; letter-spacing: -1px; opacity: .85; }}
 .mc-tl-item.izq .mc-tl-anio {{ grid-column: 3; padding-left: 24px; }}
 .mc-tl-item.der .mc-tl-anio {{ grid-column: 1; text-align: right; padding-right: 24px; }}
 .mc-tl-card h4 {{ margin: 0 0 2px; padding: 0; font-size: 1.25rem; font-weight: 800; }}
-.mc-tl-card .per {{ font-size: .74rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: {CELESTE}; }}
+.mc-tl-card .per {{ font-size: .78rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: {CELESTE}; }}
 .mc-tl-card .hito {{ font-size: .88rem; opacity: .88; margin: 8px 0 10px; line-height: 1.4; }}
 .mc-fila {{
     display: flex; justify-content: space-between; gap: 10px; padding: 5px 0;
     border-top: 1px dashed rgba(128,128,128,.3); font-size: .84rem;
 }}
-.mc-fila .k {{ opacity: .7; }}
+.mc-fila .k {{ opacity: .85; }}
 .mc-fila .v {{ font-weight: 600; text-align: right; }}
 .mc-fila .mejor {{ color: #10AC84; }}
 .mc-fila .peor {{ color: #EE5253; }}
 .mc-tl-card .pico {{ margin-top: 8px; font-size: .8rem; opacity: .9; }}
-.mc-tl-card .nota {{ margin-top: 6px; font-size: .74rem; opacity: .6; font-style: italic; }}
+.mc-tl-card .nota {{ margin-top: 6px; font-size: .78rem; opacity: .85; font-style: italic; }}
 .mc-tl-hoy {{
     width: max-content; margin: 0 auto; padding: 5px 16px; border-radius: 999px; font-weight: 800; font-size: .8rem;
     letter-spacing: .14em; color: #3A2A00; background: linear-gradient(135deg, {SOL}, #F79F1F);
@@ -638,19 +638,18 @@ html[data-alertas="anotado"] .mc-alerta {{ display: none !important; }}
 .mc-aviso .ic {{ flex: 0 0 auto; font-size: 1.15rem; line-height: 1.3; }}
 .mc-nota {{ margin: 10px 0 14px; padding: 16px 20px; border-radius: 16px; border: 1px solid rgba(116,172,223,.35);
     background: linear-gradient(135deg, rgba(116,172,223,.16) 0%, rgba(116,172,223,.05) 100%); }}
-.mc-nota .t {{ font-size: .74rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: {CELESTE}; }}
+.mc-nota .t {{ font-size: .78rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: {CELESTE}; }}
 .mc-nota .v {{ font-size: 1.9rem; font-weight: 800; letter-spacing: -.02em; margin: 2px 0 4px; }}
 .mc-nota p {{ margin: 0; font-size: .92rem; line-height: 1.55; }}
 .mc-cmp td.mejor, .mc-cmp td.peor {{ font-weight: 700; }}
-.mc-cmp td .sub {{ display: block; font-size: .72rem; font-weight: 400; opacity: .6; }}
-.mc-tablas {{ overflow-x: auto; }}
-.mc-conc-g {{ margin: 18px 0 6px; font-size: .76rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase;
+.mc-cmp td .sub {{ display: block; font-size: .78rem; font-weight: 400; opacity: .85; }}
+.mc-conc-g {{ margin: 18px 0 6px; font-size: .78rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase;
     color: {CELESTE}; }}
 .mc-conc {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px; }}
 .mc-conc .c {{ padding: 14px 16px; border-radius: 14px; background: rgba(128,128,128,.07);
     border: 1px solid rgba(128,128,128,.18); border-top: 3px solid rgba(116,172,223,.6); }}
 .mc-conc .c b {{ display: block; font-size: 1rem; margin-bottom: 4px; }}
-.mc-conc .c span {{ font-size: .87rem; line-height: 1.5; opacity: .88; }}
+.mc-conc .c span {{ font-size: .95rem; line-height: 1.55; opacity: .92; }}
 
 /* ── Ministros de Economía ── */
 .mc-min-hero {{
@@ -665,7 +664,7 @@ html[data-alertas="anotado"] .mc-alerta {{ display: none !important; }}
     content: "$"; position: absolute; right: 22px; bottom: -48px; font-size: 13rem; font-weight: 900; line-height: 1;
     color: rgba(255,255,255,.06); pointer-events: none;
 }}
-.mc-min-hero .eyebrow {{ font-size: .72rem; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; color: {SOL}; }}
+.mc-min-hero .eyebrow {{ font-size: .78rem; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; color: {SOL}; }}
 .mc-min-hero h3 {{ margin: 4px 0 6px; padding: 0; font-size: 2rem; font-weight: 900; letter-spacing: -.03em; color: #fff; }}
 .mc-min-hero p {{ margin: 0; max-width: 720px; font-size: .94rem; line-height: 1.5; color: rgba(255,255,255,.85); }}
 .mc-min-res {{ display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 18px; position: relative; z-index: 1; }}
@@ -673,9 +672,9 @@ html[data-alertas="anotado"] .mc-alerta {{ display: none !important; }}
     padding: 12px 14px; border-radius: 14px; background: rgba(255,255,255,.09); border: 1px solid rgba(255,255,255,.16);
     backdrop-filter: blur(4px);
 }}
-.mc-min-res .k {{ font-size: .7rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: rgba(255,255,255,.7); }}
+.mc-min-res .k {{ font-size: .78rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: rgba(255,255,255,.7); }}
 .mc-min-res .v {{ font-size: 1.3rem; font-weight: 900; margin-top: 2px; color: #fff; }}
-.mc-min-res .d {{ font-size: .76rem; color: rgba(255,255,255,.7); }}
+.mc-min-res .d {{ font-size: .78rem; color: rgba(255,255,255,.7); }}
 /* con poco ancho disponible (barra lateral abierta en una ventana mediana), los cuatro datos van de a dos */
 .mc-min-hero {{ container-type: inline-size; }}
 @container (max-width: 720px) {{ .mc-min-res {{ grid-template-columns: repeat(2, 1fr); }} }}
@@ -688,11 +687,11 @@ html[data-alertas="anotado"] .mc-alerta {{ display: none !important; }}
 }}
 .mc-min-grupo .pf img {{ position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: top center; }}
 .mc-min-grupo .t {{ flex: 1; }}
-.mc-min-grupo .t small {{ display: block; font-size: .68rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: {CELESTE}; }}
+.mc-min-grupo .t small {{ display: block; font-size: .78rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: {CELESTE}; }}
 .mc-min-grupo .t b {{ font-size: 1.25rem; font-weight: 900; letter-spacing: -.02em; }}
-.mc-min-grupo .t span {{ font-size: .82rem; opacity: .6; margin-left: 6px; }}
+.mc-min-grupo .t span {{ font-size: .82rem; opacity: .85; margin-left: 6px; }}
 .mc-min-grupo .n {{
-    font-size: .74rem; font-weight: 800; padding: 4px 12px; border-radius: 999px; white-space: nowrap;
+    font-size: .78rem; font-weight: 800; padding: 4px 12px; border-radius: 999px; white-space: nowrap;
     color: {CELESTE}; background: rgba(116,172,223,.14); border: 1px solid rgba(116,172,223,.35);
 }}
 .mc-min-linea {{ height: 4px; border-radius: 4px; margin: -4px 0 14px;
@@ -720,14 +719,14 @@ html[data-alertas="anotado"] .mc-alerta {{ display: none !important; }}
     box-shadow: 0 0 0 2px {CELESTE}, 0 6px 14px rgba(0,0,0,.25);
 }}
 .mc-min-card .ph img {{ position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: top center; }}
-.mc-min-card .per {{ font-size: .7rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: {CELESTE}; }}
+.mc-min-card .per {{ font-size: .78rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: {CELESTE}; }}
 .mc-min-card h5 {{ margin: 1px 0 1px; padding: 0; font-size: 1.18rem; font-weight: 900; letter-spacing: -.02em; line-height: 1.2; }}
-.mc-min-card .cargo {{ font-size: .74rem; opacity: .62; line-height: 1.3; }}
+.mc-min-card .cargo {{ font-size: .78rem; opacity: .85; line-height: 1.3; }}
 .mc-min-card .cuerpo {{ padding: 12px 16px 14px; display: flex; flex-direction: column; gap: 10px; flex: 1; }}
-.mc-min-card .dur {{ display: flex; align-items: center; gap: 10px; font-size: .74rem; font-weight: 800; white-space: nowrap; }}
+.mc-min-card .dur {{ display: flex; align-items: center; gap: 10px; font-size: .78rem; font-weight: 800; white-space: nowrap; }}
 .mc-min-card .dur .b {{ flex: 1; height: 6px; border-radius: 6px; background: rgba(128,128,128,.18); overflow: hidden; }}
 .mc-min-card .dur .b i {{ display: block; height: 100%; border-radius: 6px; background: linear-gradient(90deg, {CELESTE}, #4A8FD4); }}
-.mc-min-card .perfil {{ font-size: .8rem; opacity: .72; font-style: italic; line-height: 1.4; }}
+.mc-min-card .perfil {{ font-size: .8rem; opacity: .85; font-style: italic; line-height: 1.4; }}
 .mc-min-card ul {{ list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 7px; }}
 .mc-min-card li {{ position: relative; padding-left: 18px; font-size: .86rem; line-height: 1.42; }}
 .mc-min-card li::before {{
@@ -742,24 +741,24 @@ html[data-alertas="anotado"] .mc-alerta {{ display: none !important; }}
     border: 1px solid rgba(116,172,223,.3); transition: background-color .15s ease;
 }}
 .mc-min-card li.mas summary::-webkit-details-marker {{ display: none; }}
-.mc-min-card li.mas summary::after {{ content: "▾"; font-size: .7rem; transition: transform .15s ease; }}
+.mc-min-card li.mas summary::after {{ content: "▾"; font-size: .78rem; transition: transform .15s ease; }}
 .mc-min-card li.mas details[open] summary::after {{ transform: rotate(180deg); }}
 .mc-min-card li.mas summary:hover {{ background: rgba(116,172,223,.22); }}
 .mc-min-card li.mas ul {{ margin-top: 8px; }}
 .mc-min-card .datos {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(92px, 1fr)); gap: 8px; margin-top: auto; padding-top: 4px; }}
 .mc-min-card .dato {{ padding: 9px 10px; border-radius: 12px; background: rgba(116,172,223,.09); border: 1px solid rgba(116,172,223,.2); }}
-.mc-min-card .dato .k {{ font-size: .64rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; opacity: .65; }}
+.mc-min-card .dato .k {{ font-size: .78rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; opacity: .85; }}
 .mc-min-card .dato .v {{ font-size: .95rem; font-weight: 900; margin-top: 2px; line-height: 1.2; }}
-.mc-min-card .dato .s {{ font-size: .72rem; opacity: .75; margin-top: 1px; }}
+.mc-min-card .dato .s {{ font-size: .78rem; opacity: .85; margin-top: 1px; }}
 .mc-min-card .dato .mejor {{ color: #10AC84; opacity: 1; font-weight: 800; }}
 .mc-min-card .dato .peor {{ color: #EE5253; opacity: 1; font-weight: 800; }}
-.mc-min-card .pico {{ font-size: .76rem; opacity: .8; }}
+.mc-min-card .pico {{ font-size: .78rem; opacity: .8; }}
 .mc-min-card.actual {{ border-color: {SOL}; box-shadow: 0 0 0 1px {SOL}, 0 10px 26px rgba(246,180,14,.25); }}
 .mc-min-card.actual .top {{ background: linear-gradient(135deg, rgba(246,180,14,.32) 0%, rgba(247,159,31,.10) 60%, rgba(246,180,14,0) 100%); }}
 .mc-min-card.actual .ph {{ box-shadow: 0 0 0 2px {SOL}, 0 0 18px rgba(246,180,14,.55); background: linear-gradient(135deg, {SOL}, #F79F1F); }}
 .mc-min-card.actual .dur .b i {{ background: linear-gradient(90deg, {SOL}, #F79F1F); }}
 .mc-min-card .vivo {{
-    position: absolute; top: 12px; right: 12px; font-size: .64rem; font-weight: 900; letter-spacing: .12em;
+    position: absolute; top: 12px; right: 12px; font-size: .78rem; font-weight: 900; letter-spacing: .12em;
     padding: 3px 9px; border-radius: 999px; color: #3A2A00; background: linear-gradient(135deg, {SOL}, #F79F1F);
 }}
 @container principal (max-width: 760px) {{
@@ -789,7 +788,7 @@ html[data-alertas="anotado"] .mc-alerta {{ display: none !important; }}
     margin: 40px 0 0; padding: 16px 22px 12px; border-radius: 14px 14px 0 0; color: inherit; font-size: .82rem;
     background: rgba(116,172,223,.10); border: 1px solid rgba(116,172,223,.22); border-top: 3px solid {CELESTE};
 }}
-.mc-foot .tit {{ margin: 0 0 4px; font-size: .68rem; font-weight: 800; letter-spacing: .14em;
+.mc-foot .tit {{ margin: 0 0 4px; font-size: .78rem; font-weight: 800; letter-spacing: .14em;
     text-transform: uppercase; color: {CELESTE}; }}
 .mc-foot a {{ color: {CELESTE}; font-weight: 600; text-decoration: none; }}
 .mc-foot a:hover {{ text-decoration: underline; }}
@@ -838,7 +837,7 @@ html[data-alertas="anotado"] .mc-alerta {{ display: none !important; }}
 .st-key-pie_datos > :nth-child(2) {{ order: 1; }}
 .st-key-pie_datos > :nth-child(3) {{ order: 2; }}
 .st-key-pie_datos > :nth-child(4) {{ order: 3; }}
-.mc-pielinks {{ display: flex; flex-wrap: wrap; align-items: center; gap: 2px 14px; font-size: .76rem; white-space: nowrap; }}
+.mc-pielinks {{ display: flex; flex-wrap: wrap; align-items: center; gap: 2px 14px; font-size: .78rem; white-space: nowrap; }}
 .mc-pielinks a {{ color: {CELESTE}; font-weight: 600; text-decoration: none; }}
 .mc-pielinks a:hover {{ text-decoration: underline; }}
 .mc-pielinks a.bol {{ padding: 5px 14px; border-radius: 999px; background: {CELESTE}; color: #0E1A2B; font-weight: 800;
@@ -846,7 +845,7 @@ html[data-alertas="anotado"] .mc-alerta {{ display: none !important; }}
 .mc-pielinks a.bol:hover {{ text-decoration: none; transform: translateY(-1px); filter: brightness(1.08); }}
 @keyframes mc-resalta {{ 0% {{ box-shadow: 0 0 0 0 rgba(116,172,223,.55); }} 70%, 100% {{ box-shadow: 0 0 0 9px rgba(116,172,223,0); }} }}
 @media (prefers-reduced-motion: reduce) {{ .mc-pielinks a.bol {{ animation: none; }} }}
-.mc-pielinks .c {{ opacity: .7; }}
+.mc-pielinks .c {{ opacity: .85; }}
 .st-key-pie_datos [data-testid="stPopover"] button {{ white-space: nowrap; }}
 .mc-vivo, .mc-vivo span {{ white-space: nowrap; }}
 /* lo que entra depende del ancho real de la barra (con la barra lateral abierta es bastante menos que la ventana):
@@ -880,7 +879,7 @@ html[data-alertas="anotado"] .mc-alerta {{ display: none !important; }}
 }}
 .mc-vivo {{ display: flex; flex-wrap: nowrap; align-items: center; gap: 4px 14px; font-size: .78rem; opacity: .85; }}
 .mc-vivo .en {{ display: inline-flex; align-items: center; gap: 6px; font-weight: 800; letter-spacing: .08em;
-    text-transform: uppercase; font-size: .68rem; color: #10AC84; }}
+    text-transform: uppercase; font-size: .78rem; color: #10AC84; }}
 .mc-vivo .en::before {{ content: ""; width: 8px; height: 8px; border-radius: 50%; background: #10AC84;
     box-shadow: 0 0 0 0 rgba(16,172,132,.6); animation: mc-latido 2s ease-out infinite; }}
 @keyframes mc-latido {{ 0% {{ box-shadow: 0 0 0 0 rgba(16,172,132,.55); }} 100% {{ box-shadow: 0 0 0 8px rgba(16,172,132,0); }} }}
@@ -894,9 +893,9 @@ html[data-alertas="anotado"] .mc-alerta {{ display: none !important; }}
 .mc-foot .main {{ display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 18px 36px; align-items: start; }}
 .mc-foot .logo {{ display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }}
 .mc-foot .logo b {{ display: block; font-size: .95rem; }}
-.mc-foot .logo span {{ display: block; font-size: .76rem; opacity: .75; }}
+.mc-foot .logo span {{ display: block; font-size: .78rem; opacity: .85; }}
 .mc-foot a.mc-linkedin {{ display: inline-flex; align-items: center; gap: 5px; margin-left: auto; padding: 3px 10px;
-    border-radius: 999px; border: 1px solid rgba(116,172,223,.45); font-size: .74rem; }}
+    border-radius: 999px; border: 1px solid rgba(116,172,223,.45); font-size: .78rem; }}
 .mc-foot a.mc-linkedin:hover {{ background: #0A66C2; border-color: #0A66C2; color: #fff; text-decoration: none; }}
 .mc-foot .marca p {{ opacity: .85; max-width: 46ch; }}
 .mc-foot .fuentes ul {{ list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 2px 14px; }}
@@ -908,26 +907,29 @@ html[data-alertas="anotado"] .mc-alerta {{ display: none !important; }}
 .mc-foot details p {{ margin-top: 6px; opacity: .85; }}
 /* barra legal */
 .mc-foot .legal {{ display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 16px;
-    margin-top: 12px; padding-top: 8px; border-top: 1px solid rgba(128,128,128,.28); font-size: .74rem; opacity: .9; }}
-.mc-foot .frec {{ margin-top: 6px; font-size: .74rem; opacity: .7; }}
-.mc-foot .made {{ font-weight: 800; letter-spacing: .12em; text-transform: uppercase; opacity: .7; font-size: .66rem; }}
+    margin-top: 12px; padding-top: 8px; border-top: 1px solid rgba(128,128,128,.28); font-size: .78rem; opacity: .9; }}
+.mc-foot .frec {{ margin-top: 6px; font-size: .78rem; opacity: .85; }}
+.mc-foot .made {{ font-weight: 800; letter-spacing: .12em; text-transform: uppercase; opacity: .85; font-size: .78rem; }}
 
 /* ── Resultado final: fichas ── */
 .mc-rf {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin: 6px 0 4px; }}
 .mc-rf .f {{
-    border: 1px solid rgba(128,128,128,.25); border-left: 4px solid {CELESTE}; border-radius: 12px;
-    padding: 12px 14px; background: rgba(128,128,128,.07);
+    border: 1px solid rgba(116,172,223,.3); border-left: 5px solid {CELESTE}; border-radius: 14px;
+    padding: 16px 18px; background: linear-gradient(180deg, rgba(116,172,223,.10), rgba(116,172,223,.03));
+    box-shadow: 0 2px 10px rgba(0,0,0,.08);
 }}
 .mc-rf .f.ok {{ border-left-color: #10AC84; }} .mc-rf .f.mal {{ border-left-color: #EE5253; }}
-.mc-rf .k {{ font-size: .7rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; opacity: .65; }}
-.mc-rf .v {{ font-size: 1.45rem; font-weight: 800; margin: 2px 0; letter-spacing: -.01em; }}
-.mc-rf .d {{ font-size: .8rem; opacity: .75; line-height: 1.35; }}
+.mc-rf .k {{ font-size: .82rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }}
+.mc-rf .v {{ font-size: 1.75rem; font-weight: 800; margin: 4px 0; letter-spacing: -.01em; }}
+.mc-rf .d {{ font-size: .92rem; opacity: .9; line-height: 1.4; }}
+html[data-tema="claro"] .mc-rf .f {{ background: #F4F8FD; border-color: #CFE0F2; box-shadow: 0 2px 10px rgba(30,60,100,.07); }}
+html[data-tema="claro"] .mc-conc .c {{ background: #F4F8FD; border: 1px solid #DCE7F3; }}
 @container principal (max-width: 760px) {{ .mc-foot .main {{ grid-template-columns: 1fr; }} }}
 
 /* ── Páginas legales ── */
 .mc-legal {{ max-width: 860px; margin: 8px auto 0; }}
 .mc-legal h1 {{ margin: 0; padding: 0; font-size: 2rem; font-weight: 800; letter-spacing: -.5px; }}
-.mc-legal .act {{ opacity: .55; font-size: .88rem; margin: 4px 0 18px; }}
+.mc-legal .act {{ opacity: .85; font-size: .88rem; margin: 4px 0 18px; }}
 .mc-legal h3 {{ margin: 26px 0 10px; padding: 0; font-size: 1.1rem; font-weight: 800; color: {CELESTE}; }}
 .mc-legal .card {{ padding: 18px 22px; border-radius: 14px; background: rgba(128,128,128,.09);
     border: 1px solid rgba(128,128,128,.16); }}
@@ -961,12 +963,12 @@ html[data-alertas="anotado"] .mc-alerta {{ display: none !important; }}
 .mc-fx:hover {{ border-color: rgba(116,172,223,.6); transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,.18); }}
 .mc-fx .n {{ font-weight: 800; font-size: .98rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }}
 /* descripción: siempre el alto de dos renglones, así los valores de todas las tarjetas quedan a la misma altura */
-.mc-fx .d {{ font-size: .72rem; opacity: .65; line-height: 1.3; min-height: 2.6em; overflow: hidden;
+.mc-fx .d {{ font-size: .78rem; opacity: .85; line-height: 1.3; min-height: 2.6em; overflow: hidden;
     display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }}
 .mc-fx .v {{ font-size: 1.5rem; font-weight: 800; letter-spacing: -.5px; margin: 6px 0 0; white-space: nowrap; min-width: 0; }}
-.mc-fx .c {{ font-size: .78rem; opacity: .75; margin-bottom: 8px; }}
+.mc-fx .c {{ font-size: .78rem; opacity: .85; margin-bottom: 8px; }}
 .mc-fx .chips {{ display: flex; flex-wrap: wrap; gap: 6px; }}
-.mc-fx .chip {{ font-size: .7rem; font-weight: 700; padding: 3px 8px; border-radius: 999px; background: rgba(128,128,128,.16); }}
+.mc-fx .chip {{ font-size: .78rem; font-weight: 700; padding: 3px 8px; border-radius: 999px; background: rgba(128,128,128,.16); }}
 .mc-fx .chip.bien {{ color: #10AC84; background: rgba(16,172,132,.16); }}
 .mc-fx .chip.mal {{ color: #EE5253; background: rgba(238,82,83,.16); }}
 .mc-fx .chip.flat {{ opacity: .8; }}
@@ -985,7 +987,7 @@ html[data-alertas="anotado"] .mc-alerta {{ display: none !important; }}
     .mc-fx {{ padding: 11px 12px 10px; }}
     .mc-fx .v {{ font-size: 1.15rem; }}
     .mc-fx .spark {{ display: none; }}
-    .mc-fx .c {{ font-size: .72rem; }}
+    .mc-fx .c {{ font-size: .78rem; }}
 }}
 
 /* ── Franja superior deslizante (inspirada en los tableros de cotizaciones) ── */
@@ -1000,9 +1002,9 @@ html[data-alertas="anotado"] .mc-alerta {{ display: none !important; }}
 .mc-ticker {{ contain: layout paint; }}  /* su movimiento no obliga a redibujar el resto de la página */
 .mc-ticker:hover .pista, .mc-ticker.quieta .pista {{ animation-play-state: paused; }}  /* quieta: fuera de la vista */
 .mc-ticker .tk {{ display: inline-flex; align-items: baseline; gap: 8px; padding: 0 22px; border-right: 1px solid rgba(128,128,128,.22); }}
-.mc-ticker .n {{ font-size: .68rem; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; opacity: .6; }}
+.mc-ticker .n {{ font-size: .78rem; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; opacity: .85; }}
 .mc-ticker .v {{ font-weight: 800; font-size: .92rem; }}
-.mc-ticker .d {{ font-size: .75rem; font-weight: 700; opacity: .75; }}
+.mc-ticker .d {{ font-size: .78rem; font-weight: 700; opacity: .85; }}
 .mc-ticker .d.bien {{ color: #10AC84; opacity: 1; }}
 .mc-ticker .d.mal {{ color: #EE5253; opacity: 1; }}
 @keyframes mc-marquee {{ from {{ transform: translateX(0); }} to {{ transform: translateX(-50%); }} }}
@@ -1014,23 +1016,50 @@ html[data-alertas="anotado"] .mc-alerta {{ display: none !important; }}
     background: rgba(128,128,128,.09); border: 1px solid rgba(116,172,223,.38);
 }}
 .mc-viaje h3 {{ margin: 2px 0; padding: 0; font-size: 1.5rem; font-weight: 800; }}
-.mc-viaje .per {{ font-size: .74rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: {CELESTE}; }}
+.mc-viaje .per {{ font-size: .78rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: {CELESTE}; }}
 .mc-viaje .hito {{ font-size: .9rem; opacity: .85; line-height: 1.4; }}
-.mc-cmp {{ width: 100%; border-collapse: separate; border-spacing: 0; margin: 8px 0 12px; font-size: .92rem; }}
-.mc-cmp th {{ text-align: right; padding: 8px 12px; font-size: .74rem; letter-spacing: .08em; text-transform: uppercase;
-    opacity: .7; border-bottom: 2px solid {CELESTE}; }}
+/* TABLAS (todas las de la página usan .mc-cmp): tarjeta con borde redondeado, cabecera con fondo, filas alternadas,
+   letra grande y nada de texto gris */
+.mc-tablas {{ overflow-x: auto; margin: 10px 0 14px; border-radius: 14px; }}
+.mc-cmp {{ width: 100%; border-collapse: separate; border-spacing: 0; margin: 10px 0 14px; font-size: 1rem;
+    border: 1px solid rgba(116,172,223,.35); border-radius: 14px; overflow: hidden; font-variant-numeric: tabular-nums; }}
+.mc-tablas .mc-cmp {{ margin: 0; }}
+.mc-cmp thead th {{ text-align: right; padding: 12px 16px; font-size: .8rem; font-weight: 800; letter-spacing: .06em;
+    text-transform: uppercase; background: rgba(116,172,223,.16); border-bottom: 2px solid {CELESTE}; }}
 .mc-cmp th:first-child, .mc-cmp td:first-child {{ text-align: left; }}
-.mc-cmp td {{ text-align: right; padding: 9px 12px; border-bottom: 1px dashed rgba(128,128,128,.3); font-weight: 600; }}
-.mc-cmp td:first-child {{ font-weight: 400; opacity: .8; }}
-.mc-cmp .mejor {{ color: #10AC84; }}
-.mc-cmp .peor {{ color: #EE5253; }}
+.mc-cmp td {{ text-align: right; padding: 12px 16px; border-bottom: 1px solid rgba(128,128,128,.18); font-weight: 600;
+    line-height: 1.35; }}
+.mc-cmp tbody tr:nth-child(even) td {{ background: rgba(128,128,128,.06); }}
+.mc-cmp tbody tr:hover td {{ background: rgba(116,172,223,.12); }}
+.mc-cmp tbody tr:last-child td {{ border-bottom: 0; }}
+.mc-cmp td:first-child {{ font-weight: 600; }}
+.mc-cmp td .sub {{ display: block; font-size: .82rem; font-weight: 500; opacity: .85; margin-top: 2px; }}
+.mc-cmp .mejor {{ color: #0E9F77; font-weight: 800; }}
+.mc-cmp .peor {{ color: #E0393E; font-weight: 800; }}
 @container principal (max-width: 560px) {{  /* con poco ancho, celdas más ajustadas para que la tabla entre */
-    .mc-cmp {{ font-size: .8rem; }}
-    .mc-cmp th {{ padding: 6px 5px; font-size: .62rem; letter-spacing: .03em; }}
-    .mc-cmp td {{ padding: 7px 5px; }}
+    .mc-cmp {{ font-size: .9rem; }}
+    .mc-cmp thead th {{ padding: 9px 8px; font-size: .74rem; letter-spacing: .02em; }}
+    .mc-cmp td {{ padding: 10px 8px; }}
     .mc-cmp td:not(:first-child) {{ white-space: nowrap; }}  /* «+18,4 pp» en un solo renglón */
     .mc-cmp td:first-child {{ hyphens: auto; }}
 }}
+/* TEXTOS SECUNDARIOS: los de Streamlit (aclaraciones, etiquetas de campos) eran grises y chicos; van con el color del
+   texto y más grandes */
+[data-testid="stCaptionContainer"], [data-testid="stCaptionContainer"] p {{ font-size: .95rem !important;
+    color: inherit !important; opacity: .88; line-height: 1.5; }}
+[data-testid="stWidgetLabel"] p, [data-testid="stWidgetLabel"] label {{ font-size: 1rem !important; font-weight: 600 !important;
+    color: inherit !important; opacity: 1 !important; }}
+[data-testid="stMetricLabel"] p {{ font-size: .95rem !important; color: inherit !important; opacity: .9; }}
+[data-testid="stMarkdownContainer"] p, [data-testid="stMarkdownContainer"] li {{ font-size: 1.02rem; }}
+/* TEMA CLARO (lo marca JS_PESTANAS en html[data-tema="claro"]): el celeste de los acentos se lee mal sobre blanco */
+html[data-tema="claro"] .mc-cmp thead th {{ background: #E3EEF9; border-bottom-color: #2E6DB4; color: #12324F; }}
+html[data-tema="claro"] .mc-cmp {{ border-color: #C9DBEE; }}
+html[data-tema="claro"] .mc-cmp tbody tr:nth-child(even) td {{ background: #F5F8FC; }}
+html[data-tema="claro"] .mc-cmp .mejor {{ color: #08805F; }}
+html[data-tema="claro"] .mc-cmp .peor {{ color: #C62828; }}
+html[data-tema="claro"] [data-testid="stCaptionContainer"] {{ opacity: 1; color: #374151 !important; }}
+html[data-tema="claro"] :is(.mc-tl-card, .mc-min-card, .mc-viaje, .mc-nota, .mc-min-grupo, .mc-fx) :is(.per, .t, small) {{
+    color: #1F5F99 !important; }}
 
 [data-testid="stMetric"] {{ border-radius: 14px; transition: border-color .18s ease; }}
 [data-testid="stMetric"]:hover {{ border-color: rgba(116,172,223,.55); }}
@@ -1267,7 +1296,7 @@ h3 {{ font-weight: 700 !important; }}
     [data-testid="stMetric"] > div {{ padding: 0 !important; }}  /* Streamlit le suma otro relleno adentro */
     [data-testid="stMetricValue"] > div {{ font-size: 1.35rem !important; }}
     [data-testid="stMetricLabel"] p {{ font-size: .8rem !important; }}
-    [data-testid="stMetricDelta"] {{ font-size: .72rem !important; }}
+    [data-testid="stMetricDelta"] {{ font-size: .78rem !important; }}
     /* pestañas y botones más cómodos al tacto */
     [data-testid="stTab"] {{ height: 3rem; padding: 0 .85rem; }}
     [data-testid="stTab"] p {{ font-size: 1rem; }}
@@ -1349,6 +1378,21 @@ JS_PESTANAS = """
       raiz.dataset.alertas = 'anotado';  // si Streamlit vuelve a dibujar el formulario, queda oculto
     }, 0);
   }, true);
+})();
+(() => {
+  // Tema claro u oscuro (Streamlit no lo marca): se mira el fondo de la página. Algunos colores cambian en el claro.
+  if (window.__mcTema) return;
+  window.__mcTema = true;
+  const raiz = document.documentElement;
+  const revisar = () => {
+    const app = document.querySelector('.stApp') || document.body;
+    const m = getComputedStyle(app).backgroundColor.match(/[0-9]+/g);
+    if (!m) return;
+    const claro = (0.299 * m[0] + 0.587 * m[1] + 0.114 * m[2]) > 150;
+    if (claro) raiz.dataset.tema = 'claro'; else delete raiz.dataset.tema;
+  };
+  revisar();
+  setInterval(revisar, 1500);
 })();
 (() => {
   // La franja de cotizaciones se pausa cuando no se ve (al bajar por la página): ahorra batería en el celular.
@@ -1727,22 +1771,22 @@ def pantalla_carga(termino: str, definicion: str) -> str:
 .mc-carga .logo {{ display: inline-block; animation: mc-latir 2.2s ease-in-out infinite; }}
 .mc-carga h1 {{ margin: 14px 0 2px; font-size: 1.9rem; font-weight: 800; letter-spacing: -.02em; }}
 .mc-carga h1 span {{ color: {CELESTE}; }}
-.mc-carga .sub {{ opacity: .7; font-size: .95rem; }}
+.mc-carga .sub {{ opacity: .85; font-size: .95rem; }}
 .mc-carga .pista {{ position: relative; height: 6px; margin: 22px auto 14px; width: 78%; border-radius: 999px; overflow: hidden;
     background: rgba(116,172,223,.16); }}
 .mc-carga .pista::after {{ content: ""; position: absolute; top: 0; bottom: 0; width: 38%; border-radius: 999px;
     background: linear-gradient(90deg, {CELESTE}, #4A8FD4, {SOL}); animation: mc-avance 1.4s ease-in-out infinite; }}
 .mc-carga .fuentes {{ display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 8px; }}
 .mc-carga .fuentes span {{ font-size: .72rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; padding: 3px 10px;
-    border-radius: 999px; border: 1px solid rgba(116,172,223,.35); color: {CELESTE}; opacity: .45;
+    border-radius: 999px; border: 1px solid rgba(116,172,223,.35); color: {CELESTE}; opacity: .85;
     animation: mc-fuente 1.75s ease-in-out infinite; }}
 .mc-carga .termino {{ margin-top: 26px; text-align: left; padding: 12px 14px; border-radius: 12px; border-left: 3px solid {SOL};
     background: rgba(116,172,223,.08); }}
 .mc-carga .termino b {{ display: block; color: {SOL}; font-size: .9rem; margin-bottom: 3px; }}
-.mc-carga .termino small {{ display: block; font-size: .66rem; letter-spacing: .12em; text-transform: uppercase; opacity: .55;
+.mc-carga .termino small {{ display: block; font-size: .78rem; letter-spacing: .12em; text-transform: uppercase; opacity: .85;
     margin-bottom: 4px; }}
 .mc-carga .termino p {{ margin: 0; font-size: .85rem; line-height: 1.45; opacity: .9; }}
-.mc-carga .nota {{ margin-top: 14px; font-size: .75rem; opacity: .55; }}
+.mc-carga .nota {{ margin-top: 14px; font-size: .78rem; opacity: .85; }}
 @keyframes mc-avance {{ 0% {{ left: -38%; }} 100% {{ left: 100%; }} }}
 @keyframes mc-latir {{ 0%, 100% {{ transform: scale(1); }} 50% {{ transform: scale(1.06); }} }}
 @keyframes mc-fuente {{ 0%, 100% {{ opacity: .4; }} 50% {{ opacity: 1; background: rgba(116,172,223,.14); }} }}

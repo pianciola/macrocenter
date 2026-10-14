@@ -50,7 +50,7 @@ pantalla aclara sus supuestos.
 - **Cómo les fue**: cuánto valdría hoy un monto invertido hace 1 mes a 5 años en plazo fijo, UVA, dólar MEP, Merval,
   S&P 500 y bitcoin, contra la inflación (CER).
 - **Plazo fijo vs. UVA**: calculadora con la inflación de empate entre los dos.
-- **Conceptos**: los términos básicos, tomados del glosario.
+- **Glosario**: los términos básicos, tomados del glosario de la app.
 
 ## Historia económica (línea de tiempo)
 
@@ -79,7 +79,7 @@ Cada gráfico tiene al lado del título un botón **CSV** que baja sus datos par
 ## Enlaces para compartir
 
 La dirección sigue a lo que se mira: `?ver=tablero/dolar`, `?ver=herramientas/ajuste-de-alquileres`,
-`?ver=inversiones/conceptos`, etc. Copiarla y mandarla abre la misma pantalla. Un enlace inválido abre el tablero.
+`?ver=inversiones/glosario`, etc. Copiarla y mandarla abre la misma pantalla. Un enlace inválido abre el tablero.
 
 ## Indicadores personalizables
 

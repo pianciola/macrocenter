@@ -219,6 +219,7 @@ def abrir_ruta(ruta) -> None:
         return
     vista_, clave, opciones = RUTAS[base]
     st.session_state["vista"] = vista_
+    sub = {"conceptos": "glosario"}.get(sub, sub)  # enlaces viejos (la sección se llamaba «Conceptos»)
     elegida = next((o for o in opciones if style.slug(o) == sub), None)
     if elegida:
         st.session_state[clave] = elegida
