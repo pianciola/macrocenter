@@ -464,13 +464,14 @@ button[data-variant="segmented_control"][aria-checked="true"] p {{ color: #fff !
 /* botón para ocultar / mostrar la barra del pie (lo crea JS_PESTANAS). Discreto: solo una flechita casi transparente.
    El estado va en html[data-pie="oculto"] y NO en una clase con «mc-»: varios estilos (títulos de sección) excluyen todo lo
    que está dentro de un elemento con «mc-» en la clase, y con una clase en <html> perdían su estilo */
-.mc-pie-btn {{ position: fixed; right: 140px; bottom: 66px; z-index: 95; width: 26px; height: 26px; padding: 0;
+.mc-pie-btn {{ position: fixed; right: 140px; bottom: 66px; z-index: 95; width: 32px; height: 32px; padding: 0;
     display: flex; align-items: center; justify-content: center; border-radius: 50%; cursor: pointer;
-    border: 1px solid rgba(116,172,223,.35); background: rgba(14,26,43,.85); color: {CELESTE};
-    font: 700 11px/1 inherit; opacity: .35; transition: opacity .15s ease; }}
-.mc-pie-btn:hover, .mc-pie-btn:focus-visible {{ opacity: 1; }}
-html[data-pie="oculto"] .mc-pie-btn {{ bottom: 0; width: 44px; height: 16px; border-radius: 8px 8px 0 0; border-bottom: 0;
-    opacity: .3; }}
+    border: 1px solid rgba(116,172,223,.6); background: #13233a; color: {CELESTE};
+    font: 700 13px/1 inherit; opacity: .7; box-shadow: 0 2px 8px rgba(0,0,0,.35);
+    transition: opacity .15s ease, transform .15s ease; }}
+.mc-pie-btn:hover, .mc-pie-btn:focus-visible {{ opacity: 1; transform: translateY(-1px); }}
+html[data-pie="oculto"] .mc-pie-btn {{ bottom: 0; width: 56px; height: 22px; border-radius: 10px 10px 0 0; border-bottom: 0;
+    opacity: .7; }}
 html[data-pie="oculto"] .st-key-pie_datos {{ display: none !important; }}
 html[data-pie="oculto"] [data-testid="stMainBlockContainer"] {{ padding-bottom: 2rem !important; }}
 @media (max-width: 560px) {{ .mc-pie-btn {{ right: 12px; }} }}
