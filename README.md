@@ -142,8 +142,9 @@ rezago) y *Refrescar datos*. Lo secundario se oculta según el ancho real dispon
 2. En https://share.streamlit.io: *Create app*, elegir el repositorio, rama `main` y archivo principal `app.py`. Usa `requirements.txt`.
 3. Antes de difundirla: completar `CONTACTO` y `DOMICILIO` en `macrocenter/legal.py` y hacer revisar los textos legales.
 
-Publicada, no se guardan archivos de preferencias: lo que cada visitante elige (indicadores, noticias leídas) vale solo para
-su sesión. `run.bat` define `MACROCENTER_LOCAL=1`, que activa el guardado local y limita el acceso a esta computadora.
+Publicada, no se guardan archivos de preferencias: lo que cada visitante elige (indicadores) vale solo para su sesión.
+Las noticias leídas las recuerda el propio navegador con la cookie funcional `mc_leidas` (identificadores de 8 caracteres,
+sin datos personales). `run.bat` define `MACROCENTER_LOCAL=1`, que activa el guardado local y limita el acceso a esta computadora.
 
 ## Robustez
 

@@ -106,41 +106,46 @@ MESES_ES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "ago
 # Los archivos de preferencias solo se usan al correr en la propia computadora (run.bat define MACROCENTER_LOCAL=1).
 # Publicada en internet, cada visita guarda sus elecciones solo en su sesión: nada se comparte entre usuarios.
 LOCAL = os.environ.get("MACROCENTER_LOCAL") == "1"
-LEIDAS_ARCHIVO = Path(__file__).parent / ".macrocenter_leidas.json"
+COOKIE_LEIDAS = "mc_leidas"  # noticias leídas: la guarda el navegador de cada visitante
+
+
+def _id_nota(url: str) -> str:
+    """Identificador corto de una noticia (8 caracteres de la huella de su enlace): lo único que se recuerda de ella."""
+    return hashlib.sha1(url.encode("utf-8")).hexdigest()[:8]
 
 
 def leidas() -> set[str]:
-    """URLs de noticias ya marcadas como leídas (se guardan en un archivo local; si está roto, se ignora)."""
+    """Identificadores de las noticias que este navegador marcó como leídas. Se recuerdan en una cookie del propio
+    navegador (el servidor no guarda nada): al abrir la página se leen de ahí."""
     if "noticias_leidas" not in st.session_state:
         try:
-            if not LOCAL:
-                raise OSError("sin archivo compartido")
-            crudo = json.loads(LEIDAS_ARCHIVO.read_text(encoding="utf-8"))
-            st.session_state["noticias_leidas"] = {u for u in crudo if isinstance(u, str)} if isinstance(crudo, list) else set()
+            crudo = st.context.cookies.get(COOKIE_LEIDAS, "")
         except Exception:  # noqa: BLE001
-            st.session_state["noticias_leidas"] = set()
+            crudo = ""
+        st.session_state["noticias_leidas"] = {x for x in str(crudo).split(",") if re.fullmatch(r"[0-9a-f]{8}", x)}
     return st.session_state["noticias_leidas"]
 
 
-def _guardar_leidas() -> None:
-    try:
-        if LOCAL:
-            LEIDAS_ARCHIVO.write_text(json.dumps(sorted(st.session_state["noticias_leidas"])[-300:]), encoding="utf-8")
-    except OSError:
-        pass  # sin permiso de escritura: vale para esta sesión
+def script_cookie_leidas() -> str:
+    """Script que deja las leídas en la cookie del navegador (un año). Solo lleva identificadores hexadecimales: no hay
+    nada de la persona ni de la nota. Se mantienen las de las noticias que están hoy y, de las demás, las más recientes."""
+    hoy = {_id_nota(x.url) for items in cargar_noticias().values() if isinstance(items, list) for x in items}
+    todas = sorted(leidas(), key=lambda i: i not in hoy)[:150]
+    valor = ",".join(todas)
+    st.session_state["noticias_leidas"] = set(todas)
+    return ("<script>(() => { try { document.cookie = 'mc_leidas=' + " + json.dumps(valor) + " + '; Max-Age=31536000; "
+            "Path=/; SameSite=Lax' + (location.protocol === 'https:' ? '; Secure' : ''); } catch (e) {} })();</script>")
 
 
 def marcar_leidas() -> None:
-    """Marca como leídas todas las notas que se ven hoy y recuerda las últimas 300."""
-    vistas = {x.url for items in cargar_noticias().values() if isinstance(items, list) for x in items}
+    """Marca como leídas todas las notas que se ven hoy."""
+    vistas = {_id_nota(x.url) for items in cargar_noticias().values() if isinstance(items, list) for x in items}
     st.session_state["noticias_leidas"] = vistas | set(leidas())
-    _guardar_leidas()
 
 
 def marcar_leida(url: str) -> None:
-    """Marca una sola nota como leída."""
-    st.session_state["noticias_leidas"] = {url} | set(leidas())
-    _guardar_leidas()
+    """Marca como leída una sola nota."""
+    st.session_state["noticias_leidas"] = {_id_nota(url)} | set(leidas())
 
 
 def md_seguro(texto: str) -> str:
@@ -159,14 +164,14 @@ def noticias_recientes(dias: int = 1) -> int:
     for items in noticias.values():
         if isinstance(items, list):
             total += sum(1 for x in items
-                         if 0 <= (hoy - pd.Timestamp(x.fecha).normalize()).days <= dias and x.url not in leidas())
+                         if 0 <= (hoy - pd.Timestamp(x.fecha).normalize()).days <= dias and _id_nota(x.url) not in leidas())
     return total
 
 
 def es_nueva(n: news.Noticia) -> bool:
     """Misma regla que el contador del botón: sin leer y publicada hoy o ayer (hora argentina)."""
     hoy = pd.Timestamp(data.hoy_argentina())
-    return n.url not in leidas() and 0 <= (hoy - pd.Timestamp(n.fecha).normalize()).days <= 1
+    return _id_nota(n.url) not in leidas() and 0 <= (hoy - pd.Timestamp(n.fecha).normalize()).days <= 1
 
 
 @st.dialog("Noticias oficiales", width="large")
@@ -175,6 +180,7 @@ def ver_noticias() -> None:
     fuentes = {"bcra": "BCRA", "economia": "Economía", "indec": "INDEC"}
     pares = [(n, k) for k in fuentes for n in (noticias.get(k) if isinstance(noticias.get(k), list) else [])]
     hay_sin_leer = any(es_nueva(n) for n, _ in pares)
+    st.html(script_cookie_leidas(), unsafe_allow_javascript=True)  # recuerda lo leído en este navegador
 
     c_filtro, c_boton = st.columns([3, 1.4], vertical_alignment="center")
     filtro = c_filtro.segmented_control("Fuente", ["Todas", *fuentes.values()], default="Todas", key="news_filtro",
