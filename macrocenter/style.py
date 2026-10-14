@@ -104,17 +104,22 @@ section[data-testid="stSidebar"] [data-testid="stPills"] button {{ border-radius
 
 /* ── Barra lateral rediseñada: marca compacta, menú de lista, noticias en contorno dorado ── */
 .mc-brand {{
-    display: flex; align-items: center; gap: 12px; background: none; box-shadow: none; border-radius: 0;
-    padding: 4px 2px 16px; margin-bottom: 16px; color: inherit; position: relative;
+    display: flex; align-items: center; gap: 13px; background: none; box-shadow: none; border-radius: 0;
+    padding: 6px 4px 18px; margin-bottom: 16px; color: inherit; position: relative;
 }}
+/* una línea fina que se desvanece (antes, una franja gruesa celeste y blanca) */
 .mc-brand::after {{
-    content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 4px; border-radius: 4px;
-    background: linear-gradient(to bottom, {CELESTE} 0 34%, #FFFFFF 34% 66%, {CELESTE} 66% 100%); opacity: .85;
+    content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 1px;
+    background: linear-gradient(90deg, rgba(116,172,223,.75), rgba(116,172,223,.25) 60%, rgba(116,172,223,0));
 }}
-.mc-brand .mc-flag svg {{ width: 46px; height: 46px; }}
-.mc-brand h1 {{ margin: 0; padding: 0; font-size: 1.45rem; font-weight: 800; letter-spacing: -.02em; color: inherit; }}
+.mc-brand .mc-flag {{ line-height: 0; }}
+.mc-brand .mc-flag svg {{ width: 46px; height: 46px; border-radius: 13px;
+    box-shadow: 0 6px 16px rgba(0,0,0,.35), 0 0 0 1px rgba(116,172,223,.35); }}
+.mc-brand h1 {{ margin: 0; padding: 0; font-size: 1.5rem; font-weight: 800; letter-spacing: -.03em; line-height: 1.05;
+    color: inherit; }}
 .mc-brand h1 span {{ color: {CELESTE}; }}
-.mc-brand p.sub {{ margin: 2px 0 0; font-size: .78rem; font-weight: 500; opacity: .85; letter-spacing: .01em; }}
+.mc-brand p.sub {{ margin: 6px 0 0; font-size: .78rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
+    line-height: 1.2; opacity: .85; }}
 
 /* ── Barra lateral: terminación propia ── */
 /* sin barra de desplazamiento (se veía la de Windows, gruesa y genérica): se sigue pudiendo deslizar, y el borde de
@@ -490,6 +495,15 @@ html[data-pie="oculto"] [data-testid="stMainBlockContainer"] {{ padding-bottom: 
 @media (max-width: 560px) {{ .mc-pie-btn {{ right: 12px; }} }}
 @media (prefers-reduced-motion: reduce) {{ .mc-pie-btn {{ transition: none; }}
     html[data-pie-anim] .st-key-pie_datos {{ animation: none; }} }}
+/* mapa de inflación: la provincia bajo el cursor se levanta (la copia la arma JS_PESTANAS). Solo se animan transform y
+   opacity: la sombra es otra copia oscura que queda en el lugar, sin filtros que obliguen a repintar */
+.mc-lift {{ pointer-events: none; }}
+.mc-lift path {{ transform-box: fill-box; transform-origin: center; transition: transform .22s ease-out, opacity .22s ease-out; }}
+.mc-lift-sombra {{ fill: #000 !important; opacity: 0 !important; stroke: none !important; }}
+.mc-lift-tapa {{ stroke: #FFFFFF !important; stroke-width: 1.4px !important; }}
+.mc-lift.arriba .mc-lift-sombra {{ opacity: .45 !important; transform: translate(3px, 4px); }}
+.mc-lift.arriba .mc-lift-tapa {{ transform: translate(-2px, -6px) scale(1.06); }}
+@media (prefers-reduced-motion: reduce) {{ .mc-lift path {{ transition: none; }} }}
 /* quien ya se anotó en las alertas no vuelve a ver el formulario (lo marca JS_PESTANAS en este navegador) */
 html[data-alertas="anotado"] .mc-alerta {{ display: none !important; }}
 .mc-alerta-ok {{ margin: 10px 0 18px; padding: 12px 16px; border-radius: 14px; font-size: 14px;
@@ -1581,6 +1595,54 @@ JS_PESTANAS = """
     if (tab && tab.getAttribute('role') === 'tab') mover(destinoPara(tab));
   }, true);
 })();
+(() => {
+  // Mapa de inflación: la provincia bajo el cursor se «levanta» (sube y deja su sombra, como una pieza en 3D).
+  // Liviano: no hay observadores ni bucles; se escuchan los eventos de Plotly y se mueve una sola copia de la
+  // provincia con una transición de CSS (solo transform y opacity, que resuelve la placa de video).
+  if (window.__mcMapa) return;
+  window.__mcMapa = true;
+  const NS = 'http://www.w3.org/2000/svg';
+  const quitar = (g) => {
+    if (!g || g.__fuera) return;
+    g.__fuera = true;
+    g.classList.remove('arriba');
+    setTimeout(() => g.remove(), 260);
+  };
+  const enganchar = (gd) => {
+    if (gd.__mcLift || typeof gd.on !== 'function') return;
+    gd.__mcLift = true;
+    let actual = null;
+    gd.on('plotly_hover', (ev) => {
+      const pt = ev && ev.points && ev.points[0];
+      if (!pt) return;
+      const capa = gd.querySelector('.choroplethlayer');
+      const caminos = capa ? capa.querySelectorAll('path.choroplethlocation') : [];
+      const src = caminos[pt.pointNumber];
+      if (!src) return;
+      if (actual && actual.__src === src) return;
+      quitar(actual);
+      const g = document.createElementNS(NS, 'g');
+      g.setAttribute('class', 'mc-lift');
+      g.__src = src;
+      const sombra = src.cloneNode(false);
+      sombra.setAttribute('class', 'mc-lift-sombra');
+      const tapa = src.cloneNode(false);
+      tapa.setAttribute('class', 'mc-lift-tapa');
+      tapa.style.opacity = '1';
+      g.appendChild(sombra);
+      g.appendChild(tapa);
+      src.parentNode.appendChild(g);
+      actual = g;
+      requestAnimationFrame(() => requestAnimationFrame(() => { if (!g.__fuera) g.classList.add('arriba'); }));
+    });
+    gd.on('plotly_unhover', () => { quitar(actual); actual = null; });
+  };
+  // se engancha la primera vez que el mouse entra a un gráfico con mapa (y otra vez si Streamlit lo vuelve a armar)
+  document.addEventListener('pointerover', (e) => {
+    const gd = e.target && e.target.closest ? e.target.closest('.js-plotly-plot') : null;
+    if (gd && !gd.__mcLift && gd.querySelector('.choroplethlayer')) enganchar(gd);
+  }, { passive: true });
+})();
 </script>
 """
 
@@ -1728,7 +1790,7 @@ def _favicon_bandera():
 def marca() -> str:
     return (
         f'<div class="mc-brand"><div class="mc-flag">{logo(46)}</div><div><h1>Macro<span>Center</span></h1>'
-        '<p class="sub">La economía argentina, en datos</p></div></div>'
+        '<p class="sub">El pulso de la economía</p></div></div>'
     )
 
 
