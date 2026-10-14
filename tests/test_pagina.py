@@ -89,3 +89,10 @@ def test_el_script_de_la_pagina_no_lleva_etiquetas_html():
 
     cuerpo = style.JS_PESTANAS.replace("<script>", "").replace("</script>", "")
     assert not re.search(r"<[/\w!]", cuerpo)
+
+
+def test_titulos_de_seccion_no_dependen_de_una_clase_en_html():
+    # los estilos de los títulos excluyen lo que está dentro de un elemento con «mc-» en la clase: el estado del botón
+    # del pie va en un atributo de <html>, nunca en una clase (con una clase, los títulos perdían la barra celeste)
+    assert "mc-pie-oculto" not in style.CSS and "mc-pie-oculto" not in style.JS_PESTANAS
+    assert 'html[data-pie="oculto"]' in style.CSS and "dataset.pie" in style.JS_PESTANAS

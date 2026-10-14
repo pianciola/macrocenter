@@ -89,8 +89,6 @@ def mostrar(series: dict, clave: str = "mapa_infl") -> None:
     st.markdown("**Tocá una provincia** para ver su inflación. Cada una lleva el color de su región del INDEC.")
     st.plotly_chart(fig, width="stretch", key=clave, on_select="rerun", selection_mode="points",
                     config={"displayModeBar": False, "scrollZoom": False})
-    st.caption("Tierra del Fuego incluye las islas Malvinas. La Antártida y las islas del Atlántico Sur, que también "
-               "son parte de la provincia, no se dibujan. Límites: IGN.")
     if not elegida:
         return
     st.markdown(f"#### {elegida}")

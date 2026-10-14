@@ -461,17 +461,19 @@ button[data-variant="segmented_control"][aria-checked="true"] p {{ color: #fff !
 .mc-gtit {{ margin: 6px 0 0; padding-left: 2px; }}
 .mc-gtit .t {{ font-size: 16px; font-weight: 700; line-height: 1.3; }}
 .mc-gtit .b {{ font-size: 12px; opacity: .6; margin-top: 2px; }}
-/* botón para ocultar / mostrar la barra del pie (lo crea JS_PESTANAS; el estado queda en la clase mc-pie-oculto) */
-.mc-pie-btn {{ position: fixed; right: 140px; bottom: 72px; z-index: 95; display: flex; align-items: center; gap: 6px;
-    padding: 4px 11px 4px 9px; border-radius: 999px; border: 1px solid rgba(116,172,223,.45); cursor: pointer;
-    background: rgba(14,26,43,.92); color: {CELESTE}; font: 700 12px/1.2 inherit; opacity: .75;
-    transition: opacity .15s ease, bottom .2s ease; }}
+/* botón para ocultar / mostrar la barra del pie (lo crea JS_PESTANAS). Discreto: solo una flechita casi transparente.
+   El estado va en html[data-pie="oculto"] y NO en una clase con «mc-»: varios estilos (títulos de sección) excluyen todo lo
+   que está dentro de un elemento con «mc-» en la clase, y con una clase en <html> perdían su estilo */
+.mc-pie-btn {{ position: fixed; right: 140px; bottom: 66px; z-index: 95; width: 26px; height: 26px; padding: 0;
+    display: flex; align-items: center; justify-content: center; border-radius: 50%; cursor: pointer;
+    border: 1px solid rgba(116,172,223,.35); background: rgba(14,26,43,.85); color: {CELESTE};
+    font: 700 11px/1 inherit; opacity: .35; transition: opacity .15s ease; }}
 .mc-pie-btn:hover, .mc-pie-btn:focus-visible {{ opacity: 1; }}
-.mc-pie-btn .i {{ font-size: 13px; line-height: 1; }}
-html.mc-pie-oculto .mc-pie-btn {{ bottom: 10px; }}
-html.mc-pie-oculto .st-key-pie_datos {{ display: none !important; }}
-html.mc-pie-oculto [data-testid="stMainBlockContainer"] {{ padding-bottom: 3.5rem !important; }}
-@media (max-width: 560px) {{ .mc-pie-btn .t {{ display: none; }} .mc-pie-btn {{ padding: 5px 9px; right: 12px; }} }}
+html[data-pie="oculto"] .mc-pie-btn {{ bottom: 0; width: 44px; height: 16px; border-radius: 8px 8px 0 0; border-bottom: 0;
+    opacity: .3; }}
+html[data-pie="oculto"] .st-key-pie_datos {{ display: none !important; }}
+html[data-pie="oculto"] [data-testid="stMainBlockContainer"] {{ padding-bottom: 2rem !important; }}
+@media (max-width: 560px) {{ .mc-pie-btn {{ right: 12px; }} }}
 @media (prefers-reduced-motion: reduce) {{ .mc-pie-btn {{ transition: none; }} }}
 /* formulario de alertas del dólar (pestaña Dólar) */
 .mc-alerta {{
@@ -1301,26 +1303,22 @@ JS_PESTANAS = """
   const raiz = document.documentElement;
   const leer = () => { try { return localStorage.getItem('mc_pie_oculto') === '1'; } catch (e) { return false; } };
   const guardar = (v) => { try { localStorage.setItem('mc_pie_oculto', v ? '1' : '0'); } catch (e) {} };
+  const poner = (oculto) => { if (oculto) raiz.dataset.pie = 'oculto'; else delete raiz.dataset.pie; };
   const b = document.createElement('button');
   b.type = 'button';
   b.className = 'mc-pie-btn';
   // (sin HTML dentro del script: el sanitizador de Streamlit descarta los scripts que contienen etiquetas)
-  const icono = document.createElement('span');
-  icono.className = 'i';
-  icono.setAttribute('aria-hidden', 'true');
-  const texto = document.createElement('span');
-  texto.className = 't';
-  b.append(icono, texto);
   const pintar = () => {
-    const oculto = raiz.classList.contains('mc-pie-oculto');
-    icono.textContent = oculto ? '▲' : '▼';
-    texto.textContent = oculto ? 'Mostrar barra' : 'Ocultar barra';
-    b.setAttribute('aria-label', oculto ? 'Mostrar la barra inferior' : 'Ocultar la barra inferior');
+    const oculto = raiz.dataset.pie === 'oculto';
+    b.textContent = oculto ? '▲' : '▼';
+    b.title = oculto ? 'Mostrar la barra inferior' : 'Ocultar la barra inferior';
+    b.setAttribute('aria-label', b.title);
     b.setAttribute('aria-pressed', oculto ? 'true' : 'false');
   };
-  raiz.classList.toggle('mc-pie-oculto', leer());
+  poner(leer());
   b.addEventListener('click', () => {
-    const oculto = raiz.classList.toggle('mc-pie-oculto');
+    const oculto = raiz.dataset.pie !== 'oculto';
+    poner(oculto);
     guardar(oculto);
     pintar();
   });
