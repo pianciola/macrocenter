@@ -1119,7 +1119,7 @@ html[data-tema="claro"] :is(.mc-tl-card, .mc-min-card, .mc-viaje, .mc-nota, .mc-
 /* títulos de sección con un poco más de aire arriba */
 [data-testid="stHeading"] h3 {{ padding-top: .9rem; }}
 /* sin barra deslizante: la fila se mueve sola al tocar un marcador (ver JS_PESTANAS), con las flechas o deslizando */
-[role="tablist"] {{ gap: 6px; padding-bottom: 4px; scrollbar-width: none !important; }}
+[role="tablist"] {{ gap: 6px; padding-bottom: 8px; scrollbar-width: none !important; }}
 [role="tablist"]::-webkit-scrollbar {{ display: none !important; }}
 /* el bloque que solo trae el script no ocupa lugar (ni el espacio entre elementos) */
 [data-testid="stElementContainer"]:has(> [data-testid="stHtml"] > script:only-child) {{ display: none; }}
@@ -1164,7 +1164,7 @@ html[data-tema="claro"] :is(.mc-tl-card, .mc-min-card, .mc-viaje, .mc-nota, .mc-
 /* "Inicio" (primer marcador): la casa de la app. Píldora celeste con el Sol de Mayo, como la bandera; se rellena
    cuando está elegida y queda separada del resto por una línea vertical */
 [role="tablist"] [data-testid="stTab"]:first-of-type {{
-    position: relative; height: 2.6rem; margin: .4rem 1.25rem .4rem .1rem; padding: 0 1.15rem 0 2.45rem;
+    position: relative; height: 2.6rem; margin: .4rem 1.25rem .4rem 1.1rem; padding: 0 1.15rem 0 2.45rem;
     border-radius: 999px; border: 1px solid rgba(116,172,223,.55);
     background: linear-gradient(135deg, rgba(116,172,223,.20), rgba(116,172,223,.07));
     box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
@@ -1173,11 +1173,11 @@ html[data-tema="claro"] :is(.mc-tl-card, .mc-min-card, .mc-viaje, .mc-nota, .mc-
 [role="tablist"] [data-testid="stTab"]:first-of-type:hover {{
     transform: translateY(-1px); border-color: {CELESTE};
     background: linear-gradient(135deg, rgba(116,172,223,.32), rgba(116,172,223,.12));
-    box-shadow: 0 4px 14px rgba(116,172,223,.25);
+    box-shadow: 0 3px 11px rgba(116,172,223,.25);
 }}
 [role="tablist"] [data-testid="stTab"]:first-of-type[aria-selected="true"] {{
     border-color: transparent; background: linear-gradient(135deg, {CELESTE} 0%, #4A8FD4 100%);
-    box-shadow: 0 4px 16px rgba(74,143,212,.45), inset 0 1px 0 rgba(255,255,255,.35);
+    box-shadow: 0 3px 12px rgba(74,143,212,.45), inset 0 1px 0 rgba(255,255,255,.35);
 }}
 [role="tablist"] [data-testid="stTab"]:first-of-type[aria-selected="true"] p {{ color: #0B1A2E !important; }}
 /* la píldora ya marca la selección: sin la rayita de abajo */
