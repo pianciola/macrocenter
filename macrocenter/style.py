@@ -462,7 +462,7 @@ button[data-variant="segmented_control"][aria-checked="true"] p {{ color: #fff !
 .mc-gtit .t {{ font-size: 16px; font-weight: 700; line-height: 1.3; }}
 .mc-gtit .b {{ font-size: 12px; opacity: .6; margin-top: 2px; }}
 /* botón para ocultar / mostrar la barra del pie (lo crea JS_PESTANAS; el estado queda en la clase mc-pie-oculto) */
-.mc-pie-btn {{ position: fixed; left: 14px; bottom: 72px; z-index: 95; display: flex; align-items: center; gap: 6px;
+.mc-pie-btn {{ position: fixed; right: 140px; bottom: 72px; z-index: 95; display: flex; align-items: center; gap: 6px;
     padding: 4px 11px 4px 9px; border-radius: 999px; border: 1px solid rgba(116,172,223,.45); cursor: pointer;
     background: rgba(14,26,43,.92); color: {CELESTE}; font: 700 12px/1.2 inherit; opacity: .75;
     transition: opacity .15s ease, bottom .2s ease; }}
@@ -471,7 +471,7 @@ button[data-variant="segmented_control"][aria-checked="true"] p {{ color: #fff !
 html.mc-pie-oculto .mc-pie-btn {{ bottom: 10px; }}
 html.mc-pie-oculto .st-key-pie_datos {{ display: none !important; }}
 html.mc-pie-oculto [data-testid="stMainBlockContainer"] {{ padding-bottom: 3.5rem !important; }}
-@media (max-width: 560px) {{ .mc-pie-btn .t {{ display: none; }} .mc-pie-btn {{ padding: 5px 9px; left: 10px; }} }}
+@media (max-width: 560px) {{ .mc-pie-btn .t {{ display: none; }} .mc-pie-btn {{ padding: 5px 9px; right: 12px; }} }}
 @media (prefers-reduced-motion: reduce) {{ .mc-pie-btn {{ transition: none; }} }}
 /* formulario de alertas del dólar (pestaña Dólar) */
 .mc-alerta {{
