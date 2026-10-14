@@ -837,7 +837,7 @@ html[data-tema="claro"] .mc-aviso .ic {{ background: #FBE7B5; color: #8A5A00; }}
    «sticky» y no «fixed»: el contenedor principal tiene contención de layout y un elemento fijo se ubicaría respecto de él.
    Al final de una página corta queda en su lugar natural, apoyada abajo de todo */
 [data-testid="stLayoutWrapper"]:has(> .st-key-pie_datos) {{ display: contents; }}
-.st-key-pie_datos {{ position: sticky; bottom: 0; z-index: 90; margin-top: 28px; min-height: 60px; box-sizing: border-box;
+.st-key-pie_datos {{ position: sticky; bottom: 0; z-index: 90; margin-top: 28px; min-height: 66px; box-sizing: border-box;
     padding-top: 9px; padding-bottom: calc(15px + env(safe-area-inset-bottom, 0px)); justify-content: space-between; flex-wrap: nowrap; gap: 6px 16px !important;
     background: color-mix(in srgb, var(--background-color, #0E1117) 86%, #74ACDF 14%); border: none;
     border-top: 3px solid {CELESTE}; backdrop-filter: blur(6px); }}
@@ -858,7 +858,7 @@ html[data-tema="claro"] .mc-aviso .ic {{ background: #FBE7B5; color: #8A5A00; }}
 .st-key-pie_datos > :nth-child(2) {{ order: 1; }}
 .st-key-pie_datos > :nth-child(3) {{ order: 2; }}
 .st-key-pie_datos > :nth-child(4) {{ order: 3; }}
-.mc-pielinks {{ display: flex; flex-wrap: wrap; align-items: center; gap: 2px 14px; font-size: .78rem; white-space: nowrap; }}
+.mc-pielinks {{ display: flex; flex-wrap: wrap; align-items: center; gap: 2px 16px; font-size: .9rem; white-space: nowrap; }}
 .mc-pielinks a {{ color: {CELESTE}; font-weight: 600; text-decoration: none; }}
 .mc-pielinks a:hover {{ text-decoration: underline; }}
 /* compacto: texto corto, un poco más alto que ancho de relleno, así no se ve como una franja estirada */
@@ -875,13 +875,13 @@ html[data-tema="claro"] .mc-aviso .ic {{ background: #FBE7B5; color: #8A5A00; }}
 /* lo que entra depende del ancho real de la barra (con la barra lateral abierta es bastante menos que la ventana):
    se va ocultando lo secundario, nunca los botones. Términos y privacidad siguen en «Fuentes y aviso» */
 .st-key-pie_datos {{ container-type: inline-size; container-name: pie; }}
-@container pie (max-width: 1250px) {{ .mc-pielinks .c, .mc-vivo .sec {{ display: none; }} }}
-@container pie (max-width: 940px) {{ .mc-pielinks a:not(.bol) {{ display: none; }} }}
-@container pie (max-width: 760px) {{ .mc-vivo span:not(.en) {{ display: none; }} }}
+@container pie (max-width: 1380px) {{ .mc-pielinks .c, .mc-vivo .sec {{ display: none; }} }}
+@container pie (max-width: 1040px) {{ .mc-pielinks a:not(.bol) {{ display: none; }} }}
+@container pie (max-width: 840px) {{ .mc-vivo span:not(.en) {{ display: none; }} }}
 /* angosto (celular): la suscripción sigue a la vista con un texto corto, y los otros dos botones quedan solo con su
    ícono (el texto sigue ahí para los lectores de pantalla) */
 .mc-pielinks .bol .s {{ display: none; }}
-@container pie (max-width: 600px) {{
+@container pie (max-width: 660px) {{
     .mc-pielinks .bol .l {{ display: none; }}
     .mc-pielinks .bol .s {{ display: inline; }}
     .st-key-pie_datos button [data-testid="stMarkdownContainer"] {{ position: absolute; width: 1px; height: 1px;
@@ -901,7 +901,7 @@ html[data-tema="claro"] .mc-aviso .ic {{ background: #FBE7B5; color: #8A5A00; }}
     [data-testid="stPopoverBody"] .mc-foot .main {{ grid-template-columns: 1fr; gap: 14px; }}
     [data-testid="stPopoverBody"] .mc-foot .marca p {{ max-width: none; }}
 }}
-.mc-vivo {{ display: flex; flex-wrap: nowrap; align-items: center; gap: 4px 14px; font-size: .78rem; opacity: .85; }}
+.mc-vivo {{ display: flex; flex-wrap: nowrap; align-items: center; gap: 4px 16px; font-size: .9rem; opacity: .9; }}
 .mc-vivo .en {{ display: inline-flex; align-items: center; gap: 6px; font-weight: 800; letter-spacing: .08em;
     text-transform: uppercase; font-size: .78rem; color: #10AC84; }}
 .mc-vivo .en::before {{ content: ""; width: 8px; height: 8px; border-radius: 50%; background: #10AC84;
@@ -910,7 +910,7 @@ html[data-tema="claro"] .mc-aviso .ic {{ background: #FBE7B5; color: #8A5A00; }}
 @media (prefers-reduced-motion: reduce) {{ .mc-vivo .en::before {{ animation: none; }} }}
 .st-key-pie_datos button {{ min-height: 0 !important; padding: .28rem .8rem .28rem .65rem !important; border-radius: 999px !important;
     border: 1px solid rgba(116,172,223,.45) !important; background: transparent !important; }}
-.st-key-pie_datos button p {{ font-size: .78rem !important; font-weight: 700; color: {CELESTE} !important; }}
+.st-key-pie_datos button p {{ font-size: .9rem !important; font-weight: 700; color: {CELESTE} !important; }}
 .st-key-pie_datos button [data-testid="stIconMaterial"] {{ color: {CELESTE}; font-size: 1rem; }}
 .st-key-pie_datos button:hover:not(:disabled) {{ background: rgba(116,172,223,.16) !important; border-color: {CELESTE} !important; }}
 /* cuerpo: marca a la izquierda, fuentes a la derecha */
