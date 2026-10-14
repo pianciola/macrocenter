@@ -1728,7 +1728,12 @@ JS_PESTANAS = """
   window.__mcLeidas = true;
   // el botón de noticias queda invisible hasta saber qué hay leído (ver el CSS): si no, se veía un segundo con las
   // noticias como sin leer y recién después como leídas
-  const listo = () => { document.documentElement.dataset.leidas = 'listo'; };
+  // (además de la regla del CSS de la página, que Streamlit vuelve a armar en cada redibujado y por un instante deja el
+  // botón a la vista, se usa una hoja propia que no se toca hasta estar listo)
+  const hoja = document.createElement('style');
+  hoja.textContent = '[class*="st-key-btn_noticias"] { opacity: 0 !important; }';
+  document.head.appendChild(hoja);
+  const listo = () => { document.documentElement.dataset.leidas = 'listo'; hoja.remove(); };
   let v = '';
   try { v = localStorage.getItem('mc_leidas') || ''; } catch (e) { listo(); return; }
   if (!/^[0-9a-f]{8}(,[0-9a-f]{8})*$/.test(v)) { listo(); return; }
