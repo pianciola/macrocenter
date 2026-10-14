@@ -4,6 +4,7 @@ Ejecutar:  streamlit run app.py
 """
 from __future__ import annotations
 
+import hashlib
 import inspect
 import json
 import os
@@ -121,15 +122,25 @@ def leidas() -> set[str]:
     return st.session_state["noticias_leidas"]
 
 
-def marcar_leidas() -> None:
-    """Marca como leídas todas las notas que se ven hoy y recuerda las últimas 300."""
-    vistas = {x.url for items in cargar_noticias().values() if isinstance(items, list) for x in items}
-    st.session_state["noticias_leidas"] = vistas | set(leidas())
+def _guardar_leidas() -> None:
     try:
         if LOCAL:
             LEIDAS_ARCHIVO.write_text(json.dumps(sorted(st.session_state["noticias_leidas"])[-300:]), encoding="utf-8")
     except OSError:
         pass  # sin permiso de escritura: vale para esta sesión
+
+
+def marcar_leidas() -> None:
+    """Marca como leídas todas las notas que se ven hoy y recuerda las últimas 300."""
+    vistas = {x.url for items in cargar_noticias().values() if isinstance(items, list) for x in items}
+    st.session_state["noticias_leidas"] = vistas | set(leidas())
+    _guardar_leidas()
+
+
+def marcar_leida(url: str) -> None:
+    """Marca una sola nota como leída."""
+    st.session_state["noticias_leidas"] = {url} | set(leidas())
+    _guardar_leidas()
 
 
 def md_seguro(texto: str) -> str:
@@ -181,9 +192,19 @@ def ver_noticias() -> None:
             falla(f"no se pudieron leer las noticias de {nombre}")
     visibles = sorted(((n, k) for n, k in pares if filtro == "Todas" or fuentes[k] == filtro),
                       key=lambda par: par[0].fecha, reverse=True)
-    st.markdown(style.lista_noticias([
-        dict(titulo=n.titulo, url=n.url, fecha=n.fecha, resumen=n.resumen, fuente=fuentes[k], clase=k, nueva=es_nueva(n))
-        for n, k in visibles[:14]], MESES_ES), unsafe_allow_html=True)
+    if not visibles:
+        st.markdown(style.lista_noticias([], MESES_ES), unsafe_allow_html=True)
+    for n, k in visibles[:14]:
+        item = style.lista_noticias([dict(titulo=n.titulo, url=n.url, fecha=n.fecha, resumen=n.resumen,
+                                          fuente=fuentes[k], clase=k, nueva=es_nueva(n))], MESES_ES)
+        if es_nueva(n):
+            # cada nota nueva trae su propio botón: al tocarlo solo esa pasa a leída y el diálogo se redibuja
+            c_nota, c_leer = st.columns([6, 1.3], vertical_alignment="center", gap="small")
+            c_nota.markdown(item, unsafe_allow_html=True)
+            c_leer.button("✓ Leída", key=f"leer_{hashlib.sha1(n.url.encode()).hexdigest()[:12]}", on_click=marcar_leida,
+                          args=(n.url,), width="stretch", help="Marca solo esta noticia como leída.")
+        else:
+            st.markdown(item, unsafe_allow_html=True)
     st.markdown(style.pie_noticias([("Banco Central", news.BCRA_URL), ("Ministerio de Economía", news.ECONOMIA_URL),
                                       ("INDEC", news.INDEC_URL)]),
                 unsafe_allow_html=True)
