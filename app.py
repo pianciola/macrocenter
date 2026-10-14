@@ -982,12 +982,15 @@ t_res, t_dol, t_bol, t_cri, t_tasas, t_din, t_prec, t_act, t_res_i, t_sal, t_fis
 
 # ───────────────────────── indicadores personalizables ─────────────────────────
 PREFS_ARCHIVO = Path(__file__).parent / ".macrocenter_prefs.json"
-KPIS_DEFECTO = ["oficial", "riesgo", "reservas", "infl_m", "infl_ia"]
+KPIS_DEFECTO = ["oficial", "riesgo", "reservas", "infl_m", "emae_m"]
 
 dol_s = {c: dol[["fecha", c]].dropna().rename(columns={c: "valor"})
          for c in ("oficial", "blue", "bolsa", "contadoconliqui")} if dol is not None else {}
 brecha_df = dol.dropna(subset=["brecha_blue"]) if dol is not None else None
 emae_ia = yoy(emae) if emae is not None else None
+# actividad del mes: EMAE desestacionalizado contra el mes anterior (el dato que el INDEC destaca cada mes)
+emae_m = (emae_sa.assign(valor=emae_sa["valor"].pct_change(fill_method=None) * 100).dropna(subset=["valor"])
+          if emae_sa is not None else None)
 paro_pct = paro.assign(valor=paro["valor"] * 100) if paro is not None else None
 sal_ia = yoy(sal) if sal is not None else None
 sal_real_df = salario_real()
@@ -1021,6 +1024,8 @@ CATALOGO = {
     "infl_m": ("Precios", "Inflación mensual", _kpi(infl_m, dec=1, suf="%", color="inverse", **_MES)),
     "infl_ia": ("Precios", "Inflación interanual", _kpi(infl_ia, dec=1, suf="%", color="inverse", **_MES)),
     "rem": ("Precios", "Inflación esperada 12 m", _kpi(rem, dec=1, suf="%", color="inverse", **_MES)),
+    "emae_m": ("Actividad", "Actividad mensual", _kpi(emae_m, dec=1, suf="%", color="normal",
+                                                    help="EMAE desestacionalizado, variación contra el mes anterior", **_MES)),
     "emae": ("Actividad", "EMAE interanual", _kpi(emae_ia, dec=1, suf="%", color="normal", **_MES)),
     "paro": ("Actividad", "Desocupación (EPH)", _kpi(paro_pct, dec=1, suf="%", color="inverse", dias=80, modo="abs",
                                                       d_suf=" pp", d_txt="vs trim. ant.")),
