@@ -689,7 +689,7 @@ html[data-tema="claro"][data-intros="ocultas"] .mc-intro .mc-intro-x::before {{ 
     background: rgba(128,128,128,.06); border: 1px solid rgba(128,128,128,.18); }}
 .mc-acl .f {{ display: grid; grid-template-columns: 6.4rem 1fr; gap: 12px; align-items: baseline; }}
 .mc-acl .f + .f {{ margin-top: 6px; padding-top: 6px; border-top: 1px dashed rgba(128,128,128,.2); }}
-.mc-acl .et {{ font-size: .68rem; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; color: {CELESTE}; }}
+.mc-acl .et {{ font-size: .72rem; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; color: {CELESTE}; }}
 .mc-acl .tx {{ opacity: .92; }}
 .mc-acl .tx strong {{ font-weight: 700; }}
 .mc-acl .ley {{ display: flex; flex-wrap: wrap; gap: 4px 18px; }}
@@ -1626,6 +1626,37 @@ JS_PESTANAS = """
     arriba();
     [150, 500, 1200, 2500].forEach((ms) => setTimeout(arriba, ms));
   }, true);
+})();
+(() => {
+  // Celular: la barra lateral se abre deslizando el dedo hacia la derecha desde el borde izquierdo y se cierra
+  // deslizándolo hacia la izquierda. Toca los mismos botones de Streamlit (flecha de abrir y de cerrar). Solo cuenta
+  // un gesto claramente horizontal, para no confundirse con desplazar la página, una tabla o un gráfico.
+  if (window.__mcGesto) return;
+  window.__mcGesto = true;
+  const BORDE = 32, MINIMO = 55;
+  let x0 = null, y0 = 0, desdeBorde = false;
+  const abierta = () => {
+    const sb = document.querySelector('[data-testid="stSidebar"]');
+    return !!sb && sb.getAttribute('aria-expanded') === 'true';
+  };
+  document.addEventListener('touchstart', (e) => {
+    if (e.touches.length !== 1) { x0 = null; return; }
+    x0 = e.touches[0].clientX; y0 = e.touches[0].clientY;
+    desdeBorde = x0 <= BORDE;
+  }, { passive: true, capture: true });
+  document.addEventListener('touchend', (e) => {
+    if (x0 === null || !e.changedTouches.length) return;
+    const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0;
+    x0 = null;
+    if (Math.abs(dx) < MINIMO || Math.abs(dy) > Math.abs(dx) * 0.6) return;  // corto o más vertical que horizontal
+    if (dx > 0 && desdeBorde && !abierta()) {
+      const b = document.querySelector('[data-testid="stExpandSidebarButton"]');
+      if (b) b.click();
+    } else if (dx < 0 && abierta() && window.matchMedia('(max-width: 768px)').matches) {
+      const b = document.querySelector('[data-testid="stSidebarCollapseButton"] button');
+      if (b) b.click();
+    }
+  }, { passive: true, capture: true });
 })();
 (() => {
   // Alertas por mail: al anotarse, el formulario se reemplaza por un aviso y no vuelve a aparecer en este navegador.
