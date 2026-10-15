@@ -2515,7 +2515,7 @@ def comparacion(filas: list[dict], a: str, b: str) -> str:
 
 FUENTES = [
     ("BCRA", "Estadísticas y cotizaciones cambiarias", "https://www.bcra.gob.ar/"),
-    ("INDEC / Ministerio de Economía", "Series de Tiempo (datos.gob.ar)", "https://datos.gob.ar/series/api/"),
+    ("INDEC / Ministerio de Economía", "Series de Tiempo (datos.gob.ar)", "https://www.datos.gob.ar/series/"),
     ("ArgentinaDatos", "Dólares, inflación histórica, riesgo país, plazos fijos, fondos y rendimientos",
      "https://argentinadatos.com/"),
     ("CoinGecko", "Criptomonedas", "https://www.coingecko.com/"),
