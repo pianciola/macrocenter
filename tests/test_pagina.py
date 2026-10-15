@@ -132,3 +132,11 @@ def test_la_hoja_de_estilos_pasa_el_saneador():
     cuerpo = style.CSS.strip()
     assert cuerpo.startswith("<style>") and cuerpo.endswith("</style>")
     assert not re.search(r"<[/\w!]", cuerpo[len("<style>"):-len("</style>")])
+
+
+def test_el_contenido_espera_a_los_estilos():
+    # en un navegador nuevo el contenido se ocultaba recién cuando llegaban los estilos: ahora arranca oculto (primer
+    # elemento, st.markdown) y la hoja grande lo muestra cuando JS_PESTANAS ya marcó el tema (html[data-listo])
+    assert "visibility:hidden" in style.OCULTAR_HASTA_ESTILO and "4s forwards" in style.OCULTAR_HASTA_ESTILO
+    assert 'html[data-listo] [data-testid="stMainBlockContainer"]' in style.CSS
+    assert "dataset.listo" in style.JS_PESTANAS
