@@ -673,23 +673,13 @@ html[data-alertas="anotado"] .mc-alerta {{ display: none !important; }}
     .st-key-inv_seccion button p {{ font-size: .9rem !important; }}
 }}
 
-/* selector de Herramientas (cinco tarjetas): si no entran en una fila, pasan a la siguiente (antes, con poco ancho, el
-   texto de cada botón se partía letra por letra) */
-/* grilla según el ancho real: 5 en fila; si no entran, 3 + 2 (filas parejas, nunca una tarjeta sola estirada);
-   en el celular, de a 2 y la última a lo ancho */
+/* selector de Herramientas (cuatro tarjetas): si no entran en una fila, pasan a 2 + 2 (antes de la nueva grilla se
+   pensaba para cinco y quedaba un hueco a la derecha; con poco ancho, el texto de cada botón se partía letra por letra) */
 [data-testid="stHorizontalBlock"]:has(.st-key-modo_0) {{ display: grid !important; gap: .75rem !important;
-    grid-template-columns: repeat(5, minmax(0, 1fr)); }}
+    grid-template-columns: repeat(4, minmax(0, 1fr)); }}
 [data-testid="stHorizontalBlock"]:has(.st-key-modo_0) > [data-testid="stColumn"] {{ width: auto !important; min-width: 0 !important; }}
-@container principal (max-width: 980px) {{
-    [data-testid="stHorizontalBlock"]:has(.st-key-modo_0) {{ grid-template-columns: repeat(6, minmax(0, 1fr)); }}
-    [data-testid="stHorizontalBlock"]:has(.st-key-modo_0) > [data-testid="stColumn"] {{ grid-column: span 2; }}
-    [data-testid="stHorizontalBlock"]:has(.st-key-modo_0) > [data-testid="stColumn"]:nth-child(n+4) {{ grid-column: span 3; }}
-}}
-@container principal (max-width: 520px) {{
+@container principal (max-width: 800px) {{
     [data-testid="stHorizontalBlock"]:has(.st-key-modo_0) {{ grid-template-columns: repeat(2, minmax(0, 1fr)); }}
-    [data-testid="stHorizontalBlock"]:has(.st-key-modo_0) > [data-testid="stColumn"],
-    [data-testid="stHorizontalBlock"]:has(.st-key-modo_0) > [data-testid="stColumn"]:nth-child(n+4) {{ grid-column: span 1; }}
-    [data-testid="stHorizontalBlock"]:has(.st-key-modo_0) > [data-testid="stColumn"]:last-child:nth-child(odd) {{ grid-column: span 2; }}
 }}
 [class*="st-key-modo_"] button p {{ word-break: normal !important; overflow-wrap: normal !important; }}
 
