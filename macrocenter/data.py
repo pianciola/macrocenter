@@ -323,6 +323,48 @@ def ipc_eeuu() -> pd.DataFrame:
     return df.dropna().sort_values("fecha").reset_index(drop=True)
 
 
+# Tasa de la Reserva Federal (techo del rango objetivo) y rendimiento de los bonos del Tesoro de EE. UU. (FRED, diarios).
+TASAS_EEUU = [("DFEDTARU", "Tasa de la Fed"), ("DGS3MO", "Letra 3 meses"), ("DGS2", "Bono 2 años"),
+              ("DGS10", "Bono 10 años"), ("DGS30", "Bono 30 años")]
+
+
+def fred(serie: str, desde: str = "2016-01-01") -> pd.DataFrame:
+    """Una serie de FRED (Reserva Federal de St. Louis), sin clave. Columnas: fecha, valor. Una serie por pedido: con
+    varias juntas FRED devuelve un ZIP."""
+    import io
+
+    texto = _get("https://fred.stlouisfed.org/graph/fredgraph.csv", id=serie, cosd=desde).text
+    df = pd.read_csv(io.StringIO(texto))
+    df.columns = ["fecha", "valor"]
+    df["fecha"] = pd.to_datetime(df["fecha"], errors="coerce")
+    df["valor"] = pd.to_numeric(df["valor"], errors="coerce")  # los feriados vienen vacíos
+    return df.dropna().sort_values("fecha").reset_index(drop=True)
+
+
+# Bonos del Tesoro argentino en dólares, por vencimiento: (año, ley Nueva York, ley local). El GD46 no tiene par local.
+BONOS_ARG = [("2029", "GD29", "AL29"), ("2030", "GD30", "AL30"), ("2035", "GD35", "AL35"), ("2038", "GD38", "AE38"),
+             ("2041", "GD41", "AL41"), ("2046", "GD46", None)]
+DATA912_URL = "https://data912.com"
+
+
+def bonos_ahora() -> pd.DataFrame:
+    """Precio de los bonos argentinos en dólares MEP (especie «D»: AL30D, GD30D...), cada 100 de valor nominal, y su
+    variación del día. Fuente: data912 (precios de BYMA, no oficial). Columnas: bono, precio, var."""
+    filas = [{"bono": b["symbol"][:-1], "precio": b.get("c"), "var": b.get("pct_change")}
+             for b in _get(f"{DATA912_URL}/live/arg_bonds").json()
+             if isinstance(b, dict) and str(b.get("symbol", "")).endswith("D")]
+    df = pd.DataFrame(filas, columns=["bono", "precio", "var"])
+    df[["precio", "var"]] = df[["precio", "var"]].apply(pd.to_numeric, errors="coerce")
+    return df[df["precio"] > 0].reset_index(drop=True)
+
+
+def bono_historia(bono: str) -> pd.DataFrame:
+    """Cierre diario de un bono argentino en dólares MEP (especie «D»), cada 100 de valor nominal. Columnas: fecha, valor."""
+    df = pd.DataFrame(_get(f"{DATA912_URL}/historical/bonds/{bono}D").json())
+    df = pd.DataFrame({"fecha": pd.to_datetime(df["date"], errors="coerce"), "valor": pd.to_numeric(df["c"], errors="coerce")})
+    return df.dropna().sort_values("fecha").drop_duplicates("fecha", keep="last").reset_index(drop=True)
+
+
 def dolar_historico() -> pd.DataFrame:
     """Dólar oficial (BCRA, serie 175.1 'Dólar estadounidense') desde 1992 hasta 2010, en pesos por dólar.
     Son ~7.000 datos diarios, así que se pide en dos tramos (la API entrega hasta 5.000 por pedido).

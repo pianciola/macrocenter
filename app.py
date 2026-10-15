@@ -22,7 +22,7 @@ from macrocenter import (charts, data, glosario, interactivo, inversiones, legal
                          presidentes, selector, style)
 from macrocenter.avisos import actualizando, falla
 from macrocenter.carga import (  # descarga, cachés y copia de respaldo
-    _estado_actualizar, _memoria, _precalentar, _ultima_carga, _va_a_demorar, cargar_cripto, cargar_fotos,
+    _estado_actualizar, _memoria, _precalentar, _ultima_carga, _va_a_demorar, cargar_bonos, cargar_cripto, cargar_fotos,
     cargar_inversiones, cargar_mercados, cargar_noticias, cargar_todo, cargar_vivo, con_dolar_vivo, con_riesgo_vivo,
     envejecer_disco, protegido, reintentar_si_fallo,
 )
@@ -233,7 +233,7 @@ def ir_a(destino: str) -> None:
 VISTAS = ("tablero", "inversiones", "historia", "juegos")
 # primero el ala financiera (lo que más se usa): dólar, bolsas, cripto, tasas y dinero; después precios, actividad,
 # sector externo, ingresos y cuentas públicas
-PESTANAS = ["Resumen", "Dólar", "Bolsas", "Cripto", "Tasas y riesgo país", "Dinero y crédito", "Inflación",
+PESTANAS = ["Resumen", "Dólar", "Bolsas", "Cripto", "Tasas y riesgo país", "Bonos", "Dinero y crédito", "Inflación",
             "Actividad y PBI", "Reservas", "Salarios", "Resultado fiscal", "Comercio exterior"]
 HIST_SECCIONES = ["Presidentes", "Ministros de Economía", "Viaje en el tiempo"]
 # Enlaces para compartir: ?ver=tablero/dolar, ?ver=herramientas/ajuste-de-alquileres, etc. (la misma ruta que cuenta
@@ -761,6 +761,11 @@ def pantalla_bolsas() -> None:
     abrir(pestanas.bolsas)
 
 
+@st.fragment  # sus selectores redibujan solo esta pestaña
+def pantalla_bonos() -> None:
+    abrir(pestanas.bonos)
+
+
 # ── Franja deslizante superior ──
 def construir_ticker() -> list[dict]:
     """Datos clave para la franja de arriba. Cada pieza es opcional: lo que falte simplemente no aparece."""
@@ -913,7 +918,7 @@ if vista != "tablero":
     pie_pagina()
     st.stop()
 
-t_res, t_dol, t_bol, t_cri, t_tasas, t_din, t_prec, t_act, t_res_i, t_sal, t_fis, t_com = st.tabs(
+t_res, t_dol, t_bol, t_cri, t_tasas, t_bonos, t_din, t_prec, t_act, t_res_i, t_sal, t_fis, t_com = st.tabs(
     PESTANAS,
     # cada pestaña se calcula y se manda recién al abrirla: la primera carga pesa una fracción (clave en el celular)
     key="pestana", on_change="rerun",
@@ -1559,6 +1564,11 @@ with t_prec, protegido("Inflación"):
 with t_tasas, protegido("Tasas y riesgo país"):
     if t_tasas.open:  # solo la pestaña abierta se calcula y se manda al navegador
         abrir(pestanas.tasas)
+
+# ── Bonos ──
+with t_bonos, protegido("Bonos"):
+    if t_bonos.open:  # solo la pestaña abierta se calcula y se manda al navegador
+        pantalla_bonos()
 
 # ── Dinero y crédito ──
 with t_din, protegido("Dinero y crédito"):

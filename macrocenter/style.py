@@ -1116,6 +1116,10 @@ html[data-tema="claro"] .mc-conc .c {{ background: #F4F8FD; border: 1px solid #D
     .mc-tablas .mc-cmp th, .mc-tablas .mc-cmp td {{ white-space: nowrap; }}
     .mc-tablas .mc-cmp th:first-child, .mc-tablas .mc-cmp td:first-child {{ width: auto; white-space: normal;
         min-width: 120px; max-width: 150px; }}  /* el nombre se parte en renglones: así los números entran sin deslizar */
+    /* tablas compactas (primera columna corta, como un año): sin ese mínimo, y la letra de abajo un poco menor */
+    .mc-tablas.compacta .mc-cmp th:first-child, .mc-tablas.compacta .mc-cmp td:first-child {{ min-width: 0; }}
+    .mc-tablas.compacta .mc-cmp td {{ padding: 9px 5px; }}
+    .mc-tablas.compacta .mc-cmp td .sub {{ font-size: .74rem; }}
 }}
 /* TEXTOS SECUNDARIOS: los de Streamlit (aclaraciones, etiquetas de campos) eran grises y chicos; van con el color del
    texto y más grandes */
@@ -2473,9 +2477,10 @@ def nota_destacada(titulo: str, valor: str, texto_md: str) -> str:
             f'<p>{_md_a_html(texto_md)}</p></div>')
 
 
-def tabla(cabeceras: list[str], filas: list[list]) -> str:
+def tabla(cabeceras: list[str], filas: list[list], compacta: bool = False) -> str:
     """Como tabla_simple, pero cada celda puede ser texto o (texto, clase[, aclaración]): clase 'mejor' (verde) o
-    'peor' (rojo); la aclaración va en letra chica debajo."""
+    'peor' (rojo); la aclaración va en letra chica debajo. `compacta`: para tablas con la primera columna corta (en el
+    celular no le reserva lugar para nombres largos)."""
     esc = html.escape
 
     def celda(c) -> str:
@@ -2487,7 +2492,8 @@ def tabla(cabeceras: list[str], filas: list[list]) -> str:
 
     cab = "".join(f"<th>{esc(c)}</th>" for c in cabeceras)
     cuerpo = "".join("<tr>" + "".join(celda(c) for c in f) + "</tr>" for f in filas)
-    return f'<div class="mc-tablas"><table class="mc-cmp"><thead><tr>{cab}</tr></thead><tbody>{cuerpo}</tbody></table></div>'
+    clase = "mc-tablas compacta" if compacta else "mc-tablas"
+    return f'<div class="{clase}"><table class="mc-cmp"><thead><tr>{cab}</tr></thead><tbody>{cuerpo}</tbody></table></div>'
 
 
 def conceptos(grupos: list[tuple[str, list[tuple[str, str]]]]) -> str:
@@ -2517,7 +2523,9 @@ FUENTES = [
     ("CoinGecko", "Criptomonedas", "https://www.coingecko.com/"),
     ("CriptoYa", "USDT por exchange y dólar MEP, CCL y cripto en vivo", "https://criptoya.com/"),
     ("Yahoo Finance", "Bolsas y materias primas (fuente no oficial)", "https://finance.yahoo.com/"),
-    ("FRED (Reserva Federal de St. Louis)", "Inflación de EE. UU., para ajustar dólares", "https://fred.stlouisfed.org/"),
+    ("FRED (Reserva Federal de St. Louis)", "Tasa de la Fed, bonos del Tesoro e inflación de EE. UU.",
+     "https://fred.stlouisfed.org/"),
+    ("data912", "Bonos argentinos en dólares (precios de BYMA, fuente no oficial)", "https://data912.com/"),
     ("Wikipedia / Wikimedia Commons", "Fotos de presidentes y ministros", "https://commons.wikimedia.org/"),
 ]
 

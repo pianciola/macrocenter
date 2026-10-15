@@ -388,6 +388,35 @@ def _bajar_mercados() -> dict[str, pd.DataFrame | str]:
         return dict(pool.map(uno, data.INDICES))
 
 
+def cargar_bonos() -> dict[str, pd.DataFrame | str]:
+    """Bonos argentinos y tasas de EE. UU.: el precio del momento cada 5 minutos; las historias (un dato por día),
+    cada hora."""
+    return {**al_dia("bonos_hist", _bajar_bonos_hist, ttl=3600), **al_dia("bonos", _bajar_bonos, ttl=300)}
+
+
+def _bajar_bonos() -> dict[str, pd.DataFrame | str]:
+    try:
+        return {"vivo": data.bonos_ahora()}
+    except Exception as e:  # noqa: BLE001
+        return {"vivo": error_corto(e)}
+
+
+def _bajar_bonos_hist() -> dict[str, pd.DataFrame | str]:
+    """Historia de cada bono argentino (data912) y de cada tasa de EE. UU. (FRED). Cada una falla por separado."""
+    trabajos = [(f"bono:{b}", lambda b=b: data.bono_historia(b)) for _, ny, loc in data.BONOS_ARG for b in (ny, loc) if b]
+    trabajos += [(f"fred:{s}", lambda s=s: data.fred(s)) for s, _ in data.TASAS_EEUU]
+
+    def uno(t):
+        clave, fn = t
+        try:
+            return clave, fn()
+        except Exception as e:  # noqa: BLE001
+            return clave, error_corto(e)
+
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        return dict(pool.map(uno, trabajos))
+
+
 @st.cache_data(ttl=900, show_spinner=False)
 def _historia_cripto(coin_id: str, dias: int) -> pd.DataFrame:
     return data.limpiar(data.cripto_historia(coin_id, dias))  # si falla, la excepción no se guarda en el caché

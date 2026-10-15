@@ -30,6 +30,7 @@ de `macrocenter/pestanas/`.
 | Actividad y PBI | PBI trimestral, EMAE (original y desestacionalizado), desocupación |
 | Inflación | Inflación mensual/interanual, REM, por región (INDEC) y por provincia (Ciudad de Buenos Aires, Santa Fe, Mendoza, Tucumán, San Luis, Chaco y Neuquén; una provincia con más de 6 meses sin publicar no se muestra), UVA, CER, UVI, ICL, dólar vs inflación |
 | Tasas y riesgo país | BADLAR, TAMAR, plazo fijo, préstamos personales, riesgo país |
+| Bonos | Bonos argentinos en dólares por vencimiento, ley Nueva York (GD) y ley local (AL/AE), con su historia (data912); tasa de la Fed y bonos del Tesoro de EE. UU. a 3 meses, 2, 10 y 30 años (FRED) |
 | Dinero y crédito | Base monetaria, M2 privado, préstamos al sector privado |
 | Comercio exterior | Exportaciones, importaciones, saldo comercial |
 

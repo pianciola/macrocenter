@@ -75,3 +75,12 @@ def test_botones_de_navegacion():
     at.button(key="nav_historia").click().run()
     assert not at.exception, [str(e.value)[:200] for e in at.exception]
     assert at.session_state["vista"] == "historia"
+
+
+def test_pestana_bonos():
+    """Bonos argentinos (data912) y tasas de EE. UU. (FRED): se dibujan sin errores ni secciones caídas."""
+    at = _correr(ver="tablero/bonos")
+    assert at.session_state["pestana"] == "Bonos"
+    assert list(dict.fromkeys(at.session_state["_fallas"])) == []
+    textos = " ".join(m.value for m in at.markdown)
+    assert "Ley Nueva York" in textos and "GD30" in textos
