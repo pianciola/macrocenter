@@ -26,7 +26,7 @@ def main() -> int:
             print("La app estaba despierta.")
         # la app vive en un iframe: se espera a que dibuje su contenido (la marca de la barra lateral)
         try:
-            pag.frame_locator("iframe").locator(".mc-brand").first.wait_for(timeout=240_000)
+            pag.frame_locator("iframe[src*=\"/~/+/\"]").locator(".mc-brand").first.wait_for(timeout=240_000)
             print("La página cargó bien.")
             return 0
         except Demora:
