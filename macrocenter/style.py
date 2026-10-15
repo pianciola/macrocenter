@@ -1417,11 +1417,15 @@ h3 {{ font-weight: 700 !important; }}
 def _minificar_css(css: str) -> str:
     """Saca comentarios y espacios de sobra (el CSS viaja en cada carga): ~25% menos de bytes, mismas reglas.
     Las comillas («content: "$"», data URIs) se respetan."""
-    partes = re.split(r'("[^"]*"|\'[^\']*\')', css)  # los textos entre comillas no se tocan
+    # los comentarios primero y en todo el texto: si un comentario tenía comillas, antes quedaba sin sacar
+    css = re.sub(r"/\*.*?\*/", "", css, flags=re.S)
+    partes = re.split(r'("[^"]*"|\'[^\']*\')', css)  # los textos entre comillas no se tocan...
     for i in range(0, len(partes), 2):
-        p = re.sub(r"/\*.*?\*/", "", partes[i], flags=re.S)
-        p = re.sub(r"\s+", " ", p)
+        p = re.sub(r"\s+", " ", partes[i])
         partes[i] = re.sub(r"\s*([{};,>])\s*", r"\1", p)
+    for i in range(1, len(partes), 2):  # ...salvo los íconos SVG (data URI): sus < y > van codificados, porque el
+        if partes[i][1:].startswith("data:"):  # saneador de st.html descarta una hoja con «<algo» adentro
+            partes[i] = partes[i].replace("<", "%3C").replace(">", "%3E")
     return "".join(partes).replace(";}", "}").strip()
 
 
@@ -1826,7 +1830,10 @@ def contador_visitas(ruta: str, titulo: str) -> str:
 
 
 def aplicar() -> None:
-    st.markdown(CSS, unsafe_allow_html=True)
+    # st.html y no st.markdown: el Markdown interpretaba este bloque grande con su procesador de texto y tardaba ~0,1 s;
+    # mientras tanto la barra lateral (más liviana) ya se dibujaba sin estilo. Con solo <style>, st.html lo manda al
+    # contenedor de eventos (no ocupa lugar) y se aplica enseguida
+    st.html(CSS)
     st.html(JS_PESTANAS, unsafe_allow_javascript=True)
 
 

@@ -122,3 +122,13 @@ def test_noticias_del_indec(monkeypatch):
     notas = news.indec()
     assert [n.titulo for n in notas] == ["Índice de precios al consumidor"]
     assert notas[0].url == "https://www.indec.gob.ar/uploads/informesdeprensa/ipc.pdf" and news.url_segura(notas[0].url)
+
+
+def test_la_hoja_de_estilos_pasa_el_saneador():
+    # el CSS va por st.html: su saneador descarta una hoja de estilos entera si adentro aparece «<algo» (por ejemplo, un
+    # comentario que menciona <html> o un ícono SVG sin codificar), y la página quedaría sin formato
+    import re
+
+    cuerpo = style.CSS.strip()
+    assert cuerpo.startswith("<style>") and cuerpo.endswith("</style>")
+    assert not re.search(r"<[/\w!]", cuerpo[len("<style>"):-len("</style>")])
