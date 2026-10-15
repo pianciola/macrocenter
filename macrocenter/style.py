@@ -152,7 +152,7 @@ html[data-tema="claro"] .stApp section[data-testid="stSidebar"] .mc-brand .mc-wm
 [data-testid="stSidebarContent"]::-webkit-scrollbar {{ display: none !important; width: 0 !important; }}
 [data-testid="stSidebarUserContent"] {{ padding-bottom: 72px !important; }}
 /* títulos de sección: celestes, con una línea fina hasta el borde */
-section[data-testid="stSidebar"] .mc-label {{ display: flex; align-items: center; gap: 10px; color: {CELESTE}; opacity: .9;
+section[data-testid="stSidebar"] .mc-label {{ display: flex; align-items: center; gap: 10px; color: {CELESTE}; opacity: 1;
     margin: 22px 0 8px; font-size: .84rem; font-weight: 700; letter-spacing: .14em; }}
 section[data-testid="stSidebar"] .mc-label::after {{ content: ""; flex: 1; height: 1px; background: rgba(116,172,223,.22); }}
 /* menú: cada opción con su ícono en celeste; la elegida, en una píldora con el ícono resaltado */
@@ -482,6 +482,9 @@ button[data-variant="segmented_control"][aria-checked="true"] p {{ color: #fff !
 [class*="st-key-per_"] button[data-variant="pills"][aria-checked="true"], .st-key-cal_anios button[data-variant="pills"][aria-checked="true"] {{
     background: rgba(246,180,14,.24) !important; box-shadow: inset 0 0 0 1px {SOL}; font-weight: 700;
 }}
+/* el texto del período elegido, dorado claro sobre el dorado suave (en el tema claro, marrón: ver más abajo) */
+[class*="st-key-per_"] button[data-variant="pills"][aria-checked="true"] p,
+.st-key-cal_anios button[data-variant="pills"][aria-checked="true"] p {{ color: #FFD465 !important; }}
 /* angosto: el selector ocupa todo el ancho y todas las opciones quedan a la vista (antes se deslizaba y escondía
    «1 mes»); si igual no entran, pasan a otra fila parejas */
 @container principal (max-width: 560px) {{
@@ -630,7 +633,7 @@ html[data-alertas="anotado"] .mc-alerta {{ display: none !important; }}
 .mc-tl-item.izq .mc-tl-anio {{ grid-column: 3; padding-left: 24px; }}
 .mc-tl-item.der .mc-tl-anio {{ grid-column: 1; text-align: right; padding-right: 24px; }}
 .mc-tl-card h4 {{ margin: 0 0 2px; padding: 0; font-size: 1.25rem; font-weight: 800; }}
-.mc-tl-card .per {{ font-size: .78rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: {CELESTE}; }}
+.mc-tl-card .per {{ font-size: .78rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #9CC6EC; }}
 .mc-tl-card .hito {{ font-size: .88rem; opacity: .88; margin: 8px 0 10px; line-height: 1.4; }}
 .mc-fila {{
     display: flex; justify-content: space-between; gap: 10px; padding: 5px 0;
@@ -815,7 +818,7 @@ html[data-tema="claro"] .mc-aviso .ic {{ background: #FBE7B5; color: #8A5A00; }}
     box-shadow: 0 0 0 2px {CELESTE}, 0 6px 14px rgba(0,0,0,.25);
 }}
 .mc-min-card .ph img {{ position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: top center; }}
-.mc-min-card .per {{ font-size: .78rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: {CELESTE}; }}
+.mc-min-card .per {{ font-size: .78rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: #9CC6EC; }}
 .mc-min-card h5 {{ margin: 1px 0 1px; padding: 0; font-size: 1.18rem; font-weight: 900; letter-spacing: -.02em; line-height: 1.2; }}
 .mc-min-card .cargo {{ font-size: .78rem; opacity: .85; line-height: 1.3; }}
 .mc-min-card .cuerpo {{ padding: 12px 16px 14px; display: flex; flex-direction: column; gap: 10px; flex: 1; }}
@@ -1115,7 +1118,7 @@ html[data-tema="claro"] .mc-conc .c {{ background: #F4F8FD; border: 1px solid #D
     background: rgba(128,128,128,.09); border: 1px solid rgba(116,172,223,.38);
 }}
 .mc-viaje h3 {{ margin: 2px 0; padding: 0; font-size: 1.5rem; font-weight: 800; }}
-.mc-viaje .per {{ font-size: .78rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: {CELESTE}; }}
+.mc-viaje .per {{ font-size: .78rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #9CC6EC; }}
 .mc-viaje .hito {{ font-size: .9rem; opacity: .85; line-height: 1.4; }}
 /* TABLAS (todas las de la página usan .mc-cmp): tarjeta con borde redondeado, cabecera con fondo, filas alternadas,
    letra grande y nada de texto gris */
