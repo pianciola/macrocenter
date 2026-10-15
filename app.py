@@ -1213,12 +1213,12 @@ def bloque_cambiario() -> None:
             (k[1], fin, "Cuenta financiera cambiaria", "Deuda, inversiones, préstamos y compra de dólares para ahorro.")):
         if df_ is not None:
             v, a_ = ult_y_ant(df_)
-            kpi(slot, f"{nombre} · {_mes_corto(df_['fecha'].iloc[-1])}", v, 0, pre="USD ", suf=" M", d=dif(v, a_),
+            kpi(slot, f"{nombre} · {_mes_corto(df_['fecha'].iloc[-1])} (USD M)", v, 0, d=dif(v, a_),
                 d_suf=" M", d_txt="vs mes ant.", d_dec=0, help=ayuda)
     compras = fae.assign(valor=-fae["valor"]) if fae is not None else None  # la serie da las compras netas con signo negativo
     if compras is not None:
         v, a_ = ult_y_ant(compras)
-        kpi(k[2], f"Compra neta de dólares · {_mes_corto(compras['fecha'].iloc[-1])}", v, 0, pre="USD ", suf=" M",
+        kpi(k[2], f"Compra neta de dólares · {_mes_corto(compras['fecha'].iloc[-1])} (USD M)", v, 0,
             d=dif(v, a_), d_suf=" M", d_txt="vs mes ant.", d_dec=0, color="off",
             help="Formación de activos externos de personas y empresas: dólares comprados para ahorro o inversión, "
                  "menos los vendidos. Positivo: compraron más de lo que vendieron.")

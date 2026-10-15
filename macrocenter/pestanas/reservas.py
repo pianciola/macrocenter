@@ -19,18 +19,19 @@ def mostrar(*, HOY, bloque_cambiario, delta, grafico, kpi, rec, reservas, select
             c = st.columns(3)
             f_res = reservas[reservas["fecha"] <= HOY].dropna(subset=["valor"])
             d_res = delta(reservas, dias=1, modo="abs")
-            kpi(c[0], f"Último dato ({f_res['fecha'].iloc[-1]:%d/%m/%Y})" if not f_res.empty else "Último dato",
-                ultimo(reservas), 0, pre="USD ", suf=" M", d=d_res, d_suf=" M", d_txt="vs día anterior", color="normal",
+            # la unidad va en el título (como en el Resumen): la cifra sola entra en cualquier tarjeta
+            kpi(c[0], f"Reservas al {f_res['fecha'].iloc[-1]:%d/%m/%Y} (USD M)" if not f_res.empty else "Reservas (USD M)",
+                ultimo(reservas), 0, d=d_res, d_suf=" M", d_txt="vs día anterior", color="normal",
                 help="Serie oficial del BCRA, que se publica con 1 o 2 días de demora. La cifra que el BCRA difunde en sus "
                      "redes el mismo día es provisoria y puede diferir.")
             if len(r) > 1:
                 ini_r, fin_r = float(r["valor"].iloc[0]), float(r["valor"].iloc[-1])
-                kpi(c[1], "Variación en todo el período" if per_res == "Todo" else f"Variación en {per_res.lower()}",
-                    fin_r - ini_r, 0, pre="USD ", suf=" M",
+                kpi(c[1], ("Variación en todo el período" if per_res == "Todo" else f"Variación en {per_res.lower()}") + " (USD M)",
+                    fin_r - ini_r, 0,
                     d=None if ini_r == 0 else (fin_r / ini_r - 1) * 100, d_txt="", color="normal",
                     help="Verde si las reservas subieron en el período, rojo si bajaron.")
                 maximo = float(r["valor"].max())
-                kpi(c[2], "Máximo del período", maximo, 0, pre="USD ", suf=" M",
+                kpi(c[2], "Máximo del período (USD M)", maximo, 0,
                     d=None if maximo == 0 else (fin_r / maximo - 1) * 100, d_txt="hoy vs el máximo", color="normal")
             grafico(charts.lineas(r, {"Reservas brutas": "valor"}, "Reservas internacionales brutas del BCRA (USD millones)",
                                   height=460))

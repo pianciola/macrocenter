@@ -1172,7 +1172,7 @@ html[data-tema="claro"] :is(.mc-tl-card, .mc-min-card, .mc-viaje, .mc-nota, .mc-
 /* (también el <p> de adentro: la regla general del texto corrido le ponía 1.02rem y la cifra quedaba chica) */
 /* la cifra se achica con el ancho de su tarjeta (cqw = % del ancho del indicador): en el celular, «USD 49.709 M» entra */
 [data-testid="stMetricValue"] > div, [data-testid="stMetricValue"] p {{
-    font-size: clamp(1.05rem, 10.5cqw, 1.85rem) !important; line-height: 1.15; white-space: nowrap; }}
+    font-size: clamp(1.15rem, 12.5cqw, 1.85rem) !important; line-height: 1.15; white-space: nowrap; }}
 [data-testid="stMetricDelta"], [data-testid="stMetricDelta"] p {{ font-size: .95rem !important; }}
 [data-testid="stMetricDelta"] {{ margin-top: 4px; padding: 2px 9px !important; }}
 [data-testid="stMetricDelta"] svg {{ width: 1rem; height: 1rem; }}
