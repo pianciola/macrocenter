@@ -1204,6 +1204,8 @@ html[data-tema="claro"] :is(.mc-tl-card, .mc-min-card, .mc-viaje, .mc-nota, .mc-
 [data-testid="stTabsScrollLeft"], [data-testid="stTabsScrollRight"] {{
     width: 52px !important; height: 3.4rem !important; display: flex; align-items: center; cursor: pointer;
 }}
+/* en pantallas táctiles la fila se desliza con el dedo: sin las flechas, que tapaban la pestaña elegida */
+@media (hover: none) {{ [data-testid="stTabsScrollLeft"], [data-testid="stTabsScrollRight"] {{ display: none !important; }} }}
 /* la flecha izquierda va a la derecha de «Resumen», que queda fija en el borde: JS_PESTANAS mide la píldora y
    pone --mc-flecha (con un nombre más largo o la letra más grande, una posición fija la tapaba) */
 [data-testid="stTabsScrollLeft"] {{ justify-content: flex-start; left: var(--mc-flecha, 11rem) !important; z-index: 4; }}
@@ -1606,11 +1608,15 @@ JS_PESTANAS = """
     const izq = (i <= 1 ? tab : tabs[i - 1]).getBoundingClientRect();
     const der = tabs[Math.min(tabs.length - 1, i + 1)].getBoundingClientRect();
     const t = tab.getBoundingClientRect();
-    // a la izquierda quedan fijos «Resumen» y la flecha (--mc-flecha + su ancho); a la derecha, la otra flecha
-    const flecha = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--mc-flecha')) || 0;
-    const desde = r.left + Math.max(MARGEN, flecha + 56), hasta = r.right - Math.max(MARGEN, 58);
+    // zona libre: desde el borde derecho de «Resumen» (fija) o de la flecha izquierda, si se ve, hasta la flecha derecha
+    const visible = (el) => el && el.offsetWidth && getComputedStyle(el).display !== 'none' && getComputedStyle(el).visibility !== 'hidden';
+    const fL = c.parentElement && c.parentElement.querySelector('[data-testid="stTabsScrollLeft"]');
+    const fR = c.parentElement && c.parentElement.querySelector('[data-testid="stTabsScrollRight"]');
+    const res = tabs[0].getBoundingClientRect();
+    const desde = Math.max(res.right + 12, visible(fL) ? res.right + 12 + fL.offsetWidth : 0, r.left + MARGEN);
+    const hasta = r.right - (visible(fR) ? fR.offsetWidth + 6 : 12);
     let delta = 0;
-    if (der.right - izq.left > hasta - desde) delta = (t.left + t.width / 2) - (r.left + r.width / 2);  // no entran: centrar
+    if (der.right - izq.left > hasta - desde) delta = (t.left + t.width / 2) - (desde + hasta) / 2;  // no entran: centrar en la zona libre
     else if (der.right > hasta) delta = der.right - hasta;
     else if (izq.left < desde) delta = izq.left - desde;
     if (Math.abs(delta) < 2) return null;
