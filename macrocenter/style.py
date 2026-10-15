@@ -1494,6 +1494,8 @@ CSS = _version_clara(CSS)
 # ajustes del tema claro que la regla automática no cubre (o que pisaría mal)
 CSS = CSS.replace("</style>", (
     'html[data-tema="claro"] .mc-pielinks a.bol{color:#0E1A2B}'  # botón celeste relleno: el texto sigue oscuro
+    'html[data-tema="claro"] .mc-foot .bol a{color:#0E1A2B}'
+    'html[data-tema="claro"] .mc-foot a.mc-linkedin:hover{color:#fff}'
     'html[data-tema="claro"] section[data-testid="stSidebar"] .mc-label{opacity:1}'
     'html[data-tema="claro"] [class*="st-key-per_"] button[data-variant="pills"][aria-checked="true"] p{color:#7A4F00 !important}'
     'html[data-tema="claro"] [class*="st-key-gtit_"] [data-testid="stDownloadButton"] button{opacity:.8}'
