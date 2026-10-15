@@ -332,16 +332,24 @@ def _bajar_inversiones() -> dict[str, pd.DataFrame | str]:
     hoy_f = out["fci_hoy"]
     if isinstance(hoy_f, pd.DataFrame) and not hoy_f.empty:
         base = hoy_f["fecha"].max() - pd.Timedelta(days=30)
-        for atras in range(7):  # fines de semana y feriados no tienen datos: se prueba el día hábil anterior
+        # fines de semana y feriados no tienen datos, y algunos días la fuente trae pocos fondos o falla un momento:
+        # se juntan hasta tres días hábiles cercanos (el primero de cada fondo) para que casi todos tengan con qué compararse
+        dias, error = [], None
+        for atras in range(8):
             f = base - pd.Timedelta(days=atras)
             try:
                 antes = data.fci("mercadoDinero", f.strftime("%Y/%m/%d"))
             except Exception as e:  # noqa: BLE001
-                out["fci_antes"] = error_corto(e)
-                break
+                error = error_corto(e)
+                continue
             if not antes.empty:
-                out["fci_antes"] = antes
-                break
+                dias.append(antes)
+                if len(dias) == 3 or len(antes) >= 150:
+                    break
+        if dias:
+            out["fci_antes"] = pd.concat(dias, ignore_index=True).drop_duplicates("fondo").reset_index(drop=True)
+        elif error:
+            out["fci_antes"] = error
     return out
 
 

@@ -131,8 +131,6 @@ def revisar_sitio() -> tuple[str, str]:
 
 def revisar_pantallas() -> list[str]:
     """Dibuja cada pantalla con AppTest y devuelve los problemas (excepciones o secciones que no se pudieron mostrar)."""
-    from streamlit.testing.v1 import AppTest
-
     pestanas = ["Resumen", "Dólar", "Cripto", "Bolsas", "Reservas", "Actividad y PBI", "Salarios", "Inflación",
                 "Tasas y riesgo país", "Dinero y crédito", "Comercio exterior", "Resultado fiscal"]
     vistas = [(f"Tablero · {p}", {"pestana": p}) for p in pestanas]
@@ -142,6 +140,23 @@ def revisar_pantallas() -> list[str]:
                ("Historia · Ministros", {"vista": "historia", "hist_seccion": "Ministros de Economía"})]
     vistas += [(f"Herramientas · {m}", {"vista": "juegos", "inter_modo": m}) for m in
                ["¿Cuánto valían tus pesos?", "Ajuste de alquileres", "Comparador de épocas", "Viaje en el tiempo"]]
+    problemas = _correr_vistas(vistas)
+    if problemas:  # una falla de un momento (una API que tardó) no es motivo de alarma: se vuelve a mirar lo que falló
+        time.sleep(REINTENTO_S)
+        try:  # lo que se bajó mal queda guardado en memoria unos minutos: se descarta para que se vuelva a bajar
+            from macrocenter import carga
+
+            carga._memoria().clear()
+        except Exception:  # noqa: BLE001
+            pass
+        fallaron = {p.split(":")[0] for p in problemas}
+        problemas = _correr_vistas([v for v in vistas if v[0] in fallaron])
+    return problemas
+
+
+def _correr_vistas(vistas: list) -> list[str]:
+    from streamlit.testing.v1 import AppTest
+
     problemas = []
     for nombre, estado in vistas:
         at = AppTest.from_file(str(RAIZ / "app.py"), default_timeout=300)
