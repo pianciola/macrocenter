@@ -3,6 +3,7 @@ __pycache__/
 *.pyc
 .macrocenter_*.json
 .macrocenter_cache*.pkl
+.macrocenter_cache*.json.gz
 boletin_vista_previa.html
 *.tmp
 .claude/

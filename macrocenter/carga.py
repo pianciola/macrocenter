@@ -6,7 +6,6 @@ Todo lo que se guarda es compartido por todas las visitas (datos públicos de la
 from __future__ import annotations
 
 import os
-import pickle
 import threading
 import time
 import traceback
@@ -36,7 +35,7 @@ def error_corto(exc: BaseException) -> str:
 
 
 
-CACHE_DISCO = Path(__file__).resolve().parent.parent / ".macrocenter_cache_v2.pkl"  # v2: series sin los huecos al azar de la API
+CACHE_DISCO = Path(__file__).resolve().parent.parent / ".macrocenter_cache_v3.json.gz"
 DISCO_FRESCO = 3600       # un dato guardado con menos de 1 h se usa tal cual, sin descargar
 DISCO_VIEJO_MAX = 43200   # hasta 12 h se muestra enseguida mientras se actualiza de fondo
 _refrescando = threading.Lock()
@@ -47,7 +46,13 @@ def _leer_disco() -> tuple[tuple[dict, datetime], float] | None:
     try:
         edad = time.time() - CACHE_DISCO.stat().st_mtime
         with open(CACHE_DISCO, "rb") as f:
-            datos, cuando = pickle.load(f)
+            crudo = f.read(semilla.MAX_BYTES + 1)
+        if len(crudo) > semilla.MAX_BYTES:
+            return None
+        resultado = semilla.de_bytes(crudo)
+        if resultado is None:
+            return None
+        datos, cuando = resultado
         # si cambió la lista de fuentes (código nuevo), lo guardado ya no sirve
         if isinstance(datos, dict) and isinstance(cuando, datetime) and set(datos) == set(_tareas()):
             # una serie vacía guardada (de antes de tratarlas como falla) cuenta como faltante: se completa con lo
@@ -67,9 +72,12 @@ def _guardar_disco(resultado: tuple[dict, datetime]) -> None:
     if any(isinstance(v, str) for v in resultado[0].values()):
         return
     try:
+        crudo = semilla.a_bytes(*resultado)
+        validado = semilla.de_bytes(crudo)
+        if validado is None or set(validado[0]) != set(_tareas()):
+            return
         tmp = CACHE_DISCO.with_suffix(".tmp")
-        with open(tmp, "wb") as f:
-            pickle.dump(resultado, f)
+        tmp.write_bytes(crudo)
         tmp.replace(CACHE_DISCO)
     except Exception:  # noqa: BLE001 — el disco es solo una optimización
         pass

@@ -98,9 +98,12 @@ def test_titulos_de_seccion_no_dependen_de_una_clase_en_html():
     assert 'html[data-pie="oculto"]' in style.CSS and "dataset.pie" in style.JS_PESTANAS
 
 
-def test_formulario_de_alertas_se_oculta_al_anotarse():
-    assert 'html[data-alertas="anotado"] .mc-alerta' in style.CSS
-    assert "mc_alertas_anotado" in style.JS_PESTANAS and "dataset.alertas" in style.JS_PESTANAS
+def test_formulario_de_alertas_permite_reintentar_sin_falso_exito():
+    assert 'html[data-alertas="anotado"] .mc-alerta' not in style.CSS
+    assert "localStorage.removeItem('mc_alertas_anotado')" in style.JS_PESTANAS
+    assert "localStorage.setItem('mc_alertas_anotado'" not in style.JS_PESTANAS
+    assert "f.replaceWith(ok)" not in style.JS_PESTANAS
+    assert "podés volver a intentarlo acá" in style.JS_PESTANAS
 
 
 def test_noticias_del_indec(monkeypatch):

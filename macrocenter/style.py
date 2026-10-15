@@ -524,8 +524,7 @@ html[data-pie="oculto"] [data-testid="stMainBlockContainer"] {{ padding-bottom: 
     overflow: hidden !important; opacity: 0 !important; pointer-events: none !important; }}
 [data-testid="stElementContainer"]:has(> .st-key-puente_leidas), [data-testid="stLayoutWrapper"]:has(> .st-key-puente_leidas) {{
     position: absolute !important; height: 0 !important; margin: 0 !important; overflow: hidden !important; }}
-/* quien ya se anotó en las alertas no vuelve a ver el formulario (lo marca JS_PESTANAS en este navegador) */
-html[data-alertas="anotado"] .mc-alerta {{ display: none !important; }}
+/* aviso que aparece debajo del formulario de alertas al enviarlo (el formulario queda, por si hay que reintentar) */
 .mc-alerta-ok {{ margin: 10px 0 18px; padding: 12px 16px; border-radius: 14px; font-size: 14px;
     border: 1px solid rgba(16,172,132,.45); background: rgba(16,172,132,.10); }}
 /* formulario de alertas del dólar (pestaña Dólar) */
@@ -1659,22 +1658,27 @@ JS_PESTANAS = """
   }, { passive: true, capture: true });
 })();
 (() => {
-  // Alertas por mail: al anotarse, el formulario se reemplaza por un aviso y no vuelve a aparecer en este navegador.
-  // (el mail sigue yendo directo a Buttondown; acá solo se guarda que ya se anotó, nunca la dirección)
+  // Alertas por mail: el formulario se envía a Buttondown en otra pestaña y desde acá no se puede saber si salió bien.
+  // Por eso no se da por hecho: se muestra un aviso debajo y el formulario queda, por si hay que volver a intentarlo.
+  // (el mail va directo a Buttondown; la página nunca lo ve ni lo guarda)
   if (window.__mcAlertas) return;
   window.__mcAlertas = true;
   const raiz = document.documentElement;
-  try { if (localStorage.getItem('mc_alertas_anotado') === '1') raiz.dataset.alertas = 'anotado'; } catch (e) {}
+  // Retirar el éxito prematuro guardado por versiones anteriores.
+  try { localStorage.removeItem('mc_alertas_anotado'); } catch (e) {}
+  delete raiz.dataset.alertas;
   document.addEventListener('submit', (ev) => {
     const f = ev.target;
     if (!(f instanceof HTMLFormElement) || !f.classList.contains('mc-alerta')) return;
-    try { localStorage.setItem('mc_alertas_anotado', '1'); } catch (e) {}
     setTimeout(() => {
-      const ok = document.createElement('div');
+      let ok = f.nextElementSibling;
+      if (!ok || !ok.classList.contains('mc-alerta-ok')) {
+        ok = document.createElement('div');
+        f.after(ok);
+      }
       ok.className = 'mc-alerta-ok';
-      ok.textContent = '✅ Listo. Revisá tu mail y confirmá la suscripción desde el enlace que te mandó Buttondown.';
-      f.replaceWith(ok);
-      raiz.dataset.alertas = 'anotado';  // si Streamlit vuelve a dibujar el formulario, queda oculto
+      ok.setAttribute('role', 'status');
+      ok.textContent = 'Se abrió Buttondown en otra pestaña: seguí ahí. Si te llega un mail, confirmá la suscripción desde su enlace. Si algo falló, podés volver a intentarlo acá.';
     }, 0);
   }, true);
 })();

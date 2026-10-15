@@ -93,6 +93,14 @@ def trazas_de(fig: go.Figure) -> list[tuple]:
     return [t for t in out if largo <= 1 or (len(t[1]) > 1 and (len(t[1]) > 2 or largo <= 10))]
 
 
+def _texto_csv_seguro(valor):
+    """Impide que una etiqueta se interprete como fórmula; conserva los valores numéricos."""
+    if isinstance(valor, str) and (valor.startswith(("\t", "\r", "\n"))
+                                   or valor.lstrip().startswith(("=", "+", "-", "@"))):
+        return "'" + valor
+    return valor
+
+
 def csv_de(trazas: list[tuple]) -> bytes:
     """CSV para Excel en castellano: separado por punto y coma, con coma decimal y fechas AAAA-MM-DD."""
     columnas = {}
@@ -111,6 +119,8 @@ def csv_de(trazas: list[tuple]) -> bytes:
         df.index.name = "fecha"
     except (TypeError, ValueError):
         df.index.name = "categoría"
+    df.index = df.index.map(_texto_csv_seguro)
+    df.columns = df.columns.map(_texto_csv_seguro)
     return df.to_csv(sep=";", decimal=",").encode("utf-8-sig")
 
 

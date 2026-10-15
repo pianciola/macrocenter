@@ -119,7 +119,8 @@ def tabla_plataformas(rend: pd.DataFrame, monedas: dict[str, str]) -> pd.DataFra
     r = rend[rend["moneda"].isin(monedas)].copy()
     if r.empty:
         return r
-    r = r[r["fecha"] >= r["fecha"].max() - pd.Timedelta(days=21)]
+    hoy = _hoy()
+    r = r[r["fecha"].between(hoy - pd.Timedelta(days=21), hoy)]
     r = r[(r["apy"] > 0) & (r["apy"] < 200)]
     r["plataforma"] = r["entidad"].map(lambda e: _PLATAFORMAS.get(str(e).lower(), str(e).capitalize()))
     r["moneda_txt"] = r["moneda"].map(monedas)
@@ -334,8 +335,9 @@ def pantalla_tasas(d: dict) -> None:
                 if t.empty:
                     st.caption("Sin datos vigentes.")
                 else:
-                    st.markdown(style.tabla(["Plataforma", "Moneda", "Rendimiento anual"],
-                                            [[r["plataforma"], r["moneda_txt"], _pct(r["apy"], 2)] for _, r in t.iterrows()]),
+                    st.markdown(style.tabla(["Plataforma", "Moneda", "Rendimiento anual", "Dato de"],
+                                            [[r["plataforma"], r["moneda_txt"], _pct(r["apy"], 2),
+                                              r["fecha"].strftime("%d/%m/%Y")] for _, r in t.iterrows()]),
                                 unsafe_allow_html=True)
         st.markdown(style.aclaracion(
             ("Cómo leerlo", "El rendimiento anual que informa cada plataforma (en su mayoría, empresas cripto). Puede "
