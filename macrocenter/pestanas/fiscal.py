@@ -42,7 +42,9 @@ def mostrar(*, actualizando, dif, falla, fiscal_anual, fiscal_df, grafico, grafi
             antes = float(hace_un_anio.iloc[-1]) if not hace_un_anio.empty else None
             kpi(slot, nombre, v, 1, suf="% del PBI", d=dif(v, antes), d_suf=" pp", d_txt="vs un año antes",
                 help=ayuda + " Verde: el resultado mejoró contra un año antes; rojo: empeoró.")
-        st.caption("Primario: ingresos menos gastos, sin contar intereses de la deuda. Financiero: lo que queda después de pagar intereses.")
+        st.markdown(style.aclaracion(
+            ("Qué mide", "**Primario**: ingresos menos gastos, sin contar intereses de la deuda. **Financiero**: lo que "
+                         "queda después de pagar intereses.")), unsafe_allow_html=True)
         graficos_fiscales(f)
         fa = fiscal_anual()
         if not fa.empty:
@@ -58,8 +60,9 @@ def mostrar(*, actualizando, dif, falla, fiscal_anual, fiscal_df, grafico, grafi
                         fig_a.update_xaxes(type="category")
                         grafico(fig_a)
             if (fa["meses"] < 12).any():
-                st.caption("El año en curso es el acumulado de los meses publicados sobre el PBI estimado del año completo, "
-                           "así que todavía puede cambiar (diciembre suele ser deficitario por el aguinaldo).")
+                st.markdown(style.aclaracion(
+                    ("Ojo", "El año en curso es el acumulado de los meses publicados sobre el PBI estimado del año completo, así "
+                            "que todavía puede cambiar (diciembre suele ser deficitario por el aguinaldo).")), unsafe_allow_html=True)
         with st.expander("Cómo se calcula el porcentaje del PBI"):
             st.markdown(
                 "- **Resultado:** informe mensual de ingresos y gastos del Ministerio de Economía (base caja).\n"
@@ -69,4 +72,5 @@ def mostrar(*, actualizando, dif, falla, fiscal_anual, fiscal_df, grafico, grafi
                 "- **Mensual:** resultado del mes sobre 1/12 del PBI. Es muy variable; mirá el acumulado de 12 meses para la tendencia.\n"
                 "- Puede diferir de las cifras que publica el Gobierno, que usan su propio PBI y criterios de ajuste (por ejemplo, "
                 "ingresos extraordinarios).")
-        st.caption("Fuente: Ministerio de Economía (IMIG, Informe Mensual de Ingresos y Gastos) e INDEC, vía datos.gob.ar.")
+        st.markdown(style.aclaracion(
+            ("Fuente", "Ministerio de Economía (IMIG, Informe Mensual de Ingresos y Gastos) e INDEC, vía datos.gob.ar.")), unsafe_allow_html=True)

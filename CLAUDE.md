@@ -29,6 +29,9 @@ Tablero de la economía argentina hecho con Streamlit + Plotly, de Juan Manuel P
 ## Criterios de diseño (mantenerlos parejos)
 - Cada pantalla abre con `style.intro(texto, leyenda, nota)`: tarjeta con la frase y la leyenda de colores (no `st.caption` suelto).
 - Indicadores: la unidad va en el título («Reservas (USD M)») y la cifra sola.
+- Aclaraciones al pie de cuadros y gráficos: `style.aclaracion((rótulo, texto), ..., leyenda=[...])`, con rótulos
+  («Cómo leerlo», «Supuestos», «Fuente», «Ojo»...). `st.caption` solo para instrucciones cortas o avisos de estado.
+- Selectores de una opción (`segmented_control` / `pills`): siempre con `selector.uno`, que no deja desmarcar la elegida.
 - Tema claro: `_version_clara` arma sola la versión oscura de los colores de texto (celeste, verde, rojo, dorado); los
   casos especiales van en el bloque de ajustes que le sigue. Revisar contraste en claro y oscuro, en celular y PC.
 - Botones elegidos: degradé azul profundo con texto blanco; píldora «Resumen» elegida: celeste con texto oscuro.

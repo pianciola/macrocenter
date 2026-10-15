@@ -47,6 +47,8 @@ def mostrar(*, _var_pct, cargar_mercados, falla, grafico, rec, selector_categori
         ancho = pd.concat(series, axis=1, sort=True).reset_index().rename(columns={"index": "fecha"})
         grafico(charts.lineas(ancho, {n: n for n in series}, "Evolución de las bolsas — base 100 = inicio del período",
                               yfmt=",.0f", height=380))
-        st.caption("Cada índice en su moneda: el Merval está en pesos, así que también refleja la inflación y el tipo de cambio.")
+        st.markdown(style.aclaracion(
+            ("Cómo leerlo", "Cada índice está en su moneda: el Merval está en pesos, así que también refleja la inflación y "
+                            "el tipo de cambio.")), unsafe_allow_html=True)
     else:
         st.info("Elegí al menos una bolsa para ver el gráfico.")

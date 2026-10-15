@@ -1,4 +1,4 @@
-"""Historia económica: presidentes y ministros.
+"""Historia económica: presidentes, ministros y viaje en el tiempo.
 
 app.py la dibuja con `abrir` y le pasa, por nombre, los datos y las funciones de la página que usa (los
 parámetros de `mostrar` después del asterisco)."""
@@ -9,7 +9,7 @@ import traceback
 import pandas as pd
 import streamlit as st
 
-from macrocenter import charts, presidentes, style
+from macrocenter import charts, interactivo, presidentes, selector, style
 
 
 def mostrar(
@@ -17,9 +17,7 @@ def mostrar(
     seccion_ministros,
 ) -> None:
     secciones = HIST_SECCIONES
-    if st.session_state.get("hist_seccion") not in secciones:
-        st.session_state["hist_seccion"] = secciones[0]
-    seccion = st.segmented_control("Sección", secciones, key="hist_seccion", label_visibility="collapsed") or secciones[0]
+    seccion = selector.uno(st.segmented_control, "Sección", secciones, "hist_seccion", label_visibility="collapsed")
     if seccion == "Ministros de Economía":
         try:
             dp = historicos(DATOS, dol, ACTUALIZADO)[0]
@@ -27,23 +25,33 @@ def mostrar(
             dp = None
         seccion_ministros(dp)
         return
-    st.markdown(style.intro("Cómo recibió y cómo dejó la economía cada presidente desde la vuelta de la democracia. "
-               "Los números se calculan con las series oficiales; en cada fila: **lo que recibió → cómo dejó** "
-               "(o cómo está hoy, en el caso del presidente actual)."), unsafe_allow_html=True)
+    if seccion == "Viaje en el tiempo":
+        try:
+            dp, _, faltan = historicos(DATOS, dol, ACTUALIZADO)
+        except Exception:  # noqa: BLE001
+            traceback.print_exc()
+            dp, faltan = None, ["cálculo"]
+        if faltan:
+            falla("no se pudo armar el viaje en el tiempo: falta " + ", ".join(faltan))
+            actualizando()
+        else:
+            interactivo.pantalla_viaje(dp, fotos_presidentes())
+        return
+    st.markdown(style.intro("Cómo evolucionó la economía con cada presidente desde la vuelta de la democracia, y cómo se "
+               "comparan los mandatos entre sí. Los números se calculan con las series oficiales."), unsafe_allow_html=True)
     try:
         dp, inds, faltan = historicos(DATOS, dol, ACTUALIZADO)
     except Exception:  # noqa: BLE001 — una falla de cálculo no debe romper el resto de la app
         traceback.print_exc()
         dp, inds, faltan = None, None, ["cálculo"]
     if faltan:
-        falla("no se pudo armar la línea de tiempo: falta " + ", ".join(faltan))
+        falla("no se pudo armar la sección de presidentes: falta " + ", ".join(faltan))
         actualizando()
     else:
-        fotos = fotos_presidentes()
         if inds:
             MS = presidentes.MANDATOS
-            elegido = st.segmented_control("Gráfico", presidentes.GRAFICOS, default=presidentes.GRAFICOS[0],
-                                key="hist_grafico", label_visibility="collapsed") or presidentes.GRAFICOS[0]
+            elegido = selector.uno(st.segmented_control, "Gráfico", presidentes.GRAFICOS, "hist_grafico",
+                                   label_visibility="collapsed")
             serie_g, opciones_g = presidentes.grafico_historico(elegido, dp)
             fig_g = charts.serie_presidentes(serie_g, MS, presidentes.CORTO, **opciones_g)
             if st.toggle("Mostrar hitos económicos", key="hist_hitos",
@@ -78,8 +86,8 @@ def mostrar(
 
             # comparación entre mandatos: orden cronológico, un indicador a la vez
             st.markdown("#### Comparar mandatos")
-            comp = st.segmented_control("Indicador", list(presidentes.COMPARACIONES), default="Inflación anual al irse",
-                            key="hist_comp", label_visibility="collapsed") or "Inflación anual al irse"
+            comp = selector.uno(st.segmented_control, "Indicador", list(presidentes.COMPARACIONES), "hist_comp",
+                                "Inflación anual al irse", label_visibility="collapsed")
             clave_c, unidad_c, ayuda_c = presidentes.COMPARACIONES[comp]
             # reservas en dólares de hoy: se corrigen por la inflación de EE. UU. (un dólar de 1989 no es un dólar de hoy)
             cpi = DATOS.get("fred:ipc_eeuu")
@@ -109,25 +117,16 @@ def mostrar(
                                              sufijo=unidad_c, dec=0 if clave_c == "res_fin" else 1,
                                              actual=presidentes.CORTO[MS[-1].clave] if MS[-1].hasta is None else None,
                                              logaritmica=clave_c in ("inf_fin", "inf_acum")))
-            st.caption(ayuda_c + (" Escala logarítmica: cada marca vale 10 veces la anterior, así la hiperinflación no aplasta al resto."
-                                  if clave_c in ("inf_fin", "inf_acum") else "") + " Barras en orden cronológico; la dorada es el mandato en curso. Los mandatos duraron "
-                       "distinto y ocurrieron en contextos muy distintos: es información, no un ranking.")
-
-            def iniciales(nombre: str) -> str:
-                return "".join(p[0] for p in nombre.split() if p[0].isupper())[:2]
-
-            items = [dict(
-                nombre=m.nombre, periodo=m.periodo, anio=m.desde.year, iniciales=iniciales(m.nombre), hito=m.hito,
-                filas=presidentes.filas(m, inds[m.clave]), pico=presidentes.pico_texto(m, inds[m.clave]),
-                nota=m.nota, foto=fotos.get(m.clave, {}).get("url"), pagina=fotos.get(m.clave, {}).get("pagina"),
-                actual=m.hasta is None,
-            ) for m in MS]
-            st.markdown(style.linea_tiempo(items), unsafe_allow_html=True)
-            st.caption("Fotos: Wikipedia / Wikimedia Commons (licencias libres); tocá una foto para ir a su página. "
-                       "Ojo: los mandatos duraron y ocurrieron en contextos muy distintos, así que comparar cifras entre épocas tiene límites. "
-                       "La inflación de cada mes se asigna a quien gobernaba al cierre de ese mes: por eso julio de 1989 cuenta "
-                       "para Menem y diciembre de 2023 para Milei, aunque esas subas se hayan gestado antes. Es un criterio "
-                       "discutible, y se aplica igual a todos.")
+            st.markdown(style.aclaracion(
+                ("Qué mide", ayuda_c),
+                ("Cómo leerlo", "Barras en orden cronológico; la dorada es el mandato en curso."
+                                + (" Escala logarítmica: cada marca vale 10 veces la anterior, así la hiperinflación no "
+                                   "aplasta al resto." if clave_c in ("inf_fin", "inf_acum") else "")),
+                ("Criterio", "La inflación de cada mes se asigna a quien gobernaba al cierre de ese mes: por eso julio de "
+                             "1989 cuenta para Menem y diciembre de 2023 para Milei, aunque esas subas se hayan gestado "
+                             "antes. Es discutible, y se aplica igual a todos."),
+                ("Ojo", "Los mandatos duraron distinto y ocurrieron en contextos muy distintos: es información, no un "
+                        "ranking.")), unsafe_allow_html=True)
             with st.expander("Cómo se calcula cada cifra"):
                 st.markdown(
                     """
@@ -140,7 +139,6 @@ def mostrar(
 - **Dólar oficial:** solo desde 1992; antes las series están en monedas de cada época (peso argentino, austral) y con
   tramos sin actualizar, por eso no se muestra para Alfonsín ni para el inicio de Menem.
 - **Reservas:** brutas del BCRA, saldo de fin de mes. **Riesgo país:** disponible desde 1999.
-- **Pico de inflación mensual:** un mes cuenta para quien estaba en el cargo a fin de ese mes.
 - No se incluye pobreza: no existe una serie oficial continua desde 1983.
                     """
                 )

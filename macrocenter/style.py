@@ -582,23 +582,6 @@ html[data-alertas="anotado"] .mc-alerta {{ display: none !important; }}
 .mc-by {{ font-size: .82rem; opacity: .85; text-align: right; }}
 .mc-by b {{ color: {CELESTE}; opacity: 1; }}
 
-/* ── Línea de tiempo de presidentes ── */
-.mc-tl {{ position: relative; margin: 18px 0 6px; }}
-.mc-tl::before {{
-    content: ""; position: absolute; left: 50%; top: 0; bottom: 0; width: 6px; transform: translateX(-50%);
-    border-radius: 3px; box-shadow: 0 0 0 1px rgba(116,172,223,.5);
-    background: linear-gradient(to right, {CELESTE} 0 33%, #FFFFFF 33% 66%, {CELESTE} 66% 100%);
-}}
-.mc-tl-item {{
-    display: grid; grid-template-columns: 1fr 116px 1fr; align-items: center; margin-bottom: 28px; position: relative;
-}}
-.mc-tl-card {{
-    grid-row: 1; padding: 16px 18px 14px; border-radius: 16px; background: rgba(128,128,128,.09);
-    border: 1px solid rgba(116,172,223,.38); box-shadow: 0 4px 14px rgba(0,0,0,.10);
-}}
-.mc-tl-item.izq .mc-tl-card {{ grid-column: 1; }}
-.mc-tl-item.der .mc-tl-card {{ grid-column: 3; }}
-.mc-tl-dot {{ grid-column: 2; grid-row: 1; justify-self: center; position: relative; z-index: 1; }}
 .mc-foto {{
     width: 88px; height: 88px; border-radius: 50%; position: relative; overflow: hidden;
     display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 1.6rem;
@@ -606,13 +589,6 @@ html[data-alertas="anotado"] .mc-alerta {{ display: none !important; }}
     box-shadow: 0 0 0 3px {CELESTE}, 0 6px 16px rgba(0,0,0,.3);
 }}
 .mc-foto img {{ position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: top center; }}
-.mc-tl-item.actual .mc-foto {{ box-shadow: 0 0 0 3px {SOL}, 0 0 20px rgba(246,180,14,.65); }}
-.mc-tl-anio {{ grid-row: 1; font-size: 2rem; font-weight: 800; letter-spacing: -1px; opacity: .85; }}
-.mc-tl-item.izq .mc-tl-anio {{ grid-column: 3; padding-left: 24px; }}
-.mc-tl-item.der .mc-tl-anio {{ grid-column: 1; text-align: right; padding-right: 24px; }}
-.mc-tl-card h4 {{ margin: 0 0 2px; padding: 0; font-size: 1.25rem; font-weight: 800; }}
-.mc-tl-card .per {{ font-size: .78rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #9CC6EC; }}
-.mc-tl-card .hito {{ font-size: .88rem; opacity: .88; margin: 8px 0 10px; line-height: 1.4; }}
 .mc-fila {{
     display: flex; justify-content: space-between; gap: 10px; padding: 5px 0;
     border-top: 1px dashed rgba(128,128,128,.3); font-size: .84rem;
@@ -621,18 +597,14 @@ html[data-alertas="anotado"] .mc-alerta {{ display: none !important; }}
 .mc-fila .v {{ font-weight: 600; text-align: right; }}
 .mc-fila .mejor {{ color: #10AC84; }}
 .mc-fila .peor {{ color: #EE5253; }}
-.mc-tl-card .pico {{ margin-top: 8px; font-size: .8rem; opacity: .9; }}
-.mc-tl-card .nota {{ margin-top: 6px; font-size: .78rem; opacity: .85; font-style: italic; }}
-.mc-tl-hoy {{
-    width: max-content; margin: 0 auto; padding: 5px 16px; border-radius: 999px; font-weight: 800; font-size: .8rem;
-    letter-spacing: .14em; color: #3A2A00; background: linear-gradient(135deg, {SOL}, #F79F1F);
-    box-shadow: 0 4px 12px rgba(246,180,14,.4); position: relative; z-index: 1;
-}}
 /* ── Selector de sección de Historia y de Ahorro e inversiones: pestañas grandes ── */
 :is(.st-key-hist_seccion, .st-key-inv_seccion), :is(.st-key-hist_seccion, .st-key-inv_seccion) [data-testid="stButtonGroup"] {{ width: 100% !important; }}
-:is(.st-key-hist_seccion, .st-key-inv_seccion) [data-testid="stButtonGroup"] > div {{ width: 100% !important; max-width: none !important; display: flex; gap: 10px; }}
+/* misma separación entre botones que contra el borde del recuadro, y todos del mismo ancho (Streamlit les pone un
+   margen negativo para pegarlos: acá van sueltos) */
+:is(.st-key-hist_seccion, .st-key-inv_seccion) [data-testid="stButtonGroup"] > div {{ width: 100% !important;
+    max-width: none !important; display: flex; gap: 8px !important; padding: 6px !important; box-sizing: border-box; }}
 :is(.st-key-hist_seccion, .st-key-inv_seccion) button {{
-    flex: 1 1 0; min-width: 0; min-height: 3.3rem; border-radius: 16px !important; padding: .6rem 1.1rem !important;
+    flex: 1 1 0; min-width: 0; margin: 0 !important; min-height: 3.3rem; border-radius: 16px !important; padding: .6rem 1.1rem !important;
     border: 1px solid rgba(116,172,223,.4) !important; background: rgba(116,172,223,.07) !important;
     transition: transform .18s ease, box-shadow .18s ease, background-color .18s ease;
 }}
@@ -655,17 +627,17 @@ html[data-alertas="anotado"] .mc-alerta {{ display: none !important; }}
 }}
 @container principal (max-width: 640px) {{
     .st-key-inv_seccion [data-testid="stButtonGroup"] > div {{ flex-wrap: wrap; }}
-    .st-key-inv_seccion button {{ flex: 1 1 calc(50% - 10px); min-height: 2.9rem; }}
+    .st-key-inv_seccion button {{ flex: 1 1 calc(50% - 8px); min-height: 2.9rem; }}
     .st-key-inv_seccion button p {{ font-size: .9rem !important; }}
 }}
 
-/* selector de Herramientas (cuatro tarjetas): si no entran en una fila, pasan a 2 + 2 (antes de la nueva grilla se
-   pensaba para cinco y quedaba un hueco a la derecha; con poco ancho, el texto de cada botón se partía letra por letra) */
+/* selector de Herramientas (tres tarjetas): en una fila; si no entran, una debajo de la otra (con poco ancho, el
+   texto de cada botón se partía letra por letra) */
 [data-testid="stHorizontalBlock"]:has(.st-key-modo_0) {{ display: grid !important; gap: .75rem !important;
-    grid-template-columns: repeat(4, minmax(0, 1fr)); }}
+    grid-template-columns: repeat(3, minmax(0, 1fr)); }}
 [data-testid="stHorizontalBlock"]:has(.st-key-modo_0) > [data-testid="stColumn"] {{ width: auto !important; min-width: 0 !important; }}
-@container principal (max-width: 800px) {{
-    [data-testid="stHorizontalBlock"]:has(.st-key-modo_0) {{ grid-template-columns: repeat(2, minmax(0, 1fr)); }}
+@container principal (max-width: 640px) {{
+    [data-testid="stHorizontalBlock"]:has(.st-key-modo_0) {{ grid-template-columns: 1fr; }}
 }}
 [class*="st-key-modo_"] button p {{ word-break: normal !important; overflow-wrap: normal !important; }}
 
@@ -694,13 +666,45 @@ html[data-tema="claro"] .mc-intro b {{ color: #2E6DB4; }}
     transition: opacity .15s ease, background-color .15s ease; }}
 .mc-intro .mc-intro-x::after {{ content: "▴"; font-size: 1rem; line-height: 1; }}
 .mc-intro .mc-intro-x:hover, .mc-intro .mc-intro-x:focus-visible {{ opacity: 1; background: rgba(116,172,223,.16); outline: none; }}
-html[data-intros="ocultas"] .mc-intro {{ display: inline-flex; padding: 0; margin: 0 0 12px; background: none;
-    border: 1px solid rgba(116,172,223,.30); border-radius: 999px; }}
+/* oculta, queda una píldora para volver a abrirla: círculo con la «i», texto y una flechita */
+html[data-intros="ocultas"] .mc-intro {{ display: inline-flex; padding: 0; margin: 0 0 14px; border-radius: 999px;
+    background: linear-gradient(135deg, rgba(116,172,223,.18), rgba(116,172,223,.06));
+    border: 1px solid rgba(116,172,223,.40); box-shadow: 0 2px 10px rgba(0,0,0,.18);
+    transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease; }}
+html[data-intros="ocultas"] .mc-intro:hover {{ transform: translateY(-1px); border-color: rgba(116,172,223,.75);
+    box-shadow: 0 6px 16px rgba(74,143,212,.25); }}
 html[data-intros="ocultas"] .mc-intro::before, html[data-intros="ocultas"] .mc-intro > p,
 html[data-intros="ocultas"] .mc-intro .ley, html[data-intros="ocultas"] .mc-intro .nota {{ display: none; }}
-html[data-intros="ocultas"] .mc-intro .mc-intro-x {{ position: static; height: 30px; padding: 0 12px; opacity: .8; }}
-html[data-intros="ocultas"] .mc-intro .mc-intro-x::after {{ content: "ⓘ  Ver presentación"; font-size: .88rem; }}
+html[data-intros="ocultas"] .mc-intro .mc-intro-x {{ position: static; height: 34px; padding: 0 14px 0 5px; gap: 9px;
+    opacity: 1; color: #E6EDF6; font-size: .88rem; font-weight: 700; background: none; }}
+html[data-intros="ocultas"] .mc-intro .mc-intro-x::before {{ content: "i"; display: inline-flex; align-items: center;
+    justify-content: center; width: 24px; height: 24px; border-radius: 50%; font-size: .82rem; font-weight: 800;
+    font-style: italic; font-family: Georgia, serif; color: #0E1A2B; background: linear-gradient(135deg, #9CC6EC, {CELESTE}); }}
+html[data-intros="ocultas"] .mc-intro .mc-intro-x::after {{ content: "Ver presentación  ▾"; font-size: .88rem; white-space: pre; }}
 html[data-tema="claro"] .mc-intro .mc-intro-x {{ color: #2E6DB4; }}
+html[data-tema="claro"][data-intros="ocultas"] .mc-intro {{ background: linear-gradient(135deg, #EAF2FB, #F7FAFE);
+    border-color: #BCD3EC; box-shadow: 0 2px 8px rgba(30,60,100,.10); }}
+html[data-tema="claro"][data-intros="ocultas"] .mc-intro .mc-intro-x {{ color: #1F3B5C; }}
+html[data-tema="claro"][data-intros="ocultas"] .mc-intro .mc-intro-x::before {{ color: #FFFFFF;
+    background: linear-gradient(135deg, #3A7BC0, #2563A8); }}
+/* aclaraciones al pie (style.aclaracion): misma tarjeta chica en toda la página, cada fila con su rótulo */
+.mc-acl {{ margin: 8px 0 22px; padding: 10px 14px; border-radius: 10px; font-size: .86rem; line-height: 1.55;
+    background: rgba(128,128,128,.06); border: 1px solid rgba(128,128,128,.18); }}
+.mc-acl .f {{ display: grid; grid-template-columns: 6.4rem 1fr; gap: 12px; align-items: baseline; }}
+.mc-acl .f + .f {{ margin-top: 6px; padding-top: 6px; border-top: 1px dashed rgba(128,128,128,.2); }}
+.mc-acl .et {{ font-size: .68rem; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; color: {CELESTE}; }}
+.mc-acl .tx {{ opacity: .92; }}
+.mc-acl .tx strong {{ font-weight: 700; }}
+.mc-acl .ley {{ display: flex; flex-wrap: wrap; gap: 4px 18px; }}
+.mc-acl .ley span {{ display: inline-flex; align-items: baseline; gap: 7px; }}
+.mc-acl .ley span::before {{ content: ""; flex: 0 0 auto; width: 8px; height: 8px; border-radius: 50%; background: #8A9BB0;
+    transform: translateY(-1px); }}
+.mc-acl .ley .bien::before {{ background: #10AC84; }}
+.mc-acl .ley .mal::before {{ background: #EE5253; }}
+html[data-tema="claro"] .mc-acl {{ background: #F6F9FC; border-color: #DCE6F0; }}
+@container principal (max-width: 560px) {{
+    .mc-acl .f {{ grid-template-columns: 1fr; gap: 2px; }}
+}}
 /* ── Ahorro e inversiones ── */
 .mc-aviso {{ display: flex; gap: 14px; align-items: flex-start; margin: 6px 0 22px; padding: 14px 18px 14px 16px;
     border-radius: 12px; border: 1px solid rgba(246,180,14,.28); border-left: 4px solid {SOL};
@@ -846,18 +850,6 @@ html[data-tema="claro"] .mc-aviso .ic {{ background: #FBE7B5; color: #8A5A00; }}
     .mc-min-card .ph {{ flex-basis: 64px; height: 64px; }}
 }}
 @media (prefers-reduced-motion: reduce) {{ .mc-min-card, :is(.st-key-hist_seccion, .st-key-inv_seccion) button {{ transition: none; }} }}
-/* una sola columna según el ancho real disponible (con la barra lateral abierta, una ventana mediana ya no alcanza
-   para alternar tarjetas a los dos lados) */
-.mc-tlwrap {{ container-type: inline-size; }}
-@container (max-width: 760px) {{
-    .mc-tl::before {{ left: 48px; }}
-    .mc-tl-item {{ grid-template-columns: 96px 1fr; }}
-    .mc-tl-dot {{ grid-column: 1; justify-self: start; }}
-    .mc-tl-item.izq .mc-tl-card, .mc-tl-item.der .mc-tl-card {{ grid-column: 2; }}
-    .mc-tl-anio {{ display: none; }}
-    .mc-tl .mc-foto {{ width: 76px; height: 76px; margin-left: 10px; }}
-    .mc-tl-hoy {{ margin-left: 10px; }}
-}}
 @media (max-width: 860px) {{ .mc-foto {{ width: 76px; height: 76px; margin-left: 10px; }} }}
 
 /* ── Pie de página: franja celeste de la paleta ── */
@@ -1143,7 +1135,7 @@ html[data-tema="claro"] .mc-cmp tbody tr:nth-child(even) td {{ background: #F5F8
 html[data-tema="claro"] .mc-cmp .mejor {{ color: #08805F; }}
 html[data-tema="claro"] .mc-cmp .peor {{ color: #C62828; }}
 html[data-tema="claro"] [data-testid="stCaptionContainer"] {{ opacity: 1; color: #374151 !important; }}
-html[data-tema="claro"] :is(.mc-tl-card, .mc-min-card, .mc-viaje, .mc-nota, .mc-min-grupo, .mc-fx) :is(.per, .t, small) {{
+html[data-tema="claro"] :is(.mc-min-card, .mc-viaje, .mc-nota, .mc-min-grupo, .mc-fx) :is(.per, .t, small) {{
     color: #1F5F99 !important; }}
 
 [data-testid="stMetric"] {{ border-radius: 14px; transition: border-color .18s ease; }}
@@ -2267,37 +2259,6 @@ def cotizacion(nombre: str, valor: str, variacion: float | None) -> str:
     return f'<div class="mc-tick"><span class="n">{nombre}</span><span class="v">{valor}{d}</span></div>'
 
 
-def linea_tiempo(items: list[dict]) -> str:
-    """Línea de tiempo vertical de presidentes. Cada item: nombre, periodo, anio, iniciales, hito, filas
-    ([{'k','ini','fin','tend'}]), pico, nota, foto, pagina, actual."""
-    esc = html.escape
-    out = ['<div class="mc-tlwrap"><div class="mc-tl">']
-    for i, it in enumerate(items):
-        lado = "izq" if i % 2 == 0 else "der"
-        foto = (f'<img src="{esc(it["foto"])}" alt="{esc(it["nombre"])}" loading="lazy" decoding="async" referrerpolicy="no-referrer">'
-                if it.get("foto") else "")
-        dot = f'<div class="mc-foto"><span>{esc(it["iniciales"])}</span>{foto}</div>'
-        if it.get("pagina"):
-            dot = f'<a href="{esc(it["pagina"])}" target="_blank" rel="noopener noreferrer" title="{esc(it["nombre"])} en Wikipedia">{dot}</a>'
-        filas = ""
-        for f in it["filas"]:
-            if f["ini"] in ("", "s/d") and f["fin"] in ("", "s/d"):
-                continue  # sin datos confiables: no se muestra la fila
-            valor = (f'{esc(f["ini"])} <span style="opacity:.5">→</span> ' if f["ini"] else "") + \
-                    f'<span class="{f["tend"]}">{esc(f["fin"])}</span>'
-            filas += f'<div class="mc-fila"><span class="k">{esc(f["k"])}</span><span class="v">{valor}</span></div>'
-        pico = f'<div class="pico">{esc(it["pico"])}</div>' if it.get("pico") else ""
-        nota = f'<div class="nota">{esc(it["nota"])}</div>' if it.get("nota") else ""
-        out.append(
-            f'<div class="mc-tl-item {lado}{" actual" if it.get("actual") else ""}">'
-            f'<div class="mc-tl-card"><div class="per">{esc(it["periodo"])}</div><h4>{esc(it["nombre"])}</h4>'
-            f'<div class="hito">{esc(it["hito"])}</div>{filas}{pico}{nota}</div>'
-            f'<div class="mc-tl-dot">{dot}</div><div class="mc-tl-anio">{it["anio"]}</div></div>'
-        )
-    out.append('<div class="mc-tl-hoy">HOY</div></div></div>')
-    return "".join(out)
-
-
 def ministros(resumen: list | None, grupos: list[dict], intro: str = "") -> str:
     """Sección de ministros de Economía. resumen: [(etiqueta, valor, detalle)] o None. Cada grupo: titulo, periodo,
     foto, nota, items [{nombre, iniciales, foto, cargo, periodo, duracion, barra, perfil, hitos, datos, pico, actual}]."""
@@ -2478,6 +2439,19 @@ def intro(texto_md: str, leyenda: list[tuple[str, str]] | None = None, nota_md: 
     # botón para ocultarla (o volver a mostrarla): lo maneja JS_PESTANAS y la elección vale para todas las pestañas
     boton = '<span class="mc-intro-x" role="button" tabindex="0" title="Ocultar o mostrar la presentación"></span>'
     return f'<div class="mc-intro">{boton}<p>{_md_a_html(texto_md)}</p>{pie}</div>'
+
+
+def aclaracion(*filas: tuple[str, str], leyenda: list[tuple[str, str]] | None = None) -> str:
+    """Aclaraciones al pie de un cuadro o gráfico, siempre con el mismo formato: una tarjeta chica con filas
+    rotuladas («Colores», «Supuestos», «Fuente», «Ojo»...) para que se entienda por qué está cada texto.
+    `leyenda`: [(«bien»|«mal»|«neutro», texto)] arma la fila «Colores» con sus puntitos. Admite **negrita**."""
+    partes = []
+    if leyenda:
+        ley = "".join(f'<span class="{html.escape(c)}">{_md_a_html(t)}</span>' for c, t in leyenda)
+        partes.append(f'<div class="f"><div class="et">Colores</div><div class="tx ley">{ley}</div></div>')
+    partes += [f'<div class="f"><div class="et">{html.escape(e)}</div><div class="tx">{_md_a_html(t)}</div></div>'
+               for e, t in filas if t]
+    return f'<div class="mc-acl" role="note">{"".join(partes)}</div>'
 
 
 def aviso(texto_md: str, titulo: str = "") -> str:

@@ -128,12 +128,14 @@ def mostrar(
                     valores_r.append(float(((1 + tm_ / 1200).prod() - 1) * 100))
             if len(valores_r) >= 2:
                 grafico(charts.rendimientos(nombres_r, valores_r, infl_p, f"Variación en los últimos {vent} (%)"))
-                st.caption("En verde, lo que superó a la inflación del período (línea punteada); en rojo, lo que quedó abajo. "
-                           "Es el pasado: no anticipa qué va a pasar. El plazo fijo se aproxima con la tasa BADLAR, sin impuestos "
-                           "ni comisiones; el dólar se mide sin considerar costos de compra o venta."
-                           + ("" if uva_p is None else
-                              f" Como referencia, la UVA subió {charts.num(uva_p, 1, '%')}: no se compara porque se ajusta por la "
-                              "inflación (CER, con unas semanas de rezago), así que siempre queda cerca de la línea."))
+                st.markdown(style.aclaracion(
+                    ("Supuestos", "El plazo fijo se aproxima con la tasa BADLAR, sin impuestos ni comisiones; el dólar se mide sin "
+                                  "considerar costos de compra o venta."),
+                    ("UVA", "" if uva_p is None else
+                            f"Subió {charts.num(uva_p, 1, '%')}. No se compara porque se ajusta por la inflación (CER, con unas semanas "
+                            "de rezago), así que siempre queda cerca de la línea."),
+                    ("Ojo", "Es el pasado: no anticipa qué va a pasar."),
+                    leyenda=[("bien", "Superó a la inflación del período (línea punteada)"), ("mal", "Quedó abajo")]), unsafe_allow_html=True)
             else:
                 falla("no hay datos para el comparativo contra la inflación")
         except Exception:  # noqa: BLE001

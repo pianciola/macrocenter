@@ -12,7 +12,7 @@ import re
 import pandas as pd
 import streamlit as st
 
-from . import charts, data, glosario, style
+from . import charts, data, glosario, selector, style
 from .avisos import falla
 from .interactivo import entrada_monto
 
@@ -260,8 +260,11 @@ def pantalla_tasas(d: dict) -> None:
         fichas.append(("Inflación esperada", f"{_pct(rem_a)} anual", f"≈ {_pct(rem_m, 2)} por mes · REM del BCRA", ""))
     if fichas:
         st.markdown(style.resultado_final(fichas), unsafe_allow_html=True)
-        st.caption("Verde: la tasa anual efectiva le gana a la inflación que esperan las consultoras para los próximos "
-                   "12 meses; rojo: queda abajo. Es una referencia, no una garantía: la inflación real puede ser otra.")
+        st.markdown(style.aclaracion(
+            ("Ojo", "Se compara con la inflación que **esperan** las consultoras para los próximos 12 meses: es una "
+                    "referencia, no una garantía. La inflación real puede ser otra."),
+            leyenda=[("bien", "La tasa anual efectiva le gana a esa inflación"), ("mal", "Queda abajo")]),
+            unsafe_allow_html=True)
 
     # plazo fijo por banco
     st.markdown("#### Plazo fijo a 30 días, banco por banco")
@@ -284,14 +287,17 @@ def pantalla_tasas(d: dict) -> None:
         grandes, resto = tb[tb["banco"].isin(GRANDES)], tb[~tb["banco"].isin(GRANDES)]
         if grandes.empty:
             grandes, resto = tb, tb.iloc[0:0]
-        st.markdown("**Los bancos más grandes**")
         st.markdown(style.tabla(cab, filas(grandes)), unsafe_allow_html=True)
         if not resto.empty:
             with st.expander(f"Ver los otros {len(resto)} bancos y financieras"):
                 st.markdown(style.tabla(cab, filas(resto)), unsafe_allow_html=True)
-        st.caption("Tasa para clientes (si el banco no la informa, la de no clientes), según lo que cada banco informa al "
-                   "BCRA. TEA: lo que rinde en un año renovando cada 30 días. Los plazos fijos están cubiertos por el "
-                   "seguro de depósitos hasta el tope que fija el BCRA. No incluye impuestos.")
+        st.markdown(style.aclaracion(
+            ("Cómo leerlo", "**TNA**: la tasa que publica el banco. **TEA**: lo que rinde en un año renovando cada 30 días. "
+                            "Es la tasa para clientes (si el banco no la informa, la de no clientes)."),
+            ("Protección", "Los plazos fijos están cubiertos por el seguro de depósitos hasta el tope que fija el BCRA."),
+            ("No incluye", "Impuestos."),
+            ("Fuente", "Lo que cada banco informa al BCRA."),
+            leyenda=[("bien", "La TEA le gana a la inflación esperada"), ("mal", "Queda abajo")]), unsafe_allow_html=True)
 
     # fondos money market
     st.markdown("#### Fondos money market (rescate inmediato)")
@@ -306,10 +312,13 @@ def pantalla_tasas(d: dict) -> None:
                           (_pct(tea, 2), "" if gana is None else "mejor" if gana else "peor"),
                           charts.num(r["patrimonio"] / 1e9, 0, pre="$", suf=" mil M")])
         st.markdown(style.tabla(["Fondo", "TNA (30 días)", "TEA", "Patrimonio"], filas), unsafe_allow_html=True)
-        st.caption(f"Los {len(fondos)} fondos money market en pesos con más patrimonio, con datos de la CAFCI. El "
-                   "rendimiento es el de los últimos 30 días, llevado a tasa anual: el de los próximos días puede ser "
-                   "otro. Muchas cuentas remuneradas de billeteras invierten en este tipo de fondos. Los fondos no "
-                   "están cubiertos por el seguro de depósitos.")
+        st.markdown(style.aclaracion(
+            ("Cómo leerlo", f"Los {len(fondos)} fondos money market en pesos con más patrimonio. El rendimiento es el de "
+                            "los últimos 30 días, llevado a tasa anual: el de los próximos días puede ser otro. Muchas "
+                            "cuentas remuneradas de billeteras invierten en este tipo de fondos."),
+            ("Protección", "Los fondos **no** están cubiertos por el seguro de depósitos."),
+            ("Fuente", "CAFCI (Cámara Argentina de Fondos Comunes de Inversión)."),
+            leyenda=[("bien", "La TEA le gana a la inflación esperada"), ("mal", "Queda abajo")]), unsafe_allow_html=True)
 
     # billeteras y plataformas
     st.markdown("#### Billeteras y plataformas")
@@ -327,21 +336,26 @@ def pantalla_tasas(d: dict) -> None:
                     st.markdown(style.tabla(["Plataforma", "Moneda", "Rendimiento anual"],
                                             [[r["plataforma"], r["moneda_txt"], _pct(r["apy"], 2)] for _, r in t.iterrows()]),
                                 unsafe_allow_html=True)
-        st.caption("Rendimiento anual que informa cada plataforma (en su mayoría, empresas cripto). Puede cambiar todos los "
-                   "días y tener topes o condiciones. No son depósitos bancarios: no los cubre el seguro de depósitos y "
-                   "dependen de la solidez de cada empresa.")
+        st.markdown(style.aclaracion(
+            ("Cómo leerlo", "El rendimiento anual que informa cada plataforma (en su mayoría, empresas cripto). Puede "
+                            "cambiar todos los días y tener topes o condiciones."),
+            ("Protección", "No son depósitos bancarios: no los cubre el seguro de depósitos y dependen de la solidez de "
+                           "cada empresa.")), unsafe_allow_html=True)
 
 
 PERIODOS = {"1 mes": 30, "3 meses": 91, "6 meses": 182, "1 año": 365, "2 años": 730, "3 años": 1095, "5 años": 1826}
 
 
 def pantalla_historica(d: dict, grafico) -> None:
-    st.markdown(style.intro("Si hubieras puesto una plata en cada alternativa, ¿cuánto tendrías hoy? Y, sobre todo, ¿le ganó a la "
-               "inflación? Es el pasado: no dice nada de lo que va a pasar."), unsafe_allow_html=True)
+    st.markdown(style.intro(
+        "Elegí un **monto** y **desde cuándo**, y mirá cuánto tendrías hoy si lo hubieras puesto en cada alternativa "
+        "(plazo fijo, UVA, dólar, acciones, bitcoin) y si le ganó a la inflación.",
+        [("bien", "Le ganó a la inflación"), ("mal", "Perdió contra ella")],
+        "Es el pasado: no dice nada de lo que va a pasar."), unsafe_allow_html=True)
     c1, c2 = st.columns([1, 2])
     monto = entrada_monto(c1, "Monto inicial", "inv_monto_hist", 1_000_000)
     with c2:
-        per = st.pills("Desde hace", list(PERIODOS), default="1 año", key="per_inv_hist") or "1 año"
+        per = selector.uno(st.pills, "Desde hace", list(PERIODOS), "per_inv_hist", "1 año")
     desde = _hoy() - pd.Timedelta(days=PERIODOS[per])
     tabla, series, faltan = alternativas(d, desde, monto)
     if not series:
@@ -367,13 +381,16 @@ def pantalla_historica(d: dict, grafico) -> None:
     grafico(charts.evolucion_montos(tabla[::max(1, len(tabla) // 400)] if len(tabla) > 800 else tabla, series,
                                     "Inflación" if infl_final is not None else None,
                                     f"Cuánto valdrían {_monto_txt(monto)} invertidos hace {per}"), key="graf_inv_hist")
-    st.caption(
-        "Verde: terminó arriba de la inflación (ganó poder de compra); rojo: quedó abajo. Supuestos: el plazo fijo usa la "
-        "tasa promedio a 30 días del BCRA y se renueva cada mes; el UVA muestra solo el ajuste por inflación (los bancos "
-        "suman una tasa chica); el dólar MEP se compra al precio de venta y se vende al de compra; las acciones de EE. UU. "
-        "y el bitcoin se pasan a pesos con el dólar MEP. La inflación se mide con el CER (sigue al IPC con unas semanas "
-        "de rezago). No incluye impuestos ni comisiones. Bolsas y bitcoin: Yahoo Finance (fuente no oficial)."
-        + (f" Sin datos para este período: {', '.join(faltan)}." if faltan else ""))
+    st.markdown(style.aclaracion(
+        ("Supuestos", "El plazo fijo usa la tasa promedio a 30 días del BCRA y se renueva cada mes. El UVA muestra solo "
+                      "el ajuste por inflación (los bancos suman una tasa chica). El dólar MEP se compra al precio de "
+                      "venta y se vende al de compra. Las acciones de EE. UU. y el bitcoin se pasan a pesos con el MEP."),
+        ("Inflación", "Se mide con el CER, que sigue al IPC con unas semanas de rezago."),
+        ("No incluye", "Impuestos ni comisiones."),
+        ("Fuente", "BCRA; bolsas y bitcoin: Yahoo Finance (fuente no oficial)."),
+        ("Sin datos", ", ".join(faltan) if faltan else ""),
+        leyenda=[("bien", "Terminó arriba de la inflación (ganó poder de compra)"), ("mal", "Quedó abajo")]),
+        unsafe_allow_html=True)
 
 
 def pantalla_uva(d: dict, grafico) -> None:
@@ -387,8 +404,8 @@ def pantalla_uva(d: dict, grafico) -> None:
     c1, c2, c3 = st.columns(3)
     monto = entrada_monto(c1, "Monto", "inv_monto_uva", 1_000_000)
     with c2:
-        dias = st.segmented_control("Plazo (días)", [90, 180, 270, 365], default=180, key="inv_dias",
-                                    help="El plazo fijo UVA tiene un plazo mínimo de 90 días.") or 180
+        dias = selector.uno(st.segmented_control, "Plazo (días)", [90, 180, 270, 365], "inv_dias", 180,
+                            help="El plazo fijo UVA tiene un plazo mínimo de 90 días.")
     with c3:
         tna = st.number_input("TNA del plazo fijo tradicional (%)", 0.0, 300.0, round(tna_ref or 30.0, 2), 0.25,
                               format="%.2f", key="inv_tna",
@@ -422,10 +439,13 @@ def pantalla_uva(d: dict, grafico) -> None:
     xs = [round(i * 0.05, 2) for i in range(int(tope / 0.05) + 1)]
     grafico(charts.equilibrio_uva(xs, [r["trad"]] * len(xs), [monto * r["f_uva"](x) for x in xs], rem_m, r["empate"],
                                   f"Cuánto tendrías a los {dias} días según la inflación mensual promedio"), key="graf_inv_uva")
-    st.caption("El tradicional está fijo: no depende de la inflación. El UVA sube con ella. Supuestos: el tradicional se "
-               "renueva cada 30 días a la misma tasa; el UVA ajusta por la inflación promedio que elegiste (en la "
-               "práctica, la UVA sigue al IPC con unas semanas de rezago) más la tasa adicional. Los dos están cubiertos "
-               "por el seguro de depósitos. No incluye impuestos.")
+    st.markdown(style.aclaracion(
+        ("Cómo leerlo", "La línea del tradicional es plana: no depende de la inflación. La del UVA sube con ella. Donde "
+                        "se cruzan está la inflación de empate."),
+        ("Supuestos", "El tradicional se renueva cada 30 días a la misma tasa. El UVA ajusta por la inflación promedio "
+                      "que elegiste más la tasa adicional (en la práctica, la UVA sigue al IPC con unas semanas de rezago)."),
+        ("Protección", "Los dos están cubiertos por el seguro de depósitos."),
+        ("No incluye", "Impuestos.")), unsafe_allow_html=True)
 
 
 EXTRAS = {
@@ -463,9 +483,7 @@ def pantalla_conceptos() -> None:
 def mostrar(d: dict, grafico) -> None:
     """Pantalla completa. `d`: las series y tablas (ver app.py); `grafico`: la función de la app que dibuja figuras."""
     st.markdown(style.aviso(AVISO, AVISO_TITULO), unsafe_allow_html=True)
-    if st.session_state.get("inv_seccion") not in SECCIONES:
-        st.session_state["inv_seccion"] = SECCIONES[0]
-    sec = st.segmented_control("Sección", SECCIONES, key="inv_seccion", label_visibility="collapsed") or SECCIONES[0]
+    sec = selector.uno(st.segmented_control, "Sección", SECCIONES, "inv_seccion", label_visibility="collapsed")
     if sec == "Tasas de hoy":
         pantalla_tasas(d)
     elif sec == "Rendimientos pasados":

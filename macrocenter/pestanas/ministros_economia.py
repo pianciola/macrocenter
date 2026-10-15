@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import streamlit as st
 
-from macrocenter import ministros, presidentes, style
+from macrocenter import ministros, presidentes, selector, style
 
 
 def mostrar(dp: dict | None, *, fotos_ministros, fotos_presidentes) -> None:
@@ -20,8 +20,7 @@ def mostrar(dp: dict | None, *, fotos_ministros, fotos_presidentes) -> None:
         "hechos con fecha, sin valoraciones; las cifras se calculan con las series oficiales.")), unsafe_allow_html=True)
     MS = presidentes.MANDATOS
     opciones = ["Todos"] + [presidentes.CORTO[m.clave] for m in MS]
-    elegido = st.segmented_control("Presidente", opciones, default="Todos", key="min_pres",
-                                   label_visibility="collapsed") or "Todos"
+    elegido = selector.uno(st.segmented_control, "Presidente", opciones, "min_pres", label_visibility="collapsed")
     fotos_p = fotos_presidentes()
     fotos_m = fotos_ministros()
     grupos = []
@@ -46,7 +45,10 @@ def mostrar(dp: dict | None, *, fotos_ministros, fotos_presidentes) -> None:
         grupos.append(dict(titulo=m.nombre, periodo=m.periodo, foto=fotos_p.get(m.clave, {}).get("url"),
                            nota=ministros.NOTAS.get(m.clave, ""), items=items))
     st.markdown(style.ministros(None, grupos), unsafe_allow_html=True)
-    st.caption("Fechas: listado oficial del Ministerio de Economía (CDI). La inflación de cada mes se asigna a quien estaba "
-               "en el cargo al cierre de ese mes; entre 2007 y 2015 son las cifras del INDEC intervenido, que distintos "
-               "analistas consideran subestimadas. El dólar oficial se muestra desde 1992. Las cifras de un ministro dependen "
-               "también del contexto que heredó y de decisiones de otras áreas (BCRA, Congreso, Presidencia).")
+    st.markdown(style.aclaracion(
+        ("Criterio", "La inflación de cada mes se asigna a quien estaba en el cargo al cierre de ese mes. El dólar "
+                     "oficial se muestra desde 1992."),
+        ("Ojo", "Entre 2007 y 2015 son las cifras del INDEC intervenido, que distintos analistas consideran "
+                "subestimadas. Las cifras de un ministro dependen también del contexto que heredó y de decisiones de otras "
+                "áreas (BCRA, Congreso, Presidencia)."),
+        ("Fuente", "Fechas: listado oficial del Ministerio de Economía (CDI).")), unsafe_allow_html=True)

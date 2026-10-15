@@ -22,7 +22,9 @@ def mostrar(*, comercio, dif, grafico, kpi, pct, rec, ult_y_ant) -> None:
         v, a_ = ult_y_ant(c.dropna(subset=["saldo_12m"]), "saldo_12m", atras=12)
         kpi(k[3], "Saldo 12 meses (USD M)", v, 0, d=dif(v, a_), d_suf=" M", d_txt="vs un año antes", d_dec=0)
         ult_c = c.dropna(subset=["exp"])["fecha"].max()
-        st.caption(f"Último dato: {ult_c:%m/%Y} (INDEC, intercambio comercial argentino).")
+        st.markdown(style.aclaracion(
+            ("Último dato", f"{ult_c:%m/%Y}."),
+            ("Fuente", "INDEC, intercambio comercial argentino.")), unsafe_allow_html=True)
         a, b = st.columns(2)
         with a:
             grafico(charts.lineas(rec(c, 3), {"Exportaciones": "exp", "Importaciones": "imp"},

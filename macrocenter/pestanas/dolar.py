@@ -41,7 +41,9 @@ def mostrar(*, VIVO, base100, con_periodo, delta, dol, dol_rec, get, grafico, ul
         dv_ = VIVO.get("dolares")
         hora_ = (f" Último dato del día: {pd.Timestamp(dv_['actualizado'].max()):%d/%m %H:%M} (DolarApi y CriptoYa: MEP y CCL de las operaciones del AL30); se renueva cada 30 segundos."
                  if isinstance(dv_, pd.DataFrame) and not dv_.empty else "")
-        st.caption(f"Historia: ArgentinaDatos.{hora_} La variación compara con 30 días atrás.")
+        st.markdown(style.aclaracion(
+            ("Cómo leerlo", "La variación compara con 30 días atrás."),
+            ("Fuente", f"ArgentinaDatos.{hora_}")), unsafe_allow_html=True)
         st.markdown(style.form_alertas(), unsafe_allow_html=True)
 
         eur, gbp = get("fx:EUR"), get("fx:GBP")
@@ -57,7 +59,8 @@ def mostrar(*, VIVO, base100, con_periodo, delta, dol, dol_rec, get, grafico, ul
         if tarjetas_fx:
             st.markdown("#### Otras monedas")
             st.markdown(style.cotizaciones(tarjetas_fx), unsafe_allow_html=True)
-            st.caption("Euro y libra: referencia cambiaria del BCRA en pesos por unidad (no es el precio de la casa de cambio).")
+            st.markdown(style.aclaracion(
+                ("Euro y libra", "Referencia cambiaria del BCRA en pesos por unidad (no es el precio de la casa de cambio).")), unsafe_allow_html=True)
 
         @st.fragment
         def graficos_dolar() -> None:

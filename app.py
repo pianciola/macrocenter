@@ -19,7 +19,7 @@ import pandas as pd
 import streamlit as st
 
 from macrocenter import (charts, data, glosario, interactivo, inversiones, legal, mapa, ministros, news, pestanas,
-                         presidentes, style)
+                         presidentes, selector, style)
 from macrocenter.avisos import actualizando, falla
 from macrocenter.carga import (  # descarga, cachés y copia de respaldo
     _estado_actualizar, _memoria, _precalentar, _ultima_carga, _va_a_demorar, cargar_cripto, cargar_fotos,
@@ -187,8 +187,8 @@ def ver_noticias() -> None:
     st.html(script_guardar_leidas(), unsafe_allow_javascript=True)  # recuerda lo leído en este navegador
 
     c_filtro, c_boton = st.columns([3, 1.4], vertical_alignment="center")
-    filtro = c_filtro.segmented_control("Fuente", ["Todas", *fuentes.values()], default="Todas", key="news_filtro",
-                                        label_visibility="collapsed") or "Todas"
+    filtro = selector.uno(c_filtro.segmented_control, "Fuente", ["Todas", *fuentes.values()], "news_filtro",
+                          label_visibility="collapsed")
     if hay_sin_leer:
         # al tocarlo se marca todo y el diálogo se redibuja solo: el botón pasa a verde
         c_boton.button("Marcar todas como leídas", key="btn_marcar_leidas", icon=":material/done_all:", on_click=marcar_leidas,
@@ -235,7 +235,7 @@ VISTAS = ("tablero", "inversiones", "historia", "juegos")
 # sector externo, ingresos y cuentas públicas
 PESTANAS = ["Resumen", "Dólar", "Bolsas", "Cripto", "Tasas y riesgo país", "Dinero y crédito", "Inflación",
             "Actividad y PBI", "Reservas", "Salarios", "Resultado fiscal", "Comercio exterior"]
-HIST_SECCIONES = ["Presidentes", "Ministros de Economía"]
+HIST_SECCIONES = ["Presidentes", "Ministros de Economía", "Viaje en el tiempo"]
 # Enlaces para compartir: ?ver=tablero/dolar, ?ver=herramientas/ajuste-de-alquileres, etc. (la misma ruta que cuenta
 # las visitas, ver seccion_actual). Se lee una sola vez por visita; después la dirección sigue a lo que se mira.
 RUTAS = {"tablero": ("tablero", "pestana", PESTANAS), "inversiones": ("inversiones", "inv_seccion", inversiones.SECCIONES),
@@ -248,6 +248,8 @@ def abrir_ruta(ruta) -> None:
     if not isinstance(ruta, str) or len(ruta) > 80:
         return
     base, _, sub = ruta.strip("/").partition("/")
+    if base == "herramientas" and sub == "viaje-en-el-tiempo":  # enlace viejo: el viaje pasó a Historia económica
+        base = "historia"
     if base not in RUTAS:
         return
     vista_, clave, opciones = RUTAS[base]
@@ -312,15 +314,15 @@ def selector_periodo(clave: str, defecto: str = "2 años", mensual: bool = False
     Con datos mensuales no se ofrece «1 mes» (quedaría un solo punto). `opciones` permite un juego propio
     (por ejemplo «1 mes / 3 meses / 1 año»). La clave empieza con `per_`: el estilo de style.py se engancha ahí."""
     opciones = list(opciones) if opciones else [o for o in PERIODOS if not (mensual and o == "1 mes")]
-    p = st.pills("Período", opciones, default=defecto if defecto in opciones else opciones[0],
-                 key=f"per_{clave}", label_visibility="collapsed")
-    return p if p in opciones else defecto
+    return selector.uno(st.pills, "Período", opciones, f"per_{clave}", defecto, label_visibility="collapsed")
 
 
 def selector_categoria(etiqueta: str, opciones: list, clave: str, defecto=None, multi: bool = False):
     """Fichas para elegir QUÉ se mira (un índice, una moneda, un gráfico). Se ven distinto del período a propósito.
     La clave empieza con `cat_`: el estilo de style.py se engancha ahí. Devuelve el elegido (o la lista, si `multi`)."""
-    return st.pills(etiqueta, list(opciones), selection_mode="multi" if multi else "single", default=defecto,
+    if not multi:
+        return selector.uno(st.pills, etiqueta, opciones, f"cat_{clave}", defecto, label_visibility="collapsed")
+    return st.pills(etiqueta, list(opciones), selection_mode="multi", default=defecto,
                     key=f"cat_{clave}", label_visibility="collapsed")
 
 
@@ -596,8 +598,8 @@ if ex is not None and im is not None:
 def conversor_lateral() -> None:
     """Conversor pesos ↔ dólares con las cotizaciones del día. De pesos a dólares usa el precio de venta (lo que se
     paga por cada dólar); de dólares a pesos, el de compra (lo que se recibe)."""
-    sentido_c = st.segmented_control("Sentido", ["A dólares", "A pesos"], default="A dólares", key="conv_sentido", width="stretch",
-                                     label_visibility="collapsed") or "A dólares"
+    sentido_c = selector.uno(st.segmented_control, "Sentido", ["A dólares", "A pesos"], "conv_sentido", width="stretch",
+                             label_visibility="collapsed")
     a_dolares = sentido_c == "A dólares"
     monto = interactivo.entrada_monto(st, "Pesos" if a_dolares else "Dólares",
                                       "conv_pesos" if a_dolares else "conv_usd", 1_000_000 if a_dolares else 1_000)
@@ -1053,10 +1055,12 @@ def inflacion_distritos() -> None:
                       charts.num(u["mensual"], 1, suf="%"),
                       charts.num(u["interanual"], 1, suf="%") if pd.notna(u["interanual"]) else "s/d"])
     st.markdown(style.tabla(["Distrito", "Dato de", "Mensual", "Interanual"], filas), unsafe_allow_html=True)
-    st.caption("Cada instituto mide con su propia canasta y publica en su propia fecha, por eso el último mes no es el "
-               "mismo para todos. Las regiones del INDEC cubren todo el país (Córdoba, por ejemplo, está en la Pampeana: "
-               "su índice provincial no está en la API de datos abiertos). Una provincia que lleva más de seis meses sin "
-               "publicar no se muestra hasta que vuelva a hacerlo.")
+    st.markdown(style.aclaracion(
+        ("Cómo leerlo", "Cada instituto mide con su propia canasta y publica en su propia fecha, por eso el último mes no "
+                        "es el mismo para todos. Una provincia que lleva más de seis meses sin publicar no se muestra "
+                        "hasta que vuelva a hacerlo."),
+        ("Regiones", "Las del INDEC cubren todo el país (Córdoba, por ejemplo, está en la Pampeana: su índice provincial "
+                     "no está en la API de datos abiertos).")), unsafe_allow_html=True)
     nombres = list(series)
     defecto = [n for n in ("Nacional", "Ciudad de Buenos Aires", "Santa Fe", "Mendoza") if n in series]
     elegidos = selector_categoria("Distritos", nombres, "infl_distritos", defecto=defecto, multi=True) or defecto
@@ -1110,8 +1114,10 @@ def panel_plazo_fijo(clave: str = "res_real", subtitulo: bool = True) -> None:
                 help="Positivo: la tasa le ganó a la inflación. Negativo: el ahorro perdió poder de compra.")
             grafico_periodo(clave, real, lambda d: charts.barras(
                 d, "real", "Rendimiento real mensual de un plazo fijo (%)", yfmt=",.1f", height=300), mensual=True)
-            st.caption("Usa la tasa BADLAR (depósitos a plazo de bancos privados) como referencia de un plazo fijo, promedio del "
-                       "mes, contra la inflación de ese mes. No incluye impuestos ni comisiones.")
+            st.markdown(style.aclaracion(
+                ("Supuestos", "El plazo fijo se aproxima con la tasa BADLAR (depósitos a plazo de bancos privados), promedio del "
+                              "mes, contra la inflación de ese mes."),
+                ("No incluye", "Impuestos ni comisiones.")), unsafe_allow_html=True)
     else:
         falla("no se pudieron cargar la tasa o la inflación del panel del plazo fijo")
 
@@ -1195,7 +1201,8 @@ def bloque_pobreza() -> None:
             canastas = canastas.sort_values("fecha")
             grafico(charts.lineas(rec(canastas, 3), {c_: c_ for c_ in canastas.columns if c_ != "fecha"},
                                   "Canastas de una familia tipo y salario mínimo ($ por mes)"), key="graf_canastas")
-    st.caption("Fuente: INDEC (Encuesta Permanente de Hogares y valorización de las canastas básicas).")
+    st.markdown(style.aclaracion(
+        ("Fuente", "INDEC (Encuesta Permanente de Hogares y valorización de las canastas básicas).")), unsafe_allow_html=True)
 
 
 def bloque_cambiario() -> None:
@@ -1205,8 +1212,10 @@ def bloque_cambiario() -> None:
     if cc is None and fae is None:
         return
     st.markdown("#### Balance cambiario")
-    st.caption("Los dólares que entran y salen por el mercado de cambios cada mes, según el BCRA (millones de USD). "
-               "Verde: entran más de los que salen; rojo: salen más.")
+    st.markdown(style.aclaracion(
+        ("Qué mide", "Los dólares que entran y salen por el mercado de cambios cada mes (millones de USD)."),
+        ("Fuente", "BCRA."),
+        leyenda=[("bien", "Entran más de los que salen"), ("mal", "Salen más")]), unsafe_allow_html=True)
     k = st.columns(3)
     for slot, df_, nombre, ayuda in (
             (k[0], cc, "Cuenta corriente cambiaria", "Comercio de bienes y servicios, intereses y utilidades."),
@@ -1384,10 +1393,11 @@ def bloque_salarios() -> None:
                                                             "Salarios vs inflación — variación interanual (%)",
                                                             yfmt=",.0f", height=340), defecto="5 años", mensual=True)
     u = sr.dropna(subset=["real"]).iloc[-1]
-    st.caption(f"En {_mes(u['fecha'])} de {u['fecha'].year} los salarios subían {charts.num(u['salario'], 1, '%')} "
-               f"interanual y los precios, {charts.num(u['inflacion'], 1, '%')}. Cuando la línea de salarios va por "
-               "encima de la de inflación, el sueldo alcanza para más. Índice de salarios del INDEC (registrados y no "
-               "registrados), que se publica con unos dos meses de rezago.")
+    st.markdown(style.aclaracion(
+        ("Último dato", f"En {_mes(u['fecha'])} de {u['fecha'].year} los salarios subían "
+                        f"{charts.num(u['salario'], 1, '%')} interanual y los precios, {charts.num(u['inflacion'], 1, '%')}."),
+        ("Cómo leerlo", "Cuando la línea de salarios va por encima de la de inflación, el sueldo alcanza para más."),
+        ("Fuente", "Índice de salarios del INDEC (registrados y no registrados), con unos dos meses de rezago.")), unsafe_allow_html=True)
 
 
 def bloque_expectativas() -> None:
@@ -1404,9 +1414,10 @@ def bloque_expectativas() -> None:
         "Inflación observada y expectativa del mercado (%)", yfmt=",.0f", height=340), defecto="5 años", mensual=True)
     obs, esp = ultimo(infl_ia), ultimo(rem)
     if obs is not None and esp is not None:
-        st.caption(f"La inflación de los últimos 12 meses fue {charts.num(obs, 1, '%')}; los analistas esperan "
-                   f"{charts.num(esp, 1, '%')} para los próximos 12 (mediana del REM del BCRA). Las expectativas son una "
-                   "referencia y pueden cambiar mes a mes.")
+        st.markdown(style.aclaracion(
+            ("Último dato", f"La inflación de los últimos 12 meses fue {charts.num(obs, 1, '%')}; los analistas esperan "
+                            f"{charts.num(esp, 1, '%')} para los próximos 12 (mediana del REM del BCRA)."),
+            ("Ojo", "Las expectativas son una referencia y pueden cambiar mes a mes.")), unsafe_allow_html=True)
 
 
 def bloque_dolar_precios() -> None:
@@ -1432,8 +1443,9 @@ def bloque_dolar_precios() -> None:
                              colores=("#74ACDF", "#F6B40E", "#B8C4D6"))  # sin verde ni rojo: acá no hay bueno ni malo
 
     _grafico_periodo("ini_dolprecios", df, armar, defecto="2 años", mensual=True)
-    st.caption("Si la línea de un dólar queda por encima de la de precios, subió más que la inflación en ese período; si "
-               "queda por debajo, subió menos. Todas parten de 100 al comienzo del período elegido.")
+    st.markdown(style.aclaracion(
+        ("Cómo leerlo", "Todas las líneas parten de 100 al comienzo del período elegido. Si la de un dólar queda por "
+                        "encima de la de precios, subió más que la inflación en ese período; si queda por debajo, subió menos.")), unsafe_allow_html=True)
 
 
 def bloque_comercio_inicio() -> None:
@@ -1451,9 +1463,11 @@ def bloque_comercio_inicio() -> None:
         d, {"Exportaciones": "exp_12m", "Importaciones": "imp_12m"},
         "Comercio exterior — acumulado de 12 meses (USD millones)", yfmt=",.0f", height=340), defecto="5 años", mensual=True)
     u = c.iloc[-1]
-    st.caption(f"En los 12 meses hasta {_mes(u['fecha'])} de {u['fecha'].year}, la Argentina exportó USD {charts.num(u['exp_12m'], 0)} "
-               f"millones e importó USD {charts.num(u['imp_12m'], 0)} millones: saldo de USD {charts.num(u['exp_12m'] - u['imp_12m'], 0)} "
-               "millones. Datos del INDEC.")
+    st.markdown(style.aclaracion(
+        ("Último dato", f"En los 12 meses hasta {_mes(u['fecha'])} de {u['fecha'].year}, la Argentina exportó USD "
+                        f"{charts.num(u['exp_12m'], 0)} millones e importó USD {charts.num(u['imp_12m'], 0)} millones: saldo "
+                        f"de USD {charts.num(u['exp_12m'] - u['imp_12m'], 0)} millones."),
+        ("Fuente", "INDEC.")), unsafe_allow_html=True)
 
 
 def bloque_reservas_riesgo() -> None:
@@ -1470,8 +1484,10 @@ def bloque_reservas_riesgo() -> None:
         with b:
             grafico(charts.lineas(rec(riesgo), {"Riesgo país": "valor"}, "Riesgo país (puntos básicos)", yfmt=",.0f",
                                   height=320), key="graf_ini_rr_riesgo")
-    st.caption("Las reservas son los dólares y el oro que tiene el Banco Central. El riesgo país mide cuánto más que EE. UU. paga "
-               "la Argentina para endeudarse (100 puntos = 1 punto porcentual). Últimos dos años.")
+    st.markdown(style.aclaracion(
+        ("Qué mide", "Las reservas son los dólares y el oro que tiene el Banco Central. El riesgo país mide cuánto más "
+                     "que EE. UU. paga la Argentina para endeudarse (100 puntos = 1 punto porcentual)."),
+        ("Período", "Últimos dos años.")), unsafe_allow_html=True)
 
 
 def bloque_fiscal() -> None:
@@ -1488,9 +1504,11 @@ def bloque_fiscal() -> None:
         return fig
 
     _grafico_periodo("ini_fis", f12, fig12, defecto="5 años", mensual=True)
-    st.caption("Arriba de la línea punteada, el Estado nacional gasta menos de lo que recauda (superávit); abajo, más "
-               "(déficit). El **primario** no cuenta los intereses de la deuda; el **financiero** sí. Más detalle en la "
-               "pestaña Resultado fiscal.")
+    st.markdown(style.aclaracion(
+        ("Cómo leerlo", "Arriba de la línea punteada, el Estado nacional gasta menos de lo que recauda (superávit); "
+                        "abajo, más (déficit)."),
+        ("Qué mide", "El **primario** no cuenta los intereses de la deuda; el **financiero** sí. Más detalle en la "
+                     "pestaña Resultado fiscal.")), unsafe_allow_html=True)
 
 
 # ── Inicio ──

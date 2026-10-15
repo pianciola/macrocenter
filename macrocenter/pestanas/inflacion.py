@@ -59,8 +59,10 @@ def mostrar(
             d, {"Inflación interanual": "inflacion", "Dólar oficial": "oficial", "Dólar blue": "blue"},
             "Inflación vs. dólar — variación contra el mismo mes del año anterior (%)", yfmt=",.0f", height=340),
             mensual=True)
-        st.caption("Si una línea del dólar queda por debajo de la inflación, el dólar subió menos que los precios: "
-                   "en términos reales, se abarató. La inflación se publica con un mes de rezago.")
+        st.markdown(style.aclaracion(
+            ("Cómo leerlo", "Si una línea del dólar queda por debajo de la inflación, el dólar subió menos que los precios: "
+                            "en términos reales, se abarató."),
+            ("Ojo", "La inflación se publica con un mes de rezago.")), unsafe_allow_html=True)
     with st.expander("Índices de ajuste: UVA, CER, UVI e ICL"):
         pares = [("bcra:uva", "UVA (pesos)", ",.0f"), ("bcra:cer", "CER (base 2/2/2002 = 1)", ",.0f"),
                  ("bcra:uvi", "UVI (pesos)", ",.0f"), ("bcra:icl", "ICL — Índice para Contratos de Locación", ",.1f")]

@@ -33,8 +33,9 @@ def mostrar(
         ref = ref.sort_values("fecha")
         grafico(charts.lineas(rec(ref, 3), {c_: c_ for c_ in ref.columns if c_ != "fecha"},
                               "Tasa de política monetaria y tasa de pases a 1 día (TNA, %)", yfmt=",.0f", paso=True))
-        st.caption("La API del BCRA no registra datos de tasa de política monetaria después del 10/07/2025 "
-                   "(último valor: 29% TNA). Como referencia vigente se muestra la tasa de pases a 1 día.")
+        st.markdown(style.aclaracion(
+            ("Ojo", "La API del BCRA no registra datos de tasa de política monetaria después del 10/07/2025 (último "
+                    "valor: 29% TNA). Como referencia vigente se muestra la tasa de pases a 1 día.")), unsafe_allow_html=True)
     a, b = st.columns(2)
     with a:
         tasas = {}

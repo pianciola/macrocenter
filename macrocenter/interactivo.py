@@ -1,4 +1,5 @@
-"""Herramientas interactivas: ¿cuánto valían tus pesos?, comparador de épocas y viaje en el tiempo.
+"""Herramientas interactivas: ¿cuánto valían tus pesos?, ajuste de alquileres y comparador de épocas (el viaje en el
+tiempo se muestra en Historia económica).
 
 Todo se calcula con las mismas series de la sección de historia económica (nada escrito a mano), y vale lo
 mismo que allí: el dólar solo desde 1992, el riesgo país desde 1999, la inflación 2007-2015 es la del INDEC
@@ -12,7 +13,7 @@ from datetime import date
 import pandas as pd
 import streamlit as st
 
-from macrocenter import charts, style
+from macrocenter import charts, selector, style
 from macrocenter import presidentes as P
 
 HOY = P.hoy()  # se actualiza en cada visita (ver `mostrar`): el servidor queda prendido días seguidos
@@ -223,9 +224,10 @@ def pantalla_pesos(d: dict, uva: pd.DataFrame | None) -> None:
     graf = indices_base100(d, f, uva)
     cols = {c: c for c in ("Precios", "Dólar oficial", "Dólar blue", "UVA") if c in graf}
     _grafico(charts.lineas(graf, cols, "Cómo evolucionó cada cosa (base 100 = la fecha elegida)", yfmt=",.0f", height=340))
-    st.caption("Valores mes a mes (aproximados). No es una recomendación de inversión: es solo mirar el pasado."
-               + (" La fecha elegida cae en un período de cepo: al dólar oficial no se podía comprar libremente, así que "
-                  "el cálculo usa el blue." if tipo0 == "blue" else ""))
+    st.markdown(style.aclaracion(
+        ("Cómo leerlo", "Valores mes a mes (aproximados). Es solo mirar el pasado, no una recomendación de inversión."),
+        ("Dólar", "La fecha elegida cae en un período de cepo: al dólar oficial no se podía comprar libremente, así que "
+                  "el cálculo usa el blue." if tipo0 == "blue" else "")), unsafe_allow_html=True)
 
 
 # ───────────────────────── Ajuste de alquileres ─────────────────────────
@@ -315,7 +317,7 @@ def pantalla_alquileres(d: dict) -> None:
                                         key="alq_inicio"))
     frecuencia = c3.selectbox("Ajuste", list(FRECUENCIAS), index=1, key="alq_frec")
     nombres = list(indices)
-    indice = st.segmented_control("Índice", nombres, default=nombres[0], key="alq_indice") or nombres[0]
+    indice = selector.uno(st.segmented_control, "Índice", nombres, "alq_indice")
     s, tipo, desc = indices[indice]
     st.caption(desc)
 
@@ -357,10 +359,12 @@ def pantalla_alquileres(d: dict) -> None:
             ["Índice", "Alquiler hoy", "Aumento desde el inicio"],
             [[n, _n(v, 0, "$"), _n((v / monto - 1) * 100, 1, suf="%")] for n, v in sorted(comp, key=lambda p: p[1])]),
             unsafe_allow_html=True)
-    st.caption("Cómo se calcula: en cada ajuste se aplica la variación del índice desde el ajuste anterior. ICL y CER son "
-               "diarios (se toma el valor del día del ajuste); IPC y salarios son mensuales y se usa el último dato "
-               "publicado a esa fecha (el INDEC lo publica unas seis semanas después). El IPCBA de la Ciudad no tiene una "
-               "fuente pública con API: como referencia para CABA se usa el IPC GBA del INDEC. No es asesoramiento legal.")
+    st.markdown(style.aclaracion(
+        ("Cómo se calcula", "En cada ajuste se aplica la variación del índice desde el ajuste anterior. ICL y CER son "
+                            "diarios (se toma el valor del día del ajuste); IPC y salarios son mensuales y se usa el último "
+                            "dato publicado a esa fecha (el INDEC lo publica unas seis semanas después)."),
+        ("CABA", "El IPCBA de la Ciudad no tiene una fuente pública con API: como referencia se usa el IPC GBA del INDEC."),
+        ("Ojo", "No es asesoramiento legal.")), unsafe_allow_html=True)
 
 
 # ───────────────────────── 2) Comparador de épocas ─────────────────────────
@@ -425,7 +429,8 @@ def pantalla_comparador(d: dict) -> None:
          "tend": "" if pbi_x == "s/d" else ("mejor" if pbi_x.startswith("+") else "peor")},
     ]
     st.markdown(style.comparacion(filas, "A", "B"), unsafe_allow_html=True)
-    st.caption("s/d = sin dato confiable para esa fecha (dólar: antes de 1992; riesgo país: antes de 1999).")
+    st.markdown(style.aclaracion(
+        ("s/d", "Sin dato confiable para esa fecha (dólar: antes de 1992; riesgo país: antes de 1999).")), unsafe_allow_html=True)
 
 
 # ───────────────────────── 3) Viaje en el tiempo ─────────────────────────
@@ -453,8 +458,12 @@ def _cuadro_viaje(d: dict, fotos: dict, f: pd.Timestamp) -> None:
 
 
 def pantalla_viaje(d: dict, fotos: dict) -> None:
-    st.markdown("##### Viaje en el tiempo")
-    st.markdown(style.intro("Elegí una fecha y mirá cómo estaba el país ese día. También podés dejar que avance solo hasta hoy."), unsafe_allow_html=True)
+    """Va en Historia económica. `d`: las series largas de `historicos` (app.py); `fotos`: las de los presidentes."""
+    global HOY
+    HOY = P.hoy()
+    st.markdown(style.intro("Elegí una fecha y mirá cómo estaba el país ese día: quién gobernaba, la inflación, el dólar, "
+                            "las reservas, el riesgo país y la desocupación. También podés dejar que avance solo hasta hoy."),
+                unsafe_allow_html=True)
     f = pd.Timestamp(st.slider("Fecha", min_value=date(1984, 1, 1), max_value=HOY.date(), value=date(2015, 12, 10),
                                format="MM/YYYY", key="viaje_fecha"))
     lugar = st.empty()
@@ -472,12 +481,11 @@ def pantalla_viaje(d: dict, fotos: dict) -> None:
 
 
 # ───────────────────────── entrada ─────────────────────────
-MODOS = ["¿Cuánto valían tus pesos?", "Ajuste de alquileres", "Comparador de épocas", "Viaje en el tiempo"]
+MODOS = ["¿Cuánto valían tus pesos?", "Ajuste de alquileres", "Comparador de épocas"]
 TARJETAS = {  # ícono (Material) y descripción corta de cada herramienta
     "¿Cuánto valían tus pesos?": (":material/savings:", "Qué fue de tu plata según la inflación, el dólar y la UVA."),
     "Ajuste de alquileres": (":material/home:", "Cuánto queda tu alquiler según ICL, IPC, CER o salarios."),
     "Comparador de épocas": (":material/compare_arrows:", "Dos momentos de la economía, lado a lado."),
-    "Viaje en el tiempo": (":material/history:", "Elegí una fecha y mirá cómo estaba el país."),
 }
 
 
@@ -508,7 +516,5 @@ def mostrar(d: dict, inds: dict, fotos: dict, uva: pd.DataFrame | None, extra: d
         pantalla_pesos(d, uva)
     elif modo == "Ajuste de alquileres":
         pantalla_alquileres(d)
-    elif modo == "Comparador de épocas":
-        pantalla_comparador(d)
     else:
-        pantalla_viaje(d, fotos)
+        pantalla_comparador(d)

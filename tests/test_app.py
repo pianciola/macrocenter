@@ -36,6 +36,8 @@ def test_inicio_sin_errores_ni_secciones_caidas():
     ("inversiones/conceptos", "inv_seccion", "Glosario"),  # enlaces viejos
     ("inversiones/como-les-fue", "inv_seccion", "Rendimientos pasados"),  # enlaces viejos
     ("historia/ministros-de-economia", "hist_seccion", "Ministros de Economía"),
+    ("historia/viaje-en-el-tiempo", "hist_seccion", "Viaje en el tiempo"),
+    ("herramientas/viaje-en-el-tiempo", "hist_seccion", "Viaje en el tiempo"),  # enlaces viejos (estaba en Herramientas)
 ])
 def test_los_enlaces_abren_la_seccion(ruta, clave, valor):
     at = _correr(ver=ruta)

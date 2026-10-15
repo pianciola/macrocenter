@@ -53,22 +53,22 @@ pantalla aclara sus supuestos.
 
 ## Historia económica (línea de tiempo)
 
-La sección **Historia económica** (barra lateral → *Explorar*) recorre desde Alfonsín hasta hoy: foto, hito y cómo recibió → cómo dejó la inflación,
-el PBI, la desocupación, el dólar, las reservas y el riesgo país. Todo se calcula con las series oficiales
+La sección **Historia económica** (barra lateral → *Explorar*) tiene tres partes: **Presidentes** (cómo evolucionó la
+economía con cada uno desde Alfonsín y cómo se comparan los mandatos: inflación, PBI, desocupación, dólar y reservas),
+**Ministros de Economía** y **Viaje en el tiempo** (un deslizador de fecha, de 1984 a hoy, que muestra quién gobernaba
+y cómo estaba el país, con botón para reproducirlo hasta hoy). Todo se calcula con las series oficiales
 (`macrocenter/presidentes.py`); las fotos se piden en el momento a Wikipedia / Wikimedia Commons. La pestaña explica
 los criterios y límites (por ejemplo, la inflación 2007-2015 es la del INDEC intervenido).
 
 ## Interactivo
 
-La sección **Herramientas** (barra lateral → *Explorar*; `macrocenter/interactivo.py`) tiene cuatro herramientas, de a una por vez:
+La sección **Herramientas** (barra lateral → *Explorar*; `macrocenter/interactivo.py`) tiene tres herramientas, de a una por vez:
 
 - **¿Cuánto valían tus pesos?** — un monto y una fecha (desde 1992): qué fue de esa plata según la inflación, el dólar
   oficial y la UVA.
 - **Comparador de épocas** — dos momentos cualesquiera (asunciones, hoy u otra fecha) lado a lado.
 - **Ajuste de alquileres** — monto inicial, fecha de inicio y frecuencia: cronograma de ajustes y alquiler actual según
   ICL, IPC nacional, IPC GBA, CER o salarios, y el mismo contrato comparado con cada índice.
-- **Viaje en el tiempo** — un deslizador de fecha (1984 a hoy) que muestra quién gobernaba y cómo estaba el país, con
-  botón para reproducirlo hasta hoy.
 
 ## Período de los gráficos y descargas
 

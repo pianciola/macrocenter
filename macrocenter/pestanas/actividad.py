@@ -38,8 +38,10 @@ def mostrar(*, dif, emae, emae_sa, get, grafico, kpi, paro, paro_pct, pib, rec, 
         with b:
             grafico(charts.barras(rec(p.dropna(subset=["interanual"]), 5), "interanual",
                                   "PBI — variación interanual (%)"))
-        st.caption("Serie trimestral sin desestacionalizar de Cuentas Nacionales (INDEC). "
-                   f"Último trimestre disponible: {p['fecha'].iloc[-1]:%m/%Y} (inicio de trimestre).")
+        st.markdown(style.aclaracion(
+            ("Qué mide", "Serie trimestral sin desestacionalizar de Cuentas Nacionales."),
+            ("Último dato", f"{p['fecha'].iloc[-1]:%m/%Y} (inicio de trimestre)."),
+            ("Fuente", "INDEC.")), unsafe_allow_html=True)
     if emae_sa is not None:
         st.markdown("#### Actividad mes a mes (EMAE)")
         a, b = st.columns(2)

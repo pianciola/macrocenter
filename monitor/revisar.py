@@ -138,9 +138,10 @@ def revisar_pantallas() -> list[str]:
     vistas += [(f"Ahorro e inversiones · {sec}", {"vista": "inversiones", "inv_seccion": sec}) for sec in
                ["Tasas de hoy", "Rendimientos pasados", "Plazo fijo vs. UVA", "Glosario"]]
     vistas += [("Historia · Presidentes", {"vista": "historia"}),
-               ("Historia · Ministros", {"vista": "historia", "hist_seccion": "Ministros de Economía"})]
+               ("Historia · Ministros", {"vista": "historia", "hist_seccion": "Ministros de Economía"}),
+               ("Historia · Viaje en el tiempo", {"vista": "historia", "hist_seccion": "Viaje en el tiempo"})]
     vistas += [(f"Herramientas · {m}", {"vista": "juegos", "inter_modo": m}) for m in
-               ["¿Cuánto valían tus pesos?", "Ajuste de alquileres", "Comparador de épocas", "Viaje en el tiempo"]]
+               ["¿Cuánto valían tus pesos?", "Ajuste de alquileres", "Comparador de épocas"]]
     problemas = _correr_vistas(vistas)
     if problemas:  # una falla de un momento (una API que tardó) no es motivo de alarma: se vuelve a mirar lo que falló
         time.sleep(REINTENTO_S)

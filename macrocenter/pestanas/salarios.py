@@ -57,6 +57,7 @@ def mostrar(
                 piso = piso.sort_values("fecha")
                 grafico(charts.lineas(rec(piso, 3), {c_: c_ for c_ in piso.columns if c_ != "fecha"},
                                       "Salario mínimo y haber mínimo jubilatorio ($ mensuales)", height=340))
-    st.caption("Índice de salarios y RIPTE: INDEC / Secretaría de Seguridad Social, con rezago de ~2 meses. "
-               "El salario real se calcula como (1 + salario nominal) / (1 + inflación) − 1, interanual.")
+    st.markdown(style.aclaracion(
+        ("Cómo se calcula", "El salario real es (1 + salario nominal) / (1 + inflación) − 1, interanual."),
+        ("Fuente", "Índice de salarios y RIPTE: INDEC / Secretaría de Seguridad Social, con unos dos meses de rezago.")), unsafe_allow_html=True)
     bloque_pobreza()
