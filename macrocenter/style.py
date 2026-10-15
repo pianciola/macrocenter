@@ -1133,6 +1133,10 @@ html[data-tema="claro"] .mc-conc .c {{ background: #F4F8FD; border: 1px solid #D
     .mc-cmp thead th {{ padding: 9px 6px; font-size: .74rem; letter-spacing: 0; overflow-wrap: break-word; }}
     .mc-cmp td {{ padding: 10px 6px; overflow-wrap: break-word; }}
     .mc-cmp th:first-child, .mc-cmp td:first-child {{ width: 31%; hyphens: auto; }}
+    /* las tablas anchas (muchas columnas, dentro de .mc-tablas) mantienen su ancho natural y se deslizan de costado */
+    .mc-tablas .mc-cmp {{ table-layout: auto; }}
+    .mc-tablas .mc-cmp th, .mc-tablas .mc-cmp td {{ white-space: nowrap; }}
+    .mc-tablas .mc-cmp th:first-child, .mc-tablas .mc-cmp td:first-child {{ width: auto; }}
 }}
 /* TEXTOS SECUNDARIOS: los de Streamlit (aclaraciones, etiquetas de campos) eran grises y chicos; van con el color del
    texto y más grandes */
