@@ -401,34 +401,8 @@ section[data-testid="stSidebar"] [class*="st-key-atajo_"] {{ margin-top: -6px; }
 /* los títulos de las tarjetas propias no llevan la barra */
 [data-testid="stMain"] [class*="mc-"] [data-testid="stHeadingWithActionElements"] :is(h3, h4, h5) {{
     border-left: none !important; padding-left: 0 !important; }}
-/* informe "En pocas palabras" de Inicio: neutral (no califica nada como bueno o malo). Título como los demás títulos
-   de sección (barra celeste), filas numeradas separadas por líneas finas, misma letra que el resto de la página */
-.mc-pano {{ margin: 6px 0 10px; counter-reset: pano; }}
-.mc-pano .cab {{ padding: 4px 0 12px; border-bottom: 1px solid rgba(128,128,128,.35); }}
-.mc-pano .cab .tit {{ font-size: 1.5rem; font-weight: 700; letter-spacing: -.01em; line-height: 1.25;
-    border-left: 4px solid {CELESTE}; padding-left: 12px; }}
-.mc-pano .cab .sub {{ font-size: .84rem; opacity: .85; margin: 4px 0 0 16px; }}
-.mc-pano .fila {{ display: grid; grid-template-columns: 2.1rem 150px 1fr; gap: 18px; align-items: baseline;
-    padding: 15px 2px; counter-increment: pano; }}
-.mc-pano .fila + .fila {{ border-top: 1px solid rgba(128,128,128,.2); }}
-.mc-pano .fila::before {{ content: counter(pano, decimal-leading-zero); font-size: .9rem; font-weight: 700;
-    color: {CELESTE}; opacity: .8; font-variant-numeric: tabular-nums; }}
-.mc-pano .tema {{ font-size: .8rem; font-weight: 600; opacity: .85; }}
-.mc-pano .cifra {{ font-size: 1.45rem; font-weight: 700; letter-spacing: -.02em; line-height: 1.15;
-    font-variant-numeric: tabular-nums; margin: 1px 0; }}
-.mc-pano .det {{ font-size: .78rem; opacity: .85; }}
-.mc-pano .txt {{ font-size: .94rem; line-height: 1.6; }}
-.mc-pano .txt strong, .mc-pano .txt :is(.pos, .neg) {{ font-weight: 700; color: inherit; }}
 :is(.mc-nota, .mc-aviso) .pos {{ color: #10AC84; font-weight: 700; }}
 :is(.mc-nota, .mc-aviso) .neg {{ color: #EE5253; font-weight: 700; }}
-.mc-pano .pie {{ font-size: .78rem; opacity: .85; padding: 10px 0 0; border-top: 1px solid rgba(128,128,128,.35); }}
-@container principal (max-width: 640px) {{
-    .mc-pano .fila {{ grid-template-columns: 1.8rem 1fr; gap: 4px 10px; padding: 13px 0; }}
-    .mc-pano .izq {{ display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }}
-    .mc-pano .txt {{ grid-column: 2; font-size: .9rem; }}
-    .mc-pano .cifra {{ font-size: 1.15rem; }}
-    .mc-pano .cab .tit {{ font-size: 1.3rem; }}
-}}
 
 /* actualizar datos: discreto, al pie */
 section[data-testid="stSidebar"] .st-key-actualizar button {{
@@ -531,7 +505,9 @@ html[data-pie="oculto"] .st-key-pie_datos {{ display: none !important; }}
 html[data-pie-anim="entra"] .st-key-pie_datos {{ animation: mc-pie-entra .3s ease-out; }}
 html[data-pie-anim="sale"] .st-key-pie_datos {{ animation: mc-pie-sale .3s ease-in forwards; }}
 html[data-pie="oculto"] [data-testid="stMainBlockContainer"] {{ padding-bottom: 2rem !important; }}
-@media (max-width: 560px) {{ .mc-pie-btn {{ right: 12px; }} }}
+/* en el celular, la esquina inferior derecha la ocupan el logo de Streamlit y el de la cuenta (no se pueden sacar desde
+   la app): la lengüeta va a la izquierda. La barra lateral desplegada la tapa (queda por debajo de ella) */
+@media (max-width: 560px) {{ .mc-pie-btn {{ right: auto; left: 12px; }} }}
 @media (prefers-reduced-motion: reduce) {{ .mc-pie-btn {{ transition: none; }}
     html[data-pie-anim] .st-key-pie_datos {{ animation: none; }} }}
 /* mapa de inflación: la provincia bajo el cursor se levanta (la copia la arma JS_PESTANAS). Solo se animan transform y
@@ -1493,6 +1469,35 @@ def _version_clara(css: str) -> str:
 
 
 CSS = _version_clara(CSS)
+
+# «En pocas palabras» trae su propio estilo (va dentro del mismo bloque que el informe): en el celular, la primera vez,
+# el informe podía dibujarse un par de segundos antes que la hoja general y se veía sin formato.
+ESTILO_PANO = _version_clara(_minificar_css("<style>" + r"""/* informe "En pocas palabras" de Inicio: neutral (no califica nada como bueno o malo). Título como los demás títulos
+   de sección (barra celeste), filas numeradas separadas por líneas finas, misma letra que el resto de la página */
+.mc-pano { margin: 6px 0 10px; counter-reset: pano; }
+.mc-pano .cab { padding: 4px 0 12px; border-bottom: 1px solid rgba(128,128,128,.35); }
+.mc-pano .cab .tit { font-size: 1.5rem; font-weight: 700; letter-spacing: -.01em; line-height: 1.25;
+    border-left: 4px solid #74ACDF; padding-left: 12px; }
+.mc-pano .cab .sub { font-size: .84rem; opacity: .85; margin: 4px 0 0 16px; }
+.mc-pano .fila { display: grid; grid-template-columns: 2.1rem 150px 1fr; gap: 18px; align-items: baseline;
+    padding: 15px 2px; counter-increment: pano; }
+.mc-pano .fila + .fila { border-top: 1px solid rgba(128,128,128,.2); }
+.mc-pano .fila::before { content: counter(pano, decimal-leading-zero); font-size: .9rem; font-weight: 700;
+    color: #74ACDF; opacity: .8; font-variant-numeric: tabular-nums; }
+.mc-pano .tema { font-size: .8rem; font-weight: 600; opacity: .85; }
+.mc-pano .cifra { font-size: 1.45rem; font-weight: 700; letter-spacing: -.02em; line-height: 1.15;
+    font-variant-numeric: tabular-nums; margin: 1px 0; }
+.mc-pano .det { font-size: .78rem; opacity: .85; }
+.mc-pano .txt { font-size: .94rem; line-height: 1.6; }
+.mc-pano .txt strong, .mc-pano .txt :is(.pos, .neg) { font-weight: 700; color: inherit; }
+.mc-pano .pie { font-size: .78rem; opacity: .85; padding: 10px 0 0; border-top: 1px solid rgba(128,128,128,.35); }
+@container principal (max-width: 640px) {
+    .mc-pano .fila { grid-template-columns: 1.8rem 1fr; gap: 4px 10px; padding: 13px 0; }
+    .mc-pano .izq { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+    .mc-pano .txt { grid-column: 2; font-size: .9rem; }
+    .mc-pano .cifra { font-size: 1.15rem; }
+    .mc-pano .cab .tit { font-size: 1.3rem; }
+}""" + "</style>"))
 # ajustes del tema claro que la regla automática no cubre (o que pisaría mal)
 CSS = CSS.replace("</style>", (
     'html[data-tema="claro"] .mc-pielinks a.bol{color:#0E1A2B}'  # botón celeste relleno: el texto sigue oscuro
@@ -2164,7 +2169,7 @@ def panorama(items: list[dict], fecha: str) -> str:
         f'<div class="cifra">{esc(i["cifra"])}</div><div class="det">{esc(i["detalle"])}</div></div>'
         f'<div class="txt">{_md_a_html(i["texto"])}</div></div>'
         for i in items)
-    return (f'<div class="mc-pano"><div class="cab"><div class="tit">En pocas palabras</div>'
+    return (ESTILO_PANO + f'<div class="mc-pano"><div class="cab"><div class="tit">En pocas palabras</div>'
             f'<div class="sub">Lo más importante de la economía · datos al {esc(fecha)}</div></div>{filas}'
             '<div class="pie">Resumen automático con el último dato publicado por cada fuente (algunos tienen semanas de '
             'rezago).</div></div>')
