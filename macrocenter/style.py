@@ -26,8 +26,10 @@ FUENTE = '"Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, "Helve
 
 CSS = f"""
 <style>
-/* el contenido estaba invisible hasta que llegara esta hoja (ver OCULTAR_HASTA_ESTILO): ya está, se muestra */
-[data-testid="stSidebarUserContent"], [data-testid="stMainBlockContainer"] {{ visibility: visible !important; animation: none !important; }}
+/* el contenido estaba invisible hasta que llegara esta hoja (ver OCULTAR_HASTA_ESTILO): se muestra cuando además
+   JS_PESTANAS ya detectó el tema (html[data-listo]), así tampoco se ve un instante con los colores del otro tema */
+html[data-listo] [data-testid="stSidebarUserContent"], html[data-listo] [data-testid="stMainBlockContainer"] {{
+    visibility: visible !important; animation: none !important; }}
 /* ── Tipografía (los íconos de Streamlit conservan su propia fuente) ── */
 .stApp, .stApp *:not([data-testid="stIconMaterial"]):not([class*="material"]) {{ font-family: {FUENTE} !important; }}
 .stApp {{ font-feature-settings: "tnum" 1, "lnum" 1; -webkit-font-smoothing: antialiased; }}
@@ -1550,6 +1552,7 @@ JS_PESTANAS = """
     if (claro) raiz.dataset.tema = 'claro'; else delete raiz.dataset.tema;
   };
   revisar();
+  raiz.dataset.listo = '1';  // estilos y tema listos: se muestra el contenido (ver OCULTAR_HASTA_ESTILO)
   setInterval(revisar, 1500);
 })();
 (() => {
