@@ -35,6 +35,8 @@ def test_inicio_sin_errores_ni_secciones_caidas():
     ("inversiones/glosario", "inv_seccion", "Glosario"),
     ("inversiones/conceptos", "inv_seccion", "Glosario"),  # enlaces viejos
     ("inversiones/como-les-fue", "inv_seccion", "Rendimientos pasados"),  # enlaces viejos
+    ("inversiones/tasas-de-hoy", "inv_seccion", "Tasas y plazos fijos"),  # enlaces viejos
+    ("inversiones/plazo-fijo-vs-uva", "inv_seccion", "Tasas y plazos fijos"),  # enlaces viejos (se juntó con las tasas)
     ("historia/ministros-de-economia", "hist_seccion", "Ministros de Economía"),
     ("historia/viaje-en-el-tiempo", "hist_seccion", "Viaje en el tiempo"),
     ("herramientas/viaje-en-el-tiempo", "hist_seccion", "Viaje en el tiempo"),  # enlaces viejos (estaba en Herramientas)
@@ -59,3 +61,17 @@ def test_cada_analisis_destacado_se_dibuja(i):
     at.run()
     assert not at.exception, [str(e.value)[:200] for e in at.exception]
     assert list(dict.fromkeys(at.session_state["_fallas"])) == []
+
+
+def test_botones_de_navegacion():
+    """Cada botón que cambia de pantalla (menú, atajos, «Volver al tablero») anda sin romper la página."""
+    at = _correr(ver="inversiones/tasas-y-plazos-fijos")
+    at.button(key="volver_tablero").click().run()
+    assert not at.exception, [str(e.value)[:200] for e in at.exception]
+    assert at.session_state["vista"] == "tablero"
+    at.button(key="atajo_tasas").click().run()
+    assert not at.exception, [str(e.value)[:200] for e in at.exception]
+    assert at.session_state["vista"] == "inversiones" and at.session_state["inv_seccion"] == "Tasas y plazos fijos"
+    at.button(key="nav_historia").click().run()
+    assert not at.exception, [str(e.value)[:200] for e in at.exception]
+    assert at.session_state["vista"] == "historia"

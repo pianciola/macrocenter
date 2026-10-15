@@ -1,4 +1,4 @@
-"""Ahorro e inversiones: tasas de hoy, cómo le fue a cada alternativa, plazo fijo tradicional vs. UVA y conceptos.
+"""Ahorro e inversiones: tasas y plazos fijos (con la calculadora tradicional vs. UVA), rendimientos pasados y glosario.
 
 Es una sección informativa: muestra datos, el pasado y simulaciones. No recomienda nada. Por eso las listas van
 ordenadas por nombre (no por rendimiento), cada pantalla aclara qué no incluye y los colores siguen la regla de toda la
@@ -16,7 +16,7 @@ from . import charts, data, glosario, selector, style
 from .avisos import falla
 from .interactivo import entrada_monto
 
-SECCIONES = ["Tasas de hoy", "Rendimientos pasados", "Plazo fijo vs. UVA", "Glosario"]
+SECCIONES = ["Tasas y plazos fijos", "Rendimientos pasados", "Glosario"]
 AVISO_TITULO = "Información, no recomendación"
 AVISO = ("Tasas, resultados pasados y simulaciones para comparar opciones. No es asesoramiento financiero: antes de "
          "invertir, revisá las condiciones de cada producto y, si lo necesitás, consultá a un asesor registrado en la CNV.")
@@ -237,7 +237,8 @@ def _monto_txt(v: float) -> str:
 
 def pantalla_tasas(d: dict) -> None:
     st.markdown(style.intro("Lo que pagan hoy los plazos fijos, los fondos money market y las billeteras y plataformas, comparado con "
-               "la inflación que esperan las consultoras. Las listas van por orden alfabético, no por rendimiento."), unsafe_allow_html=True)
+               "la inflación que esperan las consultoras. Al final, una calculadora para comparar el plazo fijo tradicional "
+               "con el UVA.", nota_md="Las listas van por orden alfabético, no por rendimiento."), unsafe_allow_html=True)
     rem_a, rem_m = inflacion_esperada_mensual(d.get("rem"))
     bancos, rend, fci_hoy, fci_antes = d.get("bancos"), d.get("rendimientos"), d.get("fci_hoy"), d.get("fci_antes")
     tb = tabla_bancos(bancos) if _ok(bancos) else None
@@ -394,9 +395,10 @@ def pantalla_historica(d: dict, grafico) -> None:
 
 
 def pantalla_uva(d: dict, grafico) -> None:
-    st.markdown(style.intro("Dos formas de hacer un plazo fijo: con una tasa fija (tradicional) o ajustado por inflación (UVA). Cuál "
-               "termina con más plata depende de la inflación que venga, que nadie sabe. Esta calculadora muestra la "
-               "inflación a partir de la cual uno supera al otro."), unsafe_allow_html=True)
+    """Calculadora tradicional vs. UVA: va al final de «Tasas y plazos fijos»."""
+    st.markdown("#### ¿Plazo fijo tradicional o UVA?")
+    st.markdown("Uno paga una tasa fija; el otro se ajusta por inflación. Cuál termina con más plata depende de la "
+                "inflación que venga, que nadie sabe: esta calculadora muestra a partir de qué inflación uno supera al otro.")
     rem_a, rem_m = inflacion_esperada_mensual(d.get("rem"))
     tb = tabla_bancos(d["bancos"]) if _ok(d.get("bancos")) else None
     tna_ref = promedio_grandes(tb) if tb is not None and not tb.empty else _ultimo(d.get("depositos_30d"))
@@ -484,11 +486,10 @@ def mostrar(d: dict, grafico) -> None:
     """Pantalla completa. `d`: las series y tablas (ver app.py); `grafico`: la función de la app que dibuja figuras."""
     st.markdown(style.aviso(AVISO, AVISO_TITULO), unsafe_allow_html=True)
     sec = selector.uno(st.segmented_control, "Sección", SECCIONES, "inv_seccion", label_visibility="collapsed")
-    if sec == "Tasas de hoy":
+    if sec == "Tasas y plazos fijos":
         pantalla_tasas(d)
+        pantalla_uva(d, grafico)
     elif sec == "Rendimientos pasados":
         pantalla_historica(d, grafico)
-    elif sec == "Plazo fijo vs. UVA":
-        pantalla_uva(d, grafico)
     else:
         pantalla_conceptos()

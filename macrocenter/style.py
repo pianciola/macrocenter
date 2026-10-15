@@ -616,7 +616,6 @@ html[data-alertas="anotado"] .mc-alerta {{ display: none !important; }}
 }}
 :is(.st-key-hist_seccion, .st-key-inv_seccion) button[aria-checked="true"] p {{ color: #fff !important; }}
 
-/* con cuatro secciones, en pantallas angostas pasan a dos por fila */
 /* selectores grandes de sección (Historia, Ahorro e inversiones) con poco ancho: letra algo menor y el texto puede bajar
    de renglón en vez de cortarse */
 @container principal (max-width: 640px) {{
@@ -624,11 +623,6 @@ html[data-alertas="anotado"] .mc-alerta {{ display: none !important; }}
     :is(.st-key-hist_seccion, .st-key-inv_seccion) button p {{
         font-size: .9rem !important; white-space: normal !important; overflow: visible !important;
         text-overflow: clip !important; line-height: 1.2; text-align: center; }}
-}}
-@container principal (max-width: 640px) {{
-    .st-key-inv_seccion [data-testid="stButtonGroup"] > div {{ flex-wrap: wrap; }}
-    .st-key-inv_seccion button {{ flex: 1 1 calc(50% - 8px); min-height: 2.9rem; }}
-    .st-key-inv_seccion button p {{ font-size: .9rem !important; }}
 }}
 
 /* selector de Herramientas (tres tarjetas): en una fila; si no entran, una debajo de la otra (con poco ancho, el
@@ -687,6 +681,9 @@ html[data-tema="claro"][data-intros="ocultas"] .mc-intro {{ background: linear-g
 html[data-tema="claro"][data-intros="ocultas"] .mc-intro .mc-intro-x {{ color: #1F3B5C; }}
 html[data-tema="claro"][data-intros="ocultas"] .mc-intro .mc-intro-x::before {{ color: #FFFFFF;
     background: linear-gradient(135deg, #3A7BC0, #2563A8); }}
+/* selectores de una sola opción: la elegida no se puede volver a tocar. Streamlit la desmarcaba al instante y recién
+   la volvía a marcar al responder el servidor (selector.uno), así que se veía un rato sin nada elegido */
+[data-testid="stButtonGroup"] button[role="radio"][aria-checked="true"] {{ pointer-events: none; cursor: default; }}
 /* aclaraciones al pie (style.aclaracion): misma tarjeta chica en toda la página, cada fila con su rótulo */
 .mc-acl {{ margin: 8px 0 22px; padding: 10px 14px; border-radius: 10px; font-size: .86rem; line-height: 1.55;
     background: rgba(128,128,128,.06); border: 1px solid rgba(128,128,128,.18); }}
@@ -1558,37 +1555,45 @@ JS_PESTANAS = """
     }
     return document.scrollingElement || document.documentElement;
   };
+  // desplaza la página de `desde` a `hasta` en lo que dura la animación (a mano y no con scrollBy «smooth»: ese no se
+  // mueve en todos los navegadores dentro de Streamlit). Al final se fija `hasta` por si el navegador lo recortó.
+  const deslizar = (caja, desde, hasta) => {
+    const t0 = performance.now();
+    const paso = (t) => {
+      const k = quieto() ? 1 : Math.min(1, (t - t0) / MS);
+      caja.scrollTop = desde + (hasta - desde) * (1 - Math.pow(1 - k, 3));
+      if (k < 1) requestAnimationFrame(paso);
+    };
+    requestAnimationFrame(paso);
+    setTimeout(() => { if (Math.abs(caja.scrollTop - hasta) > 1) caja.scrollTop = hasta; }, MS + 80);
+  };
   b.addEventListener('click', () => {
     const oculto = !raiz.dataset.pie;
     clearTimeout(reloj);
     guardar(oculto);
     const barra = document.querySelector('.st-key-pie_datos');
+    // la página se mueve lo mismo que mide la barra: baja al abrirla (así no tapa lo que se estaba leyendo) y sube al
+    // cerrarla. Si solo bajara, abrir y cerrar varias veces iba corriendo la página hacia abajo.
+    const caja = barra ? desplazable(barra) : null;
+    const alto = barra ? barra.getBoundingClientRect().height : 0;
     if (oculto) {
       // cierre: la barra baja y recién después se saca
-      if (!barra || quieto()) { delete raiz.dataset.pieAnim; poner(true); pintar(); return; }
+      if (!barra || quieto()) {
+        delete raiz.dataset.pieAnim; poner(true); pintar();
+        if (caja) caja.scrollTop = Math.max(0, caja.scrollTop - alto);
+        return;
+      }
       raiz.dataset.pieAnim = 'sale';
       raiz.dataset.pie = 'cerrando';
       pintar();
+      deslizar(caja, caja.scrollTop, Math.max(0, caja.scrollTop - alto));
       reloj = setTimeout(() => { poner(true); delete raiz.dataset.pieAnim; pintar(); }, MS);
     } else {
-      // apertura: la barra sube y la página baja lo mismo que mide, así no tapa lo que se estaba leyendo
+      // apertura: la barra sube y la página baja lo mismo que mide
       poner(false);
       if (!quieto()) raiz.dataset.pieAnim = 'entra';
       pintar();
-      if (barra) {
-        // (a mano y no con scrollBy «smooth»: ese no se mueve en todos los navegadores dentro de Streamlit)
-        const caja = desplazable(barra);
-        const desde = caja.scrollTop;
-        const hasta = desde + barra.getBoundingClientRect().height;
-        const t0 = performance.now();
-        const paso = (t) => {
-          const k = quieto() ? 1 : Math.min(1, (t - t0) / MS);
-          caja.scrollTop = desde + (hasta - desde) * (1 - Math.pow(1 - k, 3));
-          if (k < 1) requestAnimationFrame(paso);
-        };
-        requestAnimationFrame(paso);
-        setTimeout(() => { if (caja.scrollTop < hasta - 1) caja.scrollTop = hasta; }, MS + 80);
-      }
+      if (barra) deslizar(caja, caja.scrollTop, caja.scrollTop + barra.getBoundingClientRect().height);
       reloj = setTimeout(() => { delete raiz.dataset.pieAnim; }, MS);
     }
   });

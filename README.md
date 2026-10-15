@@ -44,11 +44,11 @@ vuelve con *← Volver al tablero*.
 Sección informativa (`macrocenter/inversiones.py`), sin recomendaciones: las listas van por orden alfabético y cada
 pantalla aclara sus supuestos.
 
-- **Tasas de hoy**: plazo fijo a 30 días por banco, fondos money market (rendimiento de los últimos 30 días) y
-  rendimientos que informan billeteras y plataformas, contra la inflación esperada (REM del BCRA). Datos de ArgentinaDatos.
+- **Tasas y plazos fijos**: plazo fijo a 30 días por banco, fondos money market (rendimiento de los últimos 30 días) y
+  rendimientos que informan billeteras y plataformas, contra la inflación esperada (REM del BCRA), y al final una calculadora de plazo fijo tradicional vs. UVA con la
+  inflación de empate entre los dos. Datos de ArgentinaDatos.
 - **Rendimientos pasados**: cuánto valdría hoy un monto invertido hace 1 mes a 5 años en plazo fijo, UVA, dólar MEP, Merval,
   S&P 500 y bitcoin, contra la inflación (CER).
-- **Plazo fijo vs. UVA**: calculadora con la inflación de empate entre los dos.
 - **Glosario**: los términos básicos, tomados del glosario de la app.
 
 ## Historia económica (línea de tiempo)

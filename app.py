@@ -254,7 +254,9 @@ def abrir_ruta(ruta) -> None:
         return
     vista_, clave, opciones = RUTAS[base]
     st.session_state["vista"] = vista_
-    sub = {"conceptos": "glosario", "como-les-fue": "rendimientos-pasados", "inicio": "resumen"}.get(sub, sub)  # enlaces viejos (la sección se llamaba «Conceptos»)
+    # enlaces viejos: secciones que cambiaron de nombre o se juntaron con otra
+    sub = {"conceptos": "glosario", "como-les-fue": "rendimientos-pasados", "inicio": "resumen",
+           "tasas-de-hoy": "tasas-y-plazos-fijos", "plazo-fijo-vs-uva": "tasas-y-plazos-fijos"}.get(sub, sub)
     elegida = next((o for o in opciones if style.slug(o) == sub), None)
     if elegida:
         st.session_state[clave] = elegida
@@ -620,7 +622,7 @@ def conversor_lateral() -> None:
                     unsafe_allow_html=True)
 
 
-def ir_a(vista_: str, clave: str, valor: str) -> None:
+def ir_a_seccion(vista_: str, clave: str, valor: str) -> None:
     """Atajo de la barra lateral: abre una pantalla directo en la sección elegida."""
     st.session_state["vista"] = vista_
     st.session_state[clave] = valor
@@ -628,7 +630,7 @@ def ir_a(vista_: str, clave: str, valor: str) -> None:
 
 # lo más buscado de la página, sin repetir lo que ya está a la vista (cotizaciones, menú): pocos y a mano
 ATAJOS = (
-    ("tasas", "Tasas de plazo fijo hoy", ":material/percent:", ("inversiones", "inv_seccion", "Tasas de hoy")),
+    ("tasas", "Tasas de plazo fijo hoy", ":material/percent:", ("inversiones", "inv_seccion", "Tasas y plazos fijos")),
     ("alquiler", "Ajustar un alquiler", ":material/home:", ("juegos", "inter_modo", "Ajuste de alquileres")),
     ("pesos", "¿Cuánto valían tus pesos?", ":material/savings:", ("juegos", "inter_modo", "¿Cuánto valían tus pesos?")),
     ("mapa", "Inflación por provincia", ":material/map:", ("tablero", "pestana", "Inflación")),
@@ -638,7 +640,7 @@ ATAJOS = (
 with st.sidebar:
     st.markdown(style.etiqueta("Atajos"), unsafe_allow_html=True)
     for clave_a, texto_a, icono_a, destino_a in ATAJOS:
-        st.button(texto_a, key=f"atajo_{clave_a}", icon=icono_a, width="stretch", on_click=ir_a, args=destino_a)
+        st.button(texto_a, key=f"atajo_{clave_a}", icon=icono_a, width="stretch", on_click=ir_a_seccion, args=destino_a)
     if dol is not None:
         st.markdown(style.etiqueta("Conversor"), unsafe_allow_html=True)
         with st.container(key="conv_caja"):
