@@ -127,14 +127,14 @@ a.mc-brand:hover .mc-flag svg {{ transform: translateY(-1px) scale(1.04); box-sh
     box-shadow: 0 6px 16px rgba(0,0,0,.35), 0 0 0 1px rgba(116,172,223,.35); }}
 .mc-brand h1 {{ margin: 0; padding: 0; font-size: 1.5rem; font-weight: 800; letter-spacing: -.03em; line-height: 1.05;
     color: inherit; }}
-/* el nombre: misma familia que la página, en negrita con «Center» celeste y algo más liviano. Las reglas apuntan a
+/* el nombre: misma familia que la página, en seminegrita pareja (sin mezclar pesos) y con «Center» celeste. Las reglas apuntan a
    .c y no a «h1 span»: Streamlit envuelve el texto del título en su propio <span>, y con «h1 span» todo el nombre
    quedaba fino y celeste */
 .mc-brand .txt {{ display: flex; flex-direction: column; min-width: 0; }}
-.stApp section[data-testid="stSidebar"] .mc-brand .mc-wm {{ display: block; line-height: 1.05; font-size: 1.6rem; font-weight: 800 !important;
-    letter-spacing: -.025em; color: #FFFFFF; }}
+.stApp section[data-testid="stSidebar"] .mc-brand .mc-wm {{ display: block; line-height: 1.05; font-size: 1.45rem; font-weight: 600 !important;
+    letter-spacing: 0; color: #FFFFFF; }}
 .stApp section[data-testid="stSidebar"] .mc-brand .mc-wm * {{ font-weight: inherit !important; color: inherit; }}
-.stApp section[data-testid="stSidebar"] .mc-brand .mc-wm .c {{ color: {CELESTE} !important; font-weight: 700 !important; }}
+.stApp section[data-testid="stSidebar"] .mc-brand .mc-wm .c {{ color: {CELESTE} !important; font-weight: 600 !important; }}
 html[data-tema="claro"] .stApp section[data-testid="stSidebar"] .mc-brand .mc-wm {{ color: #0E1A2B; }}
 html[data-tema="claro"] .stApp section[data-testid="stSidebar"] .mc-brand .mc-wm .c {{ color: #2E6DB4 !important; }}
 /* etiqueta «Beta» junto al nombre: chica, para avisar que todavía es una versión de prueba */
@@ -1394,7 +1394,7 @@ h3 {{ font-weight: 700 !important; }}
     /* pie de página y fichas en una columna */
     .mc-foot {{ padding: 14px 14px 10px; margin-top: 28px; }}
     .mc-foot .legal {{ flex-direction: column; }}
-    .stApp section[data-testid="stSidebar"] .mc-brand .mc-wm {{ font-size: 1.35rem !important; }}
+    .stApp section[data-testid="stSidebar"] .mc-brand .mc-wm {{ font-size: 1.25rem !important; }}
 }}
 </style>
 """
