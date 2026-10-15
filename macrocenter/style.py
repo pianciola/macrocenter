@@ -1446,6 +1446,48 @@ def _minificar_css(css: str) -> str:
 
 CSS = _minificar_css(CSS)
 
+# Tema claro: los colores de texto pensados para fondo oscuro (celeste, verde, rojo y dorado) se leen mal sobre blanco
+# (contraste de 2 a 1, cuando lo recomendado es 4,5 a 1). En vez de repetir cada regla a mano, se arma su versión clara:
+# para cada regla de primer nivel que pinta el TEXTO de uno de esos colores, la misma regla con un tono más oscuro bajo
+# html[data-tema="claro"]. Se saltean las reglas que además ponen un fondo oscuro propio (ahí el color claro va bien).
+CLARO_TEXTO = {CELESTE.lower(): "#2563A8", "#10ac84": "#08805F", "#ee5253": "#C62828", SOL.lower(): "#8A5A00",
+               "#f79f1f": "#9A5B00", "#2ed3a0": "#08805F"}
+
+
+def _version_clara(css: str) -> str:
+    cuerpo = css[len("<style>"):-len("</style>")] if css.startswith("<style>") else css
+    reglas, nivel, inicio, i = [], 0, 0, 0
+    while i < len(cuerpo):
+        ch = cuerpo[i]
+        if ch == "{":
+            if nivel == 0:
+                sel, sel_ini = cuerpo[inicio:i], i + 1
+            nivel += 1
+        elif ch == "}":
+            nivel -= 1
+            if nivel == 0:
+                if not sel.lstrip().startswith("@"):
+                    reglas.append((sel.strip(), cuerpo[sel_ini:i]))
+                inicio = i + 1
+        i += 1
+    out = []
+    for sel, decl in reglas:
+        if "data-tema" in sel:
+            continue
+        m = re.search(r"(?:^|;)\s*color:\s*(#[0-9a-fA-F]{6})\s*(!important)?", decl)
+        if not m or m.group(1).lower() not in CLARO_TEXTO:
+            continue
+        fondo = re.search(r"background(?:-color)?:\s*(#[0-9a-fA-F]{6})", decl)
+        if fondo and sum(int(fondo.group(1)[k:k + 2], 16) for k in (1, 3, 5)) < 3 * 90:
+            continue  # fondo oscuro propio: el color claro sigue estando bien
+        nuevo = CLARO_TEXTO[m.group(1).lower()] + (" !important" if m.group(2) else "")
+        sels = ",".join(f'html[data-tema="claro"] {x.strip()}' for x in sel.split(","))
+        out.append(f"{sels}{{color:{nuevo}}}")
+    return "<style>" + cuerpo + "".join(out) + "</style>"
+
+
+CSS = _version_clara(CSS)
+
 
 # Al tocar una pestaña de un borde, la fila se desliza lo justo para mostrar la que sigue (o la anterior); las del
 # medio no mueven nada. Se instala una sola vez por página y también sigue a las flechas del teclado.

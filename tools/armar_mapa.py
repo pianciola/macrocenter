@@ -12,7 +12,7 @@ import sys
 from pathlib import Path
 
 import requests
-from shapely.geometry import MultiPolygon, mapping, shape
+from shapely.geometry import MultiPolygon, shape
 
 URL = ("https://wms.ign.gob.ar/geoserver/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=ign:provincia"
        "&outputFormat=application/json&srsName=EPSG:4326")
