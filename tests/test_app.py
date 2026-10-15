@@ -46,3 +46,14 @@ def test_los_enlaces_abren_la_seccion(ruta, clave, valor):
 def test_un_enlace_roto_cae_en_el_tablero(ruta):
     at = _correr(ver=ruta)
     assert at.session_state["vista"] == "tablero"
+
+
+@pytest.mark.parametrize("i", range(9))
+def test_cada_analisis_destacado_se_dibuja(i):
+    from streamlit.testing.v1 import AppTest
+
+    at = AppTest.from_file(APP, default_timeout=300)
+    at.session_state["inicio_analisis"] = i
+    at.run()
+    assert not at.exception, [str(e.value)[:200] for e in at.exception]
+    assert list(dict.fromkeys(at.session_state["_fallas"])) == []

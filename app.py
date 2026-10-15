@@ -1388,6 +1388,89 @@ def bloque_salarios() -> None:
                "registrados), que se publica con unos dos meses de rezago.")
 
 
+def bloque_expectativas() -> None:
+    """Inflación interanual observada contra lo que espera el mercado a 12 meses (REM del BCRA)."""
+    if infl_m is None or infl_ia is None or rem is None:
+        falla("no se pudieron cargar las expectativas de inflación")
+        return
+    m = infl_m.merge(infl_ia, on="fecha", suffixes=("_m", "_ia"))[["fecha", "valor_ia"]]
+    m = m.rename(columns={"valor_ia": "Inflación interanual observada"})
+    y = rem.rename(columns={"valor": "Expectativa a 12 meses (REM)"})
+    df = m.merge(y, on="fecha", how="outer").sort_values("fecha")
+    _grafico_periodo("ini_rem", df, lambda d: charts.lineas(
+        d, {"Interanual observada": "Inflación interanual observada", "Expectativa 12 m (REM)": "Expectativa a 12 meses (REM)"},
+        "Inflación observada y expectativa del mercado (%)", yfmt=",.0f", height=340), defecto="5 años", mensual=True)
+    obs, esp = ultimo(infl_ia), ultimo(rem)
+    if obs is not None and esp is not None:
+        st.caption(f"La inflación de los últimos 12 meses fue {charts.num(obs, 1, '%')}; los analistas esperan "
+                   f"{charts.num(esp, 1, '%')} para los próximos 12 (mediana del REM del BCRA). Las expectativas son una "
+                   "referencia y pueden cambiar mes a mes.")
+
+
+def bloque_dolar_precios() -> None:
+    """Dólar oficial y blue contra los precios, con base 100 al inicio del período elegido."""
+    if dol is None or infl_m is None:
+        falla("no se pudo armar la comparación del dólar con los precios")
+        return
+    d_ = dol.set_index("fecha")[["oficial", "blue"]].resample("MS").last().dropna(how="all").reset_index()
+    pr = infl_m.dropna(subset=["valor"]).sort_values("fecha").copy()
+    pr["mes"] = pr["fecha"].dt.to_period("M").dt.to_timestamp()
+    pr["Precios (IPC)"] = (1 + pr["valor"] / 100).cumprod()
+    d_["mes"] = d_["fecha"].dt.to_period("M").dt.to_timestamp()
+    df = d_.merge(pr[["mes", "Precios (IPC)"]], on="mes", how="inner").drop(columns="mes")
+    df = df.rename(columns={"oficial": "Dólar oficial", "blue": "Dólar blue"})
+
+    def armar(d: pd.DataFrame):
+        d = d.copy()
+        for c in ("Dólar oficial", "Dólar blue", "Precios (IPC)"):
+            base = d[c].dropna()
+            d[c] = d[c] / base.iloc[0] * 100 if not base.empty else d[c]
+        return charts.lineas(d, {c: c for c in ("Dólar oficial", "Dólar blue", "Precios (IPC)")},
+                             "Dólar y precios — base 100 al inicio del período", yfmt=",.0f", height=340)
+
+    _grafico_periodo("ini_dolprecios", df, armar, defecto="2 años", mensual=True)
+    st.caption("Si la línea de un dólar queda por encima de la de precios, subió más que la inflación en ese período; si "
+               "queda por debajo, subió menos. Todas parten de 100 al comienzo del período elegido.")
+
+
+def bloque_comercio_inicio() -> None:
+    """Exportaciones e importaciones acumuladas de 12 meses (INDEC)."""
+    if comercio is None:
+        falla("no se pudo cargar el comercio exterior")
+        return
+    c = comercio.sort_values("fecha").copy()
+    c["exp_12m"], c["imp_12m"] = c["exp"].rolling(12).sum(), c["imp"].rolling(12).sum()
+    c = c.dropna(subset=["exp_12m", "imp_12m"])
+    if c.empty:
+        falla("no se pudo cargar el comercio exterior")
+        return
+    _grafico_periodo("ini_comercio", c, lambda d: charts.lineas(
+        d, {"Exportaciones": "exp_12m", "Importaciones": "imp_12m"},
+        "Comercio exterior — acumulado de 12 meses (USD millones)", yfmt=",.0f", height=340), defecto="5 años", mensual=True)
+    u = c.iloc[-1]
+    st.caption(f"En los 12 meses hasta {_mes(u['fecha'])} de {u['fecha'].year}, la Argentina exportó USD {charts.num(u['exp_12m'], 0)} "
+               f"millones e importó USD {charts.num(u['imp_12m'], 0)} millones: saldo de USD {charts.num(u['exp_12m'] - u['imp_12m'], 0)} "
+               "millones. Datos del INDEC.")
+
+
+def bloque_reservas_riesgo() -> None:
+    """Reservas del BCRA y riesgo país, lado a lado (últimos dos años)."""
+    if reservas is None and riesgo is None:
+        falla("no se pudieron cargar las reservas ni el riesgo país")
+        return
+    a, b = st.columns(2)
+    if reservas is not None:
+        with a:
+            grafico(charts.lineas(rec(reservas), {"Reservas brutas": "valor"}, "Reservas del BCRA (USD millones)", yfmt=",.0f",
+                                  height=320), key="graf_ini_rr_res")
+    if riesgo is not None:
+        with b:
+            grafico(charts.lineas(rec(riesgo), {"Riesgo país": "valor"}, "Riesgo país (puntos básicos)", yfmt=",.0f",
+                                  height=320), key="graf_ini_rr_riesgo")
+    st.caption("Las reservas son los dólares y el oro que tiene el Banco Central. El riesgo país mide cuánto más que EE. UU. paga "
+               "la Argentina para endeudarse (100 puntos = 1 punto porcentual). Últimos dos años.")
+
+
 def bloque_fiscal() -> None:
     f = fiscal_df()
     cols = {n: c for n, c in (("Primario", "primario_12m"), ("Financiero", "financiero_12m")) if c in f}

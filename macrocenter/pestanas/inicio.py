@@ -11,7 +11,8 @@ from macrocenter import charts, style
 
 
 def mostrar(
-    *, CATALOGO, GRAFICOS_INICIO, HOY, _grafico_periodo, badlar, bloque_fiscal, bloque_salarios, dol, dol_rec,
+    *, CATALOGO, GRAFICOS_INICIO, HOY, _grafico_periodo, badlar, bloque_comercio_inicio, bloque_dolar_precios,
+    bloque_expectativas, bloque_fiscal, bloque_pobreza, bloque_reservas_riesgo, bloque_salarios, dol, dol_rec,
     emae_sa, falla, grafico, guardar_prefs, infl_ia, infl_m, kpi, panel_plazo_fijo, panorama_inicio, reservas,
     restablecer_prefs, riesgo, sal_real_df, selector_categoria, selector_periodo, turno_de_visita, ultimo, uva,
 ) -> None:
@@ -145,6 +146,11 @@ def mostrar(
         ("¿Los salarios le ganan a la inflación?", bloque_salarios),
         ("¿Le ganó el plazo fijo a la inflación?", lambda: panel_plazo_fijo("ini_real", subtitulo=False)),
         ("¿Cómo vienen las cuentas públicas?", bloque_fiscal),
+        ("¿Qué espera el mercado de la inflación?", bloque_expectativas),
+        ("¿El dólar subió más o menos que los precios?", bloque_dolar_precios),
+        ("¿Cómo viene el comercio exterior?", bloque_comercio_inicio),
+        ("¿Cómo vienen las reservas y el riesgo país?", bloque_reservas_riesgo),
+        ("¿Cuántas personas están por debajo de la línea de pobreza?", bloque_pobreza),
     ]
 
     def _otro_analisis() -> None:
