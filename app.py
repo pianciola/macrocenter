@@ -857,11 +857,11 @@ def estado_vivo() -> None:
 
 def pie_pagina() -> None:
     # Barra fina pegada al borde inferior de la ventana en todas las pantallas (ver .st-key-pie_datos en style.py).
-    # Lo largo (marca, fuentes, aviso) va en el panel «Fuentes y legales».
+    # Lo largo (marca, fuentes, aviso) va en el panel «Acerca de».
     with st.container(key="pie_datos", horizontal=True, vertical_alignment="center"):
         estado_vivo()
         st.markdown(style.pie_enlaces(), unsafe_allow_html=True)
-        with st.popover("Fuentes y legales", icon=":material/info:", width="content"):
+        with st.popover("Acerca de", icon=":material/info:", width="content"):
             st.markdown(style.footer(), unsafe_allow_html=True)
         # Los cachés son compartidos: vaciarlos obliga a volver a descargar para todos. Publicada, el botón tiene una
         # espera de 10 minutos entre usos (para cualquiera), así nadie puede forzar descargas en cadena.

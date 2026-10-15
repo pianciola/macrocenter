@@ -115,7 +115,7 @@ El dólar y el riesgo país se consultan cada 30 segundos (DolarApi y CriptoYa, 
 ## Pie de página
 
 Una barra fina queda siempre pegada al borde inferior de la ventana, en cualquier pestaña o pantalla: estado en vivo,
-suscripción al resumen semanal, términos, privacidad, el panel **Fuentes y legales** (marca, fuentes de datos, aviso de
+suscripción al resumen semanal, términos, privacidad, el panel **Acerca de** (marca, fuentes de datos, aviso de
 rezago) y *Refrescar datos*. Lo secundario se oculta según el ancho real disponible; los botones nunca se achican.
 
 ## Agregar un indicador

@@ -949,11 +949,10 @@ html[data-tema="claro"] .mc-aviso .ic {{ background: #FBE7B5; color: #8A5A00; }}
 .st-key-pie_datos [data-testid="stPopover"] button {{ white-space: nowrap; }}
 .mc-vivo, .mc-vivo span {{ white-space: nowrap; }}
 /* lo que entra depende del ancho real de la barra (con la barra lateral abierta es bastante menos que la ventana):
-   se va ocultando lo secundario, nunca los botones. Términos y privacidad siguen en «Fuentes y legales» */
+   se va ocultando lo secundario, nunca los botones. Términos y privacidad siguen en «Acerca de» */
 .st-key-pie_datos {{ container-type: inline-size; container-name: pie; }}
 @container pie (max-width: 1380px) {{ .mc-pielinks .c, .mc-vivo .sec {{ display: none; }} }}
-@container pie (max-width: 1040px) {{ .mc-pielinks a:not(.bol):not(.err) {{ display: none; }} }}
-@container pie (max-width: 840px) {{ .mc-pielinks a.err {{ display: none; }} }}  /* en el celular, en «Fuentes y legales» */
+@container pie (max-width: 1040px) {{ .mc-pielinks a:not(.bol) {{ display: none; }} }}
 @container pie (max-width: 840px) {{ .mc-vivo span:not(.en) {{ display: none; }} }}
 /* angosto (celular): la suscripción sigue a la vista con un texto corto, y los otros dos botones quedan solo con su
    ícono (el texto sigue ahí para los lectores de pantalla) */
@@ -972,7 +971,7 @@ html[data-tema="claro"] .mc-aviso .ic {{ background: #FBE7B5; color: #8A5A00; }}
 @media (max-width: 560px) {{ .st-key-pie_datos {{ padding-left: 14px !important; padding-right: 112px !important; gap: 8px !important;
     min-height: 52px; padding-top: 6px; padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px)); margin-top: 18px; }}
     .st-key-pie_datos > :first-child {{ display: none; }} }}
-/* el panel «Fuentes y legales»: el contenido del pie, sin marco propio */
+/* el panel «Acerca de»: el contenido del pie, sin marco propio */
 [data-testid="stPopoverBody"] .mc-foot {{ margin: 0; padding: 4px 4px 8px; border: none; border-radius: 0; background: none;
     width: min(620px, 80vw); }}
 @media (max-width: 560px) {{
@@ -2512,9 +2511,7 @@ def pie_enlaces() -> str:
     bol = (f'<a class="bol" href="{esc(BOLETIN, quote=True)}" target="_blank" rel="noopener noreferrer" title="Resumen semanal por mail"><span class="ic" aria-hidden="true">✉</span><span class="l">Resumen semanal</span>'
            '<span class="s">Suscribirme</span></a>'
            if BOLETIN else '')
-    return (f'<div class="mc-pielinks">{bol}<a class="err" href="{esc(_mail_error(), quote=True)}" '
-            'title="Contanos qué viste: un error, un dato que no cierra o algo que se ve mal">¿Viste algo raro?</a>'
-            '<a href="?legal=terminos" target="_self">Términos</a>'
+    return (f'<div class="mc-pielinks">{bol}<a href="?legal=terminos" target="_self">Términos</a>'
             '<a href="?legal=privacidad" target="_self">Privacidad</a><span class="c">© 2026 MacroCenter</span></div>')
 
 
