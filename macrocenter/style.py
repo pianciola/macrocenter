@@ -135,6 +135,11 @@ a.mc-brand:hover .mc-flag svg {{ transform: translateY(-1px) scale(1.04); box-sh
 .stApp section[data-testid="stSidebar"] .mc-brand .mc-wm .c {{ color: {CELESTE} !important; font-weight: 700 !important; }}
 html[data-tema="claro"] .stApp section[data-testid="stSidebar"] .mc-brand .mc-wm {{ color: #0E1A2B; }}
 html[data-tema="claro"] .stApp section[data-testid="stSidebar"] .mc-brand .mc-wm .c {{ color: #2E6DB4 !important; }}
+/* etiqueta «Beta» junto al nombre: chica, para avisar que todavía es una versión de prueba */
+.stApp section[data-testid="stSidebar"] .mc-brand .mc-wm .beta {{ display: inline-block; vertical-align: middle;
+    margin-left: 7px; padding: 2px 7px; border-radius: 999px; font-size: .62rem !important; font-weight: 800 !important;
+    letter-spacing: .08em; text-transform: uppercase; line-height: 1.3; color: #0E1A2B !important; background: {SOL};
+    position: relative; top: -2px; }}
 .mc-brand .sub {{ display: block; margin: 6px 0 0; font-size: .78rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
     line-height: 1.2; opacity: .85; }}
 
@@ -947,7 +952,8 @@ html[data-tema="claro"] .mc-aviso .ic {{ background: #FBE7B5; color: #8A5A00; }}
    se va ocultando lo secundario, nunca los botones. Términos y privacidad siguen en «Fuentes y legales» */
 .st-key-pie_datos {{ container-type: inline-size; container-name: pie; }}
 @container pie (max-width: 1380px) {{ .mc-pielinks .c, .mc-vivo .sec {{ display: none; }} }}
-@container pie (max-width: 1040px) {{ .mc-pielinks a:not(.bol) {{ display: none; }} }}
+@container pie (max-width: 1040px) {{ .mc-pielinks a:not(.bol):not(.err) {{ display: none; }} }}
+@container pie (max-width: 840px) {{ .mc-pielinks a.err {{ display: none; }} }}  /* en el celular, en «Fuentes y legales» */
 @container pie (max-width: 840px) {{ .mc-vivo span:not(.en) {{ display: none; }} }}
 /* angosto (celular): la suscripción sigue a la vista con un texto corto, y los otros dos botones quedan solo con su
    ícono (el texto sigue ahí para los lectores de pantalla) */
@@ -1997,7 +2003,8 @@ def marca() -> str:
         # todo en elementos de línea (span): con bloques (div, h1, p) adentro de un enlace, el Markdown de Streamlit
         # partía la marca en pedazos
         f'<span class="mc-flag">{logo(46)}</span><span class="txt"><span class="mc-wm" role="heading" aria-level="1">'
-        'Macro<span class="c">Center</span></span><span class="sub">El pulso de la economía</span></span></a>'
+        'Macro<span class="c">Center</span><span class="beta" title="Versión de prueba: puede haber detalles por '
+        'pulir">Beta</span></span><span class="sub">El pulso de la economía</span></span></a>'
     )
 
 
@@ -2465,6 +2472,9 @@ def footer() -> str:
            'economía en un minuto. Gratis y sin publicidad.</span></div>'
            f'<a href="{esc(BOLETIN, quote=True)}" target="_blank" rel="noopener noreferrer">Suscribirme →</a></div>'
            if BOLETIN else '')
+        + f'<div class="bol err"><div><b>¿Viste algo raro?</b><span>Es una versión beta: si encontrás un error, un dato '
+        'que no cierra o algo que se ve mal, contanos.</span></div>'
+        f'<a href="{esc(_mail_error(), quote=True)}">Escribinos →</a></div>'
         + '<div class="main">'
         f'<div class="marca"><div class="logo">{bandera(30)}<div><b>MacroCenter</b><span>Creada por {esc(AUTOR)}</span></div>'
         f'<a class="mc-linkedin" href="{esc(LINKEDIN, quote=True)}" target="_blank" rel="noopener noreferrer" '
@@ -2502,8 +2512,19 @@ def pie_enlaces() -> str:
     bol = (f'<a class="bol" href="{esc(BOLETIN, quote=True)}" target="_blank" rel="noopener noreferrer" title="Resumen semanal por mail"><span class="ic" aria-hidden="true">✉</span><span class="l">Resumen semanal</span>'
            '<span class="s">Suscribirme</span></a>'
            if BOLETIN else '')
-    return (f'<div class="mc-pielinks">{bol}<a href="?legal=terminos" target="_self">Términos</a>'
+    return (f'<div class="mc-pielinks">{bol}<a class="err" href="{esc(_mail_error(), quote=True)}" '
+            'title="Contanos qué viste: un error, un dato que no cierra o algo que se ve mal">¿Viste algo raro?</a>'
+            '<a href="?legal=terminos" target="_self">Términos</a>'
             '<a href="?legal=privacidad" target="_self">Privacidad</a><span class="c">© 2026 MacroCenter</span></div>')
+
+
+def _mail_error() -> str:
+    """Enlace de correo para avisar un error (beta), con asunto ya puesto. Va al contacto público de la página."""
+    from urllib.parse import quote
+
+    from macrocenter.legal import CONTACTO
+
+    return f"mailto:{CONTACTO}?subject=" + quote("MacroCenter (beta): vi algo raro")
 
 
 def form_alertas() -> str:

@@ -874,7 +874,7 @@ def pie_pagina() -> None:
     try:
         ruta, titulo = seccion_actual()
         if not ruta.startswith("/legal/"):  # la dirección del navegador sigue a lo que se mira: se puede compartir
-            if ruta == "/tablero/inicio":
+            if ruta == "/tablero/resumen":
                 st.query_params.pop("ver", None)
             elif st.query_params.get("ver") != ruta.strip("/"):
                 st.query_params["ver"] = ruta.strip("/")
