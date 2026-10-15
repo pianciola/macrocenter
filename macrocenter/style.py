@@ -190,6 +190,7 @@ section[data-testid="stSidebar"] .st-key-conv_caja .mc-conv {{ border: none; bac
     box-shadow: 0 0 0 0 rgba(246,180,14,.55) !important; animation: mc-latido 2.4s ease-out infinite;
 }}
 .st-key-btn_noticias_nuevas button p {{ color: #3A2A00 !important; font-weight: 800; }}
+.st-key-btn_noticias_nuevas button [data-testid="stIconMaterial"] {{ color: #3A2A00 !important; }}  /* el ícono, visible sobre el dorado */
 .st-key-btn_noticias_nuevas button:hover {{
     background: linear-gradient(135deg, #FFC52E 0%, #F7A93A 100%) !important; box-shadow: 0 6px 18px rgba(246,180,14,.45) !important;
 }}

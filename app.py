@@ -628,7 +628,7 @@ ATAJOS = (
     ("alquiler", "Ajustar un alquiler", ":material/home:", ("juegos", "inter_modo", "Ajuste de alquileres")),
     ("pesos", "¿Cuánto valían tus pesos?", ":material/savings:", ("juegos", "inter_modo", "¿Cuánto valían tus pesos?")),
     ("mapa", "Inflación por provincia", ":material/map:", ("tablero", "pestana", "Inflación")),
-    ("presidentes", "La economía de cada presidente", ":material/account_balance:", ("historia", "hist_seccion", "Presidentes")),
+    ("presidentes", "Economía por presidente", ":material/account_balance:", ("historia", "hist_seccion", "Presidentes")),
 )
 
 with st.sidebar:
