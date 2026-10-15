@@ -160,6 +160,8 @@ def noticias_recientes(dias: int = 1) -> int:
     """Cuántas notas sin leer se publicaron hoy o ayer (hora argentina). 0 si no se pudieron leer.
     Antes contaba toda la semana: como en la versión publicada lo «leído» dura solo la visita, cada vez que alguien
     entraba aparecían como nuevas notas de hace varios días."""
+    if not _ids_validos(st.session_state.get("leidas_cli")):
+        return 0  # el navegador todavía no dijo qué tiene leído: sin cuenta, para no mostrar un dato equivocado
     hoy = pd.Timestamp(data.hoy_argentina())
     total = 0
     noticias = cargar_noticias()

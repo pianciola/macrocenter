@@ -529,11 +529,6 @@ html[data-pie="oculto"] [data-testid="stMainBlockContainer"] {{ padding-bottom: 
 .mc-lift.arriba .mc-lift-sombra {{ opacity: .45 !important; transform: translate(3px, 4px); }}
 .mc-lift.arriba .mc-lift-tapa {{ transform: translate(-2px, -6px) scale(1.06); }}
 @media (prefers-reduced-motion: reduce) {{ .mc-lift path {{ transition: none; }} }}
-/* botón de noticias: invisible (sin sacarlo del lugar) hasta que JS_PESTANAS sabe qué hay leído en este navegador. Si
-   el script no corriera, aparece solo a los 4 segundos */
-html:not([data-leidas]) [class*="st-key-btn_noticias"] {{ opacity: 0; animation: mc-noticias-ver .3s ease 4s forwards; }}
-[class*="st-key-btn_noticias"] {{ transition: opacity .25s ease; }}
-@keyframes mc-noticias-ver {{ to {{ opacity: 1; }} }}
 /* campo oculto por el que el navegador le pasa a la app las noticias leídas (no se ve ni ocupa lugar) */
 .st-key-puente_leidas {{ position: absolute !important; left: -9999px !important; width: 1px !important; height: 1px !important;
     overflow: hidden !important; opacity: 0 !important; pointer-events: none !important; }}
@@ -1719,38 +1714,31 @@ JS_PESTANAS = """
 })();
 (() => {
   // Noticias leídas: el navegador las guarda en su almacenamiento local y, al abrir la página, las copia en el campo
-  // oculto de la barra lateral para que la app las conozca. Se hace una sola vez por carga.
+  // oculto de la barra lateral para que la app las conozca. Mientras la app no las recibe, el botón de noticias se ve
+  // normal y sin cuenta (sin datos equivocados); apenas llegan, se completa. Si no hay nada guardado, se manda un valor
+  // vacío («00000000») igual, para que la app sepa que ya consultó.
   if (window.__mcLeidas) return;
   window.__mcLeidas = true;
-  // el botón de noticias queda invisible hasta saber qué hay leído (ver el CSS): si no, se veía un segundo con las
-  // noticias como sin leer y recién después como leídas
-  // (además de la regla del CSS de la página, que Streamlit vuelve a armar en cada redibujado y por un instante deja el
-  // botón a la vista, se usa una hoja propia que no se toca hasta estar listo)
-  const hoja = document.createElement('style');
-  // (el selector es más específico que «[data-stale] {opacity:1 !important}» de la página, que se activa en cada redibujado)
-  hoja.textContent = 'html body [class*="st-key-btn_noticias"][class*="st-key"] { opacity: 0 !important; }';
-  document.head.appendChild(hoja);
-  const listo = () => { document.documentElement.dataset.leidas = 'listo'; hoja.remove(); };
-  let v = '';
-  try { v = localStorage.getItem('mc_leidas') || ''; } catch (e) { listo(); return; }
-  if (!/^[0-9a-f]{8}(,[0-9a-f]{8})*$/.test(v)) { listo(); return; }
-  // la app puede tardar en armarse y redibujar la barra: se reintenta hasta que el valor queda puesto (máx. ~1 min)
+  let v = '00000000';
+  try {
+    const g = localStorage.getItem('mc_leidas') || '';
+    if (/^[0-9a-f]{8}(,[0-9a-f]{8})*$/.test(g)) v = g;
+  } catch (e) {}
   let intentos = 0;
   const pasar = () => {
-    if (intentos++ > 150) return;
+    if (intentos++ > 200) return;
     const inp = document.querySelector('.st-key-puente_leidas input');
-    if (!inp) { setTimeout(pasar, 400); return; }
-    if (inp.value === v) { setTimeout(listo, 600); return; }
+    if (!inp) { setTimeout(pasar, 120); return; }
+    if (inp.value === v) return;
     const set = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
     inp.focus({ preventScroll: true });
     set.call(inp, v);
     inp.dispatchEvent(new Event('input', { bubbles: true }));
     inp.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true }));
     inp.blur();
-    setTimeout(listo, 1800);  // da tiempo a que la app redibuje con lo leído
     setTimeout(pasar, 2500);  // si la app lo pisó al redibujar, se vuelve a poner
   };
-  setTimeout(pasar, 800);
+  pasar();
 })();
 (() => {
   // Flecha izquierda de las pestañas: justo a la derecha de «Resumen» (que queda fija). Se mide la píldora y se
