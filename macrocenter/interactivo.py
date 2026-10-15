@@ -176,7 +176,7 @@ def indices_base100(d: dict, f: pd.Timestamp, uva: pd.DataFrame | None) -> pd.Da
 
 def pantalla_pesos(d: dict, uva: pd.DataFrame | None) -> None:
     st.markdown("##### ¿Cuánto valían tus pesos?")
-    st.caption("Poné un monto y una fecha: te mostramos qué fue de esa plata según la inflación, el dólar oficial y la UVA.")
+    st.markdown(style.intro("Poné un monto y una fecha: te mostramos qué fue de esa plata según la inflación, el dólar oficial y la UVA."), unsafe_allow_html=True)
     c1, c2 = st.columns(2)
     monto = entrada_monto(c1, "Monto en pesos de esa fecha", "pesos_monto", 100_000)
     f = pd.Timestamp(c2.date_input("¿En qué fecha lo tenías?", value=date(2019, 12, 10), min_value=FECHA_MIN,
@@ -300,8 +300,8 @@ def calcular_alquiler(monto: float, inicio: pd.Timestamp, meses: int, s: pd.Seri
 
 def pantalla_alquileres(d: dict) -> None:
     st.markdown("##### Ajuste de alquileres")
-    st.caption("Poné el alquiler inicial, cuándo empezó el contrato y cada cuánto se ajusta: te mostramos cuánto "
-               "corresponde pagar hoy con cada índice. Es una referencia: vale lo que diga tu contrato.")
+    st.markdown(style.intro("Poné el alquiler inicial, cuándo empezó el contrato y cada cuánto se ajusta: te mostramos cuánto "
+               "corresponde pagar hoy con cada índice. Es una referencia: vale lo que diga tu contrato."), unsafe_allow_html=True)
     indices = indices_alquiler(d)
     if not indices:
         from .avisos import actualizando, falla
@@ -394,7 +394,7 @@ def _cambio_pp(a, b, mejor="bajo", dec=1):
 
 def pantalla_comparador(d: dict) -> None:
     st.markdown("##### Comparador de épocas")
-    st.caption("Elegí dos momentos y mirá cómo estaba la economía en cada uno.")
+    st.markdown(style.intro("Elegí dos momentos y mirá cómo estaba la economía en cada uno."), unsafe_allow_html=True)
     c1, c2 = st.columns(2)
     fa = _elegir_momento(c1, "Momento A", "cmp_a", "Asumió Macri (2015)")
     fb = _elegir_momento(c2, "Momento B", "cmp_b", "Hoy")
@@ -454,7 +454,7 @@ def _cuadro_viaje(d: dict, fotos: dict, f: pd.Timestamp) -> None:
 
 def pantalla_viaje(d: dict, fotos: dict) -> None:
     st.markdown("##### Viaje en el tiempo")
-    st.caption("Elegí una fecha y mirá cómo estaba el país ese día. También podés dejar que avance solo hasta hoy.")
+    st.markdown(style.intro("Elegí una fecha y mirá cómo estaba el país ese día. También podés dejar que avance solo hasta hoy."), unsafe_allow_html=True)
     f = pd.Timestamp(st.slider("Fecha", min_value=date(1984, 1, 1), max_value=HOY.date(), value=date(2015, 12, 10),
                                format="MM/YYYY", key="viaje_fecha"))
     lugar = st.empty()

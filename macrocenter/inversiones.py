@@ -236,8 +236,8 @@ def _monto_txt(v: float) -> str:
 
 
 def pantalla_tasas(d: dict) -> None:
-    st.caption("Lo que pagan hoy los plazos fijos, los fondos money market y las billeteras y plataformas, comparado con "
-               "la inflación que esperan las consultoras. Las listas van por orden alfabético, no por rendimiento.")
+    st.markdown(style.intro("Lo que pagan hoy los plazos fijos, los fondos money market y las billeteras y plataformas, comparado con "
+               "la inflación que esperan las consultoras. Las listas van por orden alfabético, no por rendimiento."), unsafe_allow_html=True)
     rem_a, rem_m = inflacion_esperada_mensual(d.get("rem"))
     bancos, rend, fci_hoy, fci_antes = d.get("bancos"), d.get("rendimientos"), d.get("fci_hoy"), d.get("fci_antes")
     tb = tabla_bancos(bancos) if _ok(bancos) else None
@@ -336,8 +336,8 @@ PERIODOS = {"1 mes": 30, "3 meses": 91, "6 meses": 182, "1 año": 365, "2 años"
 
 
 def pantalla_historica(d: dict, grafico) -> None:
-    st.caption("Si hubieras puesto una plata en cada alternativa, ¿cuánto tendrías hoy? Y, sobre todo, ¿le ganó a la "
-               "inflación? Es el pasado: no dice nada de lo que va a pasar.")
+    st.markdown(style.intro("Si hubieras puesto una plata en cada alternativa, ¿cuánto tendrías hoy? Y, sobre todo, ¿le ganó a la "
+               "inflación? Es el pasado: no dice nada de lo que va a pasar."), unsafe_allow_html=True)
     c1, c2 = st.columns([1, 2])
     monto = entrada_monto(c1, "Monto inicial", "inv_monto_hist", 1_000_000)
     with c2:
@@ -377,9 +377,9 @@ def pantalla_historica(d: dict, grafico) -> None:
 
 
 def pantalla_uva(d: dict, grafico) -> None:
-    st.caption("Dos formas de hacer un plazo fijo: con una tasa fija (tradicional) o ajustado por inflación (UVA). Cuál "
+    st.markdown(style.intro("Dos formas de hacer un plazo fijo: con una tasa fija (tradicional) o ajustado por inflación (UVA). Cuál "
                "termina con más plata depende de la inflación que venga, que nadie sabe. Esta calculadora muestra la "
-               "inflación a partir de la cual uno supera al otro.")
+               "inflación a partir de la cual uno supera al otro."), unsafe_allow_html=True)
     rem_a, rem_m = inflacion_esperada_mensual(d.get("rem"))
     tb = tabla_bancos(d["bancos"]) if _ok(d.get("bancos")) else None
     tna_ref = promedio_grandes(tb) if tb is not None and not tb.empty else _ultimo(d.get("depositos_30d"))
@@ -454,7 +454,7 @@ GRUPOS = [
 
 
 def pantalla_conceptos() -> None:
-    st.caption("Las palabras que aparecen cuando se habla de ahorro e inversiones, explicadas en dos líneas.")
+    st.markdown(style.intro("Las palabras que aparecen cuando se habla de ahorro e inversiones, explicadas en dos líneas."), unsafe_allow_html=True)
     defs = dict(glosario.TERMINOS) | EXTRAS
     grupos = [(g, [(t, defs[t]) for t in terminos if t in defs]) for g, terminos in GRUPOS]
     st.markdown(style.conceptos([(g, items) for g, items in grupos if items]), unsafe_allow_html=True)

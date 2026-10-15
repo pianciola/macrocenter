@@ -27,9 +27,9 @@ def mostrar(
             dp = None
         seccion_ministros(dp)
         return
-    st.caption("Cómo recibió y cómo dejó la economía cada presidente desde la vuelta de la democracia. "
+    st.markdown(style.intro("Cómo recibió y cómo dejó la economía cada presidente desde la vuelta de la democracia. "
                "Los números se calculan con las series oficiales; en cada fila: **lo que recibió → cómo dejó** "
-               "(o cómo está hoy, en el caso del presidente actual).")
+               "(o cómo está hoy, en el caso del presidente actual)."), unsafe_allow_html=True)
     try:
         dp, inds, faltan = historicos(DATOS, dol, ACTUALIZADO)
     except Exception:  # noqa: BLE001 — una falla de cálculo no debe romper el resto de la app
