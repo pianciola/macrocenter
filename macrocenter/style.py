@@ -1605,6 +1605,28 @@ JS_PESTANAS = """
   document.body.appendChild(b);
 })();
 (() => {
+  // Logo: lleva al Resumen sin recargar la página (toca el botón oculto «ir_resumen» de la barra lateral). Con Ctrl,
+  // Mayús o la rueda del mouse sigue siendo un enlace común, para abrirlo en otra pestaña.
+  if (window.__mcLogo) return;
+  window.__mcLogo = true;
+  document.addEventListener('click', (e) => {
+    const a = e.target.closest && e.target.closest('a.mc-brand');
+    if (!a || e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
+    const b = document.querySelector('.st-key-ir_resumen button');
+    if (!b) return;  // si no estuviera, el enlace funciona como siempre
+    e.preventDefault();
+    b.click();
+    // arriba de todo; se repite mientras la pantalla se redibuja (si no, el cambio de contenido corta el desplazamiento)
+    const arriba = () => {
+      const p = document.querySelector('[data-testid="stMain"]');
+      if (p) p.scrollTop = 0;
+      window.scrollTo(0, 0);
+    };
+    arriba();
+    [150, 500, 1200, 2500].forEach((ms) => setTimeout(arriba, ms));
+  }, true);
+})();
+(() => {
   // Alertas por mail: al anotarse, el formulario se reemplaza por un aviso y no vuelve a aparecer en este navegador.
   // (el mail sigue yendo directo a Buttondown; acá solo se guarda que ya se anotó, nunca la dirección)
   if (window.__mcAlertas) return;

@@ -276,11 +276,19 @@ _cargando_inicio = st.empty()
 if not st.session_state.get("_ya_cargo"):
     _cargando_inicio.html(style.cargando())
 
+def ir_al_resumen() -> None:
+    """Lo que hace el logo: abre el tablero en Resumen sin recargar la página (ver JS_PESTANAS)."""
+    st.session_state["vista"] = "tablero"
+    st.session_state["pestana"] = "Resumen"
+
+
 with st.sidebar:
     st.markdown(style.marca(), unsafe_allow_html=True)
-    # campo oculto: por acá el navegador le pasa a la app las noticias que ya marcó como leídas (ver leidas())
+    # contenedor oculto: el campo por el que el navegador le pasa a la app las noticias que ya marcó como leídas (ver
+    # leidas()) y el botón que toca el logo para ir al Resumen sin recargar la página
     with st.container(key="puente_leidas"):
         st.text_input("Noticias leídas", key="leidas_cli", label_visibility="collapsed", max_chars=1400)
+        st.button("Ir al resumen", key="ir_resumen", on_click=ir_al_resumen)
     nuevas = noticias_recientes()
     if nuevas:
         etiqueta_noticias = f"Noticias · {nuevas} {'nueva' if nuevas == 1 else 'nuevas'}"
