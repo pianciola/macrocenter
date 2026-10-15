@@ -80,11 +80,12 @@ def mostrar(series: dict, clave: str = "mapa_infl") -> None:
         # cambiara con cada toque, Streamlit lo volvería a armar y el mapa parpadearía
         selected=dict(marker=dict(opacity=1)), unselected=dict(marker=dict(opacity=0.5)),
         hovertemplate="<b>%{location}</b><br>%{customdata}: %{z:.1f}% interanual<extra></extra>",
-        colorbar=dict(title=dict(text="Interanual (%)", side="top"), thickness=12, len=0.6, x=0.98, y=0.5,
-                      ticksuffix="%", outlinewidth=0),
+        # la escala va abajo y a lo ancho: en el celular, una barra vertical al costado achicaba el mapa a la mitad
+        colorbar=dict(orientation="h", title=dict(text="Inflación interanual (%)", side="top"), thickness=10, len=0.8,
+                      x=0.5, xanchor="center", y=-0.02, yanchor="top", ticksuffix="%", outlinewidth=0),
     ))
     fig.update_geos(fitbounds="locations", visible=False, bgcolor="rgba(0,0,0,0)", projection_type="mercator")
-    fig.update_layout(margin=dict(l=0, r=0, t=0, b=0), height=560, dragmode=False, clickmode="event+select",
+    fig.update_layout(margin=dict(l=0, r=0, t=0, b=64), height=600, dragmode=False, clickmode="event+select",
                       uirevision="mapa", separators=",.", paper_bgcolor="rgba(0,0,0,0)", geo=dict(bgcolor="rgba(0,0,0,0)"))
     st.markdown("**Tocá una provincia** para ver su inflación. Cada una lleva el color de su región del INDEC.")
     st.plotly_chart(fig, width="stretch", key=clave, on_select="rerun", selection_mode="points",

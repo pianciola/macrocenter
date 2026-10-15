@@ -1056,6 +1056,7 @@ html[data-tema="claro"] .mc-conc .c {{ background: #F4F8FD; border: 1px solid #D
 }}
 .mc-fx:hover {{ border-color: rgba(116,172,223,.6); transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,.18); }}
 .mc-fx .n {{ font-weight: 800; font-size: 1.05rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }}
+@container (max-width: 170px) {{ .mc-fx .n {{ white-space: normal; }} }}
 /* descripción: siempre el alto de dos renglones, así los valores de todas las tarjetas quedan a la misma altura */
 .mc-fx .d {{ font-size: .85rem; opacity: .85; line-height: 1.3; min-height: 2.6em; overflow: hidden;
     display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }}
@@ -1128,7 +1129,7 @@ html[data-tema="claro"] .mc-conc .c {{ background: #F4F8FD; border: 1px solid #D
 @container principal (max-width: 560px) {{  /* con poco ancho, celdas más ajustadas para que la tabla entre */
     /* columnas de ancho repartido y celdas que se parten si hace falta: una tabla de cuatro columnas ya no se sale */
     .mc-cmp {{ font-size: .9rem; table-layout: fixed; }}
-    .mc-cmp thead th {{ padding: 9px 6px; font-size: .78rem; letter-spacing: .02em; overflow-wrap: break-word; }}
+    .mc-cmp thead th {{ padding: 9px 6px; font-size: .74rem; letter-spacing: 0; overflow-wrap: break-word; }}
     .mc-cmp td {{ padding: 10px 6px; overflow-wrap: break-word; }}
     .mc-cmp th:first-child, .mc-cmp td:first-child {{ width: 31%; hyphens: auto; }}
 }}
