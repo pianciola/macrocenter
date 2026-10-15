@@ -26,6 +26,8 @@ FUENTE = '"Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, "Helve
 
 CSS = f"""
 <style>
+/* el contenido estaba invisible hasta que llegara esta hoja (ver OCULTAR_HASTA_ESTILO): ya está, se muestra */
+[data-testid="stSidebarUserContent"], [data-testid="stMainBlockContainer"] {{ visibility: visible !important; animation: none !important; }}
 /* ── Tipografía (los íconos de Streamlit conservan su propia fuente) ── */
 .stApp, .stApp *:not([data-testid="stIconMaterial"]):not([class*="material"]) {{ font-family: {FUENTE} !important; }}
 .stApp {{ font-feature-settings: "tnum" 1, "lnum" 1; -webkit-font-smoothing: antialiased; }}
@@ -1829,7 +1831,19 @@ def contador_visitas(ruta: str, titulo: str) -> str:
 </script>"""
 
 
+# Primer elemento de la página: deja invisible el contenido (no el fondo) hasta que llega la hoja de estilos grande.
+# En un navegador nuevo, Streamlit baja por partes el código que dibuja cada tipo de elemento; si el de los textos
+# llegaba antes que el de la hoja de estilos, se veía un instante todo sin formato. Va con st.markdown, el mismo tipo
+# que los textos, así que se aplica junto con ellos. La hoja grande lo vuelve a mostrar; si no llegara, aparece igual a
+# los 4 segundos.
+OCULTAR_HASTA_ESTILO = (
+    "<style>[data-testid=\"stSidebarUserContent\"],[data-testid=\"stMainBlockContainer\"]{visibility:hidden;"
+    "animation:mc-ver-igual 0s linear 4s forwards}@keyframes mc-ver-igual{to{visibility:visible}}</style>"
+)
+
+
 def aplicar() -> None:
+    st.markdown(OCULTAR_HASTA_ESTILO, unsafe_allow_html=True)
     # st.html y no st.markdown: el Markdown interpretaba este bloque grande con su procesador de texto y tardaba ~0,1 s;
     # mientras tanto la barra lateral (más liviana) ya se dibujaba sin estilo. Con solo <style>, st.html lo manda al
     # contenedor de eventos (no ocupa lugar) y se aplica enseguida
