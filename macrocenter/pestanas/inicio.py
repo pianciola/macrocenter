@@ -152,7 +152,7 @@ def mostrar(
         ("¿El dólar subió más o menos que los precios?", bloque_dolar_precios),
         ("¿Cómo viene el comercio exterior?", bloque_comercio_inicio),
         ("¿Cómo vienen las reservas y el riesgo país?", bloque_reservas_riesgo),
-        ("¿Cuántas personas están por debajo de la línea de pobreza?", bloque_pobreza),
+        ("¿Cuántas personas están por debajo de la línea de pobreza?", lambda: bloque_pobreza(titulo=False)),
     ]
 
     def _otro_analisis() -> None:

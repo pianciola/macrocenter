@@ -1166,12 +1166,14 @@ def semestre_pobreza(fecha: pd.Timestamp) -> str:
     return f"{'1.er' if f.month <= 6 else '2.º'} sem. {f.year}"
 
 
-def bloque_pobreza() -> None:
-    """Pobreza (EPH, por semestre) y canastas básicas del INDEC, al pie de la pestaña Salarios."""
+def bloque_pobreza(titulo: bool = True) -> None:
+    """Pobreza (EPH, por semestre) y canastas básicas del INDEC, al pie de la pestaña Salarios. En el Resumen va sin
+    título propio (`titulo=False`): ahí ya lo encabeza la pregunta del análisis."""
     pob, lp, li = get("serie:pobreza"), get("serie:linea_pobreza"), get("serie:linea_indigencia")
     if pob is None and lp is None:
         return
-    st.markdown("#### Pobreza y canasta básica")
+    if titulo:
+        st.markdown("#### Pobreza y canasta básica")
     k = st.columns(3)
     pp = pob.assign(valor=pob["valor"] * 100) if pob is not None else None
     if pp is not None:
