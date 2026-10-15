@@ -1472,7 +1472,7 @@ def _version_clara(css: str) -> str:
         i += 1
     out = []
     for sel, decl in reglas:
-        if "data-tema" in sel:
+        if "data-tema" in sel or "-hero" in sel:  # los encabezados con fondo oscuro propio quedan como están
             continue
         m = re.search(r"(?:^|;)\s*color:\s*(#[0-9a-fA-F]{6})\s*(!important)?", decl)
         if not m or m.group(1).lower() not in CLARO_TEXTO:
@@ -1497,6 +1497,9 @@ CSS = CSS.replace("</style>", (
     'html[data-tema="claro"] [role="tablist"] [data-testid="stTab"]:first-of-type[aria-selected="true"] p{color:#0B1A2E !important}'
     # variaciones de los indicadores (colores de Streamlit): un poco más oscuras sobre blanco
     'html[data-tema="claro"] [data-testid="stMetricDelta"]{filter:brightness(.72) saturate(1.15)}'
+    # barra inferior y su lengüeta: claras en el tema claro (antes quedaban azul oscuro)
+    'html[data-tema="claro"] .st-key-pie_datos{background:color-mix(in srgb,#FFFFFF 90%,#74ACDF 10%);border-top-color:#2563A8}'
+    'html[data-tema="claro"] .mc-pie-btn{background:#E9F1FA;color:#2563A8;border-color:#9DBEE0;box-shadow:0 -2px 6px rgba(30,60,100,.12)}'
     "</style>"))
 
 
