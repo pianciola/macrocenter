@@ -1495,6 +1495,10 @@ CSS = _version_clara(CSS)
 CSS = CSS.replace("</style>", (
     'html[data-tema="claro"] .mc-pielinks a.bol{color:#0E1A2B}'  # botón celeste relleno: el texto sigue oscuro
     'html[data-tema="claro"] .mc-foot .bol a{color:#0E1A2B}'
+    # etiquetas de fuente de las noticias (gris y violeta claros: sobre blanco no se leían)
+    'html[data-tema="claro"] .mc-news .tag.economia{color:#3D4F66;background:rgba(61,79,102,.12)}'
+    'html[data-tema="claro"] .mc-news .tag.indec{color:#5B3A9E;background:rgba(91,58,158,.12)}'
+    'html[data-tema="claro"] .mc-news-pie{opacity:1}'
     'html[data-tema="claro"] .mc-foot a.mc-linkedin:hover{color:#fff}'
     'html[data-tema="claro"] section[data-testid="stSidebar"] .mc-label{opacity:1}'
     'html[data-tema="claro"] [class*="st-key-per_"] button[data-variant="pills"][aria-checked="true"] p{color:#7A4F00 !important}'
