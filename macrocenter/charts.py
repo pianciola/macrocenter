@@ -254,7 +254,7 @@ def serie_presidentes(df: pd.DataFrame, mandatos: list, cortos: dict[str, str], 
                       fillcolor=_rgba("#74ACDF", 0.16 if i % 2 == 0 else 0.04))
         fig.add_annotation(x=m.desde + (m.fin - m.desde) / 2, y=0.98, yref="paper", yanchor="top",
                            text=cortos.get(m.clave, m.nombre), showarrow=False, textangle=-90,
-                           font=dict(size=11), opacity=0.85)
+                           font=dict(size=12.5), opacity=0.85)
     if cero:
         fig.add_hline(y=0, line_width=1, line_dash="dot", line_color="rgba(128,128,128,.7)")
     if marca is not None:  # línea vertical: "estás acá"
@@ -276,7 +276,7 @@ def marcar_eventos(fig: go.Figure, eventos: list, desde: pd.Timestamp) -> go.Fig
             continue
         fig.add_vline(x=fecha, line_width=1, line_dash="dot", line_color="rgba(246,180,14,.85)")
         fig.add_annotation(x=fecha, y=0.02, yref="paper", yanchor="bottom", xanchor="left", text=texto, showarrow=False,
-                           textangle=-90, font=dict(size=10, color="#F6B40E"), opacity=0.95)
+                           textangle=-90, font=dict(size=12, color="#F6B40E"), opacity=0.95)
     return fig
 
 
@@ -301,7 +301,7 @@ def comparar_mandatos(nombres: list[str], valores: list, titulo: str, sufijo: st
         tope = max((abs(v) for _, v in ok), default=0)
         marcas = [m for m in marcas if m == 0 or m <= tope * 10]
         fig.update_yaxes(tickvals=[math.log10(1 + m) for m in marcas],
-                         ticktext=[num(m, 0, sufijo) for m in marcas], title=dict(text="escala logarítmica", font=dict(size=11)))
+                         ticktext=[num(m, 0, sufijo) for m in marcas], title=dict(text="escala logarítmica", font=dict(size=12.5)))
     return fig
 
 

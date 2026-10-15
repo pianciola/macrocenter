@@ -1060,7 +1060,7 @@ html[data-tema="claro"] .mc-conc .c {{ background: #F4F8FD; border: 1px solid #D
 .mc-fx .d {{ font-size: .85rem; opacity: .85; line-height: 1.3; min-height: 2.6em; overflow: hidden;
     display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }}
 /* mismo tamaño de cifra que los indicadores (stMetricValue): 1.85rem en toda la página */
-.mc-fx .v {{ font-size: 1.85rem; font-weight: 800; letter-spacing: -.5px; line-height: 1.15; margin: 6px 0 0;
+.mc-fx .v {{ font-size: clamp(1.1rem, 9.5cqw, 1.85rem); font-weight: 800; letter-spacing: -.5px; line-height: 1.15; margin: 6px 0 0;
     white-space: nowrap; min-width: 0; }}
 .mc-fx .c {{ font-size: .9rem; opacity: .85; margin-bottom: 8px; }}
 .mc-fx .chips {{ display: flex; flex-wrap: wrap; gap: 6px; }}
@@ -1073,11 +1073,9 @@ html[data-tema="claro"] .mc-conc .c {{ background: #F4F8FD; border: 1px solid #D
 .mc-fx .fila {{ display: flex; flex-direction: column; align-items: stretch; gap: 4px; min-width: 0; }}
 .mc-fx {{ container-type: inline-size; }}
 .mc-fx .spark {{ display: block; width: 100%; height: 26px; opacity: .95; }}
-@container (max-width: 190px) {{ .mc-fx .v {{ font-size: 1.45rem; }} }}
-@container (max-width: 150px) {{ .mc-fx .v {{ font-size: 1.2rem; }} }}
+
 @media (max-width: 640px) {{
     .mc-fx {{ padding: 11px 12px 10px; }}
-    .mc-fx .v {{ font-size: 1.5rem; }}
     .mc-fx .c {{ font-size: .85rem; }}
 }}
 
@@ -1128,11 +1126,11 @@ html[data-tema="claro"] .mc-conc .c {{ background: #F4F8FD; border: 1px solid #D
 .mc-cmp .mejor {{ color: #0E9F77; font-weight: 800; }}
 .mc-cmp .peor {{ color: #E0393E; font-weight: 800; }}
 @container principal (max-width: 560px) {{  /* con poco ancho, celdas más ajustadas para que la tabla entre */
-    .mc-cmp {{ font-size: .9rem; }}
-    .mc-cmp thead th {{ padding: 9px 8px; font-size: .74rem; letter-spacing: .02em; }}
-    .mc-cmp td {{ padding: 10px 8px; }}
-    .mc-cmp td:not(:first-child) {{ white-space: nowrap; }}  /* «+18,4 pp» en un solo renglón */
-    .mc-cmp td:first-child {{ hyphens: auto; }}
+    /* columnas de ancho repartido y celdas que se parten si hace falta: una tabla de cuatro columnas ya no se sale */
+    .mc-cmp {{ font-size: .9rem; table-layout: fixed; }}
+    .mc-cmp thead th {{ padding: 9px 6px; font-size: .78rem; letter-spacing: .02em; overflow-wrap: break-word; }}
+    .mc-cmp td {{ padding: 10px 6px; overflow-wrap: break-word; }}
+    .mc-cmp th:first-child, .mc-cmp td:first-child {{ width: 31%; hyphens: auto; }}
 }}
 /* TEXTOS SECUNDARIOS: los de Streamlit (aclaraciones, etiquetas de campos) eran grises y chicos; van con el color del
    texto y más grandes */
@@ -1158,7 +1156,9 @@ html[data-tema="claro"] :is(.mc-tl-card, .mc-min-card, .mc-viaje, .mc-nota, .mc-
 [data-testid="stMetricValue"] {{ font-weight: 650 !important; letter-spacing: -.02em; }}
 /* un solo tamaño de cifra para todos los indicadores (antes, según la pestaña, 36, 23 o 19 px) */
 /* (también el <p> de adentro: la regla general del texto corrido le ponía 1.02rem y la cifra quedaba chica) */
-[data-testid="stMetricValue"] > div, [data-testid="stMetricValue"] p {{ font-size: 1.85rem !important; line-height: 1.15; }}
+/* la cifra se achica con el ancho de su tarjeta (cqw = % del ancho del indicador): en el celular, «USD 49.709 M» entra */
+[data-testid="stMetricValue"] > div, [data-testid="stMetricValue"] p {{
+    font-size: clamp(1.05rem, 10.5cqw, 1.85rem) !important; line-height: 1.15; white-space: nowrap; }}
 [data-testid="stMetricDelta"], [data-testid="stMetricDelta"] p {{ font-size: .95rem !important; }}
 [data-testid="stMetricDelta"] {{ margin-top: 4px; padding: 2px 9px !important; }}
 [data-testid="stMetricDelta"] svg {{ width: 1rem; height: 1rem; }}
@@ -1166,9 +1166,7 @@ html[data-tema="claro"] :is(.mc-tl-card, .mc-min-card, .mc-viaje, .mc-nota, .mc-
    etiqueta puede ocupar dos renglones */
 [data-testid="stMetric"] {{ container-type: inline-size; }}
 [data-testid="stMetricLabel"] p {{ white-space: normal !important; overflow: visible !important; line-height: 1.25; }}
-@container (max-width: 190px) {{ [data-testid="stMetricValue"] > div, [data-testid="stMetricValue"] p {{ font-size: 1.45rem !important; }}
-    [data-testid="stMetricDelta"], [data-testid="stMetricDelta"] p {{ font-size: .85rem !important; }} }}
-@container (max-width: 150px) {{ [data-testid="stMetricValue"] > div, [data-testid="stMetricValue"] p {{ font-size: 1.2rem !important; }} }}
+@container (max-width: 190px) {{ [data-testid="stMetricDelta"], [data-testid="stMetricDelta"] p {{ font-size: .85rem !important; }} }}
 /* tarjetas de una misma fila, del mismo alto (con o sin variación debajo) */
 [data-testid="stColumn"]:has(> [data-testid="stVerticalBlock"] > [data-testid="stElementContainer"]:only-child > [data-testid="stMetric"])
     > [data-testid="stVerticalBlock"],
@@ -1398,7 +1396,6 @@ h3 {{ font-weight: 700 !important; }}
     h3 {{ font-size: 1.15rem !important; }}
     [data-testid="stMetric"] {{ padding: .7rem .8rem !important; }}
     [data-testid="stMetric"] > div {{ padding: 0 !important; }}  /* Streamlit le suma otro relleno adentro */
-    [data-testid="stMetricValue"] > div, [data-testid="stMetricValue"] p {{ font-size: 1.5rem !important; }}
     [data-testid="stMetricLabel"] p {{ font-size: .88rem !important; }}
     [data-testid="stMetricDelta"], [data-testid="stMetricDelta"] p {{ font-size: .85rem !important; }}
     /* pestañas y botones más cómodos al tacto */
