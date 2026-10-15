@@ -2471,7 +2471,7 @@ def footer() -> str:
            'economía en un minuto. Gratis y sin publicidad.</span></div>'
            f'<a href="{esc(BOLETIN, quote=True)}" target="_blank" rel="noopener noreferrer">Suscribirme →</a></div>'
            if BOLETIN else '')
-        + f'<div class="bol err"><div><b>¿Viste algo raro?</b><span>Es una versión beta: si encontrás un error, un dato '
+        + f'<div class="bol err"><div><b>¿Notaste algún error?</b><span>Es una versión beta: si encontrás un error, un dato '
         'que no cierra o algo que se ve mal, contanos.</span></div>'
         f'<a href="{esc(_mail_error(), quote=True)}">Escribinos →</a></div>'
         + '<div class="main">'
@@ -2521,7 +2521,7 @@ def _mail_error() -> str:
 
     from macrocenter.legal import CONTACTO
 
-    return f"mailto:{CONTACTO}?subject=" + quote("MacroCenter (beta): vi algo raro")
+    return f"mailto:{CONTACTO}?subject=" + quote("MacroCenter (beta): noté un error")
 
 
 def form_alertas() -> str:
