@@ -1,0 +1,31 @@
+# Mantiene despierta la página publicada: Streamlit Community Cloud duerme las apps sin visitas y el primer visitante
+# veía «This app has gone to sleep». Cada 4 horas un navegador real abre la página (monitor/despertar.py).
+name: Despertar
+
+on:
+  schedule:
+    - cron: "41 */4 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read  # solo lee el código; no puede modificar nada
+
+concurrency:
+  group: despertar
+  cancel-in-progress: true
+
+jobs:
+  despertar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Instalar el navegador
+        run: |
+          pip install playwright==1.55.0
+          python -m playwright install --with-deps chromium
+      - name: Abrir la página
+        run: python monitor/despertar.py

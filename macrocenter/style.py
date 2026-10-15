@@ -499,10 +499,10 @@ button[data-variant="segmented_control"][aria-checked="true"] p {{ color: #fff !
 /* botón para ocultar / mostrar la barra del pie (lo crea JS_PESTANAS). Discreto: solo una flechita casi transparente.
    El estado va en html[data-pie="oculto"] y NO en una clase con «mc-»: varios estilos (títulos de sección) excluyen todo lo
    que está dentro de un elemento con «mc-» en la clase, y con una clase en <html> perdían su estilo */
-.mc-pie-btn {{ position: fixed; right: 140px; bottom: 66px; z-index: 95; width: 32px; height: 32px; padding: 0;
-    display: flex; align-items: center; justify-content: center; border-radius: 50%; cursor: pointer;
-    border: 1px solid rgba(116,172,223,.6); background: #13233a; color: {CELESTE};
-    font: 700 13px/1 inherit; opacity: .85; box-shadow: 0 2px 8px rgba(0,0,0,.35);
+.mc-pie-btn {{ position: fixed; right: 140px; bottom: calc(var(--mc-pie-alto, 66px) - 1px); z-index: 95; width: 48px;
+    height: 20px; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: 10px 10px 0 0;
+    cursor: pointer; border: 1px solid rgba(116,172,223,.6); border-bottom: 0; background: #16263b; color: {CELESTE};
+    font: 700 11px/1 inherit; opacity: .9; box-shadow: 0 -2px 8px rgba(0,0,0,.25);
     transition: opacity .15s ease, transform .15s ease, bottom .3s ease, width .3s ease, height .3s ease,
     border-radius .3s ease; }}
 .mc-pie-btn:hover, .mc-pie-btn:focus-visible {{ opacity: 1; transform: translateY(-1px); }}
@@ -908,6 +908,7 @@ html[data-tema="claro"] .mc-aviso .ic {{ background: #FBE7B5; color: #8A5A00; }}
    Al final de una página corta queda en su lugar natural, apoyada abajo de todo */
 [data-testid="stLayoutWrapper"]:has(> .st-key-pie_datos) {{ display: contents; }}
 .st-key-pie_datos {{ position: sticky; bottom: 0; z-index: 90; margin-top: 28px; min-height: 66px; box-sizing: border-box;
+    /* (su alto real lo mide JS_PESTANAS y lo guarda en --mc-pie-alto para apoyar la lengüeta ▼ encima) */
     padding-top: 9px; padding-bottom: calc(15px + env(safe-area-inset-bottom, 0px)); justify-content: space-between; flex-wrap: nowrap; gap: 6px 16px !important;
     background: color-mix(in srgb, var(--background-color, #0E1117) 86%, #74ACDF 14%); border: none;
     border-top: 3px solid {CELESTE}; backdrop-filter: blur(6px); }}
@@ -961,7 +962,9 @@ html[data-tema="claro"] .mc-aviso .ic {{ background: #FBE7B5; color: #8A5A00; }}
     .st-key-pie_datos button [data-testid="stIconMaterial"] {{ font-size: 1.15rem; }}
 }}
 @container pie (max-width: 430px) {{ .st-key-pie_datos .mc-vivo .en {{ font-size: 0; gap: 0; }} }}
-@media (max-width: 560px) {{ .st-key-pie_datos {{ padding-left: 14px !important; padding-right: 112px !important; gap: 8px !important; }}
+/* en el celular la barra es más baja: entre el encabezado de arriba y esta barra se perdía mucha pantalla */
+@media (max-width: 560px) {{ .st-key-pie_datos {{ padding-left: 14px !important; padding-right: 112px !important; gap: 8px !important;
+    min-height: 52px; padding-top: 6px; padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px)); margin-top: 18px; }}
     .st-key-pie_datos > :first-child {{ display: none; }} }}
 /* el panel «Fuentes y legales»: el contenido del pie, sin marco propio */
 [data-testid="stPopoverBody"] .mc-foot {{ margin: 0; padding: 4px 4px 8px; border: none; border-radius: 0; background: none;
@@ -1091,6 +1094,7 @@ html[data-tema="claro"] .mc-conc .c {{ background: #F4F8FD; border: 1px solid #D
     will-change: transform; }}
 .mc-ticker {{ contain: layout paint; }}  /* su movimiento no obliga a redibujar el resto de la página */
 .mc-ticker:hover .pista, .mc-ticker.quieta .pista {{ animation-play-state: paused; }}  /* quieta: fuera de la vista */
+.mc-ticker .copia {{ display: contents; }}  /* la segunda vuelta de la franja (oculta para lectores de pantalla) */
 .mc-ticker .tk {{ display: inline-flex; align-items: baseline; gap: 8px; padding: 0 22px; border-right: 1px solid rgba(128,128,128,.22); }}
 .mc-ticker .n {{ font-size: .78rem; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; opacity: .85; }}
 .mc-ticker .v {{ font-weight: 800; font-size: .92rem; }}
@@ -1380,8 +1384,8 @@ h3 {{ font-weight: 700 !important; }}
         flex-wrap: wrap !important; gap: .6rem !important; }}
     [data-testid="stHorizontalBlock"]:is(:has([data-testid="stMetric"]), :has(> [data-testid="stColumn"]:nth-child(4) [data-testid="stMetric"]),
         :has(> [data-testid="stColumn"]:nth-child(4):last-child [data-testid="stMetric"])) > [data-testid="stColumn"] {{
-        flex: 1 1 calc(50% - .6rem) !important; min-width: calc(50% - .6rem) !important; width: auto !important;
-    }}
+        flex: 0 1 calc(50% - .3rem) !important; min-width: calc(50% - .3rem) !important; width: auto !important;
+    }}  /* (sin crecer: el quinto indicador, solo en su fila, se estiraba a todo el ancho con la cifra enorme) */
 }}
 /* encabezado de Inicio: el título y el botón «Personalizar» van en una fila; el botón nunca se aplasta */
 [data-testid="stHorizontalBlock"]:is(:has(.st-key-personalizar), :has(.st-key-inicio_otro)) {{
@@ -1598,10 +1602,13 @@ JS_PESTANAS = """
     if (!c || c.scrollWidth <= c.clientWidth + 1) return null;
     const tabs = [...c.querySelectorAll('[role="tab"]')], i = tabs.indexOf(tab);
     const r = c.getBoundingClientRect();
-    const izq = tabs[Math.max(0, i - 1)].getBoundingClientRect();
+    if (i === 0) return null;  // «Resumen» está siempre a la vista
+    const izq = (i <= 1 ? tab : tabs[i - 1]).getBoundingClientRect();
     const der = tabs[Math.min(tabs.length - 1, i + 1)].getBoundingClientRect();
     const t = tab.getBoundingClientRect();
-    const desde = r.left + MARGEN, hasta = r.right - MARGEN;
+    // a la izquierda quedan fijos «Resumen» y la flecha (--mc-flecha + su ancho); a la derecha, la otra flecha
+    const flecha = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--mc-flecha')) || 0;
+    const desde = r.left + Math.max(MARGEN, flecha + 56), hasta = r.right - Math.max(MARGEN, 58);
     let delta = 0;
     if (der.right - izq.left > hasta - desde) delta = (t.left + t.width / 2) - (r.left + r.width / 2);  // no entran: centrar
     else if (der.right > hasta) delta = der.right - hasta;
@@ -1790,6 +1797,33 @@ JS_PESTANAS = """
   document.addEventListener('keydown', (e) => {
     if ((e.key === 'Enter' || e.key === ' ') && e.target.closest && e.target.closest('.mc-intro-x')) { e.preventDefault(); alternar(); }
   });
+})();
+(() => {
+  // Detalles del documento que Streamlit no deja configurar: idioma español (para los lectores de pantalla), color de
+  // la barra del navegador en el celular según el tema, título de la pestaña sin «· Streamlit», íconos que no se leen
+  // en voz alta y el alto real de la barra inferior (para apoyar encima la lengüeta ▼). Liviano: un repaso cada 2 s.
+  if (window.__mcDoc) return;
+  window.__mcDoc = true;
+  const docs = () => { const out = [document]; try { if (window.parent && window.parent.document) out.push(window.parent.document); } catch (e) {} return out; };
+  const repasar = () => {
+    const claro = document.documentElement.dataset.tema === 'claro';
+    for (const d of docs()) {
+      try {
+        if (d.documentElement.lang !== 'es') d.documentElement.lang = 'es';
+        let m = d.querySelector('meta[name="theme-color"]');
+        if (!m) { m = d.createElement('meta'); m.name = 'theme-color'; d.head.appendChild(m); }
+        const color = claro ? '#FFFFFF' : '#0E1420';
+        if (m.content !== color) m.content = color;
+        if (/Streamlit/.test(d.title)) d.title = d.title.replace(/ *[·|-] *Streamlit *$/, '') || 'MacroCenter';
+      } catch (e) {}
+    }
+    document.querySelectorAll('[data-testid="stIconMaterial"]:not([aria-hidden])').forEach((i) => i.setAttribute('aria-hidden', 'true'));
+    const barra = document.querySelector('.st-key-pie_datos');
+    if (barra && barra.offsetHeight) document.documentElement.style.setProperty('--mc-pie-alto', barra.offsetHeight + 'px');
+  };
+  repasar();
+  setInterval(repasar, 2000);
+  window.addEventListener('resize', () => setTimeout(repasar, 150), { passive: true });
 })();
 </script>
 """
@@ -2311,7 +2345,8 @@ def ticker(items: list[dict]) -> str:
                    f'{abs(d):.1f}% · 1 d</span>').replace(".", ",")
         celdas.append(f'<span class="tk"><span class="n">{esc(it["n"])}</span><span class="v">{esc(it["v"])}</span>{var}</span>')
     pista = "".join(celdas)
-    return f'<div class="mc-ticker" aria-label="Datos clave"><div class="pista">{pista}{pista}</div></div>'
+    return (f'<div class="mc-ticker" aria-label="Datos clave"><div class="pista">{pista}'
+            f'<span class="copia" aria-hidden="true">{pista}</span></div></div>')
 
 
 def tabla_simple(cabeceras: list[str], filas: list[list[str]]) -> str:

@@ -28,6 +28,8 @@ enableWebsocketCompression = true
 
 [client]
 showErrorDetails = "none"
+# barra de herramientas mínima: menos menús de Streamlit a la vista
+toolbarMode = "minimal"
 
 [browser]
 gatherUsageStats = false
