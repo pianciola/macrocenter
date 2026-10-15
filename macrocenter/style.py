@@ -1820,7 +1820,8 @@ JS_PESTANAS = """
         if (!m) { m = d.createElement('meta'); m.name = 'theme-color'; d.head.appendChild(m); }
         const color = claro ? '#FFFFFF' : '#0E1420';
         if (m.content !== color) m.content = color;
-        if (/Streamlit/.test(d.title)) d.title = d.title.replace(/ *[·|-] *Streamlit *$/, '') || 'MacroCenter';
+        const titulo = document.title.replace(/ *[·|-] *Streamlit *$/, '') || 'MacroCenter';
+        if (d.title !== titulo && (!d.title || /Streamlit/.test(d.title))) d.title = titulo;
       } catch (e) {}
     }
     document.querySelectorAll('[data-testid="stIconMaterial"]:not([aria-hidden])').forEach((i) => i.setAttribute('aria-hidden', 'true'));
