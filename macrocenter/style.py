@@ -30,6 +30,8 @@ CSS = f"""
    JS_PESTANAS ya detectó el tema (html[data-listo]), así tampoco se ve un instante con los colores del otro tema */
 html[data-listo] [data-testid="stSidebarUserContent"], html[data-listo] [data-testid="stMainBlockContainer"] {{
     visibility: visible !important; animation: none !important; }}
+/* al cambiar de tema, todo cambia de color de golpe (sin transiciones que arrastren el color del tema anterior) */
+html[data-tema-cambio] *, html[data-tema-cambio] *::before, html[data-tema-cambio] *::after {{ transition: none !important; }}
 /* ── Tipografía (los íconos de Streamlit conservan su propia fuente) ── */
 .stApp, .stApp *:not([data-testid="stIconMaterial"]):not([class*="material"]) {{ font-family: {FUENTE} !important; }}
 .stApp {{ font-feature-settings: "tnum" 1, "lnum" 1; -webkit-font-smoothing: antialiased; }}
@@ -1620,16 +1622,25 @@ JS_PESTANAS = """
   // Tema claro u oscuro (Streamlit no lo marca): se mira el fondo de la página. Algunos colores cambian en el claro.
   if (window.__mcTema) return;
   window.__mcTema = true;
+  // Al cambiar de tema, Streamlit reemplaza sus estilos (cambia la cabecera y las clases): se revisa en ese mismo
+  // instante, antes de pintar, para que no quede ni un cuadro con colores del tema anterior. Durante el cambio se
+  // apagan las transiciones (si no, botones e íconos se ven un momento con el color viejo).
   const raiz = document.documentElement;
   const revisar = () => {
     const app = document.querySelector('.stApp') || document.body;
     const m = getComputedStyle(app).backgroundColor.match(/[0-9]+/g);
     if (!m) return;
     const claro = (0.299 * m[0] + 0.587 * m[1] + 0.114 * m[2]) > 150;
+    if (claro === (raiz.dataset.tema === 'claro')) return;
+    raiz.dataset.temaCambio = '1';
     if (claro) raiz.dataset.tema = 'claro'; else delete raiz.dataset.tema;
+    requestAnimationFrame(() => requestAnimationFrame(() => { delete raiz.dataset.temaCambio; }));
+    window.dispatchEvent(new Event('mc-tema'));
   };
   revisar();
   raiz.dataset.listo = '1';  // estilos y tema listos: se muestra el contenido (ver OCULTAR_HASTA_ESTILO)
+  new MutationObserver(revisar).observe(raiz, {subtree: true, childList: true, attributes: true, attributeFilter: ['class']});
+  try { matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => requestAnimationFrame(revisar)); } catch (e) {}
   setInterval(revisar, 1500);
 })();
 (() => {
@@ -1902,6 +1913,7 @@ JS_PESTANAS = """
   repasar();
   setInterval(repasar, 2000);
   window.addEventListener('resize', () => setTimeout(repasar, 150), { passive: true });
+  window.addEventListener('mc-tema', repasar);
 })();
 </script>
 """
