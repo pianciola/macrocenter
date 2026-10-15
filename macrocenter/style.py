@@ -1266,8 +1266,9 @@ html[data-tema="claro"] [role="tablist"] [data-testid="stTab"]:first-of-type {{ 
     filter: drop-shadow(0 0 4px rgba(246,180,14,.9));
 }}
 [role="tablist"] [data-testid="stTab"]:first-of-type p {{ font-weight: 800; letter-spacing: .02em; }}
+/* línea divisoria: centrada entre «Resumen» y la primera pestaña (con «Inicio», más corta, quedaba bien más cerca) */
 [role="tablist"] [data-testid="stTab"]:first-of-type::after {{
-    content: ""; position: absolute; right: -0.75rem; top: 15%; height: 70%; width: 1px;
+    content: ""; position: absolute; right: -22px; top: 15%; height: 70%; width: 1px;
     background: rgba(128,128,128,.45);
 }}
 /* pestaña recién tocada (se arma en el servidor): esqueleto de tarjetas y gráfico con un brillo que pasa, en lugar de
@@ -1882,7 +1883,7 @@ JS_PESTANAS = """
     const lista = document.querySelector('[role="tablist"]');
     const res = lista && lista.querySelector('[data-testid="stTab"]');
     if (!res) return false;
-    const x = Math.round(res.getBoundingClientRect().right - lista.getBoundingClientRect().left + 14);
+    const x = Math.round(res.getBoundingClientRect().right - lista.getBoundingClientRect().left + 30);  // después de la línea divisoria
     const valor = Math.max(x, 60) + 'px';
     if (raiz.style.getPropertyValue('--mc-flecha') !== valor) raiz.style.setProperty('--mc-flecha', valor);
     return true;
