@@ -1147,7 +1147,8 @@ html[data-tema="claro"] .mc-conc .c {{ background: #F4F8FD; border: 1px solid #D
     /* las tablas anchas (muchas columnas, dentro de .mc-tablas) mantienen su ancho natural y se deslizan de costado */
     .mc-tablas .mc-cmp {{ table-layout: auto; }}
     .mc-tablas .mc-cmp th, .mc-tablas .mc-cmp td {{ white-space: nowrap; }}
-    .mc-tablas .mc-cmp th:first-child, .mc-tablas .mc-cmp td:first-child {{ width: auto; }}
+    .mc-tablas .mc-cmp th:first-child, .mc-tablas .mc-cmp td:first-child {{ width: auto; white-space: normal;
+        min-width: 120px; max-width: 150px; }}  /* el nombre se parte en renglones: así los números entran sin deslizar */
 }}
 /* TEXTOS SECUNDARIOS: los de Streamlit (aclaraciones, etiquetas de campos) eran grises y chicos; van con el color del
    texto y más grandes */
