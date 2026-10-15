@@ -3,7 +3,7 @@ font = "sans serif"
 
 # Streamlit ofrece ambos temas en ⋮ → Settings → Theme (por defecto sigue al sistema).
 [theme.light]
-primaryColor = "#3B82C4"
+primaryColor = "#2563A8"
 backgroundColor = "#FFFFFF"
 secondaryBackgroundColor = "#EEF3F9"
 textColor = "#1F2937"

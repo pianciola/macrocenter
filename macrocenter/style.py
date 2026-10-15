@@ -246,7 +246,7 @@ section[data-testid="stSidebar"] .st-key-conv_caja .mc-conv {{ border: none; bac
     box-shadow: 0 6px 16px rgba(74,143,212,.18);
 }}
 [class*="st-key-modo_"] button[data-testid="stBaseButton-primary"] {{
-    background: linear-gradient(135deg, #4A8FD4 0%, #2E6DB4 100%) !important; border-color: {CELESTE} !important;
+    background: linear-gradient(135deg, #3A7BC0 0%, #2563A8 100%) !important; border-color: {CELESTE} !important;
     box-shadow: 0 6px 18px rgba(74,143,212,.35), inset 0 -3px 0 {SOL};
 }}
 [class*="st-key-modo_"] button[data-testid="stBaseButton-primary"] p,
@@ -447,7 +447,7 @@ button[data-variant="segmented_control"]:hover {{
     background: rgba(116,172,223,.22) !important; transform: translateY(-1px);
 }}
 button[data-variant="segmented_control"][aria-checked="true"] {{
-    background: linear-gradient(135deg, #4A8FD4 0%, #2E6DB4 100%) !important; color: #fff !important;
+    background: linear-gradient(135deg, #3A7BC0 0%, #2563A8 100%) !important; color: #fff !important;
     box-shadow: 0 3px 10px rgba(74,143,212,.4); font-weight: 700;
 }}
 button[data-variant="segmented_control"][aria-checked="true"] p {{ color: #fff !important; }}
@@ -462,7 +462,7 @@ button[data-variant="segmented_control"][aria-checked="true"] p {{ color: #fff !
 }}
 [class*="st-key-cat_"] button[data-variant="pills"]:hover {{ border-color: {CELESTE}; color: {CELESTE}; }}
 [class*="st-key-cat_"] button[data-variant="pills"]:is([aria-checked="true"], [aria-pressed="true"]) {{
-    background: linear-gradient(135deg, #4A8FD4 0%, #2E6DB4 100%) !important; border-color: transparent !important;
+    background: linear-gradient(135deg, #3A7BC0 0%, #2563A8 100%) !important; border-color: transparent !important;
     color: #fff !important; font-weight: 700; box-shadow: 0 2px 8px rgba(74,143,212,.38);
 }}
 [class*="st-key-cat_"] button[data-variant="pills"]:is([aria-checked="true"], [aria-pressed="true"]) p {{ color: #fff !important; }}
@@ -658,7 +658,7 @@ html[data-alertas="anotado"] .mc-alerta {{ display: none !important; }}
 :is(.st-key-hist_seccion, .st-key-inv_seccion) button p {{ font-size: 1.02rem !important; font-weight: 800; }}
 :is(.st-key-hist_seccion, .st-key-inv_seccion) button:hover {{ transform: translateY(-2px); box-shadow: 0 6px 16px rgba(74,143,212,.2); }}
 :is(.st-key-hist_seccion, .st-key-inv_seccion) button[aria-checked="true"] {{
-    background: linear-gradient(135deg, #4A8FD4 0%, #2E6DB4 100%) !important; border-color: {CELESTE} !important;
+    background: linear-gradient(135deg, #3A7BC0 0%, #2563A8 100%) !important; border-color: {CELESTE} !important;
     box-shadow: 0 8px 20px rgba(74,143,212,.35), inset 0 -3px 0 {SOL};
 }}
 :is(.st-key-hist_seccion, .st-key-inv_seccion) button[aria-checked="true"] p {{ color: #fff !important; }}
@@ -1493,6 +1493,10 @@ CSS = CSS.replace("</style>", (
     'html[data-tema="claro"] section[data-testid="stSidebar"] .mc-label{opacity:1}'
     'html[data-tema="claro"] [class*="st-key-per_"] button[data-variant="pills"][aria-checked="true"] p{color:#7A4F00 !important}'
     'html[data-tema="claro"] [class*="st-key-gtit_"] [data-testid="stDownloadButton"] button{opacity:.8}'
+    # «Resumen» elegida: texto oscuro sobre la píldora celeste (la regla automática lo pasaba a azul y no se leía)
+    'html[data-tema="claro"] [role="tablist"] [data-testid="stTab"]:first-of-type[aria-selected="true"] p{color:#0B1A2E !important}'
+    # variaciones de los indicadores (colores de Streamlit): un poco más oscuras sobre blanco
+    'html[data-tema="claro"] [data-testid="stMetricDelta"]{filter:brightness(.72) saturate(1.15)}'
     "</style>"))
 
 
