@@ -199,16 +199,17 @@ def lineas(
     x: str = "fecha",
     paso: bool = False,
     ocultas: tuple[str, ...] = (),
+    colores: tuple[str, ...] | None = None,
 ) -> go.Figure:
     """Líneas. `series` mapea nombre visible -> columna de df. Las de `ocultas` arrancan apagadas
-    (se prenden tocando la leyenda)."""
+    (se prenden tocando la leyenda). `colores`: uno por serie, si no conviene la paleta (que usa verde y rojo)."""
     fig = go.Figure()
     for i, (nombre, col) in enumerate(series.items()):
         d = df[[x, col]].dropna()
         fig.add_trace(
             go.Scatter(
                 x=d[x], y=d[col], name=nombre, mode="lines",
-                line=dict(color=PALETA[i % len(PALETA)], width=2, shape="hv" if paso else "linear"),
+                line=dict(color=(colores or PALETA)[i % len(colores or PALETA)], width=2, shape="hv" if paso else "linear"),
                 visible="legendonly" if nombre in ocultas else True,
             )
         )

@@ -1426,7 +1426,8 @@ def bloque_dolar_precios() -> None:
             base = d[c].dropna()
             d[c] = d[c] / base.iloc[0] * 100 if not base.empty else d[c]
         return charts.lineas(d, {c: c for c in ("Dólar oficial", "Dólar blue", "Precios (IPC)")},
-                             "Dólar y precios — base 100 al inicio del período", yfmt=",.0f", height=340)
+                             "Dólar y precios — base 100 al inicio del período", yfmt=",.0f", height=340,
+                             colores=("#74ACDF", "#F6B40E", "#B8C4D6"))  # sin verde ni rojo: acá no hay bueno ni malo
 
     _grafico_periodo("ini_dolprecios", df, armar, defecto="2 años", mensual=True)
     st.caption("Si la línea de un dólar queda por encima de la de precios, subió más que la inflación en ese período; si "
