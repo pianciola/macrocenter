@@ -1159,7 +1159,7 @@ html[data-tema="claro"] :is(.mc-min-card, .mc-viaje, .mc-nota, .mc-min-grupo, .m
 /* títulos de sección con un poco más de aire arriba */
 [data-testid="stHeading"] h3 {{ padding-top: .9rem; }}
 /* sin barra deslizante: la fila se mueve sola al tocar un marcador (ver JS_PESTANAS), con las flechas o deslizando */
-[role="tablist"] {{ gap: 6px; padding-bottom: 8px; scrollbar-width: none !important; }}
+[role="tablist"] {{ gap: 6px; align-items: center; padding-bottom: 8px; scrollbar-width: none !important; }}
 [role="tablist"]::-webkit-scrollbar {{ display: none !important; }}
 /* el bloque que solo trae el script no ocupa lugar (ni el espacio entre elementos) */
 [data-testid="stElementContainer"]:has(> [data-testid="stHtml"] > script:only-child) {{ display: none; }}
@@ -1199,8 +1199,16 @@ html[data-tema="claro"] [data-testid="stTabsScrollLeft"] svg, html[data-tema="cl
 [data-testid="stTabsScrollLeft"]:focus-visible svg, [data-testid="stTabsScrollRight"]:focus-visible svg {{
     outline: 2px solid {CELESTE}; outline-offset: 2px;
 }}
-[data-testid="stTab"] {{ height: 3.4rem; padding: 0 1.15rem; }}
-[data-testid="stTab"] p {{ font-size: 1.15rem; font-weight: 600; }}
+/* Misma altura y eje para todos; el icono de Resumen conserva su espacio propio. */
+[data-testid="stTab"] {{
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    box-sizing: border-box; height: 2.8rem; margin-block: .3rem; padding: 0 1.15rem;
+}}
+[data-testid="stTab"] [data-testid="stMarkdownContainer"] {{ margin: 0; padding: 0; }}
+[data-testid="stTab"] p {{
+    margin: 0; padding: 0; font-size: 1.15rem; font-weight: 600; line-height: 1.25;
+    text-align: center; white-space: nowrap;
+}}
 /* animación sutil al pasar el cursor por un marcador */
 [data-testid="stTab"] {{
     border-radius: 10px 10px 0 0;
@@ -1208,7 +1216,6 @@ html[data-tema="claro"] [data-testid="stTabsScrollLeft"] svg, html[data-tema="cl
 }}
 [data-testid="stTab"] p {{ transition: color .18s ease, letter-spacing .18s ease; }}
 [data-testid="stTab"]:hover {{
-    transform: translateY(-2px);
     background-color: rgba(116,172,223,.14);
     box-shadow: inset 0 -2px 0 rgba(116,172,223,.8);
 }}
@@ -1223,7 +1230,7 @@ html[data-tema="claro"] [data-testid="stTabsScrollLeft"] svg, html[data-tema="cl
 /* fija a la izquierda de la fila: al desplazar las pestañas, «Inicio» queda siempre a mano. (left = su margen
    izquierdo: un valor mayor la corría sobre «Dólar» con la fila sin desplazar) */
 [role="tablist"] [data-testid="stTab"]:first-of-type {{
-    position: sticky; left: 1.1rem; z-index: 3; height: 2.6rem; margin: .4rem 1.25rem .4rem 1.1rem; padding: 0 1.15rem 0 2.45rem;
+    position: sticky; left: 1.1rem; z-index: 3; height: 2.8rem; margin: .3rem 1.25rem .3rem 1.1rem; padding: 0 1.15rem 0 2.45rem;
     border-radius: 999px; border: 1px solid rgba(116,172,223,.55);
     /* fondo opaco y sombras del color de la página a los costados: tapan las pestañas que pasan por debajo */
     --mc-fondo: #0E1420;
@@ -1234,7 +1241,7 @@ html[data-tema="claro"] [data-testid="stTabsScrollLeft"] svg, html[data-tema="cl
 html[data-tema="claro"] [role="tablist"] [data-testid="stTab"]:first-of-type {{ --mc-fondo: #FFFFFF; }}
 [role="tablist"] [data-testid="stTab"]:first-of-type p {{ color: {CELESTE} !important; }}
 [role="tablist"] [data-testid="stTab"]:first-of-type:hover {{
-    transform: translateY(-1px); border-color: {CELESTE};
+    border-color: {CELESTE};
     background: linear-gradient(135deg, rgba(116,172,223,.32), rgba(116,172,223,.12)), var(--mc-fondo);
     box-shadow: 0 3px 11px rgba(116,172,223,.25), var(--mc-tapa);
 }}
