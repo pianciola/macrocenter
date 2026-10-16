@@ -1175,10 +1175,14 @@ html[data-tema="claro"] :is(.mc-min-card, .mc-viaje, .mc-nota, .mc-min-grupo, .m
 [data-testid="stTabsScrollRight"] {{ justify-content: flex-end; }}
 [data-testid="stTabsScrollLeft"] svg, [data-testid="stTabsScrollRight"] svg {{
     width: 32px !important; height: 32px !important; padding: 5px; box-sizing: border-box; border-radius: 50%;
-    color: {CELESTE}; background: rgba(116,172,223,.16); border: 1px solid rgba(116,172,223,.55);
+    color: {CELESTE}; border: 1px solid rgba(116,172,223,.55);
+    /* fondo opaco: sin él, el texto de las pestañas que pasan por debajo se veía a través de la flechita */
+    background: linear-gradient(rgba(116,172,223,.16), rgba(116,172,223,.16)), #0E1420;
     box-shadow: 0 2px 10px rgba(0,0,0,.18);
     transition: transform .18s ease, background-color .18s ease, color .18s ease, box-shadow .18s ease;
 }}
+html[data-tema="claro"] [data-testid="stTabsScrollLeft"] svg, html[data-tema="claro"] [data-testid="stTabsScrollRight"] svg {{
+    background: linear-gradient(rgba(116,172,223,.16), rgba(116,172,223,.16)), #FFFFFF; }}
 [data-testid="stTabsScrollLeft"]:hover svg, [data-testid="stTabsScrollRight"]:hover svg {{
     background: {CELESTE}; color: #0E1420; transform: scale(1.1); box-shadow: 0 0 0 4px rgba(116,172,223,.22);
 }}

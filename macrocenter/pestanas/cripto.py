@@ -47,8 +47,6 @@ def mostrar(
                 fmt_c = ",.0f" if tope >= 100 else ",.2f" if tope >= 1 else ",.4f"
                 grafico(charts.lineas(hist, {f"{fila.iloc[0]['nombre']} (US$)": "valor"},
                                       f"{fila.iloc[0]['nombre']} en dólares — {rango.lower()}", yfmt=fmt_c, height=340))
-        st.markdown(style.aclaracion(
-            ("Nota", "El historial gratuito de CoinGecko llega hasta 1 año atrás.")), unsafe_allow_html=True)
 
     st.subheader("USDT en pesos, exchange por exchange")
     if isinstance(usdt, str) or usdt.empty:
