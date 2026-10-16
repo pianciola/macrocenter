@@ -84,7 +84,7 @@ NOMBRES_DATOS = {  # cómo se llama cada serie en los avisos (la clave interna n
     "serie:emae": "EMAE", "serie:emae_sa": "EMAE desestacionalizado", "serie:emae_sa_mom": "EMAE mensual",
     "serie:desempleo": "desocupación", "serie:salarios": "índice de salarios", "serie:ripte": "RIPTE",
     "serie:smvm": "salario mínimo", "serie:haber_minimo": "haber mínimo jubilatorio",
-    "serie:exportaciones": "exportaciones", "serie:importaciones": "importaciones", "serie:ipc_gba": "IPC GBA",
+    "serie:exportaciones": "exportaciones", "serie:importaciones": "importaciones", "serie:ipim": "IPIM", "serie:ipp": "IPP", "serie:ipc_gba": "IPC GBA",
     "dolares": "cotizaciones del dólar", "riesgo_pais": "riesgo país", "fx:EUR": "euro", "fx:GBP": "libra",
 }
 
@@ -477,6 +477,7 @@ riesgo = con_riesgo_vivo(get("riesgo_pais"), VIVO.get("riesgo"))
 reservas = get("bcra:reservas")
 infl_m, infl_ia, rem = get("bcra:inflacion_mensual"), get("bcra:inflacion_interanual"), get("bcra:rem_12m")
 uva = get("bcra:uva")
+ipim, ipp = get("serie:ipim"), get("serie:ipp")  # precios mayoristas (INDEC)
 emae_sa, emae = get("serie:emae_sa"), get("serie:emae")
 paro = get("serie:desempleo")
 pib = get("serie:pib")

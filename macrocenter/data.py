@@ -82,6 +82,9 @@ SERIES_IDS = {
     "ipc_sanluis": "197.1_NIVEL_GENERAL_2014_0_13",
     "ipc_chaco": "464.1_IPC_CHACO_NG_0_0_22_93",  # Gran Resistencia
     "ipc_neuquen": "196.1_NIVEL_GENERAL_2014_0_13",  # se muestra solo si está al día (ver inflacion_distritos)
+    # precios mayoristas (INDEC, Sistema de Índices de Precios Mayoristas): nivel general, base dic-2015 = 100
+    "ipim": "448.1_NIVEL_GENERAL_0_0_13_46",  # IPIM: precios internos al por mayor (incluye impuestos)
+    "ipp": "450.1_NIVEL_GENERAL_0_0_13_92",  # IPP: precios básicos del productor (sin impuestos)
     # pobreza (EPH, % de personas, por semestre: la fecha es el comienzo del semestre SIGUIENTE al medido) y canastas
     "pobreza": "64.2_POBLACION_NUA_0_0_34_74",
     "cba_adulto": "150.1_CSTA_BARIA_0_D_26",  # canasta básica alimentaria, por adulto equivalente ($)

@@ -84,3 +84,15 @@ def test_pestana_bonos():
     assert list(dict.fromkeys(at.session_state["_fallas"])) == []
     textos = " ".join(m.value for m in at.markdown)
     assert "Ley Nueva York" in textos and "GD30" in textos
+
+
+def test_precios_mayoristas_se_bajan_y_se_calculan():
+    """IPIM e IPP (INDEC, API de datos.gob.ar): se descargan y de ellos salen las variaciones de la pestaña Inflación."""
+    from macrocenter import data
+    from macrocenter.pestanas.inflacion import _variaciones
+
+    for nombre in ("ipim", "ipp"):
+        d = data.serie(nombre)
+        assert not d.empty and {"fecha", "valor"} <= set(d.columns)
+        v = _variaciones(d)
+        assert v["mensual"].notna().all() and v["interanual"].dropna().size > 0

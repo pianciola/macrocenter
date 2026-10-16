@@ -9,8 +9,8 @@ from macrocenter import charts, style
 
 
 def mostrar(
-    *, HOY, delta, dif, dol, dol_rec, get, grafico, grafico_periodo, infl_ia, infl_m, inflacion_distritos, kpi,
-    rec, rem, ult_y_ant, ultimo, uva,
+    *, HOY, delta, dif, dol, dol_rec, get, grafico, grafico_periodo, infl_ia, infl_m, inflacion_distritos, ipim, ipp,
+    kpi, rec, rem, ult_y_ant, ultimo, uva,
 ) -> None:
     st.markdown(style.intro("La inflación (**IPC** del INDEC), lo que espera el mercado para los próximos 12 meses (**REM** del BCRA) y la "
                             "**UVA**, la unidad que ajusta créditos y plazos fijos por inflación.",
@@ -40,6 +40,8 @@ def mostrar(
                                       {"Interanual observada": "Inflación interanual observada",
                                        "Expectativa 12 m (REM)": "Expectativa 12 m (REM)"},
                                       "Inflación interanual vs. expectativas del REM (%)", yfmt=",.0f"))
+    if ipim is not None:
+        mayoristas(ipim, ipp, infl_ia, dif, grafico, kpi, rec, ult_y_ant)
     inflacion_distritos()
     if infl_ia is not None and dol is not None:
         st.markdown("#### ¿El dólar le ganó a la inflación?")
@@ -73,3 +75,54 @@ def mostrar(
                 if d is not None:
                     with col:
                         grafico(charts.lineas(rec(d), {titulo: "valor"}, titulo, yfmt=fmt, height=320))
+
+
+def _variaciones(df: pd.DataFrame) -> pd.DataFrame:
+    """Un índice mensual -> variación del mes (%) y contra el mismo mes del año anterior (%)."""
+    d = df.sort_values("fecha").copy()
+    d["mensual"] = d["valor"].pct_change() * 100
+    d["interanual"] = d["valor"].pct_change(12) * 100
+    return d.dropna(subset=["mensual"])
+
+
+def mayoristas(ipim: pd.DataFrame, ipp: pd.DataFrame | None, infl_ia: pd.DataFrame | None, dif, grafico, kpi, rec,
+               ult_y_ant) -> None:
+    """Precios mayoristas (INDEC): lo que cobran productores e importadores, antes de llegar al consumidor."""
+    st.markdown("#### Precios mayoristas")
+    vm = _variaciones(ipim)
+    k = st.columns(3)
+    v, a_ = ult_y_ant(vm, "mensual")
+    kpi(k[0], "IPIM · mensual", v, 1, suf="%", d=dif(v, a_), d_suf=" pp", d_txt="vs mes ant.", color="inverse",
+        help="Índice de precios internos al por mayor: lo que cobran los productores y los importadores en el mercado "
+             "interno, con impuestos.")
+    v, a_ = ult_y_ant(vm, "interanual")
+    kpi(k[1], "IPIM · interanual", v, 1, suf="%", d=dif(v, a_), d_suf=" pp", d_txt="vs mes ant.", color="inverse")
+    if ipp is not None:
+        vp = _variaciones(ipp)
+        v, a_ = ult_y_ant(vp, "mensual")
+        kpi(k[2], "IPP · mensual", v, 1, suf="%", d=dif(v, a_), d_suf=" pp", d_txt="vs mes ant.", color="inverse",
+            help="Índice de precios básicos del productor: igual que el IPIM, pero sin impuestos.")
+    a, b = st.columns(2)
+    with a:
+        if ipp is not None:
+            m = vm[["fecha", "mensual"]].rename(columns={"mensual": "IPIM"}).merge(
+                _variaciones(ipp)[["fecha", "mensual"]].rename(columns={"mensual": "IPP"}), on="fecha", how="outer")
+            grafico(charts.lineas(rec(m.sort_values("fecha"), 2), {"IPIM": "IPIM", "IPP": "IPP"},
+                                  "Precios mayoristas: variación mensual (%)", yfmt=",.1f", height=340,
+                                  colores=("#74ACDF", "#F6B40E")))
+    with b:
+        if infl_ia is not None:
+            m = vm[["fecha", "interanual"]].rename(columns={"interanual": "Mayoristas (IPIM)"}).merge(
+                infl_ia[["fecha", "valor"]].rename(columns={"valor": "Consumidores (IPC)"}), on="fecha", how="outer")
+            grafico(charts.lineas(rec(m.sort_values("fecha"), 2),
+                                  {"Mayoristas (IPIM)": "Mayoristas (IPIM)", "Consumidores (IPC)": "Consumidores (IPC)"},
+                                  "Variación interanual: mayoristas y consumidores (%)", yfmt=",.0f", height=340,
+                                  colores=("#74ACDF", "#A78BFA")))
+    st.markdown(style.aclaracion(
+        ("Qué mide", "El IPIM es lo que cobran los productores y los importadores en el mercado interno, con impuestos; "
+                     "el IPP es lo mismo sin impuestos. Son precios anteriores a los que paga el consumidor: a veces "
+                     "anticipan la inflación al consumidor, pero no siempre se trasladan."),
+        ("Cómo leerlo", "Arriba, la suba de cada mes. Abajo, cuánto subieron respecto del mismo mes del año anterior, "
+                        "comparado con la inflación al consumidor."),
+        ("Fuente", "INDEC, Sistema de Índices de Precios Mayoristas, con datos de la API de datos.gob.ar. Se publica con "
+                   "un mes de rezago.")), unsafe_allow_html=True)
