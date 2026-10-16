@@ -1474,6 +1474,16 @@ h3 {{ font-weight: 700 !important; }}
     .mc-acl .f {{ grid-template-columns: 1fr; gap: 3px; }}
     button[data-variant="segmented_control"], [role="radio"] {{ min-height: 44px; }}
 }}
+
+@container principal (max-width: 480px) {{
+    :is(.st-key-hist_seccion, .st-key-inv_seccion) [data-testid="stButtonGroup"] > div {{
+        display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px !important;
+    }}
+    :is(.st-key-hist_seccion, .st-key-inv_seccion) button:last-child {{ grid-column: 1 / -1; }}
+    :is(.st-key-hist_seccion, .st-key-inv_seccion) button p {{
+        overflow-wrap: normal !important; word-break: normal !important; font-weight: 600;
+    }}
+}}
 </style>
 """
 
@@ -1732,6 +1742,19 @@ JS_PESTANAS = """
   }, { passive: true, capture: true });
 })();
 (() => {
+  // En el celular, elegir un destino también deja a la vista su contenido.
+  if (!window.__mcMenuMovil) {
+    window.__mcMenuMovil = true;
+    document.addEventListener('click', (e) => {
+      if (!window.matchMedia('(max-width: 768px)').matches) return;
+      const destino = e.target.closest && e.target.closest('[class*="st-key-nav_"], [class*="st-key-atajo_"], .mc-brand');
+      if (!destino) return;
+      setTimeout(() => {
+        const boton = document.querySelector('[data-testid="stSidebarCollapseButton"] button');
+        if (boton) boton.click();
+      }, 0);
+    });
+  }
   // Tema claro u oscuro (Streamlit no lo marca): se mira el fondo de la página. Algunos colores cambian en el claro.
   if (window.__mcTema) return;
   window.__mcTema = true;

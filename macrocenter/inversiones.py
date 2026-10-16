@@ -18,8 +18,8 @@ from .interactivo import entrada_monto
 
 SECCIONES = ["Tasas y plazos fijos", "Rendimientos pasados", "Glosario"]
 AVISO_TITULO = "Información, no recomendación"
-AVISO = ("Tasas, resultados pasados y simulaciones para comparar opciones. No es asesoramiento financiero: antes de "
-         "invertir, revisá las condiciones de cada producto y, si lo necesitás, consultá a un asesor registrado en la CNV.")
+AVISO = ("Tasas, resultados pasados y simulaciones para comparar. No es asesoramiento financiero. "
+         "Revisá costos, riesgos y condiciones de cada producto.")
 
 
 def _hoy() -> pd.Timestamp:

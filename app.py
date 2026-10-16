@@ -956,7 +956,7 @@ dol_s = {c: dol[["fecha", c]].dropna().rename(columns={c: "valor"})
 brecha_df = dol.dropna(subset=["brecha_blue"]) if dol is not None else None
 emae_ia = yoy(emae) if emae is not None else None
 # actividad del mes: EMAE desestacionalizado contra el mes anterior (el dato que el INDEC destaca cada mes)
-emae_m = (emae_sa.assign(valor=emae_sa["valor"].pct_change(fill_method=None) * 100).dropna(subset=["valor"])
+emae_m = (emae_sa.assign(valor=series.cambio_periodico(emae_sa, periodos=1)["valor"]).dropna(subset=["valor"])
           if emae_sa is not None else None)
 paro_pct = paro.assign(valor=paro["valor"] * 100) if paro is not None else None
 sal_ia = yoy(sal) if sal is not None else None
@@ -968,7 +968,13 @@ def _kpi(df: pd.DataFrame | None, col: str = "valor", dias: int = 30, modo: str 
     def calcular() -> dict:
         if df is None:
             return {"valor": None, **kw}
-        return dict(valor=ultimo(df, col), d=delta(df, col, dias=dias, modo=modo), serie=df.dropna(subset=[col]), **kw)
+        cambio = delta(df, col, dias=dias, modo=modo)
+        if kw.get("d_txt") in ("vs mes ant.", "vs trim. ant."):
+            meses = 3 if kw["d_txt"] == "vs trim. ant." else 1
+            actual, anterior = series.comparar(df, col, meses=meses, hoy=HOY)
+            cambio = (None if actual is None or anterior is None else
+                      actual - anterior if modo == "abs" else None if anterior == 0 else (actual / anterior - 1) * 100)
+        return dict(valor=ultimo(df, col), d=cambio, serie=df.dropna(subset=[col]), **kw)
     return calcular
 
 
