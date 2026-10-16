@@ -29,7 +29,7 @@ from macrocenter.carga import (  # descarga, cachés y copia de respaldo
 )
 
 # Módulos de presentación sin estado: recargarlos evita mezclar pantallas anteriores con la navegación nueva.
-for modulo in (style, inversiones, pestanas.inflacion, pestanas.inicio, pestanas.historia, interactivo, presentacion):
+for modulo in (style, charts, inversiones, pestanas.inflacion, pestanas.inicio, pestanas.historia, interactivo, presentacion):
     importlib.reload(modulo)
 
 st.set_page_config(page_title="MacroCenter", page_icon=style.favicon(), layout="wide")

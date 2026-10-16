@@ -53,3 +53,14 @@ html[data-tema="claro"] section[data-testid="stSidebar"]{background:#F5F7FA!impo
 html :is(.st-key-hist_seccion,.st-key-inv_seccion) button[aria-checked="true"]{background:#2563A8!important;border:1px solid #2563A8!important;box-shadow:none!important;color:#fff!important}
 html :is(.st-key-hist_seccion,.st-key-inv_seccion) button[aria-checked="true"]::after{display:none!important}
 html[data-intros="ocultas"] .mc-intro .nota{display:block!important}html[data-intros="ocultas"] .mc-intro .ley{display:flex!important}
+
+[data-testid="stMainBlockContainer"]{padding-top:4.5rem!important}
+.stApp section[data-testid="stSidebar"] .mc-brand{gap:9px!important;padding:4px 0 16px!important;margin:0 0 8px!important}
+.stApp section[data-testid="stSidebar"] .mc-brand .mc-wm{font-size:1.1rem!important;white-space:nowrap;line-height:1.3!important}
+.stApp section[data-testid="stSidebar"] .mc-brand .mc-wm .beta{display:none!important}
+.stApp section[data-testid="stSidebar"] .mc-brand .sub{font-size:.64rem!important;letter-spacing:.04em!important;font-weight:500!important;white-space:nowrap}
+.stApp section[data-testid="stSidebar"] .mc-brand .mc-flag svg{width:34px!important;height:34px!important;box-shadow:none!important;border-radius:6px!important}
+section[data-testid="stSidebar"] :is(.st-key-btn_noticias_nuevas,.st-key-btn_noticias) button p{color:#B8C8DA!important}
+html[data-tema="claro"] section[data-testid="stSidebar"] :is(.st-key-btn_noticias_nuevas,.st-key-btn_noticias) button p{color:#334155!important}
+.mc-intro::before{display:none!important}.mc-intro{border-left:0!important}
+@media(max-width:700px){[data-testid="stMainBlockContainer"]{padding-top:4rem!important}}

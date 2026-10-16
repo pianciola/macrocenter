@@ -530,3 +530,6 @@ def mostrar(d: dict, grafico, grafico_periodo) -> None:
         comparar_dolar_inflacion(d, grafico_periodo)
     else:
         pantalla_conceptos()
+
+    with st.expander("Alcance y límites de la información"):
+        st.write(AVISO)
