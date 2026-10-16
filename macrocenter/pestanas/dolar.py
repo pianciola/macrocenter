@@ -44,7 +44,6 @@ def mostrar(*, VIVO, base100, con_periodo, delta, dol, dol_rec, get, grafico, ul
         st.markdown(style.aclaracion(
             ("Cómo leerlo", "La variación compara con 30 días atrás."),
             ("Fuente", f"ArgentinaDatos.{hora_}")), unsafe_allow_html=True)
-        st.markdown(style.form_alertas(), unsafe_allow_html=True)
 
         eur, gbp = get("fx:EUR"), get("fx:GBP")
         tarjetas_fx = []

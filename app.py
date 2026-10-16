@@ -1435,7 +1435,7 @@ def bloque_expectativas() -> None:
         st.markdown(style.aclaracion(
             ("Último dato", f"La inflación de los últimos 12 meses fue {charts.num(obs, 1, '%')}; los analistas esperan "
                             f"{charts.num(esp, 1, '%')} para los próximos 12 (mediana del REM del BCRA)."),
-            ("Ojo", "Las expectativas son una referencia y pueden cambiar mes a mes.")), unsafe_allow_html=True)
+            ("Nota", "Las expectativas son una referencia y pueden cambiar mes a mes.")), unsafe_allow_html=True)
 
 
 def bloque_dolar_precios() -> None:

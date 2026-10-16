@@ -263,7 +263,7 @@ def pantalla_tasas(d: dict) -> None:
     if fichas:
         st.markdown(style.resultado_final(fichas), unsafe_allow_html=True)
         st.markdown(style.aclaracion(
-            ("Ojo", "Se compara con la inflación que **esperan** las consultoras para los próximos 12 meses: es una "
+            ("Nota", "Se compara con la inflación que **esperan** las consultoras para los próximos 12 meses: es una "
                     "referencia, no una garantía. La inflación real puede ser otra."),
             leyenda=[("bien", "La tasa anual efectiva le gana a esa inflación"), ("mal", "Queda abajo")]),
             unsafe_allow_html=True)

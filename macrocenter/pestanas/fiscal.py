@@ -61,7 +61,7 @@ def mostrar(*, actualizando, dif, falla, fiscal_anual, fiscal_df, grafico, grafi
                         grafico(fig_a)
             if (fa["meses"] < 12).any():
                 st.markdown(style.aclaracion(
-                    ("Ojo", "El año en curso es el acumulado de los meses publicados sobre el PBI estimado del año completo, así "
+                    ("Nota", "El año en curso es el acumulado de los meses publicados sobre el PBI estimado del año completo, así "
                             "que todavía puede cambiar (diciembre suele ser deficitario por el aguinaldo).")), unsafe_allow_html=True)
         with st.expander("Cómo se calcula el porcentaje del PBI"):
             st.markdown(

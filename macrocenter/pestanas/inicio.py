@@ -134,7 +134,7 @@ def mostrar(
                     ("UVA", "" if uva_p is None else
                             f"Subió {charts.num(uva_p, 1, '%')}. No se compara porque se ajusta por la inflación (CER, con unas semanas "
                             "de rezago), así que siempre queda cerca de la línea."),
-                    ("Ojo", "Es el pasado: no anticipa qué va a pasar."),
+                    ("Nota", "Es el pasado: no anticipa qué va a pasar."),
                     leyenda=[("bien", "Superó a la inflación del período (línea punteada)"), ("mal", "Quedó abajo")]), unsafe_allow_html=True)
             else:
                 falla("no hay datos para el comparativo contra la inflación")

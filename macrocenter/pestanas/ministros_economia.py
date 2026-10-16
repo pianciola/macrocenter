@@ -48,7 +48,7 @@ def mostrar(dp: dict | None, *, fotos_ministros, fotos_presidentes) -> None:
     st.markdown(style.aclaracion(
         ("Criterio", "La inflación de cada mes se asigna a quien estaba en el cargo al cierre de ese mes. El dólar "
                      "oficial se muestra desde 1992."),
-        ("Ojo", "Entre 2007 y 2015 son las cifras del INDEC intervenido, que distintos analistas consideran "
+        ("Nota", "Entre 2007 y 2015 son las cifras del INDEC intervenido, que distintos analistas consideran "
                 "subestimadas. Las cifras de un ministro dependen también del contexto que heredó y de decisiones de otras "
                 "áreas (BCRA, Congreso, Presidencia)."),
         ("Fuente", "Fechas: listado oficial del Ministerio de Economía (CDI).")), unsafe_allow_html=True)

@@ -40,7 +40,7 @@ def mostrar(*, HOY, bloque_cambiario, delta, grafico, kpi, rec, reservas, select
         st.markdown(style.aclaracion(
             ("Qué mide", "Son las reservas **brutas**: incluyen el swap con China, los encajes de los depósitos en dólares y "
                          "los repos con bancos, que no son de libre disponibilidad."),
-            ("Ojo", "Las **netas** (lo que el BCRA puede usar para intervenir) son bastante menores, pero no se muestran porque "
+            ("Nota", "Las **netas** (lo que el BCRA puede usar para intervenir) son bastante menores, pero no se muestran porque "
                     "no existe una serie oficial pública con la que calcularlas.")), unsafe_allow_html=True)
         with st.expander("Variación mensual"):
             rm = reservas.set_index("fecha")["valor"].resample("ME").last().diff().rename("var").reset_index()

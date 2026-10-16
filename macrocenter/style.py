@@ -531,29 +531,6 @@ html[data-pie="oculto"] [data-testid="stMainBlockContainer"] {{ padding-bottom: 
     overflow: hidden !important; opacity: 0 !important; pointer-events: none !important; }}
 [data-testid="stElementContainer"]:has(> .st-key-puente_leidas), [data-testid="stLayoutWrapper"]:has(> .st-key-puente_leidas) {{
     position: absolute !important; height: 0 !important; margin: 0 !important; overflow: hidden !important; }}
-/* aviso que aparece debajo del formulario de alertas al enviarlo (el formulario queda, por si hay que reintentar) */
-.mc-alerta-ok {{ margin: 10px 0 18px; padding: 12px 16px; border-radius: 14px; font-size: 14px;
-    border: 1px solid rgba(16,172,132,.45); background: rgba(16,172,132,.10); }}
-/* formulario de alertas del dólar (pestaña Dólar) */
-.mc-alerta {{
-    display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin: 10px 0 18px; padding: 14px 16px;
-    border: 1px solid rgba(74,143,212,.35); border-radius: 14px; background: rgba(74,143,212,.07);
-}}
-.mc-alerta .tx {{ flex: 1 1 320px; min-width: 0; display: flex; flex-direction: column; gap: 3px; }}
-.mc-alerta .tx b {{ font-size: 15px; }}
-.mc-alerta .tx span {{ font-size: 13px; opacity: .85; line-height: 1.4; }}
-.mc-alerta .cp {{ display: flex; gap: 8px; flex: 1 1 280px; max-width: 420px; }}
-.mc-alerta input[type=email] {{
-    flex: 1 1 auto; min-width: 0; padding: 9px 12px; border-radius: 10px; font: inherit; font-size: 14px;
-    border: 1px solid rgba(128,128,128,.45); background: rgba(0,0,0,.18); color: inherit;
-}}
-.mc-alerta input[type=email]:focus {{ outline: 2px solid #4A8FD4; outline-offset: 1px; }}
-.mc-alerta button {{
-    flex: 0 0 auto; padding: 9px 16px; border-radius: 10px; border: 0; cursor: pointer; font: inherit;
-    font-size: 14px; font-weight: 700; color: #fff; background: #2E86DE;
-}}
-.mc-alerta button:hover {{ background: #4A8FD4; }}
-@container principal (max-width: 560px) {{ .mc-alerta .cp {{ max-width: none; }} }}
 /* fila del título de cada gráfico: el título ocupa lo que haya y «CSV» (bajar los datos) queda chico a la derecha */
 [class*="st-key-gtit_"] {{ flex-wrap: nowrap !important; gap: 6px !important; }}
 [class*="st-key-gtit_"] > div:first-child {{ flex: 1 1 auto !important; min-width: 0; }}
@@ -1665,31 +1642,6 @@ JS_PESTANAS = """
   }, { passive: true, capture: true });
 })();
 (() => {
-  // Alertas por mail: el formulario se envía a Buttondown en otra pestaña y desde acá no se puede saber si salió bien.
-  // Por eso no se da por hecho: se muestra un aviso debajo y el formulario queda, por si hay que volver a intentarlo.
-  // (el mail va directo a Buttondown; la página nunca lo ve ni lo guarda)
-  if (window.__mcAlertas) return;
-  window.__mcAlertas = true;
-  const raiz = document.documentElement;
-  // Retirar el éxito prematuro guardado por versiones anteriores.
-  try { localStorage.removeItem('mc_alertas_anotado'); } catch (e) {}
-  delete raiz.dataset.alertas;
-  document.addEventListener('submit', (ev) => {
-    const f = ev.target;
-    if (!(f instanceof HTMLFormElement) || !f.classList.contains('mc-alerta')) return;
-    setTimeout(() => {
-      let ok = f.nextElementSibling;
-      if (!ok || !ok.classList.contains('mc-alerta-ok')) {
-        ok = document.createElement('div');
-        f.after(ok);
-      }
-      ok.className = 'mc-alerta-ok';
-      ok.setAttribute('role', 'status');
-      ok.textContent = 'Se abrió Buttondown en otra pestaña: seguí ahí. Si te llega un mail, confirmá la suscripción desde su enlace. Si algo falló, podés volver a intentarlo acá.';
-    }, 0);
-  }, true);
-})();
-(() => {
   // Tema claro u oscuro (Streamlit no lo marca): se mira el fondo de la página. Algunos colores cambian en el claro.
   if (window.__mcTema) return;
   window.__mcTema = true;
@@ -2663,22 +2615,6 @@ def _mail_error() -> str:
     from macrocenter.legal import CONTACTO
 
     return f"mailto:{CONTACTO}?subject=" + quote("MacroCenter (beta): noté un error")
-
-
-def form_alertas() -> str:
-    """Formulario para anotarse en las alertas del dólar. El mail va directo del navegador a Buttondown (con la
-    etiqueta «alertas»): la página nunca lo ve ni lo guarda."""
-    if not BOLETIN:
-        return ""
-    usuario = BOLETIN.rstrip("/").rsplit("/", 1)[-1]
-    accion = f"https://buttondown.com/api/emails/embed-subscribe/{usuario}"
-    return (f'<form class="mc-alerta" action="{html.escape(accion, quote=True)}" method="post" target="_blank">'
-            '<div class="tx"><b>🔔 Alertas del dólar por mail</b>'
-            '<span>Un aviso cuando el dólar o el riesgo país se mueven fuerte en el día (también te llega el resumen '
-            'semanal). Tu mail va directo a Buttondown: MacroCenter no lo ve ni lo guarda.</span></div>'
-            '<div class="cp"><input type="email" name="email" required placeholder="tu@mail.com" aria-label="Tu mail" '
-            'autocomplete="email" maxlength="254"><input type="hidden" name="tag" value="alertas">'
-            '<input type="hidden" name="embed" value="1"><button type="submit">Anotarme</button></div></form>')
 
 
 def legal_pagina(doc: dict, actualizacion: str) -> str:

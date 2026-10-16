@@ -48,7 +48,7 @@ def mostrar(
                 grafico(charts.lineas(hist, {f"{fila.iloc[0]['nombre']} (US$)": "valor"},
                                       f"{fila.iloc[0]['nombre']} en dólares — {rango.lower()}", yfmt=fmt_c, height=340))
         st.markdown(style.aclaracion(
-            ("Ojo", "El historial gratuito de CoinGecko llega hasta 1 año atrás.")), unsafe_allow_html=True)
+            ("Nota", "El historial gratuito de CoinGecko llega hasta 1 año atrás.")), unsafe_allow_html=True)
 
     st.subheader("USDT en pesos, exchange por exchange")
     if isinstance(usdt, str) or usdt.empty:
@@ -73,4 +73,4 @@ def mostrar(
         st.markdown(style.aclaracion(
             ("Cómo leerlo", "«Comprar» es lo que pagás por cada USDT; «Vender», lo que recibís. Precios sin comisiones."),
             ("Fuente", "CriptoYa."),
-            ("Ojo", "No es una recomendación de inversión.")), unsafe_allow_html=True)
+            ("Nota", "No es una recomendación de inversión.")), unsafe_allow_html=True)

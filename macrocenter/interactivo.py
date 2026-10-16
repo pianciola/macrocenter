@@ -364,7 +364,7 @@ def pantalla_alquileres(d: dict) -> None:
                             "diarios (se toma el valor del día del ajuste); IPC y salarios son mensuales y se usa el último "
                             "dato publicado a esa fecha (el INDEC lo publica unas seis semanas después)."),
         ("CABA", "El IPCBA de la Ciudad no tiene una fuente pública con API: como referencia se usa el IPC GBA del INDEC."),
-        ("Ojo", "No es asesoramiento legal.")), unsafe_allow_html=True)
+        ("Nota", "No es asesoramiento legal.")), unsafe_allow_html=True)
 
 
 # ───────────────────────── 2) Comparador de épocas ─────────────────────────

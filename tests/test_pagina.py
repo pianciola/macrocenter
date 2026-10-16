@@ -33,12 +33,6 @@ def test_css_balanceado():
     assert style.CSS.count("{") == style.CSS.count("}")
 
 
-def test_form_alertas_va_directo_a_buttondown():
-    f = style.form_alertas()
-    assert 'action="https://buttondown.com/api/emails/embed-subscribe/macrocenter"' in f
-    assert 'name="tag" value="alertas"' in f and 'type="email"' in f
-
-
 def test_slug():
     assert style.slug("Tasas y riesgo país") == "tasas-y-riesgo-pais"
     assert style.slug("¿Cuánto valían tus pesos?") == "cuanto-valian-tus-pesos"
@@ -96,14 +90,6 @@ def test_titulos_de_seccion_no_dependen_de_una_clase_en_html():
     # del pie va en un atributo de <html>, nunca en una clase (con una clase, los títulos perdían la barra celeste)
     assert "mc-pie-oculto" not in style.CSS and "mc-pie-oculto" not in style.JS_PESTANAS
     assert 'html[data-pie="oculto"]' in style.CSS and "dataset.pie" in style.JS_PESTANAS
-
-
-def test_formulario_de_alertas_permite_reintentar_sin_falso_exito():
-    assert 'html[data-alertas="anotado"] .mc-alerta' not in style.CSS
-    assert "localStorage.removeItem('mc_alertas_anotado')" in style.JS_PESTANAS
-    assert "localStorage.setItem('mc_alertas_anotado'" not in style.JS_PESTANAS
-    assert "f.replaceWith(ok)" not in style.JS_PESTANAS
-    assert "podés volver a intentarlo acá" in style.JS_PESTANAS
 
 
 def test_noticias_del_indec(monkeypatch):

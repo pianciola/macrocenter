@@ -125,7 +125,7 @@ def mostrar(
                 ("Criterio", "La inflación de cada mes se asigna a quien gobernaba al cierre de ese mes: por eso julio de "
                              "1989 cuenta para Menem y diciembre de 2023 para Milei, aunque esas subas se hayan gestado "
                              "antes. Es discutible, y se aplica igual a todos."),
-                ("Ojo", "Los mandatos duraron distinto y ocurrieron en contextos muy distintos: es información, no un "
+                ("Nota", "Los mandatos duraron distinto y ocurrieron en contextos muy distintos: es información, no un "
                         "ranking.")), unsafe_allow_html=True)
             with st.expander("Cómo se calcula cada cifra"):
                 st.markdown(

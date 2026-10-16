@@ -132,6 +132,6 @@ def tasas_eeuu(b: dict, _ult_y_hace, dif, falla, grafico_periodo, kpi) -> None:
     st.markdown(style.aclaracion(
         ("Cómo leerlo", "Cuando estas tasas suben, el dinero en el mundo se encarece: los países y las empresas pagan más "
                         "para endeudarse. El **riesgo país** se mide justamente contra los bonos del Tesoro de EE. UU."),
-        ("Ojo", "Los rendimientos de los bonos se mueven todos los días; la tasa de la Fed cambia solo en sus reuniones. "
+        ("Nota", "Los rendimientos de los bonos se mueven todos los días; la tasa de la Fed cambia solo en sus reuniones. "
                 "Tocá un nombre en la leyenda para mostrar u ocultar cada línea."),
         ("Fuente", "Reserva Federal de St. Louis (FRED), datos diarios.")), unsafe_allow_html=True)
