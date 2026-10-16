@@ -238,7 +238,7 @@ def ir_a(destino: str) -> None:
 VISTAS = ("tablero", "inversiones", "historia", "juegos")
 # primero el ala financiera (lo que más se usa): dólar, bolsas, cripto, tasas y dinero; después precios, actividad,
 # sector externo, ingresos y cuentas públicas
-PESTANAS = ["Resumen", "Dólar", "Bolsas", "Cripto", "Tasas y riesgo país", "Bonos", "Inflación y dinero",
+PESTANAS = ["Resumen", "Dólar", "Bolsas", "Cripto", "Bonos", "Inflación y dinero", "Tasas y riesgo país",
             "Actividad y PBI", "Reservas", "Salarios", "Resultado fiscal", "Comercio exterior"]
 HIST_SECCIONES = ["Presidentes", "Ministros de Economía", "Viaje en el tiempo"]
 # Enlaces para compartir: ?ver=tablero/dolar, ?ver=herramientas/ajuste-de-alquileres, etc. (la misma ruta que cuenta
@@ -936,7 +936,7 @@ if vista != "tablero":
 # Migrar la selección de sesiones abiertas antes de fusionar las pestañas.
 if st.session_state.get("pestana") in ("Inflación", "Dinero y crédito"):
     st.session_state["pestana"] = "Inflación y dinero"
-t_res, t_dol, t_bol, t_cri, t_tasas, t_bonos, t_prec, t_act, t_res_i, t_sal, t_fis, t_com = st.tabs(
+t_res, t_dol, t_bol, t_cri, t_bonos, t_prec, t_tasas, t_act, t_res_i, t_sal, t_fis, t_com = st.tabs(
     PESTANAS,
     # cada pestaña se calcula y se manda recién al abrirla: la primera carga pesa una fracción (clave en el celular)
     key="pestana", on_change="rerun",
