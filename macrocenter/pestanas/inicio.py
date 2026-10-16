@@ -21,6 +21,13 @@ def mostrar(
     previos = st.session_state.get("kpis_sel")
     st.session_state["kpis_sel"] = [k for k in (previos if isinstance(previos, list) else [])
                                     if isinstance(k, str) and k in CATALOGO]
+    frases = panorama_inicio()
+    if frases:
+        st.html(style.panorama(frases[:3], f"{HOY:%d/%m/%Y}"))
+    st.markdown("#### Consultas frecuentes")
+    enlaces = [("Ajustar un alquiler", "herramientas/ajuste-de-alquileres"), ("Comparar rendimientos", "inversiones/rendimientos-pasados"), ("Consultar el dólar", "tablero/dolar")]
+    for col, (texto, ruta) in zip(st.columns(3), enlaces):
+        col.link_button(texto, "?ver=" + ruta, width="stretch")
     h, p = st.columns([5, 1.5], vertical_alignment="center")
     h.subheader("Indicadores clave")
     with p.container(key="personalizar"), st.popover("Personalizar", icon=":material/tune:", width="content"):
@@ -37,15 +44,10 @@ def mostrar(
     for i in range(0, len(elegidos), 5):
         for slot, clave in zip(st.columns(5), elegidos[i:i + 5]):
             try:
-                kpi(slot, CATALOGO[clave][1], **CATALOGO[clave][2]())
+                kpi(slot, CATALOGO[clave][1], fuente=("DolarApi / ArgentinaDatos" if clave in ("oficial", "blue", "mep", "ccl", "brecha") else "INDEC" if clave in ("infl_m", "infl_ia", "emae_m", "emae_ia", "salarios", "salario_real", "paro") else "ArgentinaDatos" if clave == "riesgo" else "BCRA / datos.gob.ar"), **CATALOGO[clave][2]())
             except Exception:  # noqa: BLE001
                 traceback.print_exc()
                 kpi(slot, CATALOGO[clave][1], None)
-
-    # Panorama en texto: la coyuntura en cuatro o cinco frases, armadas con los últimos datos
-    frases = panorama_inicio()
-    if frases:
-        st.html(style.panorama(frases, f"{HOY:%d/%m/%Y}"))
 
     # un solo gráfico a la vez, para que la portada no se llene; cada visita arranca con uno distinto
     st.markdown("#### Gráfico destacado")
@@ -53,7 +55,7 @@ def mostrar(
     def grafico_inicio() -> None:
         """Selector de gráfico + período: cambiar uno u otro redibuja solo esto."""
         OPC = list(GRAFICOS_INICIO)
-        inicial = OPC[turno % len(OPC)]
+        inicial = "Inflación"
         elegido_i = selector_categoria("Gráfico", OPC, "inicio_grafico", defecto=inicial) or inicial
         if elegido_i == "Dólar" and dol is not None:
             _grafico_periodo("res_dolar", dol_rec, lambda d: charts.lineas(d, {"Oficial": "oficial", "Blue": "blue"}, "Dólar ($)",
@@ -161,13 +163,12 @@ def mostrar(
     @st.fragment
     def analisis_inicio() -> None:
         if not isinstance(st.session_state.get("inicio_analisis"), int):
-            st.session_state["inicio_analisis"] = turno
+            st.session_state["inicio_analisis"] = 0
         i = st.session_state["inicio_analisis"] % len(ANALISIS)
         titulo_a, dibujar = ANALISIS[i]
-        h_, b_ = st.columns([5, 1.5], vertical_alignment="center")
-        h_.subheader(titulo_a)
-        b_.button("Ver otro análisis", icon=":material/autorenew:", key="inicio_otro", width="content",
-                  on_click=_otro_analisis)
+        tema = st.selectbox("Explorar un tema", [t for t, _ in ANALISIS], index=i, key="tema_resumen")
+        titulo_a, dibujar = next((t, f) for t, f in ANALISIS if t == tema)
+        st.subheader(titulo_a)
         try:
             dibujar()
         except Exception:  # noqa: BLE001

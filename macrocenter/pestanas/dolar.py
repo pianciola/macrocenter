@@ -5,7 +5,7 @@ from __future__ import annotations
 import pandas as pd
 import streamlit as st
 
-from macrocenter import charts, style
+from macrocenter import charts, style, presentacion
 
 
 def mostrar(*, VIVO, base100, con_periodo, delta, dol, dol_rec, get, grafico, ultimo) -> None:
@@ -32,7 +32,7 @@ def mostrar(*, VIVO, base100, con_periodo, delta, dol, dol_rec, get, grafico, ul
             tarjetas_usd.append(dict(
                 nombre=nombre, desc=desc, valor=charts.num(venta, 0, pre="$"),
                 detalle=f"Compra {charts.num(float(compra), 0, pre='$')} · Venta {charts.num(venta, 0, pre='$')}",
-                var=delta(s.rename(columns={clave: "valor"})), sentido="alto",  # cotización: verde si sube
+                var=delta(s.rename(columns={clave: "valor"}), dias=1), var_txt="1 d", meta=presentacion.etiqueta_dato(s, "DolarApi / ArgentinaDatos"), sentido="alto",  # cotización: verde si sube
                 spark=list(s.tail(30)[clave]),
                 chip=None if clave == "oficial" or not oficial_hoy else
                 f"{(venta / oficial_hoy - 1) * 100:+.1f}% vs oficial".replace(".", ","),
@@ -42,7 +42,7 @@ def mostrar(*, VIVO, base100, con_periodo, delta, dol, dol_rec, get, grafico, ul
         hora_ = (f" Último dato del día: {pd.Timestamp(dv_['actualizado'].max()):%d/%m %H:%M} (DolarApi y CriptoYa: MEP y CCL de las operaciones del AL30); se renueva cada 30 segundos."
                  if isinstance(dv_, pd.DataFrame) and not dv_.empty else "")
         st.markdown(style.aclaracion(
-            ("Cómo leerlo", "La variación compara con 30 días atrás."),
+            ("Cómo leerlo", "La variación compara con el último dato disponible hasta el día anterior. Los minigráficos muestran la evolución de 30 días."),
             ("Fuente", f"ArgentinaDatos.{hora_}")), unsafe_allow_html=True)
 
         eur, gbp = get("fx:EUR"), get("fx:GBP")
@@ -54,7 +54,7 @@ def mostrar(*, VIVO, base100, con_periodo, delta, dol, dol_rec, get, grafico, ul
                     nombre=nombre, desc="Cotización de referencia del BCRA",
                     valor=charts.num(float(u["valor"]), 0, pre="$"),
                     detalle=f"1 {simbolo} = US$ {charts.num(float(u['pase']), 2)}",
-                    var=delta(df_), sentido="alto", chip=None, spark=list(df_.tail(30)["valor"])))
+                    var=delta(df_, dias=1), var_txt="1 d", meta=presentacion.etiqueta_dato(df_, "BCRA"), sentido="alto", chip=None, spark=list(df_.tail(30)["valor"])))
         if tarjetas_fx:
             st.markdown("#### Otras monedas")
             st.markdown(style.cotizaciones(tarjetas_fx), unsafe_allow_html=True)

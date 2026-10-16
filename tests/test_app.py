@@ -102,9 +102,8 @@ def test_precios_mayoristas_se_bajan_y_se_calculan():
 
 def test_inflacion_y_dinero_en_una_sola_pestana():
     at = _correr(ver="tablero/inflacion-y-dinero")
-    etiquetas = [t.label for t in at.tabs]
-    assert "Inflación y dinero" in etiquetas
-    assert "Inflación" not in etiquetas and "Dinero y crédito" not in etiquetas
+    assert len(at.tabs) == 0
+    assert "Inflación y dinero" in [t.value for t in at.title]
     textos = [m.value for m in at.markdown]
     assert textos.index("#### Inflación") < textos.index("### Dinero y crédito")
     assert not any("¿El dólar le ganó a la inflación?" in t for t in textos)
@@ -116,3 +115,14 @@ def test_dolar_vs_inflacion_se_muestra_en_rendimientos_pasados():
     at = _correr(ver="inversiones/rendimientos-pasados")
     textos = [m.value for m in at.markdown]
     assert any("¿El dólar le ganó a la inflación?" in t for t in textos)
+
+
+def test_menu_por_areas_abre_la_pagina_correcta():
+    at = _correr()
+    at.button(key="menu_Inflación y dinero").click().run()
+    assert not at.exception
+    assert at.session_state["pestana"] == "Inflación y dinero"
+    at.button(key="menu_herramienta_0").click().run()
+    assert not at.exception
+    assert at.session_state["inter_modo"] == "Ajuste de alquileres"
+    assert not at.tabs

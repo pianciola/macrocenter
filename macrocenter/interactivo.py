@@ -501,14 +501,6 @@ def mostrar(d: dict, inds: dict, fotos: dict, uva: pd.DataFrame | None, extra: d
     def elegir(nombre: str) -> None:
         st.session_state["inter_modo"] = nombre
 
-    # selector en tarjetas: ícono, nombre y una línea de qué hace; la elegida queda resaltada
-    for i, (col, nombre) in enumerate(zip(st.columns(len(opciones)), opciones)):
-        icono, desc = TARJETAS.get(nombre, (":material/apps:", ""))
-        with col:
-            st.button(nombre, key=f"modo_{i}", icon=icono, width="stretch", on_click=elegir, args=(nombre,),
-                      type="primary" if st.session_state["inter_modo"] == nombre else "secondary")
-            st.caption(desc)
-    st.divider()
     modo = st.session_state["inter_modo"]
     if modo in extra:
         extra[modo]()

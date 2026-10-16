@@ -170,3 +170,14 @@ si Buttondown confirma ese filtro: nunca le llega a toda la lista por error.
 - El monitor (cada 6 horas) revisa la página, que cada fuente responda, que **ninguna serie esté desactualizada** para
   su frecuencia (diaria: 10 días; mensual: 180; trimestral: 300; anual: 900) y que todas las pantallas se dibujen. Si
   algo falla, GitHub te manda un mail.
+
+
+## Diseño del observatorio
+
+La navegación principal vive en la barra lateral: Resumen, Economía, Mercados y ahorro y Herramientas.
+Los enlaces anteriores siguen funcionando. Los mercados, las series macroeconómicas y las calculadoras no usan una
+franja móvil de cotizaciones ni un sello general «En vivo». La portada conserva la selección del gráfico y ofrece
+un selector de temas explícito. El conversor está en Dólar y las condiciones de las simulaciones siguen debajo de sus resultados.
+El sistema visual compartido está en `assets/observatorio.css`; `macrocenter/presentacion.py` concentra navegación y fechas.
+Las series recuperadas de respaldo se identifican en memoria y no se guardan como una descarga nueva sin fallas.
+La evaluación con usuarios externos queda pendiente: las pruebas automatizadas no sustituyen esa validación.

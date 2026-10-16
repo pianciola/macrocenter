@@ -59,31 +59,6 @@ def mostrar(
                 fig_g = charts.marcar_eventos(fig_g, presidentes.EVENTOS, serie_g["fecha"].min())
             grafico(fig_g)
 
-            # datos curiosos: hechos puros, con el nombre del mandato que los cumple (solo los que se pueden calcular)
-            def mejor(clave_dato, key=max):
-                cand = [(m, inds[m.clave][clave_dato]) for m in MS if inds[m.clave][clave_dato] is not None]
-                return key(cand, key=lambda par: par[1]) if cand else None
-
-            def con_signo(v: float, dec: int = 1) -> str:
-                return ("+" if v >= 0 else "") + charts.num(v, dec)
-
-            curiosos = []
-            r_pbi = mejor("pbi")
-            if r_pbi:
-                curiosos.append(("Mayor crecimiento del PBI", r_pbi[0], f"{con_signo(r_pbi[1])}% en el mandato"))
-            r_inf = mejor("inf_fin", key=min)
-            if r_inf:
-                curiosos.append(("Menor inflación anual al irse", r_inf[0], f"{charts.num(r_inf[1], 1)}% anual"))
-            mult = [(m, inds[m.clave]["usd_fin"] / inds[m.clave]["usd_ini"]) for m in MS
-                    if inds[m.clave]["usd_ini"] and inds[m.clave]["usd_fin"]]
-            if mult:
-                m_usd, v_usd = max(mult, key=lambda par: par[1])
-                curiosos.append(("El dólar que más se multiplicó", m_usd, f"×{charts.num(v_usd, 1)} en el mandato"))
-            if curiosos:
-                for slot, (titulo_c, m_c, dato_c) in zip(st.columns(len(curiosos)), curiosos):
-                    slot.metric(titulo_c, presidentes.CORTO[m_c.clave], dato_c, delta_color="off", delta_arrow="off",
-                                border=True)
-
             # comparación entre mandatos: orden cronológico, un indicador a la vez
             st.markdown("#### Comparar mandatos")
             comp = selector.uno(st.segmented_control, "Indicador", list(presidentes.COMPARACIONES), "hist_comp",
@@ -95,6 +70,7 @@ def mostrar(
             if clave_c == "res_fin" and isinstance(cpi, pd.DataFrame) and not cpi.empty:
                 ajustar = st.toggle("Ajustar por inflación de EE. UU. (dólares de hoy)", value=True, key="hist_res_real",
                                     help="Pasa las reservas de cada fecha a su equivalente en dólares actuales, según el IPC de EE. UU.")
+            anualizar = clave_c == "pbi" and st.toggle("Mostrar crecimiento anualizado", value=True, key="pbi_anualizado")
             vals_c = []
             for m in MS:
                 i_ = inds[m.clave]
@@ -108,7 +84,13 @@ def mostrar(
                         v_ = None
                     else:
                         v_ = v_ * float(cpi["valor"].iloc[-1]) / float(previos["valor"].iloc[-1])
+                if anualizar and v_ is not None:
+                    anios = (m.fin - m.desde).days / 365.25
+                    v_ = ((1 + v_ / 100) ** (1 / anios) - 1) * 100 if anios > 0 and v_ > -100 else None
                 vals_c.append(v_)
+            if anualizar:
+                comp = "PBI: crecimiento anualizado (%)"
+                ayuda_c = "Tasa anual equivalente del crecimiento acumulado, usando la duración del mandato. El último dato disponible puede tener rezago; no mide causalidad."
             if ajustar:
                 comp = "Reservas al irse (USD M de hoy)"
                 ayuda_c = ("Reservas brutas del BCRA al final del mandato, expresadas en dólares de hoy con el IPC de EE. UU. "
@@ -127,7 +109,10 @@ def mostrar(
                              "antes. Es discutible, y se aplica igual a todos."),
                 ("Nota", "Los mandatos duraron distinto y ocurrieron en contextos muy distintos: es información, no un "
                         "ranking.")), unsafe_allow_html=True)
+            st.caption("Describe la evolución durante cada mandato; no atribuye causalidad. El mandato en curso tiene un período incompleto.")
+            st.dataframe(pd.DataFrame([{"Mandato": presidentes.CORTO[m.clave], "Desde": m.desde.strftime("%d/%m/%Y"), "Hasta": m.fin.strftime("%d/%m/%Y"), "Años": round((m.fin-m.desde).days/365.25, 1)} for m in MS]), hide_index=True)
             with st.expander("Cómo se calcula cada cifra"):
+
                 st.markdown(
                     """
 - **Inflación anual:** variación de los 12 meses previos al último mes completo antes de asumir y antes de irse
