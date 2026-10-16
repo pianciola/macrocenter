@@ -29,7 +29,14 @@ CSS = f"""
 /* el contenido estaba invisible hasta que llegara esta hoja (ver OCULTAR_HASTA_ESTILO): se muestra cuando además
    JS_PESTANAS ya detectó el tema (html[data-listo]), así tampoco se ve un instante con los colores del otro tema */
 html[data-listo] [data-testid="stSidebarUserContent"], html[data-listo] [data-testid="stMainBlockContainer"] {{
-    visibility: visible !important; animation: none !important; }}
+    opacity: 1 !important; animation: none !important; }}
+/* si el script del tema tardara, igual se muestra a los 1,2 s de llegar esta hoja (otro nombre de animación: así
+   arranca recién ahora y no hereda el reloj del respaldo de OCULTAR_HASTA_ESTILO) */
+[data-testid="stSidebarUserContent"], [data-testid="stMainBlockContainer"] {{
+    animation: mc-ver-hoja 0s linear 1.2s forwards; }}
+@keyframes mc-ver-hoja {{ to {{ opacity: 1; }} }}
+/* llegó la hoja: se va el círculo de carga de OCULTAR_HASTA_ESTILO */
+.stApp::after {{ content: none !important; display: none !important; animation: none !important; }}
 /* al cambiar de tema, todo cambia de color de golpe (sin transiciones que arrastren el color del tema anterior) */
 html[data-tema-cambio] *, html[data-tema-cambio] *::before, html[data-tema-cambio] *::after {{ transition: none !important; }}
 /* ── Tipografía (los íconos de Streamlit conservan su propia fuente) ── */
@@ -2022,14 +2029,20 @@ def contador_visitas(ruta: str, titulo: str) -> str:
 </script>"""
 
 
-# Primer elemento de la página: deja invisible el contenido (no el fondo) hasta que llega la hoja de estilos grande.
-# En un navegador nuevo, Streamlit baja por partes el código que dibuja cada tipo de elemento; si el de los textos
-# llegaba antes que el de la hoja de estilos, se veía un instante todo sin formato. Va con st.markdown, el mismo tipo
-# que los textos, así que se aplica junto con ellos. La hoja grande lo vuelve a mostrar; si no llegara, aparece igual a
-# los 4 segundos.
+# Primer elemento de la página: deja invisible el contenido (no el fondo) hasta que llega la hoja de estilos grande y,
+# mientras tanto, muestra un círculo de carga. Oculta con opacidad y no con visibility: algunos elementos de Streamlit
+# se declaran visibles y se escapaban del ocultamiento. En un navegador nuevo, Streamlit baja por partes el código que dibuja cada
+# tipo de elemento; si el de los textos llegaba antes que el de la hoja de estilos, se veía todo sin formato. En un
+# celular con 4G, la primera vez, la hoja puede tardar varios segundos (con un respaldo de 4 s se llegó a ver la franja
+# de cotizaciones cruda): el respaldo queda en 20 s, solo para el caso de que la hoja no llegue nunca. Va con
+# st.markdown, el mismo tipo que los textos, así que se aplica junto con ellos.
 OCULTAR_HASTA_ESTILO = (
-    "<style>[data-testid=\"stSidebarUserContent\"],[data-testid=\"stMainBlockContainer\"]{visibility:hidden;"
-    "animation:mc-ver-igual 0s linear 4s forwards}@keyframes mc-ver-igual{to{visibility:visible}}</style>"
+    "<style>[data-testid=\"stSidebarUserContent\"],[data-testid=\"stMainBlockContainer\"]{opacity:0;"
+    "animation:mc-ver-igual 0s linear 20s forwards}@keyframes mc-ver-igual{to{opacity:1}}"
+    ".stApp::after{content:\"\";position:fixed;left:50%;top:42%;width:42px;height:42px;margin:-21px 0 0 -21px;"
+    "border-radius:50%;border:4px solid rgba(116,172,223,.18);border-top-color:#74ACDF;border-right-color:#74ACDF;"
+    "z-index:999990;pointer-events:none;opacity:0;animation:mc-aro-ini .8s linear infinite,mc-aro-ver .3s ease .3s forwards}"
+    "@keyframes mc-aro-ini{to{transform:rotate(360deg)}}@keyframes mc-aro-ver{to{opacity:1}}</style>"
 )
 
 

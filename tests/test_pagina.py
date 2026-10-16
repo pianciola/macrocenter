@@ -140,6 +140,9 @@ def test_la_hoja_de_estilos_pasa_el_saneador():
 def test_el_contenido_espera_a_los_estilos():
     # en un navegador nuevo el contenido se ocultaba recién cuando llegaban los estilos: ahora arranca oculto (primer
     # elemento, st.markdown) y la hoja grande lo muestra cuando JS_PESTANAS ya marcó el tema (html[data-listo])
-    assert "visibility:hidden" in style.OCULTAR_HASTA_ESTILO and "4s forwards" in style.OCULTAR_HASTA_ESTILO
+    assert "opacity:0" in style.OCULTAR_HASTA_ESTILO and "20s forwards" in style.OCULTAR_HASTA_ESTILO
+    # mientras tanto, un círculo de carga que la hoja grande saca; y la hoja muestra el contenido aunque el script tarde
+    assert ".stApp::after" in style.OCULTAR_HASTA_ESTILO and ".stApp::after" in style.CSS
+    assert "mc-ver-hoja 0s linear 1.2s forwards" in style.CSS
     assert 'html[data-listo] [data-testid="stMainBlockContainer"]' in style.CSS
     assert "dataset.listo" in style.JS_PESTANAS
