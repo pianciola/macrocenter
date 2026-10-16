@@ -30,7 +30,9 @@ def test_inicio_sin_errores_ni_secciones_caidas():
 @pytest.mark.parametrize("ruta,clave,valor", [
     ("tablero/dolar", "pestana", "Dólar"),
     ("tablero/inicio", "pestana", "Resumen"),  # enlaces viejos
-    ("tablero/inflacion", "pestana", "Inflación"),
+    ("tablero/inflacion", "pestana", "Inflación y dinero"),
+    ("tablero/dinero-y-credito", "pestana", "Inflación y dinero"),
+    ("tablero/inflacion-y-dinero", "pestana", "Inflación y dinero"),
     ("herramientas/ajuste-de-alquileres", "inter_modo", "Ajuste de alquileres"),
     ("inversiones/glosario", "inv_seccion", "Glosario"),
     ("inversiones/conceptos", "inv_seccion", "Glosario"),  # enlaces viejos
@@ -96,3 +98,21 @@ def test_precios_mayoristas_se_bajan_y_se_calculan():
         assert not d.empty and {"fecha", "valor"} <= set(d.columns)
         v = _variaciones(d)
         assert v["mensual"].notna().all() and v["interanual"].dropna().size > 0
+
+
+def test_inflacion_y_dinero_en_una_sola_pestana():
+    at = _correr(ver="tablero/inflacion-y-dinero")
+    etiquetas = [t.label for t in at.tabs]
+    assert "Inflación y dinero" in etiquetas
+    assert "Inflación" not in etiquetas and "Dinero y crédito" not in etiquetas
+    textos = [m.value for m in at.markdown]
+    assert textos.index("#### Inflación") < textos.index("### Dinero y crédito")
+    assert not any("¿El dólar le ganó a la inflación?" in t for t in textos)
+    assert not any("DISTRITO</TH>" in t.upper() for t in textos)
+    assert list(dict.fromkeys(at.session_state["_fallas"])) == []
+
+
+def test_dolar_vs_inflacion_se_muestra_en_rendimientos_pasados():
+    at = _correr(ver="inversiones/rendimientos-pasados")
+    textos = [m.value for m in at.markdown]
+    assert any("¿El dólar le ganó a la inflación?" in t for t in textos)

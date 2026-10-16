@@ -131,8 +131,8 @@ def revisar_sitio() -> tuple[str, str]:
 
 def revisar_pantallas() -> list[str]:
     """Dibuja cada pantalla con AppTest y devuelve los problemas (excepciones o secciones que no se pudieron mostrar)."""
-    pestanas = ["Resumen", "Dólar", "Cripto", "Bolsas", "Reservas", "Actividad y PBI", "Salarios", "Inflación",
-                "Tasas y riesgo país", "Bonos", "Dinero y crédito", "Comercio exterior", "Resultado fiscal"]
+    pestanas = ["Resumen", "Dólar", "Cripto", "Bolsas", "Reservas", "Actividad y PBI", "Salarios", "Inflación y dinero",
+                "Tasas y riesgo país", "Bonos", "Comercio exterior", "Resultado fiscal"]
     vistas = [(f"Tablero · {p}", {"pestana": p}) for p in pestanas]
     vistas += [(f"Resumen · análisis {i + 1}", {"pestana": "Resumen", "inicio_analisis": i}) for i in range(9)]
     vistas += [(f"Ahorro e inversiones · {sec}", {"vista": "inversiones", "inv_seccion": sec}) for sec in

@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import hashlib
 import inspect
+import importlib
 import json
 import os
 import re
@@ -26,6 +27,10 @@ from macrocenter.carga import (  # descarga, cachés y copia de respaldo
     cargar_inversiones, cargar_mercados, cargar_noticias, cargar_todo, cargar_vivo, con_dolar_vivo, con_riesgo_vivo,
     envejecer_disco, protegido, reintentar_si_fallo,
 )
+
+# Módulos de presentación sin estado: recargarlos evita mezclar pantallas anteriores con la navegación nueva.
+for modulo in (style, inversiones, pestanas.inflacion):
+    importlib.reload(modulo)
 
 st.set_page_config(page_title="MacroCenter", page_icon=style.favicon(), layout="wide")
 st.session_state["_fallas"] = []  # fallas de datos de esta corrida (no se muestran; las lee el monitor)
@@ -233,7 +238,7 @@ def ir_a(destino: str) -> None:
 VISTAS = ("tablero", "inversiones", "historia", "juegos")
 # primero el ala financiera (lo que más se usa): dólar, bolsas, cripto, tasas y dinero; después precios, actividad,
 # sector externo, ingresos y cuentas públicas
-PESTANAS = ["Resumen", "Dólar", "Bolsas", "Cripto", "Tasas y riesgo país", "Bonos", "Dinero y crédito", "Inflación",
+PESTANAS = ["Resumen", "Dólar", "Bolsas", "Cripto", "Tasas y riesgo país", "Bonos", "Inflación y dinero",
             "Actividad y PBI", "Reservas", "Salarios", "Resultado fiscal", "Comercio exterior"]
 HIST_SECCIONES = ["Presidentes", "Ministros de Economía", "Viaje en el tiempo"]
 # Enlaces para compartir: ?ver=tablero/dolar, ?ver=herramientas/ajuste-de-alquileres, etc. (la misma ruta que cuenta
@@ -256,7 +261,8 @@ def abrir_ruta(ruta) -> None:
     st.session_state["vista"] = vista_
     # enlaces viejos: secciones que cambiaron de nombre o se juntaron con otra
     sub = {"conceptos": "glosario", "como-les-fue": "rendimientos-pasados", "inicio": "resumen",
-           "tasas-de-hoy": "tasas-y-plazos-fijos", "plazo-fijo-vs-uva": "tasas-y-plazos-fijos"}.get(sub, sub)
+           "tasas-de-hoy": "tasas-y-plazos-fijos", "plazo-fijo-vs-uva": "tasas-y-plazos-fijos",
+           "inflacion": "inflacion-y-dinero", "dinero-y-credito": "inflacion-y-dinero"}.get(sub, sub)
     elegida = next((o for o in opciones if style.slug(o) == sub), None)
     if elegida:
         st.session_state[clave] = elegida
@@ -642,7 +648,7 @@ ATAJOS = (
     ("tasas", "Tasas de plazo fijo hoy", ":material/percent:", ("inversiones", "inv_seccion", "Tasas y plazos fijos")),
     ("alquiler", "Ajustar un alquiler", ":material/home:", ("juegos", "inter_modo", "Ajuste de alquileres")),
     ("pesos", "¿Cuánto valían tus pesos?", ":material/savings:", ("juegos", "inter_modo", "¿Cuánto valían tus pesos?")),
-    ("mapa", "Inflación por provincia", ":material/map:", ("tablero", "pestana", "Inflación")),
+    ("mapa", "Inflación por provincia", ":material/map:", ("tablero", "pestana", "Inflación y dinero")),
     ("presidentes", "Economía por presidente", ":material/account_balance:", ("historia", "hist_seccion", "Presidentes")),
 )
 
@@ -709,8 +715,8 @@ def pantalla_inversiones() -> None:
     d = {"bancos": inv.get("bancos"), "rendimientos": inv.get("rendimientos"), "fci_hoy": tabla(inv.get("fci_hoy")),
          "fci_antes": tabla(inv.get("fci_antes")), "bitcoin": tabla(inv.get("bitcoin")),
          "merval": tabla(merc.get("^MERV")), "sp500": tabla(merc.get("^GSPC")), "dolares": dol, "rem": rem,
-         "cer": get("bcra:cer"), "uva": uva, "depositos_30d": get("bcra:depositos_30d")}
-    inversiones.mostrar(d, grafico)
+         "cer": get("bcra:cer"), "uva": uva, "depositos_30d": get("bcra:depositos_30d"), "infl_ia": infl_ia}
+    inversiones.mostrar(d, grafico, _grafico_periodo)
 
 
 def pantalla_juegos() -> None:
@@ -927,7 +933,10 @@ if vista != "tablero":
     pie_pagina()
     st.stop()
 
-t_res, t_dol, t_bol, t_cri, t_tasas, t_bonos, t_din, t_prec, t_act, t_res_i, t_sal, t_fis, t_com = st.tabs(
+# Migrar la selección de sesiones abiertas antes de fusionar las pestañas.
+if st.session_state.get("pestana") in ("Inflación", "Dinero y crédito"):
+    st.session_state["pestana"] = "Inflación y dinero"
+t_res, t_dol, t_bol, t_cri, t_tasas, t_bonos, t_prec, t_act, t_res_i, t_sal, t_fis, t_com = st.tabs(
     PESTANAS,
     # cada pestaña se calcula y se manda recién al abrirla: la primera carga pesa una fracción (clave en el celular)
     key="pestana", on_change="rerun",
@@ -1047,7 +1056,7 @@ def variaciones_ipc(df: pd.DataFrame) -> pd.DataFrame:
 
 @st.fragment
 def inflacion_distritos() -> None:
-    """Tabla con el último dato de cada distrito y gráfico para comparar la interanual de los que se elijan."""
+    """Mapa con el último dato de cada distrito disponible."""
     series = {}
     if infl_m is not None and infl_ia is not None:
         n = infl_m.merge(infl_ia, on="fecha", suffixes=("_m", "_ia"))
@@ -1064,31 +1073,12 @@ def inflacion_distritos() -> None:
         return
     st.markdown("#### Inflación por región y provincia")
     mapa.mostrar(series)
-    filas = []
-    for nombre, (fuente, v) in series.items():
-        u = v.dropna(subset=["mensual"]).iloc[-1]
-        filas.append([(nombre, "", fuente), f"{MESES_ES[u['fecha'].month - 1][:3]} {u['fecha']:%Y}",
-                      charts.num(u["mensual"], 1, suf="%"),
-                      charts.num(u["interanual"], 1, suf="%") if pd.notna(u["interanual"]) else "s/d"])
-    st.markdown(style.tabla(["Distrito", "Dato de", "Mensual", "Interanual"], filas), unsafe_allow_html=True)
     st.markdown(style.aclaracion(
         ("Cómo leerlo", "Cada instituto mide con su propia canasta y publica en su propia fecha, por eso el último mes no "
                         "es el mismo para todos. Una provincia que lleva más de seis meses sin publicar no se muestra "
                         "hasta que vuelva a hacerlo."),
         ("Regiones", "Las del INDEC cubren todo el país (Córdoba, por ejemplo, está en la Pampeana: su índice provincial "
                      "no está en la API de datos abiertos).")), unsafe_allow_html=True)
-    nombres = list(series)
-    defecto = [n for n in ("Nacional", "Ciudad de Buenos Aires", "Santa Fe", "Mendoza") if n in series]
-    elegidos = selector_categoria("Distritos", nombres, "infl_distritos", defecto=defecto, multi=True) or defecto
-    elegidos = [n for n in elegidos if n in series]
-    per = selector_periodo("infl_distritos", "2 años", mensual=True)
-    tabla_ia = None
-    for nombre in elegidos:
-        v = series[nombre][1][["fecha", "interanual"]].rename(columns={"interanual": nombre})
-        tabla_ia = v if tabla_ia is None else tabla_ia.merge(v, on="fecha", how="outer")
-    if tabla_ia is not None:
-        grafico(charts.lineas(rec(tabla_ia.sort_values("fecha"), 0, per), {n: n for n in elegidos},
-                              "Inflación interanual por distrito (%)", yfmt=",.1f", height=360), key="graf_infl_distritos")
 
 
 def ult_y_ant(df: pd.DataFrame | None, col: str = "valor", atras: int = 1) -> tuple[float | None, float | None]:
@@ -1565,9 +1555,12 @@ with t_sal, protegido("Salarios"):
         abrir(pestanas.salarios)
 
 # ── Inflación ──
-with t_prec, protegido("Inflación"):
+with t_prec, protegido("Inflación y dinero"):
     if t_prec.open:  # solo la pestaña abierta se calcula y se manda al navegador
         abrir(pestanas.inflacion)
+        st.divider()
+        st.markdown("### Dinero y crédito")
+        abrir(pestanas.dinero)
 
 # ── Tasas y riesgo país ──
 with t_tasas, protegido("Tasas y riesgo país"):
@@ -1578,11 +1571,6 @@ with t_tasas, protegido("Tasas y riesgo país"):
 with t_bonos, protegido("Bonos"):
     if t_bonos.open:  # solo la pestaña abierta se calcula y se manda al navegador
         pantalla_bonos()
-
-# ── Dinero y crédito ──
-with t_din, protegido("Dinero y crédito"):
-    if t_din.open:  # solo la pestaña abierta se calcula y se manda al navegador
-        abrir(pestanas.dinero)
 
 # ── Comercio exterior ──
 with t_com, protegido("Comercio exterior"):

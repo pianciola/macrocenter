@@ -15,8 +15,8 @@ Si cambiás el código, cerrá y volvé a abrir `run.bat`: Streamlit no recarga 
 
 ## Qué muestra
 
-Orden de las pestañas: Resumen, después el ala financiera (Dólar, Bolsas, Cripto, Tasas y riesgo país, Dinero y crédito) y
-luego Inflación, Actividad y PBI, Reservas, Salarios, Resultado fiscal y Comercio exterior. Cada una vive en su archivo
+Orden de las pestañas: Resumen, después el ala financiera (Dólar, Bolsas, Cripto, Tasas y riesgo país, Bonos) y
+luego Inflación y dinero, Actividad y PBI, Reservas, Salarios, Resultado fiscal y Comercio exterior. Cada una vive en su archivo
 de `macrocenter/pestanas/`.
 
 | Pestaña | Contenido |
@@ -28,10 +28,9 @@ de `macrocenter/pestanas/`.
 | Dólar | Los 7 dólares (oficial, mayorista, blue, MEP, CCL, cripto, tarjeta) con compra, venta, variación y brecha; euro y libra esterlina (referencia BCRA); gráficos y brecha cambiaria; formulario para anotarse en las alertas por mail |
 | Reservas | Reservas brutas del BCRA y variación mensual; balance cambiario (cuenta corriente, cuenta financiera y compra neta de dólares de personas y empresas) |
 | Actividad y PBI | PBI trimestral, EMAE (original y desestacionalizado), desocupación |
-| Inflación | Inflación mensual/interanual, REM, por región (INDEC) y por provincia (Ciudad de Buenos Aires, Santa Fe, Mendoza, Tucumán, San Luis, Chaco y Neuquén; una provincia con más de 6 meses sin publicar no se muestra), UVA, CER, UVI, ICL, dólar vs inflación |
+| Inflación y dinero | Inflación mensual/interanual, REM, por región (INDEC) y por provincia (Ciudad de Buenos Aires, Santa Fe, Mendoza, Tucumán, San Luis, Chaco y Neuquén; una provincia con más de 6 meses sin publicar no se muestra), UVA, CER, UVI, ICL, base monetaria, M2 privado y préstamos al sector privado |
 | Tasas y riesgo país | BADLAR, TAMAR, plazo fijo, préstamos personales, riesgo país |
 | Bonos | Bonos argentinos en dólares por vencimiento, ley Nueva York (GD) y ley local (AL/AE), con su historia (data912); tasa de la Fed y bonos del Tesoro de EE. UU. a 3 meses, 2, 10 y 30 años (FRED) |
-| Dinero y crédito | Base monetaria, M2 privado, préstamos al sector privado |
 | Comercio exterior | Exportaciones, importaciones, saldo comercial |
 
 ## Navegación: Tablero, Ahorro e inversiones, Herramientas e Historia económica
@@ -49,7 +48,7 @@ pantalla aclara sus supuestos.
   rendimientos que informan billeteras y plataformas, contra la inflación esperada (REM del BCRA), y al final una calculadora de plazo fijo tradicional vs. UVA con la
   inflación de empate entre los dos. Datos de ArgentinaDatos.
 - **Rendimientos pasados**: cuánto valdría hoy un monto invertido hace 1 mes a 5 años en plazo fijo, UVA, dólar MEP, Merval,
-  S&P 500 y bitcoin, contra la inflación (CER).
+  S&P 500 y bitcoin, contra la inflación (CER). Incluye el gráfico interanual de dólar oficial y blue frente a la inflación.
 - **Glosario**: los términos básicos, tomados del glosario de la app.
 
 ## Historia económica (línea de tiempo)

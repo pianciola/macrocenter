@@ -9,7 +9,7 @@ from macrocenter import charts, style
 
 
 def mostrar(
-    *, HOY, delta, dif, dol, dol_rec, get, grafico, grafico_periodo, infl_ia, infl_m, inflacion_distritos, ipim, ipp,
+    *, delta, dif, get, grafico, infl_ia, infl_m, inflacion_distritos, ipim, ipp,
     kpi, rec, rem, ult_y_ant, ultimo, uva,
 ) -> None:
     st.markdown(style.intro("La inflación (**IPC** del INDEC), lo que espera el mercado para los próximos 12 meses (**REM** del BCRA) y la "
@@ -43,28 +43,6 @@ def mostrar(
     if ipim is not None:
         mayoristas(ipim, ipp, infl_ia, dif, grafico, kpi, rec, ult_y_ant)
     inflacion_distritos()
-    if infl_ia is not None and dol is not None:
-        st.markdown("#### ¿El dólar le ganó a la inflación?")
-        # dólar: último dato de cada mes y variación contra el mismo mes del año anterior (igual que la inflación interanual)
-        dm = dol_rec[dol_rec["fecha"] <= HOY][["fecha", "oficial", "blue"]].copy()
-        dm["mes"] = dm["fecha"].dt.to_period("M")
-        dm = dm.groupby("mes").last()
-        for c_ in ("oficial", "blue"):
-            dm[c_] = dm[c_].pct_change(12) * 100
-        ii = infl_ia[infl_ia["fecha"] <= HOY].assign(mes=lambda d: d["fecha"].dt.to_period("M")).set_index("mes")
-        comp = dm.join(ii["valor"].rename("inflacion"), how="outer")
-        # la fecha del punto es el fin de mes; el mes en curso (incompleto) queda en el último día con dato
-        fin = comp.index.to_timestamp(how="end").normalize()
-        comp["fecha"] = comp["fecha"].where(fin > HOY, fin).fillna(pd.Series(fin, index=comp.index))
-        comp = comp.reset_index(drop=True)
-        grafico_periodo("precios_dolar_infl", comp, lambda d: charts.lineas(
-            d, {"Inflación interanual": "inflacion", "Dólar oficial": "oficial", "Dólar blue": "blue"},
-            "Inflación vs. dólar — variación contra el mismo mes del año anterior (%)", yfmt=",.0f", height=340),
-            mensual=True)
-        st.markdown(style.aclaracion(
-            ("Cómo leerlo", "Si una línea del dólar queda por debajo de la inflación, el dólar subió menos que los precios: "
-                            "en términos reales, se abarató."),
-            ("Nota", "La inflación se publica con un mes de rezago.")), unsafe_allow_html=True)
     with st.expander("Índices de ajuste: UVA, CER, UVI e ICL"):
         pares = [("bcra:uva", "UVA (pesos)", ",.0f"), ("bcra:cer", "CER (base 2/2/2002 = 1)", ",.0f"),
                  ("bcra:uvi", "UVI (pesos)", ",.0f"), ("bcra:icl", "ICL — Índice para Contratos de Locación", ",.1f")]

@@ -396,6 +396,37 @@ def pantalla_historica(d: dict, grafico) -> None:
         unsafe_allow_html=True)
 
 
+def comparar_dolar_inflacion(d: dict, grafico_periodo) -> None:
+    """Comparación interanual trasladada desde Inflación a Rendimientos pasados."""
+    HOY = _hoy()
+    infl_ia, dol = d.get("infl_ia"), d.get("dolares")
+    dol_rec = dol.dropna(subset=["oficial"]) if _ok(dol) else None
+    if _ok(infl_ia) and _ok(dol_rec):
+        st.markdown("#### ¿El dólar le ganó a la inflación?")
+        # dólar: último dato de cada mes y variación contra el mismo mes del año anterior (igual que la inflación interanual)
+        dm = dol_rec[dol_rec["fecha"] <= HOY][["fecha", "oficial", "blue"]].copy()
+        dm["mes"] = dm["fecha"].dt.to_period("M")
+        dm = dm.groupby("mes").last()
+        if not dm.empty:
+            dm = dm.reindex(pd.period_range(dm.index.min(), dm.index.max(), freq="M"))
+        for c_ in ("oficial", "blue"):
+            dm[c_] = dm[c_].pct_change(12, fill_method=None) * 100
+        ii = infl_ia[infl_ia["fecha"] <= HOY].assign(mes=lambda d: d["fecha"].dt.to_period("M")).set_index("mes")
+        comp = dm.join(ii["valor"].rename("inflacion"), how="outer")
+        # la fecha del punto es el fin de mes; el mes en curso (incompleto) queda en el último día con dato
+        fin = comp.index.to_timestamp(how="end").normalize()
+        comp["fecha"] = comp["fecha"].where(fin > HOY, fin).fillna(pd.Series(fin, index=comp.index))
+        comp = comp.reset_index(drop=True)
+        grafico_periodo("inv_dolar_infl", comp, lambda d: charts.lineas(
+            d, {"Inflación interanual": "inflacion", "Dólar oficial": "oficial", "Dólar blue": "blue"},
+            "Inflación vs. dólar — variación contra el mismo mes del año anterior (%)", yfmt=",.0f", height=340),
+            mensual=True)
+        st.markdown(style.aclaracion(
+            ("Cómo leerlo", "Si una línea del dólar queda por debajo de la inflación, el dólar subió menos que los precios: "
+                            "en términos reales, se abarató."),
+            ("Nota", "La inflación se publica con un mes de rezago.")), unsafe_allow_html=True)
+
+
 def pantalla_uva(d: dict, grafico) -> None:
     """Calculadora tradicional vs. UVA: va al final de «Tasas y plazos fijos»."""
     st.markdown("#### ¿Plazo fijo tradicional o UVA?")
@@ -484,7 +515,7 @@ def pantalla_conceptos() -> None:
     st.markdown(style.conceptos([(g, items) for g, items in grupos if items]), unsafe_allow_html=True)
 
 
-def mostrar(d: dict, grafico) -> None:
+def mostrar(d: dict, grafico, grafico_periodo) -> None:
     """Pantalla completa. `d`: las series y tablas (ver app.py); `grafico`: la función de la app que dibuja figuras."""
     st.markdown(style.aviso(AVISO, AVISO_TITULO), unsafe_allow_html=True)
     sec = selector.uno(st.segmented_control, "Sección", SECCIONES, "inv_seccion", label_visibility="collapsed")
@@ -493,5 +524,6 @@ def mostrar(d: dict, grafico) -> None:
         pantalla_uva(d, grafico)
     elif sec == "Rendimientos pasados":
         pantalla_historica(d, grafico)
+        comparar_dolar_inflacion(d, grafico_periodo)
     else:
         pantalla_conceptos()

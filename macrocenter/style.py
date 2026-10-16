@@ -1163,16 +1163,25 @@ html[data-tema="claro"] :is(.mc-min-card, .mc-viaje, .mc-nota, .mc-min-grupo, .m
 [role="tablist"]::-webkit-scrollbar {{ display: none !important; }}
 /* el bloque que solo trae el script no ocupa lugar (ni el espacio entre elementos) */
 [data-testid="stElementContainer"]:has(> [data-testid="stHtml"] > script:only-child) {{ display: none; }}
-/* flechas de desplazamiento: botón redondo celeste sobre el degradé que ya pone Streamlit */
-[data-testid="stTabsScrollLeft"], [data-testid="stTabsScrollRight"] {{
-    width: 52px !important; height: 3.4rem !important; display: flex; align-items: center; cursor: pointer;
+/* Las flechas tienen carriles propios: nunca ocupan el área de texto desplazable. */
+[role="tablist"] {{
+    width: calc(100% - 96px) !important; margin-inline: 48px !important; box-sizing: border-box;
 }}
-/* en pantallas táctiles la fila se desliza con el dedo: sin las flechas, que tapaban la pestaña elegida */
-@media (hover: none) {{ [data-testid="stTabsScrollLeft"], [data-testid="stTabsScrollRight"] {{ display: none !important; }} }}
-/* la flecha izquierda va a la derecha de «Resumen», que queda fija en el borde: JS_PESTANAS mide la píldora y
-   pone --mc-flecha (con un nombre más largo o la letra más grande, una posición fija la tapaba) */
-[data-testid="stTabsScrollLeft"] {{ justify-content: flex-start; left: var(--mc-flecha, 11rem) !important; z-index: 4; }}
-[data-testid="stTabsScrollRight"] {{ justify-content: flex-end; }}
+[data-testid="stTabsScrollLeft"], [data-testid="stTabsScrollRight"] {{
+    position: absolute !important; top: 0 !important; width: 40px !important; height: 3.4rem !important;
+    display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 4;
+    background: transparent !important;
+}}
+[data-testid="stTabsScrollLeft"] {{ left: 0 !important; right: auto !important; }}
+[data-testid="stTabsScrollRight"] {{ right: 0 !important; left: auto !important; }}
+@media (hover: none) {{
+    [data-testid="stTabsScrollLeft"], [data-testid="stTabsScrollRight"] {{ display: none !important; }}
+    [role="tablist"] {{ width: 100% !important; margin-inline: 0 !important; }}
+}}
+/* En filas angostas, la píldora fija dejaba sin espacio a los demás marcadores. */
+@container principal (max-width: 600px) {{
+    [role="tablist"] [data-testid="stTab"]:first-of-type {{ position: relative !important; left: auto !important; }}
+}}
 [data-testid="stTabsScrollLeft"] svg, [data-testid="stTabsScrollRight"] svg {{
     width: 32px !important; height: 32px !important; padding: 5px; box-sizing: border-box; border-radius: 50%;
     color: {CELESTE}; border: 1px solid rgba(116,172,223,.55);
@@ -1703,31 +1712,24 @@ JS_PESTANAS = """
   }, true);
 })();
 (() => {
-  if (window.__mcPestanasV3) return;
-  window.__mcPestanasV3 = true;
-  const MARGEN = 56;  // lo que tapa cada flechita (botón + degradé)
-  // Destino de la fila para que se vean enteras la pestaña tocada y sus vecinas. Si ya se ven (las del medio),
-  // devuelve null y la fila no se mueve.
+  if (window.__mcPestanasV4) return;
+  window.__mcPestanasV4 = true;
+  // Mostrar la pestaña elegida dentro del área libre; las flechas quedan fuera de esa área.
   const destinoPara = (tab) => {
     const c = tab && tab.closest('[role="tablist"]');
     if (!c || c.scrollWidth <= c.clientWidth + 1) return null;
     const tabs = [...c.querySelectorAll('[role="tab"]')], i = tabs.indexOf(tab);
-    const r = c.getBoundingClientRect();
-    if (i === 0) return null;  // «Resumen» está siempre a la vista
-    const izq = (i <= 1 ? tab : tabs[i - 1]).getBoundingClientRect();
-    const der = tabs[Math.min(tabs.length - 1, i + 1)].getBoundingClientRect();
-    const t = tab.getBoundingClientRect();
-    // zona libre: desde el borde derecho de «Resumen» (fija) o de la flecha izquierda, si se ve, hasta la flecha derecha
-    const visible = (el) => el && el.offsetWidth && getComputedStyle(el).display !== 'none' && getComputedStyle(el).visibility !== 'hidden';
-    const fL = c.parentElement && c.parentElement.querySelector('[data-testid="stTabsScrollLeft"]');
-    const fR = c.parentElement && c.parentElement.querySelector('[data-testid="stTabsScrollRight"]');
-    const res = tabs[0].getBoundingClientRect();
-    const desde = Math.max(res.right + 12, visible(fL) ? res.right + 12 + fL.offsetWidth : 0, r.left + MARGEN);
-    const hasta = r.right - (visible(fR) ? fR.offsetWidth + 6 : 12);
+    if (i < 0) return null;
+    // Los dos primeros marcadores recuperan el inicio exacto, sin compensaciones de la píldora sticky.
+    if (i <= 1) return {c, left: 0};
+    const r = c.getBoundingClientRect(), t = tab.getBoundingClientRect();
+    const primero = tabs[0], fijo = getComputedStyle(primero).position === 'sticky';
+    const desde = fijo ? primero.getBoundingClientRect().right + 20 : r.left + 8;
+    const hasta = r.right - 8;
     let delta = 0;
-    if (der.right - izq.left > hasta - desde) delta = (t.left + t.width / 2) - (desde + hasta) / 2;  // no entran: centrar en la zona libre
-    else if (der.right > hasta) delta = der.right - hasta;
-    else if (izq.left < desde) delta = izq.left - desde;
+    if (t.width > hasta - desde) delta = t.left - desde;
+    else if (t.left < desde) delta = t.left - desde;
+    else if (t.right > hasta) delta = t.right - hasta;
     if (Math.abs(delta) < 2) return null;
     return {c, left: Math.max(0, Math.min(c.scrollWidth - c.clientWidth, c.scrollLeft + delta))};
   };
@@ -1744,7 +1746,7 @@ JS_PESTANAS = """
     const mio = ++turno;
     setTimeout(() => {
       if (mio !== turno) return;
-      d.c.scrollTo({left: d.left, behavior: 'smooth'});
+      d.c.scrollTo({left: d.left, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'});
       // si la animación no llega (pestaña en segundo plano, ahorro de energía), termina igual; un clic posterior manda
       setTimeout(() => { if (mio === turno && Math.abs(d.c.scrollLeft - d.left) > 2) d.c.scrollLeft = d.left; }, 900);
     }, 0);
@@ -1776,8 +1778,8 @@ JS_PESTANAS = """
   document.addEventListener('click', (e) => {
     const flecha = e.target.closest && e.target.closest('[data-testid="stTabsScrollLeft"], [data-testid="stTabsScrollRight"]');
     if (!flecha) return;
-    const c = flecha.parentElement && flecha.parentElement.querySelector('[role="tablist"]')
-      || document.querySelector('[role="tablist"]');
+    const bloque = flecha.closest('[data-testid="stTabs"]');
+    const c = bloque && bloque.querySelector('[role="tablist"]');
     if (!c) return;
     e.stopPropagation();
     e.preventDefault();
@@ -1870,29 +1872,6 @@ JS_PESTANAS = """
     setTimeout(pasar, 2500);  // si la app lo pisó al redibujar, se vuelve a poner
   };
   pasar();
-})();
-(() => {
-  // Flecha izquierda de las pestañas: justo a la derecha de «Resumen» (que queda fija). Se mide la píldora y se
-  // guarda en --mc-flecha; solo se recalcula al cambiar el tamaño de la ventana o al tocar la fila.
-  if (window.__mcFlecha) return;
-  window.__mcFlecha = true;
-  const raiz = document.documentElement;
-  const medir = () => {
-    const lista = document.querySelector('[role="tablist"]');
-    const res = lista && lista.querySelector('[data-testid="stTab"]');
-    if (!res) return false;
-    const x = Math.round(res.getBoundingClientRect().right - lista.getBoundingClientRect().left + 30);  // después de la línea divisoria
-    const valor = Math.max(x, 60) + 'px';
-    if (raiz.style.getPropertyValue('--mc-flecha') !== valor) raiz.style.setProperty('--mc-flecha', valor);
-    return true;
-  };
-  let n = 0;
-  const arrancar = () => { if (!medir() && n++ < 60) setTimeout(arrancar, 500); };
-  arrancar();
-  window.addEventListener('resize', () => setTimeout(medir, 120), { passive: true });
-  document.addEventListener('pointerdown', (e) => {
-    if (e.target && e.target.closest && e.target.closest('[role="tablist"], [data-testid^="stTabsScroll"]')) setTimeout(medir, 60);
-  }, { passive: true, capture: true });
 })();
 (() => {
   // Presentaciones de las pestañas: se pueden ocultar con su flechita (y volver a abrir). La elección se recuerda en
