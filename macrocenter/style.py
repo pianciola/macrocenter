@@ -1453,7 +1453,7 @@ h3 {{ font-weight: 700 !important; }}
     [data-testid="stTab"] p {{ font-size: 1rem; }}
     .mc-dato-meta {{ font-size: .76rem; }}
     .mc-fx .n {{ overflow-wrap: anywhere; }}
-    .mc-acl .fila {{ grid-template-columns: 1fr; gap: 4px; }}
+    .mc-acl .f {{ grid-template-columns: 1fr; gap: 4px; }}
     .mc-intro {{ padding-left: 14px; }}
     [data-testid="stMain"] h3 {{ font-size: 1.2rem; }}
 }}
@@ -1461,6 +1461,18 @@ h3 {{ font-weight: 700 !important; }}
     [data-testid="stMetric"] {{ padding: .65rem !important; }}
     [data-testid="stMetricLabel"] p {{ font-size: .82rem !important; }}
     [data-testid="stMetricDelta"], [data-testid="stMetricDelta"] p {{ font-size: .78rem !important; }}
+}}
+
+.mc-tabla-scroll {{ width: 100%; max-width: 100%; overflow-x: auto; overscroll-behavior-x: contain; }}
+.mc-tabla-scroll:focus-visible {{ outline: 2px solid #74ACDF; outline-offset: 3px; }}
+.mc-tabla-scroll .mc-cmp {{ margin-block: 4px; }}
+.mc-tabla-scroll .mc-cmp th {{ white-space: normal; }}
+.mc-tabla-scroll .mc-cmp td:not(:first-child) {{ white-space: nowrap; }}
+@container principal (max-width: 560px) {{
+    .mc-tabla-ancha .mc-cmp {{ min-width: 540px; }}
+    .mc-tabla-scroll .mc-cmp th, .mc-tabla-scroll .mc-cmp td {{ padding: 10px 12px; }}
+    .mc-acl .f {{ grid-template-columns: 1fr; gap: 3px; }}
+    button[data-variant="segmented_control"], [role="radio"] {{ min-height: 44px; }}
 }}
 </style>
 """
@@ -1777,8 +1789,8 @@ JS_PESTANAS = """
   }, true);
 })();
 (() => {
-  if (window.__mcPestanasV5) return;
-  window.__mcPestanasV5 = true;
+  if (window.__mcPestanasV6) return;
+  window.__mcPestanasV6 = true;
   // Mostrar la pestaña elegida dentro del área libre; las flechas quedan fuera de esa área.
   const destinoPara = (tab) => {
     const c = tab && tab.closest('[role="tablist"]');
@@ -1802,7 +1814,11 @@ JS_PESTANAS = """
   // y queda un único movimiento suave, el nuestro (si no, las dos animaciones se pisan y la fila salta).
   const scrollOriginal = Element.prototype.scrollIntoView;
   Element.prototype.scrollIntoView = function (...args) {
-    if (this.getAttribute && this.getAttribute('role') === 'tab' && this.closest('[role="tablist"]')) return;
+    if (this.getAttribute && this.getAttribute('role') === 'tab' && this.closest('[role="tablist"]')) {
+      const fila = this.closest('[role="tablist"]'), r = fila.getBoundingClientRect();
+      if (r.top < 0 || r.bottom > window.innerHeight) scrollOriginal.call(fila, {block: 'nearest', inline: 'nearest'});
+      return;
+    }
     return scrollOriginal.apply(this, args);
   };
   let turno = 0;
@@ -2512,7 +2528,9 @@ def tabla_simple(cabeceras: list[str], filas: list[list[str]]) -> str:
     esc = html.escape
     cab = "".join(f"<th>{esc(c)}</th>" for c in cabeceras)
     cuerpo = "".join("<tr>" + "".join(f"<td>{esc(str(c))}</td>" for c in f) + "</tr>" for f in filas)
-    return f'<table class="mc-cmp"><thead><tr>{cab}</tr></thead><tbody>{cuerpo}</tbody></table>'
+    ancho = ' mc-tabla-ancha' if len(cabeceras) >= 4 else ''
+    return (f'<div class="mc-tabla-scroll{ancho}" role="region" tabindex="0" aria-label="Tabla de datos; desplazamiento horizontal">'
+            f'<table class="mc-cmp"><thead><tr>{cab}</tr></thead><tbody>{cuerpo}</tbody></table></div>')
 
 
 def foto_html(nombre: str, iniciales: str, url: str | None, pagina: str | None = None, actual: bool = False) -> str:

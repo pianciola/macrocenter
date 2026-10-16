@@ -15,7 +15,14 @@ def detalle(serie, fuente: str, *, hoy=None, max_dias: int | None = None) -> str
         if pd.isna(fecha):
             return pd.NaT
         return fecha.tz_convert("America/Argentina/Buenos_Aires").tz_localize(None) if fecha.tzinfo else fecha
-    fechas = pd.to_datetime(serie["fecha"].map(local))
+    try:
+        fechas = pd.to_datetime(serie["fecha"], errors="coerce", format="mixed")
+        if isinstance(fechas.dtype, pd.DatetimeTZDtype):
+            fechas = fechas.dt.tz_convert("America/Argentina/Buenos_Aires").dt.tz_localize(None)
+        elif not pd.api.types.is_datetime64_any_dtype(fechas):
+            fechas = pd.to_datetime(serie["fecha"].map(local))
+    except (ValueError, TypeError):
+        fechas = pd.to_datetime(serie["fecha"].map(local))
     fechas = fechas.dropna().drop_duplicates().sort_values()
     fechas = fechas[fechas <= hoy + pd.Timedelta(days=1) - pd.Timedelta(nanoseconds=1)]
     if fechas.empty:

@@ -206,7 +206,13 @@ def _entrada(mem: dict, nombre: str) -> dict:
 
 
 def _bajar_y_guardar(e: dict, bajar, ttl: int, reintento: int) -> None:
-    nuevo = bajar()
+    try:
+        nuevo = bajar()
+    except Exception:
+        e["t"] = time.time() - (ttl - reintento)
+        raise
+    nuevo = {k: ("la fuente respondió sin datos" if isinstance(v, pd.DataFrame) and v.empty else v)
+             for k, v in nuevo.items()}
     viejo = e["v"] or {}
     e["v"] = {k: (viejo[k] if isinstance(v, str) and k in viejo and not isinstance(viejo[k], str) else v)
               for k, v in nuevo.items()}

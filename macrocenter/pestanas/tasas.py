@@ -11,7 +11,8 @@ def mostrar(
     *, _ult_y_hace, dif, get, grafico, grafico_periodo, kpi, panel_plazo_fijo, pases, rec, riesgo, tpm,
 ) -> None:
     st.markdown(style.intro("Cuánto cuesta el dinero en pesos (**tasas de interés**) y cuánto le cuesta a la Argentina endeudarse "
-                            "(**riesgo país**).", [("bien", "El riesgo país baja"), ("mal", "Sube")]), unsafe_allow_html=True)
+                            "(**riesgo país**).", [("bien", "El riesgo país baja"), ("mal", "Sube")],
+                            "TNA: tasa nominal anual, sin capitalización. No representa el costo total de un crédito."), unsafe_allow_html=True)
     k = st.columns(4)
     v, a_ = _ult_y_hace(riesgo)
     kpi(k[0], "Riesgo país", v, 0, suf=" pb", d=dif(v, a_), d_suf=" pb", d_dec=0, color="inverse",
@@ -34,8 +35,8 @@ def mostrar(
         grafico(charts.lineas(rec(ref, 3), {c_: c_ for c_ in ref.columns if c_ != "fecha"},
                               "Tasa de política monetaria y tasa de pases a 1 día (TNA, %)", yfmt=",.0f", paso=True))
         st.markdown(style.aclaracion(
-            ("Nota", "La API del BCRA no registra datos de tasa de política monetaria después del 10/07/2025 (último "
-                    "valor: 29% TNA). Como referencia vigente se muestra la tasa de pases a 1 día.")), unsafe_allow_html=True)
+            ("Series históricas", "Cada línea termina en la última fecha informada por el BCRA. Una serie que dejó de "
+                    "publicarse no indica una tasa vigente; consultá la fecha del último punto.")), unsafe_allow_html=True)
     a, b = st.columns(2)
     with a:
         tasas = {}

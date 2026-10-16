@@ -14,7 +14,8 @@ def mostrar(
 ) -> None:
     st.markdown(style.intro("La inflación (**IPC** del INDEC), lo que espera el mercado para los próximos 12 meses (**REM** del BCRA) y la "
                             "**UVA**, la unidad que ajusta créditos y plazos fijos por inflación.",
-                            [("bien", "La inflación baja"), ("mal", "Sube")]), unsafe_allow_html=True)
+                            [("bien", "La inflación baja"), ("mal", "Sube")],
+                            "pp significa puntos porcentuales: pasar de 3% a 2% es bajar 1 pp. La fecha corresponde al período medido."), unsafe_allow_html=True)
     k = st.columns(4)
     v, a_ = ult_y_ant(infl_m)
     kpi(k[0], "Inflación mensual", v, 1, suf="%", d=dif(v, a_), d_suf=" pp", d_txt="vs mes ant.", color="inverse", serie=infl_m, fuente='INDEC · vía BCRA')

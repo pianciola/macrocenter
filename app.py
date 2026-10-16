@@ -19,8 +19,8 @@ from pathlib import Path
 import pandas as pd
 import streamlit as st
 
-from macrocenter import (charts, data, datos_vista, glosario, interactivo, inversiones, legal, mapa, ministros, news, pestanas,
-                         presidentes, selector, style)
+from macrocenter import (carga, charts, data, datos_vista, glosario, interactivo, inversiones, legal, mapa, ministros, news, pestanas,
+                         presidentes, selector, series, style)
 from macrocenter.avisos import actualizando, falla
 from macrocenter.carga import (  # descarga, cachés y copia de respaldo
     _estado_actualizar, _memoria, _precalentar, _ultima_carga, _va_a_demorar, cargar_bonos, cargar_cripto, cargar_fotos,
@@ -29,7 +29,7 @@ from macrocenter.carga import (  # descarga, cachés y copia de respaldo
 )
 
 # Módulos de presentación sin estado: recargarlos evita mezclar pantallas anteriores con la navegación nueva.
-for modulo in (data, datos_vista, style, charts, inversiones, interactivo,
+for modulo in (carga, data, datos_vista, series, style, charts, inversiones, interactivo,
                *(getattr(pestanas, nombre) for nombre in pestanas.__all__)):
     importlib.reload(modulo)
 
@@ -499,7 +499,7 @@ ripte, smvm, haber_min = get("serie:ripte"), get("serie:smvm"), get("serie:haber
 
 
 def yoy(df: pd.DataFrame, periodos: int = 12) -> pd.DataFrame:
-    return df.assign(valor=df["valor"].pct_change(periodos) * 100).dropna()
+    return series.cambio_periodico(df, periodos=periodos).dropna(subset=["valor"])
 
 
 def salario_real() -> pd.DataFrame | None:
@@ -985,8 +985,8 @@ CATALOGO = {
     "riesgo": ("Sector externo", "Riesgo país (pb)", _kpi(riesgo, modo="abs", dec=0, d_suf=" pb", color="inverse", d_dec=0, fuente='ArgentinaDatos · EMBI')),
     "badlar": ("Tasas", "BADLAR (TNA)", _kpi(badlar, modo="abs", dec=1, suf="%", d_suf=" pp", color="off", fuente='BCRA')),
     "pases": ("Tasas", "Pases 1 día (TNA)", _kpi(pases, modo="abs", dec=1, suf="%", d_suf=" pp", color="off",
-                                                 help="Tasa de referencia vigente. La API del BCRA no registra tasa de "
-                                                      "política monetaria después de julio de 2025.", fuente='BCRA')),
+                                                 help="Tasa de pases a un día del BCRA. Consultá la fecha del dato: "
+                                                      "la serie puede haber dejado de publicarse.", fuente='BCRA')),
     "uva": ("Tasas", "UVA", _kpi(uva, dec=2, pre="$", color="off", fuente='BCRA')),
     "infl_m": ("Precios", "Inflación mensual", _kpi(infl_m, dec=1, suf="%", color="inverse", **_MES, fuente='INDEC · vía BCRA')),
     "infl_ia": ("Precios", "Inflación interanual", _kpi(infl_ia, dec=1, suf="%", color="inverse", **_MES, fuente='INDEC · vía BCRA')),
@@ -1086,14 +1086,9 @@ def inflacion_distritos() -> None:
                      "no está en la API de datos abiertos).")), unsafe_allow_html=True)
 
 
-def ult_y_ant(df: pd.DataFrame | None, col: str = "valor", atras: int = 1) -> tuple[float | None, float | None]:
-    """Último dato y el de `atras` períodos antes (None si no hay)."""
-    if df is None or col not in df:
-        return None, None
-    s = df[df["fecha"] <= HOY].dropna(subset=[col])[col]
-    if s.empty:
-        return None, None
-    return float(s.iloc[-1]), (float(s.iloc[-1 - atras]) if len(s) > atras else None)
+def ult_y_ant(df: pd.DataFrame | None, col: str = "valor", atras: int = 1, meses: int = 1) -> tuple[float | None, float | None]:
+    """Compara períodos calendario; un mes o trimestre ausente no se sustituye por otro."""
+    return series.comparar(df, col, atras=atras, meses=meses, hoy=HOY)
 
 
 def dif(a: float | None, b: float | None) -> float | None:
@@ -1186,7 +1181,7 @@ def bloque_pobreza(titulo: bool = True) -> None:
     k = st.columns(3)
     pp = pob.assign(valor=pob["valor"] * 100) if pob is not None else None
     if pp is not None:
-        v, a_ = ult_y_ant(pp)
+        v, a_ = ult_y_ant(pp, meses=6)
         kpi(k[0], f"Pobreza · {semestre_pobreza(pp['fecha'].iloc[-1])}", v, 1, suf="%", d=dif(v, a_), d_suf=" pp",
             d_txt="vs semestre ant.", color="inverse",
             help="Porcentaje de personas en hogares cuyos ingresos no alcanzan la canasta básica total. EPH del INDEC, "
