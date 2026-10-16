@@ -1712,8 +1712,8 @@ JS_PESTANAS = """
   }, true);
 })();
 (() => {
-  if (window.__mcPestanasV4) return;
-  window.__mcPestanasV4 = true;
+  if (window.__mcPestanasV5) return;
+  window.__mcPestanasV5 = true;
   // Mostrar la pestaña elegida dentro del área libre; las flechas quedan fuera de esa área.
   const destinoPara = (tab) => {
     const c = tab && tab.closest('[role="tablist"]');
@@ -1751,6 +1751,26 @@ JS_PESTANAS = """
       setTimeout(() => { if (mio === turno && Math.abs(d.c.scrollLeft - d.left) > 2) d.c.scrollLeft = d.left; }, 900);
     }, 0);
   };
+  // También mostrar la seleccionada al abrir un enlace directo o redimensionar la ventana.
+  // El desplazamiento manual no altera la selección y no dispara este seguimiento.
+  const instaladas = new WeakSet();
+  const seguirListas = () => {
+    document.querySelectorAll('[role="tablist"]').forEach(c => {
+      if (instaladas.has(c)) return;
+      instaladas.add(c);
+      const mostrarElegida = () => mover(destinoPara(c.querySelector('[role="tab"][aria-selected="true"]')));
+      new MutationObserver(mostrarElegida).observe(c, {subtree: true, attributes: true, attributeFilter: ['aria-selected']});
+      if (window.ResizeObserver) new ResizeObserver(mostrarElegida).observe(c);
+      mostrarElegida();
+    });
+  };
+  let esperandoLista = false;
+  new MutationObserver(() => {
+    if (esperandoLista) return;
+    esperandoLista = true;
+    requestAnimationFrame(() => { esperandoLista = false; seguirListas(); });
+  }).observe(document.body, {childList: true, subtree: true});
+  seguirListas();
   // Al abrir una pestaña, Streamlit vacía el contenido viejo antes de que llegue el nuevo y la página se encoge un
   // instante (el pie salta y el scroll se pierde). Se mantiene el alto actual hasta que termina de cargar.
   let soltar = 0;
