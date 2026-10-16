@@ -15,14 +15,14 @@ def mostrar(
     k = st.columns(4)
     v, a_ = _ult_y_hace(riesgo)
     kpi(k[0], "Riesgo país", v, 0, suf=" pb", d=dif(v, a_), d_suf=" pb", d_dec=0, color="inverse",
-        help="Puntos básicos sobre los bonos de EE. UU. (100 pb = 1 punto porcentual). Variación contra 30 días atrás.")
+        help="Puntos básicos sobre los bonos de EE. UU. (100 pb = 1 punto porcentual). Variación contra 30 días atrás.", serie=riesgo, fuente='ArgentinaDatos · EMBI')
     for slot, (clave_t, nombre_t, ayuda_t) in zip(k[1:], (
             ("bcra:badlar", "Tasa BADLAR", "Plazos fijos de más de $1 millón en bancos privados (TNA)."),
             ("bcra:depositos_30d", "Plazo fijo a 30 días", "Tasa promedio de plazos fijos a 30 días (TNA)."),
             ("bcra:prestamos_personales", "Préstamos personales", "Tasa promedio de préstamos personales (TNA)."))):
         v, a_ = _ult_y_hace(get(clave_t))
         kpi(slot, nombre_t, v, 1, suf="%", d=dif(v, a_), d_suf=" pp", color="off",
-            help=ayuda_t + " Variación contra 30 días atrás.")
+            help=ayuda_t + " Variación contra 30 días atrás.", serie=get(clave_t), fuente='BCRA')
     st.subheader("Tasas de interés")
     if pases is not None or tpm is not None:
         ref = None

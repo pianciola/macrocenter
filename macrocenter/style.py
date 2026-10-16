@@ -1404,6 +1404,63 @@ h3 {{ font-weight: 700 !important; }}
     .mc-foot .legal {{ flex-direction: column; }}
     .stApp section[data-testid="stSidebar"] .mc-brand .mc-wm {{ font-size: 1.25rem !important; }}
 }}
+
+/* Ajustes de legibilidad sobre el diseño existente. */
+[data-testid="stTab"][aria-selected="true"] {{
+    background-color: rgba(116,172,223,.18); box-shadow: inset 0 -2px 0 #74ACDF;
+}}
+[data-testid="stTab"] p {{ font-weight: 600; }}
+[data-testid="stTab"]:hover {{ box-shadow: inset 0 -2px 0 rgba(116,172,223,.5); }}
+[role="tablist"] [data-testid="stTab"]:first-of-type[aria-selected="true"] {{
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.22), var(--mc-tapa);
+}}
+[role="tablist"] [data-testid="stTab"]:first-of-type:hover::before {{ transform: translateY(-50%); }}
+.mc-label, .mc-acl .et, .mc-nota .t, .mc-foot .tit {{
+    text-transform: none; letter-spacing: .025em; font-weight: 600;
+}}
+.mc-acl .et {{ font-size: .8rem; }}
+.mc-intro b, .mc-panorama b {{ font-weight: 600; }}
+[data-testid="stMain"] h3 {{ font-size: 1.35rem; font-weight: 650 !important; }}
+[data-testid="stMain"] h4 {{ font-size: 1.12rem; font-weight: 600; }}
+.mc-fx, [data-testid="stMetric"] {{ border-radius: 12px; padding: 1rem; }}
+.mc-fx {{ transition: border-color .18s ease; }}
+.mc-fx:hover {{ transform: none; box-shadow: none; }}
+[data-testid="stMetricLabel"] {{ min-height: 2.5em; align-items: flex-start; }}
+[data-testid="stMetric"] {{ min-height: 132px; }}
+.mc-dato-meta {{ display: flex; flex-direction: column; gap: 2px; font-size: .78rem;
+    line-height: 1.4; opacity: .85; overflow-wrap: anywhere; margin: -6px 2px 4px; }}
+.mc-dato-atrasado {{ color: #F6B40E; font-weight: 600; }}
+.mc-fx .mc-dato-meta {{ margin: 10px 0 0; padding-top: 8px; border-top: 1px solid rgba(128,128,128,.2); }}
+[data-testid="stColumn"] > [data-testid="stVerticalBlock"]:has(.mc-dato-meta) {{ gap: .75rem; }}
+.mc-vivo .en {{ text-transform: none; letter-spacing: 0; font-weight: 600; color: inherit; }}
+.mc-vivo .en::before {{ animation: none; box-shadow: none; background: #8A9BB0; }}
+.mc-intro .ley .bien::before, .mc-intro .ley .mal::before {{ box-shadow: none; }}
+.mc-ticker .pista {{ animation-duration: 85s; }}
+@container principal (max-width: 560px) {{
+    [data-testid="stHorizontalBlock"]:is(:has(.st-key-personalizar), :has(.st-key-inicio_otro)) {{ flex-wrap: wrap !important; }}
+    [data-testid="stHorizontalBlock"]:is(:has(.st-key-personalizar), :has(.st-key-inicio_otro)) > [data-testid="stColumn"]:first-child {{
+        flex-basis: 100% !important;
+    }}
+    [role="tablist"] {{ width: 100% !important; margin-inline: 0 !important; scroll-padding-inline: 8px; }}
+    [data-testid="stTabsScrollLeft"], [data-testid="stTabsScrollRight"] {{ display: none !important; }}
+    [data-testid="stTab"], [role="tablist"] [data-testid="stTab"]:first-of-type {{
+        height: 2.8rem; margin-block: .3rem; min-height: 44px;
+    }}
+    [role="tablist"] [data-testid="stTab"]:first-of-type {{ margin-left: .35rem; margin-right: .65rem; }}
+    [role="tablist"] [data-testid="stTab"]:first-of-type::after {{ display: none; }}
+    [data-testid="stTab"] {{ padding-inline: .85rem; }}
+    [data-testid="stTab"] p {{ font-size: 1rem; }}
+    .mc-dato-meta {{ font-size: .76rem; }}
+    .mc-fx .n {{ overflow-wrap: anywhere; }}
+    .mc-acl .fila {{ grid-template-columns: 1fr; gap: 4px; }}
+    .mc-intro {{ padding-left: 14px; }}
+    [data-testid="stMain"] h3 {{ font-size: 1.2rem; }}
+}}
+@media (max-width: 380px) {{
+    [data-testid="stMetric"] {{ padding: .65rem !important; }}
+    [data-testid="stMetricLabel"] p {{ font-size: .82rem !important; }}
+    [data-testid="stMetricDelta"], [data-testid="stMetricDelta"] p {{ font-size: .78rem !important; }}
+}}
 </style>
 """
 
@@ -2375,7 +2432,8 @@ def cotizaciones(tarjetas: list[dict]) -> str:
         out.append(
             f'<div class="mc-fx"><div class="n">{esc(t["nombre"])}</div><div class="d">{esc(t["desc"])}</div>'
             f'<div class="fila"><div class="v">{esc(t["valor"])}</div>{spark}</div><div class="c">{esc(t["detalle"])}</div>'
-            f'<div class="chips">{var}{extra}{chip}</div></div>'
+            f'<div class="chips">{var}{extra}{chip}</div>'
+            f'{t.get("meta", "")}</div>'
         )
     out.append("</div></div>")
     return "".join(out)
@@ -2581,7 +2639,7 @@ def footer() -> str:
         f'<div class="marca"><div class="logo">{bandera(30)}<div><b>MacroCenter</b><span>Creada por {esc(AUTOR)}</span></div>'
         f'<a class="mc-linkedin" href="{esc(LINKEDIN, quote=True)}" target="_blank" rel="noopener noreferrer" '
         f'aria-label="LinkedIn de {esc(AUTOR)}">{_ICONO_LINKEDIN} LinkedIn</a></div>'
-        '<p>Reunir en un solo lugar los principales datos de la economía argentina, tomados de fuentes oficiales y actualizados en vivo, '
+        '<p>Reunir en un solo lugar los principales datos de la economía argentina, tomados de fuentes públicas y consultados periódicamente, '
         'para que cualquier persona pueda consultarlos, compararlos con su historia y entenderlos.</p></div>'
         f'<div class="fuentes"><div class="tit">Fuentes de datos</div><ul>{lista}</ul></div>'
         '</div>'
@@ -2604,7 +2662,7 @@ def estado_datos(hora_dolar: str | None, oficiales: str) -> str:
     """Franja del pie: «En vivo», a qué hora se actualizó el dólar y cuándo se bajaron las series oficiales."""
     esc = html.escape
     dolar = f"<span>Dólar: {esc(hora_dolar)}</span>" if hora_dolar else ""
-    return (f'<div class="mc-vivo"><span class="en">En vivo</span>{dolar}'
+    return (f'<div class="mc-vivo"><span class="en">Actualización periódica</span>{dolar}'
             f'<span class="sec">Series oficiales: {esc(oficiales)}</span></div>')
 
 

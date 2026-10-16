@@ -122,7 +122,7 @@ def tasas_eeuu(b: dict, _ult_y_hace, dif, falla, grafico_periodo, kpi) -> None:
     for slot, (nombre, d) in zip(k, series.items()):
         v, a_ = _ult_y_hace(d)
         kpi(slot, f"{nombre} (%)", v, 2, d=dif(v, a_), d_suf=" pp", d_dec=2, color="off",
-            help=ayudas[nombre] + " Variación contra 30 días atrás.")
+            help=ayudas[nombre] + " Variación contra 30 días atrás.", serie=d, fuente='FRED · Fed / Tesoro de EE. UU.')
     ancho = pd.concat({n: d.set_index("fecha")["valor"] for n, d in series.items()}, axis=1, sort=True)
     ancho = ancho.ffill().reset_index().rename(columns={"index": "fecha"})  # la tasa de la Fed viene todos los días
     grafico_periodo("bonos_eeuu", ancho, lambda d: charts.lineas(

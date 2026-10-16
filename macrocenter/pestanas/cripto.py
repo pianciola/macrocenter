@@ -4,9 +4,10 @@ app.py la dibuja con `abrir` y le pasa, por nombre, los datos y las funciones de
 parámetros de `mostrar` después del asterisco)."""
 from __future__ import annotations
 
+import pandas as pd
 import streamlit as st
 
-from macrocenter import charts, style
+from macrocenter import datos_vista, charts, style
 from macrocenter.carga import historia_cripto
 
 
@@ -17,13 +18,14 @@ def mostrar(
     cr = cargar_cripto()
     mercado, usdt = cr["mercado"], cr["usdt"]
     st.markdown(style.intro("Las principales criptomonedas, en dólares y en pesos, y a cuánto se compra y vende el **USDT** en los "
-                            "exchanges argentinos.", [("bien", "Sube"), ("mal", "Baja")], "Se actualiza cada 5 minutos."), unsafe_allow_html=True)
+                            "exchanges argentinos.", [("bien", "Sube"), ("mal", "Baja")], "CoinGecko y CriptoYa. Consulta cada 5 minutos; las fuentes pueden tener demora."), unsafe_allow_html=True)
     if isinstance(mercado, str) or mercado.empty:
         falla(f"no se pudo cargar el mercado de criptomonedas ({mercado})")
     else:
         tarjetas = []
         for _, c in mercado.iterrows():
             tarjetas.append(dict(
+                meta=datos_vista.detalle(pd.DataFrame({"fecha": [c.get("actualizado")]}), "CoinGecko · consulta cada 5 min", max_dias=1),
                 nombre=c["nombre"], desc=c["simbolo"], valor=_usd_cripto(c["usd"]),
                 detalle=f"≈ {charts.num(c['ars'], 0, pre='$')}" if c["ars"] == c["ars"] else "en pesos: s/d",
                 var=c["cambio_24h"], var_txt="24 h", extras=[("7 d", c["cambio_7d"])], sentido="alto",

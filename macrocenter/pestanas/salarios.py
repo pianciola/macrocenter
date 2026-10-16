@@ -16,14 +16,14 @@ def mostrar(
     sr_k = salario_real()
     k = st.columns(4)
     v, a_ = ult_y_ant(sal_ia)
-    kpi(k[0], "Salarios · var. interanual", v, 1, suf="%", d=dif(v, a_), d_suf=" pp", d_txt="vs mes ant.")
+    kpi(k[0], "Salarios · var. interanual", v, 1, suf="%", d=dif(v, a_), d_suf=" pp", d_txt="vs mes ant.", serie=sal_ia, fuente='INDEC')
     v, a_ = ult_y_ant(sr_k, "real")
     kpi(k[1], "Salario real · interanual", v, 1, suf="%", d=dif(v, a_), d_suf=" pp", d_txt="vs mes ant.",
-        help="Positivo: los salarios subieron más que los precios en el último año.")
+        help="Positivo: los salarios subieron más que los precios en el último año.", serie=sr_k, fuente='INDEC · cálculo propio')
     v, a_ = ult_y_ant(smvm)
-    kpi(k[2], "Salario mínimo", v, 0, pre="$", d=pct(v, a_), d_txt="vs mes ant.")
+    kpi(k[2], "Salario mínimo", v, 0, pre="$", d=pct(v, a_), d_txt="vs mes ant.", serie=smvm, fuente='Secretaría de Trabajo · datos.gob.ar')
     v, a_ = ult_y_ant(haber_min)
-    kpi(k[3], "Haber mínimo jubilatorio", v, 0, pre="$", d=pct(v, a_), d_txt="vs mes ant.")
+    kpi(k[3], "Haber mínimo jubilatorio", v, 0, pre="$", d=pct(v, a_), d_txt="vs mes ant.", serie=haber_min, fuente='ANSES · datos.gob.ar')
     if sal is not None:
         st.markdown("#### Salarios e inflación")
         base = sal.rename(columns={"valor": "Total"})

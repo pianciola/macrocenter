@@ -543,6 +543,7 @@ def cripto_mercado(ids: tuple[str, ...] = CRIPTOS) -> pd.DataFrame:
         "cambio_24h": c.get("price_change_percentage_24h_in_currency", c.get("price_change_percentage_24h")),
         "cambio_7d": c.get("price_change_percentage_7d_in_currency"),
         "cambio_30d": c.get("price_change_percentage_30d_in_currency"),
+        "actualizado": c.get("last_updated"),
         "spark": ((c.get("sparkline_in_7d") or {}).get("price")) or [],
     } for c in mercado]
     df = pd.DataFrame(filas)

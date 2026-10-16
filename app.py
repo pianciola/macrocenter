@@ -19,7 +19,7 @@ from pathlib import Path
 import pandas as pd
 import streamlit as st
 
-from macrocenter import (charts, data, glosario, interactivo, inversiones, legal, mapa, ministros, news, pestanas,
+from macrocenter import (charts, data, datos_vista, glosario, interactivo, inversiones, legal, mapa, ministros, news, pestanas,
                          presidentes, selector, style)
 from macrocenter.avisos import actualizando, falla
 from macrocenter.carga import (  # descarga, cachés y copia de respaldo
@@ -29,7 +29,8 @@ from macrocenter.carga import (  # descarga, cachés y copia de respaldo
 )
 
 # Módulos de presentación sin estado: recargarlos evita mezclar pantallas anteriores con la navegación nueva.
-for modulo in (style, charts, inversiones, pestanas.inflacion, pestanas.inicio, pestanas.historia, interactivo):
+for modulo in (data, datos_vista, style, charts, inversiones, interactivo,
+               *(getattr(pestanas, nombre) for nombre in pestanas.__all__)):
     importlib.reload(modulo)
 
 st.set_page_config(page_title="MacroCenter", page_icon=style.favicon(), layout="wide")
@@ -412,7 +413,7 @@ def base100(df: pd.DataFrame, cols: list[str]) -> pd.DataFrame:
 
 def kpi(slot, label: str, valor: float | None, dec: int = 0, pre: str = "", suf: str = "",
         d: float | None = None, d_suf: str = "%", d_txt: str = "vs 30 d", color: str = "normal", help: str | None = None,
-        d_dec: int = 1):
+        d_dec: int = 1, serie=None, fuente: str = "", max_dias: int | None = None):
     # color por defecto: verde si sube, rojo si baja (precios). Los indicadores donde subir es malo
     # (inflación, riesgo país, desocupación) pasan color="inverse".
     # una variación que redondeada da 0,0 no lleva flecha (una flecha para arriba con 0,0% confunde)
@@ -426,6 +427,9 @@ def kpi(slot, label: str, valor: float | None, dec: int = 0, pre: str = "", suf:
         help=help,
         border=True,
     )
+
+    if fuente:
+        slot.markdown(datos_vista.detalle(serie, fuente, max_dias=max_dias), unsafe_allow_html=True)
 
 
 MAX_PUNTOS = 1000  # una línea de ~1.000 px de ancho no muestra más detalle que esto
@@ -452,6 +456,7 @@ def aligerar(fig) -> None:
 def grafico(fig, key: str | None = None):
     # sin la barra de herramientas de Plotly (tapa el gráfico, sobre todo en el celular) y sin zoom accidental al deslizar.
     # `key` hace falta cuando el mismo gráfico aparece en dos pantallas (por ejemplo, en Inicio y en su pestaña).
+    charts.presentar(fig)
     fig.update_layout(dragmode=False)
     titulo, bajada = charts.sacar_titulo(fig)
     trazas = charts.trazas_de(fig)
@@ -962,8 +967,8 @@ def _kpi(df: pd.DataFrame | None, col: str = "valor", dias: int = 30, modo: str 
     """Devuelve una función que calcula los argumentos de `kpi` (o 's/d' si falta la serie)."""
     def calcular() -> dict:
         if df is None:
-            return {"valor": None}
-        return dict(valor=ultimo(df, col), d=delta(df, col, dias=dias, modo=modo), **kw)
+            return {"valor": None, **kw}
+        return dict(valor=ultimo(df, col), d=delta(df, col, dias=dias, modo=modo), serie=df.dropna(subset=[col]), **kw)
     return calcular
 
 
@@ -971,34 +976,34 @@ _MES = dict(dias=25, modo="abs", d_suf=" pp", d_txt="vs mes ant.")
 
 # clave -> (grupo, nombre, función). El orden de este diccionario es el orden del selector.
 CATALOGO = {
-    "oficial": ("Dólar", "Dólar oficial", _kpi(dol_s.get("oficial"), dec=0, pre="$", help="Precio de venta")),
-    "blue": ("Dólar", "Dólar blue", _kpi(dol_s.get("blue"), dec=0, pre="$", help="Precio de venta")),
-    "mep": ("Dólar", "Dólar MEP", _kpi(dol_s.get("bolsa"), dec=0, pre="$", help="Precio de venta")),
-    "ccl": ("Dólar", "Dólar CCL", _kpi(dol_s.get("contadoconliqui"), dec=0, pre="$", help="Precio de venta")),
-    "brecha": ("Dólar", "Brecha blue / oficial", _kpi(brecha_df, "brecha_blue", modo="abs", dec=1, suf="%", d_suf=" pp", color="inverse")),
-    "reservas": ("Sector externo", "Reservas (USD M)", _kpi(reservas, dec=0, color="normal")),
-    "riesgo": ("Sector externo", "Riesgo país (pb)", _kpi(riesgo, modo="abs", dec=0, d_suf=" pb", color="inverse", d_dec=0)),
-    "badlar": ("Tasas", "BADLAR (TNA)", _kpi(badlar, modo="abs", dec=1, suf="%", d_suf=" pp", color="off")),
+    "oficial": ("Dólar", "Dólar oficial", _kpi(dol_s.get("oficial"), dec=0, pre="$", help="Precio de venta", fuente='DolarApi / ArgentinaDatos')),
+    "blue": ("Dólar", "Dólar blue", _kpi(dol_s.get("blue"), dec=0, pre="$", help="Precio de venta", fuente='DolarApi / ArgentinaDatos')),
+    "mep": ("Dólar", "Dólar MEP", _kpi(dol_s.get("bolsa"), dec=0, pre="$", help="Precio de venta", fuente='CriptoYa / ArgentinaDatos')),
+    "ccl": ("Dólar", "Dólar CCL", _kpi(dol_s.get("contadoconliqui"), dec=0, pre="$", help="Precio de venta", fuente='CriptoYa / ArgentinaDatos')),
+    "brecha": ("Dólar", "Brecha blue / oficial", _kpi(brecha_df, "brecha_blue", modo="abs", dec=1, suf="%", d_suf=" pp", color="inverse", fuente='ArgentinaDatos · cálculo propio')),
+    "reservas": ("Sector externo", "Reservas (USD M)", _kpi(reservas, dec=0, color="normal", fuente='BCRA')),
+    "riesgo": ("Sector externo", "Riesgo país (pb)", _kpi(riesgo, modo="abs", dec=0, d_suf=" pb", color="inverse", d_dec=0, fuente='ArgentinaDatos · EMBI')),
+    "badlar": ("Tasas", "BADLAR (TNA)", _kpi(badlar, modo="abs", dec=1, suf="%", d_suf=" pp", color="off", fuente='BCRA')),
     "pases": ("Tasas", "Pases 1 día (TNA)", _kpi(pases, modo="abs", dec=1, suf="%", d_suf=" pp", color="off",
                                                  help="Tasa de referencia vigente. La API del BCRA no registra tasa de "
-                                                      "política monetaria después de julio de 2025.")),
-    "uva": ("Tasas", "UVA", _kpi(uva, dec=2, pre="$", color="off")),
-    "infl_m": ("Precios", "Inflación mensual", _kpi(infl_m, dec=1, suf="%", color="inverse", **_MES)),
-    "infl_ia": ("Precios", "Inflación interanual", _kpi(infl_ia, dec=1, suf="%", color="inverse", **_MES)),
-    "rem": ("Precios", "Inflación esperada 12 m", _kpi(rem, dec=1, suf="%", color="inverse", **_MES)),
+                                                      "política monetaria después de julio de 2025.", fuente='BCRA')),
+    "uva": ("Tasas", "UVA", _kpi(uva, dec=2, pre="$", color="off", fuente='BCRA')),
+    "infl_m": ("Precios", "Inflación mensual", _kpi(infl_m, dec=1, suf="%", color="inverse", **_MES, fuente='INDEC · vía BCRA')),
+    "infl_ia": ("Precios", "Inflación interanual", _kpi(infl_ia, dec=1, suf="%", color="inverse", **_MES, fuente='INDEC · vía BCRA')),
+    "rem": ("Precios", "Inflación esperada 12 m", _kpi(rem, dec=1, suf="%", color="inverse", **_MES, fuente='BCRA')),
     "emae_m": ("Actividad", "Actividad mensual", _kpi(emae_m, dec=1, suf="%", color="normal",
-                                                    help="EMAE desestacionalizado, variación contra el mes anterior", **_MES)),
-    "emae": ("Actividad", "EMAE interanual", _kpi(emae_ia, dec=1, suf="%", color="normal", **_MES)),
+                                                    help="EMAE desestacionalizado, variación contra el mes anterior", **_MES, fuente='INDEC · cálculo propio')),
+    "emae": ("Actividad", "EMAE interanual", _kpi(emae_ia, dec=1, suf="%", color="normal", **_MES, fuente='INDEC')),
     "paro": ("Actividad", "Desocupación (EPH)", _kpi(paro_pct, dec=1, suf="%", color="inverse", dias=80, modo="abs",
-                                                      d_suf=" pp", d_txt="vs trim. ant.")),
+                                                      d_suf=" pp", d_txt="vs trim. ant.", fuente='INDEC · EPH')),
     "sal_nom": ("Ingresos", "Salarios interanual", _kpi(sal_ia, dec=1, suf="%", color="normal",
-                                                        help="Índice de salarios INDEC, total", **_MES)),
+                                                        help="Índice de salarios INDEC, total", **_MES, fuente='INDEC')),
     "salario_real": ("Ingresos", "Salario real interanual", _kpi(sal_real_df, "real", dec=1, suf="%", color="normal",
-                                                                 help="Salarios nominales descontada la inflación", **_MES)),
-    "ripte": ("Ingresos", "RIPTE", _kpi(ripte, dias=25, dec=0, pre="$", color="normal", d_txt="vs mes ant.")),
-    "smvm": ("Ingresos", "Salario mínimo", _kpi(smvm, dias=25, dec=0, pre="$", color="normal", d_txt="vs mes ant.")),
+                                                                 help="Salarios nominales descontada la inflación", **_MES, fuente='INDEC · cálculo propio')),
+    "ripte": ("Ingresos", "RIPTE", _kpi(ripte, dias=25, dec=0, pre="$", color="normal", d_txt="vs mes ant.", fuente='Secretaría de Trabajo · datos.gob.ar')),
+    "smvm": ("Ingresos", "Salario mínimo", _kpi(smvm, dias=25, dec=0, pre="$", color="normal", d_txt="vs mes ant.", fuente='Secretaría de Trabajo · datos.gob.ar')),
     "haber": ("Ingresos", "Haber mínimo jubilatorio", _kpi(haber_min, dias=25, dec=0, pre="$", color="normal",
-                                                           d_txt="vs mes ant.")),
+                                                           d_txt="vs mes ant.", fuente='ANSES · datos.gob.ar')),
 }
 
 

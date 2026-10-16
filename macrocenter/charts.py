@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 
-PALETA = ["#2E86DE", "#EE5253", "#10AC84", "#F79F1F", "#8E44AD", "#576574"]
+PALETA = ["#2E86DE", "#EE5253", "#10AC84", "#F79F1F", "#8E44AD", "#8A9BB0"]
 POS, NEG = "#10AC84", "#EE5253"
 
 
@@ -406,4 +406,19 @@ def barras_y_linea(
                                   tickmode="auto", nticks=6, rangemode="tozero", tickfont=dict(color=PALETA[1]),
                                   separatethousands=True),
                       yaxis=dict(rangemode="tozero", tickfont=dict(color=PALETA[0]), nticks=6))
+    return fig
+
+
+def presentar(fig: go.Figure) -> go.Figure:
+    """Legibilidad común para figuras propias y comparativos, también en pantallas angostas."""
+    fig.update_layout(
+        autosize=True, separators=",.",
+        font=dict(family="Segoe UI, system-ui, Arial, sans-serif", size=12),
+        hoverlabel=dict(font_size=13, namelength=-1),
+        legend=dict(font_size=12, itemsizing="constant", maxheight=0.24),
+    )
+    fig.update_xaxes(automargin=True, tickfont_size=11)
+    fig.update_yaxes(automargin=True, tickfont_size=11)
+    if _eje_x_fechas(fig):
+        fig.update_xaxes(hoverformat="%d/%m/%Y")
     return fig

@@ -41,7 +41,7 @@ def mostrar(*, actualizando, dif, falla, fiscal_anual, fiscal_df, grafico, grafi
             hace_un_anio = f[f["fecha"] <= fila["fecha"] - pd.DateOffset(months=12)][col].dropna()
             antes = float(hace_un_anio.iloc[-1]) if not hace_un_anio.empty else None
             kpi(slot, nombre, v, 1, suf="% del PBI", d=dif(v, antes), d_suf=" pp", d_txt="vs un año antes",
-                help=ayuda + " Verde: el resultado mejoró contra un año antes; rojo: empeoró.")
+                help=ayuda + " Verde: el resultado mejoró contra un año antes; rojo: empeoró.", serie=con_dato, fuente='Ministerio de Economía / INDEC · cálculo propio')
         st.markdown(style.aclaracion(
             ("Qué mide", "**Primario**: ingresos menos gastos, sin contar intereses de la deuda. **Financiero**: lo que "
                          "queda después de pagar intereses.")), unsafe_allow_html=True)

@@ -14,13 +14,13 @@ def mostrar(*, comercio, dif, grafico, kpi, pct, rec, ult_y_ant) -> None:
         c = comercio
         k = st.columns(4)
         v, a_ = ult_y_ant(c, "exp", atras=12)
-        kpi(k[0], "Exportaciones del mes (USD M)", v, 0, d=pct(v, a_), d_txt="vs un año antes")
+        kpi(k[0], "Exportaciones del mes (USD M)", v, 0, d=pct(v, a_), d_txt="vs un año antes", serie=c.dropna(subset=["exp"]), fuente='INDEC')
         v, a_ = ult_y_ant(c, "imp", atras=12)
-        kpi(k[1], "Importaciones del mes (USD M)", v, 0, d=pct(v, a_), d_txt="vs un año antes", color="off")
+        kpi(k[1], "Importaciones del mes (USD M)", v, 0, d=pct(v, a_), d_txt="vs un año antes", color="off", serie=c.dropna(subset=["imp"]), fuente='INDEC')
         v, a_ = ult_y_ant(c, "saldo", atras=12)
-        kpi(k[2], "Saldo del mes (USD M)", v, 0, d=dif(v, a_), d_suf=" M", d_txt="vs un año antes", d_dec=0)
+        kpi(k[2], "Saldo del mes (USD M)", v, 0, d=dif(v, a_), d_suf=" M", d_txt="vs un año antes", d_dec=0, serie=c.dropna(subset=["saldo"]), fuente='INDEC')
         v, a_ = ult_y_ant(c.dropna(subset=["saldo_12m"]), "saldo_12m", atras=12)
-        kpi(k[3], "Saldo 12 meses (USD M)", v, 0, d=dif(v, a_), d_suf=" M", d_txt="vs un año antes", d_dec=0)
+        kpi(k[3], "Saldo 12 meses (USD M)", v, 0, d=dif(v, a_), d_suf=" M", d_txt="vs un año antes", d_dec=0, serie=c.dropna(subset=["saldo_12m"]), fuente='INDEC')
         ult_c = c.dropna(subset=["exp"])["fecha"].max()
         st.markdown(style.aclaracion(
             ("Último dato", f"{ult_c:%m/%Y}."),

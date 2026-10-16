@@ -5,7 +5,7 @@ from __future__ import annotations
 import pandas as pd
 import streamlit as st
 
-from macrocenter import charts, style
+from macrocenter import datos_vista, charts, style
 
 
 def mostrar(*, VIVO, base100, con_periodo, delta, dol, dol_rec, get, grafico, ultimo) -> None:
@@ -30,6 +30,7 @@ def mostrar(*, VIVO, base100, con_periodo, delta, dol, dol_rec, get, grafico, ul
                 continue
             venta, compra = float(s.iloc[-1][clave]), s.iloc[-1][f"{clave}_compra"]
             tarjetas_usd.append(dict(
+                meta=datos_vista.detalle(s, "ArgentinaDatos / DolarApi / CriptoYa"),
                 nombre=nombre, desc=desc, valor=charts.num(venta, 0, pre="$"),
                 detalle=f"Compra {charts.num(float(compra), 0, pre='$')} · Venta {charts.num(venta, 0, pre='$')}",
                 var=delta(s.rename(columns={clave: "valor"})), sentido="alto",  # cotización: verde si sube

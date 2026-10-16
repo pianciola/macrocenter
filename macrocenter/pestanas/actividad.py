@@ -22,14 +22,14 @@ def mostrar(*, dif, emae, emae_sa, get, grafico, kpi, paro, paro_pct, pib, rec, 
     k = st.columns(4)
     v, a_ = ult_y_ant(p, "interanual")
     kpi(k[0], "PBI · var. interanual", v, 1, suf="%", d=dif(v, a_), d_suf=" pp", d_txt="vs trim. ant.",
-        help="Último trimestre publicado contra el mismo trimestre del año anterior.")
+        help="Último trimestre publicado contra el mismo trimestre del año anterior.", serie=p.dropna(subset=["interanual"]) if p is not None else None, fuente='INDEC')
     v, a_ = ult_y_ant(mom)
     kpi(k[1], "EMAE · var. mensual", v, 1, suf="%", d=dif(v, a_), d_suf=" pp", d_txt="vs mes ant.",
-        help="Desestacionalizada: compara con el mes anterior sin el efecto de la época del año.")
+        help="Desestacionalizada: compara con el mes anterior sin el efecto de la época del año.", serie=mom, fuente='INDEC')
     v, a_ = ult_y_ant(e_ia, "interanual")
-    kpi(k[2], "EMAE · var. interanual", v, 1, suf="%", d=dif(v, a_), d_suf=" pp", d_txt="vs mes ant.")
+    kpi(k[2], "EMAE · var. interanual", v, 1, suf="%", d=dif(v, a_), d_suf=" pp", d_txt="vs mes ant.", serie=e_ia, fuente='INDEC')
     v, a_ = ult_y_ant(paro_pct)
-    kpi(k[3], "Desocupación (EPH)", v, 1, suf="%", d=dif(v, a_), d_suf=" pp", d_txt="vs trim. ant.", color="inverse")
+    kpi(k[3], "Desocupación (EPH)", v, 1, suf="%", d=dif(v, a_), d_suf=" pp", d_txt="vs trim. ant.", color="inverse", serie=paro_pct, fuente='INDEC · EPH')
     if p is not None:
         st.markdown("#### PBI trimestral")
         a, b = st.columns(2)

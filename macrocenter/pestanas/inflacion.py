@@ -17,14 +17,14 @@ def mostrar(
                             [("bien", "La inflación baja"), ("mal", "Sube")]), unsafe_allow_html=True)
     k = st.columns(4)
     v, a_ = ult_y_ant(infl_m)
-    kpi(k[0], "Inflación mensual", v, 1, suf="%", d=dif(v, a_), d_suf=" pp", d_txt="vs mes ant.", color="inverse")
+    kpi(k[0], "Inflación mensual", v, 1, suf="%", d=dif(v, a_), d_suf=" pp", d_txt="vs mes ant.", color="inverse", serie=infl_m, fuente='INDEC · vía BCRA')
     v, a_ = ult_y_ant(infl_ia)
-    kpi(k[1], "Inflación interanual", v, 1, suf="%", d=dif(v, a_), d_suf=" pp", d_txt="vs mes ant.", color="inverse")
+    kpi(k[1], "Inflación interanual", v, 1, suf="%", d=dif(v, a_), d_suf=" pp", d_txt="vs mes ant.", color="inverse", serie=infl_ia, fuente='INDEC · vía BCRA')
     v, a_ = ult_y_ant(rem)
     kpi(k[2], "Esperada 12 meses (REM)", v, 1, suf="%", d=dif(v, a_), d_suf=" pp", d_txt="vs mes ant.", color="inverse",
-        help="Mediana de lo que esperan los analistas del Relevamiento de Expectativas de Mercado.")
+        help="Mediana de lo que esperan los analistas del Relevamiento de Expectativas de Mercado.", serie=rem, fuente='BCRA · REM')
     kpi(k[3], "UVA", ultimo(uva) if uva is not None else None, 2, pre="$",
-        d=delta(uva) if uva is not None else None, color="off", help="Sube con la inflación (CER), con unas semanas de rezago.")
+        d=delta(uva) if uva is not None else None, color="off", help="Sube con la inflación (CER), con unas semanas de rezago.", serie=uva, fuente='BCRA')
     if infl_m is not None and infl_ia is not None:
         st.markdown("#### Inflación")
         m = infl_m.merge(infl_ia, on="fecha", suffixes=("_m", "_ia"))
@@ -72,14 +72,14 @@ def mayoristas(ipim: pd.DataFrame, ipp: pd.DataFrame | None, infl_ia: pd.DataFra
     v, a_ = ult_y_ant(vm, "mensual")
     kpi(k[0], "IPIM · mensual", v, 1, suf="%", d=dif(v, a_), d_suf=" pp", d_txt="vs mes ant.", color="inverse",
         help="Índice de precios internos al por mayor: lo que cobran los productores y los importadores en el mercado "
-             "interno, con impuestos.")
+             "interno, con impuestos.", serie=vm.dropna(subset=["mensual"]), fuente='INDEC')
     v, a_ = ult_y_ant(vm, "interanual")
-    kpi(k[1], "IPIM · interanual", v, 1, suf="%", d=dif(v, a_), d_suf=" pp", d_txt="vs mes ant.", color="inverse")
+    kpi(k[1], "IPIM · interanual", v, 1, suf="%", d=dif(v, a_), d_suf=" pp", d_txt="vs mes ant.", color="inverse", serie=vm.dropna(subset=["interanual"]), fuente='INDEC')
     if ipp is not None:
         vp = _variaciones(ipp)
         v, a_ = ult_y_ant(vp, "mensual")
         kpi(k[2], "IPP · mensual", v, 1, suf="%", d=dif(v, a_), d_suf=" pp", d_txt="vs mes ant.", color="inverse",
-            help="Índice de precios básicos del productor: igual que el IPIM, pero sin impuestos.")
+            help="Índice de precios básicos del productor: igual que el IPIM, pero sin impuestos.", serie=vp.dropna(subset=["mensual"]), fuente='INDEC')
     a, b = st.columns(2)
     with a:
         if ipp is not None:

@@ -14,12 +14,12 @@ def mostrar(*, _ult_y_hace, delta, dif, get, grafico, kpi, rec, ultimo) -> None:
                             "El dinero se muestra sin color: crecer no es bueno ni malo en sí."), unsafe_allow_html=True)
     k = st.columns(3)
     kpi(k[0], "Base monetaria", ultimo(bm) / 1e6 if bm is not None and ultimo(bm) else None, 1, pre="$", suf=" bill.",
-        d=delta(bm) if bm is not None else None, color="off", help="Billones de pesos. Variación contra 30 días atrás.")
+        d=delta(bm) if bm is not None else None, color="off", help="Billones de pesos. Variación contra 30 días atrás.", serie=bm, fuente='BCRA')
     v, a_ = _ult_y_hace(m2)  # serie diaria hábil: 30 días corridos, no 30 datos (serían ~6 semanas)
-    kpi(k[1], "M2 privado · var. interanual", v, 1, suf="%", d=dif(v, a_), d_suf=" pp", color="off")
+    kpi(k[1], "M2 privado · var. interanual", v, 1, suf="%", d=dif(v, a_), d_suf=" pp", color="off", serie=m2, fuente='BCRA')
     kpi(k[2], "Préstamos al sector privado", ultimo(pr) / 1e6 if pr is not None and ultimo(pr) else None, 1, pre="$",
         suf=" bill.", d=delta(pr) if pr is not None else None,
-        help="Billones de pesos (nominales). Variación contra 30 días atrás.")
+        help="Billones de pesos (nominales). Variación contra 30 días atrás.", serie=pr, fuente='BCRA')
     a, b = st.columns(2)
     with a:
         if bm is not None:
