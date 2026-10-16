@@ -27,3 +27,8 @@ def test_presentar_no_cambia_colores_valores_ni_unidades():
     assert f.data[0].line.color == color and list(f.data[0].y) == valores
     assert f.layout.title.text == "Tasa (%)"
     assert f.layout.xaxis.automargin and f.layout.legend.maxheight == .24
+
+
+def test_fecha_con_zona_respeta_el_dia_argentino():
+    df = pd.DataFrame({"fecha": ["2026-10-16T01:00:00Z"]})
+    assert "15/10/2026" in datos_vista.detalle(df, "CoinGecko", hoy="2026-10-16")

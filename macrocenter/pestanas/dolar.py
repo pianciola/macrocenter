@@ -52,6 +52,7 @@ def mostrar(*, VIVO, base100, con_periodo, delta, dol, dol_rec, get, grafico, ul
             if df_ is not None:
                 u = df_.iloc[-1]
                 tarjetas_fx.append(dict(
+                    meta=datos_vista.detalle(df_, "BCRA"),
                     nombre=nombre, desc="Cotización de referencia del BCRA",
                     valor=charts.num(float(u["valor"]), 0, pre="$"),
                     detalle=f"1 {simbolo} = US$ {charts.num(float(u['pase']), 2)}",

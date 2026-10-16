@@ -1427,8 +1427,9 @@ h3 {{ font-weight: 700 !important; }}
 .mc-fx:hover {{ transform: none; box-shadow: none; }}
 [data-testid="stMetricLabel"] {{ min-height: 2.5em; align-items: flex-start; }}
 [data-testid="stMetric"] {{ min-height: 132px; }}
+[data-testid="stMetric"] > div {{ padding: 0 !important; }}
 .mc-dato-meta {{ display: flex; flex-direction: column; gap: 2px; font-size: .78rem;
-    line-height: 1.4; opacity: .85; overflow-wrap: anywhere; margin: -6px 2px 4px; }}
+    line-height: 1.4; opacity: .85; overflow-wrap: anywhere; margin: -4px 2px 12px; }}
 .mc-dato-atrasado {{ color: #F6B40E; font-weight: 600; }}
 .mc-fx .mc-dato-meta {{ margin: 10px 0 0; padding-top: 8px; border-top: 1px solid rgba(128,128,128,.2); }}
 [data-testid="stColumn"] > [data-testid="stVerticalBlock"]:has(.mc-dato-meta) {{ gap: .75rem; }}
