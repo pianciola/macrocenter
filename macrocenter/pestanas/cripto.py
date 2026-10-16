@@ -8,16 +8,20 @@ import streamlit as st
 
 from macrocenter import charts, style
 from macrocenter.carga import historia_cripto
+from macrocenter.mercado_vivo import mostrar_cripto
 
 
 def mostrar(
     *, _nombre_exchange, _usd_cripto, cargar_cripto, dol, falla, grafico, selector_categoria,
     selector_periodo, ultimo,
 ) -> None:
+    st.subheader("Cripto en vivo")
+    mostrar_cripto()
+    st.subheader("Panorama del mercado")
     cr = cargar_cripto()
     mercado, usdt = cr["mercado"], cr["usdt"]
     st.markdown(style.intro("Las principales criptomonedas, en dólares y en pesos, y a cuánto se compra y vende el **USDT** en los "
-                            "exchanges argentinos.", [("bien", "Sube"), ("mal", "Baja")], "Se actualiza cada 5 minutos."), unsafe_allow_html=True)
+                            "exchanges argentinos.", [("bien", "Sube"), ("mal", "Baja")], "Este panorama y los precios en pesos se actualizan cada 5 minutos; el panel en vivo de arriba usa Binance y cotiza en USDT."), unsafe_allow_html=True)
     if isinstance(mercado, str) or mercado.empty:
         falla(f"no se pudo cargar el mercado de criptomonedas ({mercado})")
     else:

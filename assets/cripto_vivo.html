@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+:root{color-scheme:light dark;--bg:#fff;--fg:#1f2937;--muted:#53647a;--line:#d6e0eb;--accent:#2563a8;--up:#087557;--down:#b92535}
+@media(prefers-color-scheme:dark){:root{--bg:#0e1420;--fg:#e6edf6;--muted:#a7b8cb;--line:#344456;--accent:#74acdf;--up:#62d4ac;--down:#ff8792}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:14px system-ui,sans-serif}
+.panel{border:1px solid var(--line);border-radius:16px;padding:18px}.top{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}
+label{font-weight:650}select{margin-left:8px;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--fg);font:inherit}
+#status{color:var(--muted);font-size:13px}#status[data-live=true]{color:var(--up)}
+.price{font-size:32px;font-weight:750;margin:16px 0 4px;font-variant-numeric:tabular-nums}.muted{color:var(--muted);font-size:12px}.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:16px 0}
+.cell{border:1px solid var(--line);border-radius:10px;padding:10px;min-width:0}.cell span{display:block;font-size:12px;color:var(--muted);margin-bottom:5px}.cell b{font-size:16px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.up{color:var(--up)}.down{color:var(--down)}svg{width:100%;height:150px;display:block;border-bottom:1px solid var(--line)}#line{stroke:var(--accent);stroke-width:2;fill:none;vector-effect:non-scaling-stroke}
+.foot{display:flex;justify-content:space-between;margin-top:6px;gap:8px}.note{line-height:1.6;font-size:12px;color:var(--muted);margin:12px 0 0}
+@media(max-width:560px){.panel{padding:12px}.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.price{font-size:28px}svg{height:110px}}
+</style></head><body>
+<section class="panel" aria-label="Mercado cripto de Binance">
+<div class="top"><label>Par<select id="symbol"><option>BTCUSDT</option><option>ETHUSDT</option><option>SOLUSDT</option><option>BNBUSDT</option><option>XRPUSDT</option><option>DOGEUSDT</option></select></label><span id="status" role="status">Conectando…</span></div>
+<div class="price"><span id="price">—</span> <small>USDT</small></div>
+<div><span id="change">—</span> <span class="muted">en las últimas 24 h · Binance Spot</span></div>
+<div class="grid">
+<div class="cell"><span>Mejor compra (bid)</span><b id="bid">—</b></div><div class="cell"><span>Mejor venta (ask)</span><b id="ask">—</b></div>
+<div class="cell"><span>Máximo / mínimo 24 h</span><b id="range">—</b></div><div class="cell"><span>Volumen 24 h (USDT)</span><b id="volume">—</b></div>
+</div>
+<svg viewBox="0 0 600 150" preserveAspectRatio="none" role="img" aria-label="Evolución del precio durante esta conexión"><path id="line" d=""/></svg>
+<div class="foot muted"><span id="chart-note">Esperando precios para dibujar…</span><span id="time">Sin datos recibidos</span></div>
+<p class="note">Puntas y precios en USDT, que no equivale necesariamente a USD. Compra (bid): lo que ofrece el comprador; venta (ask): lo que pide el vendedor. Sin comisiones. El gráfico reúne hasta 3 minutos desde que abriste el panel; no es el historial del día.</p>
+<p class="note">Fuente pública: Binance. Actualización aproximada cada segundo mientras haya datos. Si se interrumpe, los últimos valores permanecen visibles con el estado de desconexión. Solo consulta, sin operaciones.</p>
+</section><script>/* MERCADO_SCRIPT */</script></body></html>

@@ -107,6 +107,12 @@ pases a 1 día como referencia vigente.
 
 ## Fuentes (APIs públicas, sin clave)
 
+En **Cripto**, el panel en vivo conecta directamente el navegador al canal público de Binance Spot por WebSocket,
+sin cuenta ni API key. Ofrece BTC, ETH, SOL, BNB, XRP y DOGE contra USDT, precio, puntas, variación y volumen de 24 horas.
+El gráfico se construye durante la conexión (hasta 3 minutos); los históricos y el panorama en USD/ARS siguen usando
+sus fuentes anteriores cada 5 minutos. El panel avisa cuando pierde conexión y reintenta con espera progresiva.
+Los bonos gratuitos de data912 mantienen su demora: consultarlos cada 5 minutos no los convierte en tiempo real.
+
 - **BCRA** — API Estadísticas v4.0 (`api.bcra.gob.ar/estadisticas/v4.0`)
 - **Datos Argentina** — API de Series de Tiempo (`apis.datos.gob.ar/series/api`): INDEC / MECON
 - **ArgentinaDatos** — cotizaciones del dólar y riesgo país (`api.argentinadatos.com`)
@@ -147,6 +153,9 @@ Si la API de datos.gob.ar devuelve una serie sin sus últimos meses (pasa: guard
 archivo oficial de esa serie en la misma plataforma.
 
 ## Copia de respaldo
+
+La caché local se guarda en `.macrocenter_cache_v3.json.gz`, con datos JSON comprimidos y lectura limitada en tamaño.
+Los antiguos archivos `.pkl` no se leen ni se convierten: al actualizar se recuperan los datos desde la semilla o las fuentes.
 
 Cada 3 horas GitHub Actions baja todas las series (`monitor/semilla.py`) y deja una copia en la rama `datos`
 (`semilla.json.gz`, JSON comprimido: leerla no puede ejecutar código). Con el servidor recién prendido la página arranca

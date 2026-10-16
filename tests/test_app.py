@@ -84,3 +84,10 @@ def test_pestana_bonos():
     assert list(dict.fromkeys(at.session_state["_fallas"])) == []
     textos = " ".join(m.value for m in at.markdown)
     assert "Ley Nueva York" in textos and "GD30" in textos
+
+
+def test_pestana_cripto_con_panel_publico():
+    at = _correr(ver="tablero/cripto")
+    assert at.session_state["pestana"] == "Cripto"
+    assert "Cripto en vivo" in [s.value for s in at.subheader]
+    assert "Panorama del mercado" in [s.value for s in at.subheader]

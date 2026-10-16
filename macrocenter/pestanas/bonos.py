@@ -40,6 +40,8 @@ def mostrar(*, _ult_y_hace, cargar_bonos, dif, falla, grafico, grafico_periodo, 
 
 def bonos_argentinos(b: dict, falla, grafico_periodo, selector_categoria) -> None:
     st.subheader("Bonos argentinos en dólares")
+    st.caption("Cotizaciones con demora · fuente gratuita data912. Consulta cada 5 minutos; no es tiempo real. "
+               "Si la fuente no responde, se muestra el último cierre disponible. Sin puntas ni profundidad de mercado.")
     vivo = _df(b.get("vivo"))
     hist = {k[5:]: v for k, v in b.items() if k.startswith("bono:") and _df(v) is not None}
 
