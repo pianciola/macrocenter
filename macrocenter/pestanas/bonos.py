@@ -40,7 +40,6 @@ def mostrar(*, _ult_y_hace, cargar_bonos, dif, falla, grafico, grafico_periodo, 
 
 def bonos_argentinos(b: dict, falla, grafico_periodo, selector_categoria) -> None:
     st.subheader("Bonos argentinos en dólares")
-    st.caption("data912 · Cotizaciones con demora. Si no hay cotización, se usa el cierre histórico; la fuente no garantiza hora de operación en esta consulta.")
     st.caption("Cotizaciones con demora · fuente gratuita data912. Consulta cada 5 minutos; no es tiempo real. "
                "Si la fuente no responde, se muestra el último cierre disponible. Sin puntas ni profundidad de mercado.")
     vivo = _df(b.get("vivo"))

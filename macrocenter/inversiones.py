@@ -355,7 +355,6 @@ def pantalla_historica(d: dict, grafico) -> None:
         "(plazo fijo, UVA, dólar, acciones, bitcoin) y si le ganó a la inflación.",
         [("bien", "Le ganó a la inflación"), ("mal", "Perdió contra ella")],
         "Es el pasado: no dice nada de lo que va a pasar."), unsafe_allow_html=True)
-    st.caption("Resultado acumulado: compara el monto final con el capital inicial y la inflación del mismo período.")
     c1, c2 = st.columns([1, 2])
     monto = entrada_monto(c1, "Monto inicial", "inv_monto_hist", 1_000_000)
     with c2:
@@ -404,7 +403,6 @@ def comparar_dolar_inflacion(d: dict, grafico_periodo) -> None:
     dol_rec = dol.dropna(subset=["oficial"]) if _ok(dol) else None
     if _ok(infl_ia) and _ok(dol_rec):
         st.markdown("#### ¿El dólar le ganó a la inflación?")
-        st.caption("Variación interanual: cada punto compara con el mismo mes del año anterior; no es el rendimiento acumulado del período seleccionado.")
         # dólar: último dato de cada mes y variación contra el mismo mes del año anterior (igual que la inflación interanual)
         dm = dol_rec[dol_rec["fecha"] <= HOY][["fecha", "oficial", "blue"]].copy()
         dm["mes"] = dm["fecha"].dt.to_period("M")
@@ -519,9 +517,8 @@ def pantalla_conceptos() -> None:
 
 def mostrar(d: dict, grafico, grafico_periodo) -> None:
     """Pantalla completa. `d`: las series y tablas (ver app.py); `grafico`: la función de la app que dibuja figuras."""
-    st.caption("Simulaciones informativas · Rendimientos pasados · Supuestos y fuentes debajo de cada resultado.")
-    sec = st.session_state.get("inv_seccion", SECCIONES[0])
-    st.subheader(sec)
+    st.markdown(style.aviso(AVISO, AVISO_TITULO), unsafe_allow_html=True)
+    sec = selector.uno(st.segmented_control, "Sección", SECCIONES, "inv_seccion", label_visibility="collapsed")
     if sec == "Tasas y plazos fijos":
         pantalla_tasas(d)
         pantalla_uva(d, grafico)
@@ -530,6 +527,3 @@ def mostrar(d: dict, grafico, grafico_periodo) -> None:
         comparar_dolar_inflacion(d, grafico_periodo)
     else:
         pantalla_conceptos()
-
-    with st.expander("Alcance y límites de la información"):
-        st.write(AVISO)

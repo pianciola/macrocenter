@@ -15,7 +15,6 @@ def mostrar(
     selector_periodo, ultimo,
 ) -> None:
     cr = cargar_cripto()
-    st.caption("CoinGecko / CriptoYa · Panorama con caché de 5 minutos; no es una transmisión en tiempo real. Las fechas del histórico se muestran debajo del gráfico.")
     mercado, usdt = cr["mercado"], cr["usdt"]
     st.markdown(style.intro("Las principales criptomonedas, en dólares y en pesos, y a cuánto se compra y vende el **USDT** en los "
                             "exchanges argentinos.", [("bien", "Sube"), ("mal", "Baja")], "Se actualiza cada 5 minutos."), unsafe_allow_html=True)

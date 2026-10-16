@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 
-PALETA = ["#4A8FD4", "#A78BFA", "#45A99A", "#B39355", "#8A9BB0", "#61B6D1"]
+PALETA = ["#2E86DE", "#EE5253", "#10AC84", "#F79F1F", "#8E44AD", "#576574"]
 POS, NEG = "#10AC84", "#EE5253"
 
 

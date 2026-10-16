@@ -20,7 +20,7 @@ import pandas as pd
 import streamlit as st
 
 from macrocenter import (charts, data, glosario, interactivo, inversiones, legal, mapa, ministros, news, pestanas,
-                         presidentes, selector, style, presentacion)
+                         presidentes, selector, style)
 from macrocenter.avisos import actualizando, falla
 from macrocenter.carga import (  # descarga, cachés y copia de respaldo
     _estado_actualizar, _memoria, _precalentar, _ultima_carga, _va_a_demorar, cargar_bonos, cargar_cripto, cargar_fotos,
@@ -29,7 +29,7 @@ from macrocenter.carga import (  # descarga, cachés y copia de respaldo
 )
 
 # Módulos de presentación sin estado: recargarlos evita mezclar pantallas anteriores con la navegación nueva.
-for modulo in (style, charts, inversiones, pestanas.inflacion, pestanas.inicio, pestanas.historia, interactivo, presentacion):
+for modulo in (style, charts, inversiones, pestanas.inflacion, pestanas.inicio, pestanas.historia, interactivo):
     importlib.reload(modulo)
 
 st.set_page_config(page_title="MacroCenter", page_icon=style.favicon(), layout="wide")
@@ -228,7 +228,6 @@ def ver_noticias() -> None:
 
 # ───────────────────────── barra lateral ─────────────────────────
 style.aplicar()
-presentacion.aplicar()
 
 
 def ir_a(destino: str) -> None:
@@ -307,7 +306,13 @@ with st.sidebar:
                  help="Últimas novedades del BCRA y del Ministerio de Economía"
                       + (f" ({nuevas} publicadas hoy o ayer, sin leer)" if nuevas else "")):
         ver_noticias()
-    presentacion.menu()
+    st.markdown(style.etiqueta("Explorar"), unsafe_allow_html=True)
+    for clave_vista, texto, icono_v in (("tablero", "Tablero", ":material/dashboard:"),
+                                        ("inversiones", "Ahorro e inversiones", ":material/account_balance_wallet:"),
+                                        ("juegos", "Herramientas", ":material/handyman:"),
+                                        ("historia", "Historia económica", ":material/history_edu:")):
+        st.button(texto, width="stretch", key=f"nav_{clave_vista}", icon=icono_v, on_click=ir_a, args=(clave_vista,),
+                  type="primary" if vista == clave_vista else "secondary")
 
 def rec(df: pd.DataFrame, min_anios: int = 0, periodo: str = "2 años") -> pd.DataFrame:
     """Recorta al `periodo` (por defecto 2 años) y a fechas ya ocurridas (UVA/CER/ICL traen días futuros).
@@ -407,25 +412,10 @@ def base100(df: pd.DataFrame, cols: list[str]) -> pd.DataFrame:
 
 def kpi(slot, label: str, valor: float | None, dec: int = 0, pre: str = "", suf: str = "",
         d: float | None = None, d_suf: str = "%", d_txt: str = "vs 30 d", color: str = "normal", help: str | None = None,
-        d_dec: int = 1, serie=None, fecha: str | None = None, fuente: str | None = None):
+        d_dec: int = 1):
     # color por defecto: verde si sube, rojo si baja (precios). Los indicadores donde subir es malo
     # (inflación, riesgo país, desocupación) pasan color="inverse".
     # una variación que redondeada da 0,0 no lleva flecha (una flecha para arriba con 0,0% confunde)
-    if serie is None:
-        referencias = [("inflación interanual", "infl_ia", "INDEC"), ("inflación mensual", "infl_m", "INDEC"),
-                       ("esperada", "rem", "BCRA · REM"), ("reservas", "reservas", "BCRA"),
-                       ("riesgo", "riesgo", "ArgentinaDatos"), ("uva", "uva", "BCRA"),
-                       ("actividad", "emae_sa", "INDEC"), ("salario", "sal", "INDEC"),
-                       ("base monetaria", "bcra:base_monetaria", "BCRA"), ("m2", "bcra:m2_privado_ia", "BCRA"),
-                       ("préstamos", "bcra:prestamos_privados", "BCRA"), ("ipim", "ipim", "INDEC"), ("ipp", "ipp", "INDEC"),
-                       ("badlar", "badlar", "BCRA"), ("tamar", "tamar", "BCRA")]
-        for termino, variable, origen in referencias:
-            if termino in label.casefold():
-                serie = get(variable) if ":" in variable else globals().get(variable)
-                fuente = fuente or origen
-                break
-    if serie is not None:
-        fecha = fecha or presentacion.fecha_dato(serie)
     plano = d is not None and abs(d) < 0.5 * 10 ** -d_dec
     slot.metric(
         label,
@@ -438,10 +428,7 @@ def kpi(slot, label: str, valor: float | None, dec: int = 0, pre: str = "", suf:
     )
 
 
-    if fecha:
-        slot.caption(presentacion.etiqueta_dato(serie, fuente or "Fuente pública") if serie is not None else (fuente + " · " if fuente else "") + "Dato: " + fecha)
-
-MAX_PUNTOS = 1000  # límite de puntos enviados por serie
+MAX_PUNTOS = 1000  # una línea de ~1.000 px de ancho no muestra más detalle que esto
 
 
 def aligerar(fig) -> None:
@@ -481,20 +468,6 @@ def grafico(fig, key: str | None = None):
     aligerar(fig)
     charts.compactar(fig)
     st.plotly_chart(fig, width="stretch", config={"displayModeBar": False, "scrollZoom": False}, key=key)
-    fechas_fig = []
-    for tr in fig.data:
-        xs = getattr(tr, "x", None)
-        if xs is not None and len(xs) and not isinstance(xs[0], (int, float)):
-            try:
-                fechas_fig.extend(pd.to_datetime(list(xs), errors="coerce", format="mixed").dropna().tolist())
-            except (TypeError, ValueError):
-                pass
-    if fechas_fig:
-        origen = {"Dólar": "DolarApi / ArgentinaDatos", "Bolsas": "Yahoo Finance", "Cripto": "CoinGecko / Yahoo Finance", "Bonos": "data912 / FRED", "Tasas y riesgo país": "BCRA / ArgentinaDatos"}.get(st.session_state.get("pestana"), "BCRA / INDEC · APIs públicas")
-        if st.session_state.get("vista") == "inversiones":
-            origen = "BCRA / Yahoo Finance / ArgentinaDatos · metodología debajo"
-        st.caption(f"{origen} · Datos del {min(fechas_fig):%d/%m/%Y} al {max(fechas_fig):%d/%m/%Y}")
-
 
 
 # ───────────────────────── carga de series ─────────────────────────
@@ -680,10 +653,16 @@ ATAJOS = (
 )
 
 with st.sidebar:
-    with st.expander("Accesos rápidos"):
-        for clave_a, texto_a, icono_a, destino_a in ATAJOS[:3]:
-            st.button(texto_a, key=f"atajo_{clave_a}", width="stretch", on_click=ir_a_seccion, args=destino_a)
-
+    st.markdown(style.etiqueta("Atajos"), unsafe_allow_html=True)
+    for clave_a, texto_a, icono_a, destino_a in ATAJOS:
+        st.button(texto_a, key=f"atajo_{clave_a}", icon=icono_a, width="stretch", on_click=ir_a_seccion, args=destino_a)
+    if dol is not None:
+        st.markdown(style.etiqueta("Conversor"), unsafe_allow_html=True)
+        with st.container(key="conv_caja"):
+            conversor_lateral()
+    termino, definicion = glosario.termino_del_dia(HOY)
+    st.markdown(style.etiqueta("Término del día"), unsafe_allow_html=True)
+    st.markdown(style.termino_del_dia(termino, definicion), unsafe_allow_html=True)
 
 
 # (las cotizaciones del día van en la franja deslizante de arriba; el crédito y las fuentes, en el pie de la página)
@@ -916,8 +895,6 @@ def pie_pagina() -> None:
                   on_click=refrescar_datos,
                   help="Vuelve a descargar todo de las fuentes. El dólar, cripto y las bolsas ya se renuevan solos."
                        if faltan <= 0 else f"Alguien refrescó hace poco. Podés volver a hacerlo en {faltan // 60 + 1} min.")
-    if st.session_state.get("_fallas"):
-        st.caption("Algunas fuentes están pendientes de actualización. Las series disponibles se conservan; revisá la fecha de cada dato.")
     try:
         ruta, titulo = seccion_actual()
         if not ruta.startswith("/legal/"):  # la dirección del navegador sigue a lo que se mira: se puede compartir
@@ -933,6 +910,10 @@ def pie_pagina() -> None:
 # ───────────────────────── encabezado ─────────────────────────
 _cargando_inicio.empty()
 st.session_state["_ya_cargo"] = True
+try:
+    st.markdown(style.ticker(construir_ticker()), unsafe_allow_html=True)
+except Exception:  # noqa: BLE001 — la franja es un adorno: si falla, la página sigue sin ella
+    traceback.print_exc()
 pagina_legal = st.query_params.get("legal")
 if isinstance(pagina_legal, str) and pagina_legal in legal.PAGINAS:
     # Términos y condiciones / política de privacidad (se llega desde los enlaces del pie de página)
@@ -946,9 +927,7 @@ if vista != "tablero":
     titulos = {"inversiones": "Ahorro e inversiones", "historia": "Historia económica", "juegos": "Herramientas"}
     pantallas = {"inversiones": pantalla_inversiones, "historia": pantalla_historia, "juegos": pantalla_juegos}
     st.button("Volver al tablero", key="volver_tablero", icon=":material/arrow_back:", on_click=ir_a, args=("tablero",))
-    st.caption("Economía / Historia" if vista == "historia" else "Herramientas" if vista == "juegos" or st.session_state.get("inv_seccion") == "Glosario" else "Mercados y ahorro")
-    if vista != "juegos":
-        st.title(titulos[vista])
+    st.subheader(titulos[vista])
     with protegido(titulos[vista]):
         pantallas[vista]()
     pie_pagina()
@@ -957,16 +936,11 @@ if vista != "tablero":
 # Migrar la selección de sesiones abiertas antes de fusionar las pestañas.
 if st.session_state.get("pestana") in ("Inflación", "Dinero y crédito"):
     st.session_state["pestana"] = "Inflación y dinero"
-pagina_actual = st.session_state.setdefault("pestana", "Resumen")
-if pagina_actual not in PESTANAS:
-    pagina_actual = st.session_state["pestana"] = "Resumen"
-if pagina_actual == "Resumen":
-    st.caption("OBSERVATORIO ECONÓMICO ARGENTINO")
-    st.title("La economía argentina, en contexto")
-    st.caption(f"Consulta del {HOY:%d/%m/%Y} · Cada indicador identifica el período de su último dato.")
-else:
-    st.caption("Economía" if pagina_actual in presentacion.ECONOMIA else "Mercados y ahorro")
-    st.title(pagina_actual)
+t_res, t_dol, t_bol, t_cri, t_bonos, t_prec, t_tasas, t_act, t_res_i, t_sal, t_fis, t_com = st.tabs(
+    PESTANAS,
+    # cada pestaña se calcula y se manda recién al abrirla: la primera carga pesa una fracción (clave en el celular)
+    key="pestana", on_change="rerun",
+)
 
 # ───────────────────────── indicadores personalizables ─────────────────────────
 PREFS_ARCHIVO = Path(__file__).parent / ".macrocenter_prefs.json"
@@ -989,7 +963,7 @@ def _kpi(df: pd.DataFrame | None, col: str = "valor", dias: int = 30, modo: str 
     def calcular() -> dict:
         if df is None:
             return {"valor": None}
-        return dict(valor=ultimo(df, col), d=delta(df, col, dias=dias, modo=modo), serie=df, fecha=presentacion.fecha_dato(df), **kw)
+        return dict(valor=ultimo(df, col), d=delta(df, col, dias=dias, modo=modo), **kw)
     return calcular
 
 
@@ -1546,70 +1520,67 @@ def bloque_fiscal() -> None:
 
 
 # ── Inicio ──
-with protegido("Resumen"):
-    if pagina_actual == 'Resumen':  # solo la pestaña abierta se calcula y se manda al navegador
+with t_res, protegido("Resumen"):
+    if t_res.open:  # solo la pestaña abierta se calcula y se manda al navegador
         abrir(pestanas.inicio)
 
 # ── Criptomonedas ──
-with protegido("Criptomonedas"):
-    if pagina_actual == 'Cripto':  # solo la pestaña abierta se calcula y se manda al navegador
+with t_cri, protegido("Criptomonedas"):
+    if t_cri.open:  # solo la pestaña abierta se calcula y se manda al navegador
         pantalla_cripto()
 
 # ── Bolsas ──
-with protegido("Bolsas"):
-    if pagina_actual == 'Bolsas':  # solo la pestaña abierta se calcula y se manda al navegador
+with t_bol, protegido("Bolsas"):
+    if t_bol.open:  # solo la pestaña abierta se calcula y se manda al navegador
         pantalla_bolsas()
 
 # ── Dólar ──
-with protegido("Dólar"):
-    if pagina_actual == 'Dólar':  # solo la pestaña abierta se calcula y se manda al navegador
+with t_dol, protegido("Dólar"):
+    if t_dol.open:  # solo la pestaña abierta se calcula y se manda al navegador
         abrir(pestanas.dolar)
-        with st.expander("Conversor de pesos y dólares"):
-            if dol is not None:
-                conversor_lateral()
 
 # ── Reservas ──
-with protegido("Reservas"):
-    if pagina_actual == 'Reservas':  # solo la pestaña abierta se calcula y se manda al navegador
+with t_res_i, protegido("Reservas"):
+    if t_res_i.open:  # solo la pestaña abierta se calcula y se manda al navegador
         abrir(pestanas.reservas)
 
 # ── Actividad y PBI ──
-with protegido("Actividad y PBI"):
-    if pagina_actual == 'Actividad y PBI':  # solo la pestaña abierta se calcula y se manda al navegador
+with t_act, protegido("Actividad y PBI"):
+    if t_act.open:  # solo la pestaña abierta se calcula y se manda al navegador
         abrir(pestanas.actividad)
 
 # ── Salarios ──
-with protegido("Salarios"):
-    if pagina_actual == 'Salarios':  # solo la pestaña abierta se calcula y se manda al navegador
+with t_sal, protegido("Salarios"):
+    if t_sal.open:  # solo la pestaña abierta se calcula y se manda al navegador
         abrir(pestanas.salarios)
 
 # ── Inflación ──
-with protegido("Inflación y dinero"):
-    if pagina_actual == 'Inflación y dinero':  # solo la pestaña abierta se calcula y se manda al navegador
+with t_prec, protegido("Inflación y dinero"):
+    if t_prec.open:  # solo la pestaña abierta se calcula y se manda al navegador
         abrir(pestanas.inflacion)
         st.divider()
         st.markdown("### Dinero y crédito")
         abrir(pestanas.dinero)
 
 # ── Tasas y riesgo país ──
-with protegido("Tasas y riesgo país"):
-    if pagina_actual == 'Tasas y riesgo país':  # solo la pestaña abierta se calcula y se manda al navegador
+with t_tasas, protegido("Tasas y riesgo país"):
+    if t_tasas.open:  # solo la pestaña abierta se calcula y se manda al navegador
         abrir(pestanas.tasas)
 
 # ── Bonos ──
-with protegido("Bonos"):
-    if pagina_actual == 'Bonos':  # solo la pestaña abierta se calcula y se manda al navegador
+with t_bonos, protegido("Bonos"):
+    if t_bonos.open:  # solo la pestaña abierta se calcula y se manda al navegador
         pantalla_bonos()
 
 # ── Comercio exterior ──
-with protegido("Comercio exterior"):
-    if pagina_actual == 'Comercio exterior':  # solo la pestaña abierta se calcula y se manda al navegador
+with t_com, protegido("Comercio exterior"):
+    if t_com.open:  # solo la pestaña abierta se calcula y se manda al navegador
         abrir(pestanas.comercio)
 
 
 # ── Resultado fiscal ──
-with protegido("Resultado fiscal"):
-    if pagina_actual == 'Resultado fiscal':  # solo la pestaña abierta se calcula y se manda al navegador
+with t_fis, protegido("Resultado fiscal"):
+    if t_fis.open:  # solo la pestaña abierta se calcula y se manda al navegador
         abrir(pestanas.fiscal)
 
 

@@ -1711,7 +1711,112 @@ JS_PESTANAS = """
     }, 650);
   }, true);
 })();
-
+(() => {
+  if (window.__mcPestanasV5) return;
+  window.__mcPestanasV5 = true;
+  // Mostrar la pestaña elegida dentro del área libre; las flechas quedan fuera de esa área.
+  const destinoPara = (tab) => {
+    const c = tab && tab.closest('[role="tablist"]');
+    if (!c || c.scrollWidth <= c.clientWidth + 1) return null;
+    const tabs = [...c.querySelectorAll('[role="tab"]')], i = tabs.indexOf(tab);
+    if (i < 0) return null;
+    // Los dos primeros marcadores recuperan el inicio exacto, sin compensaciones de la píldora sticky.
+    if (i <= 1) return {c, left: 0};
+    const r = c.getBoundingClientRect(), t = tab.getBoundingClientRect();
+    const primero = tabs[0], fijo = getComputedStyle(primero).position === 'sticky';
+    const desde = fijo ? primero.getBoundingClientRect().right + 20 : r.left + 8;
+    const hasta = r.right - 8;
+    let delta = 0;
+    if (t.width > hasta - desde) delta = t.left - desde;
+    else if (t.left < desde) delta = t.left - desde;
+    else if (t.right > hasta) delta = t.right - hasta;
+    if (Math.abs(delta) < 2) return null;
+    return {c, left: Math.max(0, Math.min(c.scrollWidth - c.clientWidth, c.scrollLeft + delta))};
+  };
+  // Streamlit desliza la fila por su cuenta al cambiar de pestaña (scrollIntoView); lo anulamos para las pestañas
+  // y queda un único movimiento suave, el nuestro (si no, las dos animaciones se pisan y la fila salta).
+  const scrollOriginal = Element.prototype.scrollIntoView;
+  Element.prototype.scrollIntoView = function (...args) {
+    if (this.getAttribute && this.getAttribute('role') === 'tab' && this.closest('[role="tablist"]')) return;
+    return scrollOriginal.apply(this, args);
+  };
+  let turno = 0;
+  const mover = (d) => {
+    if (!d) return;
+    const mio = ++turno;
+    setTimeout(() => {
+      if (mio !== turno) return;
+      d.c.scrollTo({left: d.left, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'});
+      // si la animación no llega (pestaña en segundo plano, ahorro de energía), termina igual; un clic posterior manda
+      setTimeout(() => { if (mio === turno && Math.abs(d.c.scrollLeft - d.left) > 2) d.c.scrollLeft = d.left; }, 900);
+    }, 0);
+  };
+  // También mostrar la seleccionada al abrir un enlace directo o redimensionar la ventana.
+  // El desplazamiento manual no altera la selección y no dispara este seguimiento.
+  const instaladas = new WeakSet();
+  const seguirListas = () => {
+    document.querySelectorAll('[role="tablist"]').forEach(c => {
+      if (instaladas.has(c)) return;
+      instaladas.add(c);
+      const mostrarElegida = () => mover(destinoPara(c.querySelector('[role="tab"][aria-selected="true"]')));
+      new MutationObserver(mostrarElegida).observe(c, {subtree: true, attributes: true, attributeFilter: ['aria-selected']});
+      if (window.ResizeObserver) new ResizeObserver(mostrarElegida).observe(c);
+      mostrarElegida();
+    });
+  };
+  let esperandoLista = false;
+  new MutationObserver(() => {
+    if (esperandoLista) return;
+    esperandoLista = true;
+    requestAnimationFrame(() => { esperandoLista = false; seguirListas(); });
+  }).observe(document.body, {childList: true, subtree: true});
+  seguirListas();
+  // Al abrir una pestaña, Streamlit vacía el contenido viejo antes de que llegue el nuevo y la página se encoge un
+  // instante (el pie salta y el scroll se pierde). Se mantiene el alto actual hasta que termina de cargar.
+  let soltar = 0;
+  const congelarAlto = () => {
+    // se congela el bloque de las pestañas (no el contenedor general): la barra del pie va justo debajo y, si el
+    // bloque se encoge, sube con él aunque la página siga igual de alta
+    const m = document.querySelector('[data-testid="stTabs"]');
+    if (!m) return;
+    m.style.minHeight = m.offsetHeight + 'px';
+    const t0 = Date.now(), mio = ++soltar;
+    let quietos = 0;
+    const iv = setInterval(() => {
+      if (mio !== soltar) { clearInterval(iv); return; }
+      quietos = document.querySelector('[data-stale="true"]') ? 0 : quietos + 1;
+      if ((quietos >= 3 && Date.now() - t0 > 700) || Date.now() - t0 > 8000) { m.style.minHeight = ''; clearInterval(iv); }
+    }, 100);
+  };
+  document.addEventListener('click', (e) => {
+    const tab = e.target.closest && e.target.closest('[role="tablist"] [role="tab"]');
+    if (tab) { mover(destinoPara(tab)); congelarAlto(); }
+  }, true);
+  // flechas de la fila: van directo a una punta (la de la derecha muestra el último marcador; la de la izquierda, el
+  // primero). Los del medio siempre se ven, así que avanzar de a poco no sumaba nada. Se corta el manejo de Streamlit
+  // (que corre la fila un tramo) para que no haya dos movimientos a la vez.
+  document.addEventListener('click', (e) => {
+    const flecha = e.target.closest && e.target.closest('[data-testid="stTabsScrollLeft"], [data-testid="stTabsScrollRight"]');
+    if (!flecha) return;
+    const bloque = flecha.closest('[data-testid="stTabs"]');
+    const c = bloque && bloque.querySelector('[role="tablist"]');
+    if (!c) return;
+    e.stopPropagation();
+    e.preventDefault();
+    const fin = flecha.getAttribute('data-testid') === 'stTabsScrollRight' ? c.scrollWidth - c.clientWidth : 0;
+    mover({c, left: fin});
+  }, true);
+  // si la persona mueve la fila a mano (flechitas, rueda, dedo), eso manda sobre cualquier movimiento pendiente
+  const aMano = (e) => { if (e.target.closest && e.target.closest('[data-testid^="stTabsScroll"], [role="tablist"]')) turno++; };
+  document.addEventListener('pointerdown', (e) => { if (e.target.closest && e.target.closest('[data-testid^="stTabsScroll"]')) turno++; }, true);
+  document.addEventListener('wheel', aMano, {capture: true, passive: true});
+  document.addEventListener('touchstart', aMano, {capture: true, passive: true});
+  document.addEventListener('keyup', (e) => {
+    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    const tab = document.activeElement;
+    if (tab && tab.getAttribute('role') === 'tab') mover(destinoPara(tab));
+  }, true);
+})();
 (() => {
   // Mapa de inflación: la provincia bajo el cursor se «levanta» (sube y deja su sombra, como una pieza en 3D).
   // Liviano: no hay observadores ni bucles; se escuchan los eventos de Plotly y se mueve una sola copia de la
@@ -2263,8 +2368,7 @@ def cotizaciones(tarjetas: list[dict]) -> str:
         out.append(
             f'<div class="mc-fx"><div class="n">{esc(t["nombre"])}</div><div class="d">{esc(t["desc"])}</div>'
             f'<div class="fila"><div class="v">{esc(t["valor"])}</div>{spark}</div><div class="c">{esc(t["detalle"])}</div>'
-            f'<div class="chips">{var}{extra}{chip}</div>'
-            f'<div class="obs-meta">{esc(t.get("meta", ""))}</div></div>'
+            f'<div class="chips">{var}{extra}{chip}</div></div>'
         )
     out.append("</div></div>")
     return "".join(out)
@@ -2366,7 +2470,7 @@ def intro(texto_md: str, leyenda: list[tuple[str, str]] | None = None, nota_md: 
     """Presentación de una pestaña: una tarjeta liviana con la frase principal y, debajo, qué significan los colores
     (leyenda: [(«bien»|«mal»|«neutro», texto)]) y una nota opcional. Admite **negrita**."""
     ley = "".join(f'<span class="{html.escape(c)}">{html.escape(t)}</span>' for c, t in (leyenda or []))
-    pie = (f'<div class="ley">{ley}</div>' if ley else "") + (f'<details class="nota"><summary>Cómo interpretar estos datos</summary>{_md_a_html(nota_md)}</details>' if nota_md else "")
+    pie = (f'<div class="ley">{ley}</div>' if ley else "") + (f'<div class="nota">{_md_a_html(nota_md)}</div>' if nota_md else "")
     # botón para ocultarla (o volver a mostrarla): lo maneja JS_PESTANAS y la elección vale para todas las pestañas
     boton = '<span class="mc-intro-x" role="button" tabindex="0" title="Ocultar o mostrar la presentación"></span>'
     return f'<div class="mc-intro">{boton}<p>{_md_a_html(texto_md)}</p>{pie}</div>'
@@ -2493,8 +2597,8 @@ def estado_datos(hora_dolar: str | None, oficiales: str) -> str:
     """Franja del pie: «En vivo», a qué hora se actualizó el dólar y cuándo se bajaron las series oficiales."""
     esc = html.escape
     dolar = f"<span>Dólar: {esc(hora_dolar)}</span>" if hora_dolar else ""
-    return (f'<div class="mc-vivo"><span class="en">Datos públicos</span>{dolar}'
-            f'<span class="sec">Descarga de series: {esc(oficiales)}</span></div>')
+    return (f'<div class="mc-vivo"><span class="en">En vivo</span>{dolar}'
+            f'<span class="sec">Series oficiales: {esc(oficiales)}</span></div>')
 
 
 def pie_enlaces() -> str:

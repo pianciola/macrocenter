@@ -69,7 +69,7 @@ def _leer_disco() -> tuple[tuple[dict, datetime], float] | None:
 
 def _guardar_disco(resultado: tuple[dict, datetime]) -> None:
     """Solo se guarda una descarga sin fallas (así una caída de red no queda 'congelada' en el disco)."""
-    if any(isinstance(v, str) or (isinstance(v, pd.DataFrame) and v.attrs.get("estado_fuente") == "respaldo") for v in resultado[0].values()):
+    if any(isinstance(v, str) for v in resultado[0].values()):
         return
     try:
         crudo = semilla.a_bytes(*resultado)
@@ -93,13 +93,6 @@ def envejecer_disco() -> None:
         pass
 
 
-def _como_respaldo(valor):
-    if isinstance(valor, pd.DataFrame):
-        valor = valor.copy()
-        valor.attrs["estado_fuente"] = "respaldo"
-    return valor
-
-
 def _completar_con_disco(resultado: tuple[dict, datetime]) -> tuple[dict, datetime]:
     """Si alguna fuente falló, usa para ella el último dato bueno guardado: mejor un dato de hace unas horas que una
     sección vacía. Así la caída de una sola fuente no deja sin caché a toda la página."""
@@ -109,11 +102,11 @@ def _completar_con_disco(resultado: tuple[dict, datetime]) -> tuple[dict, dateti
     guardado = _leer_disco()
     if guardado:
         viejos = guardado[0][0]
-        datos = {k: (_como_respaldo(viejos.get(k, v)) if isinstance(v, str) else v) for k, v in datos.items()}
+        datos = {k: (viejos.get(k, v) if isinstance(v, str) else v) for k, v in datos.items()}
     if any(isinstance(v, str) for v in datos.values()):  # sin nada guardado (servidor recién prendido): la copia de respaldo
         copia = _semilla()
         if copia:
-            datos = {k: (_como_respaldo(copia[0].get(k, v)) if isinstance(v, str) else v) for k, v in datos.items()}
+            datos = {k: (copia[0].get(k, v) if isinstance(v, str) else v) for k, v in datos.items()}
     return datos, cuando
 
 
@@ -215,7 +208,7 @@ def _entrada(mem: dict, nombre: str) -> dict:
 def _bajar_y_guardar(e: dict, bajar, ttl: int, reintento: int) -> None:
     nuevo = bajar()
     viejo = e["v"] or {}
-    e["v"] = {k: (_como_respaldo(viejo[k]) if isinstance(v, str) and k in viejo and not isinstance(viejo[k], str) else v)
+    e["v"] = {k: (viejo[k] if isinstance(v, str) and k in viejo and not isinstance(viejo[k], str) else v)
               for k, v in nuevo.items()}
     falla = any(isinstance(v, str) for v in nuevo.values())
     e["t"] = time.time() - (ttl - reintento if falla else 0)
