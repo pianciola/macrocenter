@@ -107,12 +107,6 @@ pases a 1 día como referencia vigente.
 
 ## Fuentes (APIs públicas, sin clave)
 
-En **Cripto**, el panel en vivo conecta directamente el navegador al canal público de Binance Spot por WebSocket,
-sin cuenta ni API key. Ofrece BTC, ETH, SOL, BNB, XRP y DOGE contra USDT, precio, puntas, variación y volumen de 24 horas.
-El gráfico se construye durante la conexión (hasta 3 minutos); los históricos y el panorama en USD/ARS siguen usando
-sus fuentes anteriores cada 5 minutos. El panel avisa cuando pierde conexión y reintenta con espera progresiva.
-Los bonos gratuitos de data912 mantienen su demora: consultarlos cada 5 minutos no los convierte en tiempo real.
-
 - **BCRA** — API Estadísticas v4.0 (`api.bcra.gob.ar/estadisticas/v4.0`)
 - **Datos Argentina** — API de Series de Tiempo (`apis.datos.gob.ar/series/api`): INDEC / MECON
 - **ArgentinaDatos** — cotizaciones del dólar y riesgo país (`api.argentinadatos.com`)
