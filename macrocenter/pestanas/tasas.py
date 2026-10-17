@@ -12,7 +12,7 @@ def mostrar(
 ) -> None:
     st.markdown(style.intro("Cuánto cuesta el dinero en pesos (**tasas de interés**) y cuánto le cuesta a la Argentina endeudarse "
                             "(**riesgo país**).", [("bien", "El riesgo país baja"), ("mal", "Sube")],
-                            "TNA: tasa nominal anual, sin capitalización. No representa el costo total de un crédito."), unsafe_allow_html=True)
+                            "TNA: tasa nominal anual, sin capitalización. No representa el costo total de un crédito.", resumen='Tasas de interés en pesos y riesgo país.'), unsafe_allow_html=True)
     k = st.columns(4)
     v, a_ = _ult_y_hace(riesgo)
     kpi(k[0], "Riesgo país", v, 0, suf=" pb", d=dif(v, a_), d_suf=" pb", d_dec=0, color="inverse",

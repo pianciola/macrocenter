@@ -11,7 +11,7 @@ from macrocenter import datos_vista, charts, style
 def mostrar(*, VIVO, base100, con_periodo, delta, dol, dol_rec, get, grafico, ultimo) -> None:
     st.markdown(style.intro("Todas las cotizaciones del dólar en la Argentina, del oficial a los financieros.",
                             [("bien", "Sube"), ("mal", "Baja")],
-                            "En cada tarjeta, **«vs oficial»** indica cuánto más caro está ese dólar que el oficial (por ejemplo, +2% significa que cuesta un 2% más)."), unsafe_allow_html=True)
+                            "En cada tarjeta, **«vs oficial»** indica cuánto más caro está ese dólar que el oficial (por ejemplo, +2% significa que cuesta un 2% más).", resumen='Cotizaciones, brechas y evolución de los principales dólares.'), unsafe_allow_html=True)
     if dol is not None:
         TIPOS_DOLAR = [
             ("oficial", "Dólar oficial", "Banco Nación, venta minorista"),

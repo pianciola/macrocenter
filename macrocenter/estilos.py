@@ -1,9 +1,7 @@
 """Hojas de estilo y adaptación al tema de MacroCenter."""
 import re
 
-CELESTE = "#74ACDF"
-SOL = "#F6B40E"
-FUENTE = '"Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Roboto, Arial, sans-serif'
+from macrocenter.diseno import CELESTE, SOL, FUENTE
 
 CSS = f"""
 <style>
@@ -1688,3 +1686,28 @@ CSS = CSS.replace("</style>", (
     'html[data-tema="claro"] .st-key-pie_datos{background:color-mix(in srgb,#FFFFFF 90%,#74ACDF 10%);border-top-color:#2563A8}'
     'html[data-tema="claro"] .mc-pie-btn{background:#E9F1FA;color:#2563A8;border-color:#9DBEE0;box-shadow:0 -2px 6px rgba(30,60,100,.12)}'
     "</style>"))
+
+
+# Reglas comunes de presentación: conservar tamaños táctiles y colores semánticos.
+CSS = CSS.replace("</style>", """
+[class*="st-key-btn_noticias"] button { background: rgba(116,172,223,.12) !important; border: 1px solid rgba(116,172,223,.35) !important; box-shadow: none !important; }
+[class*="st-key-btn_noticias"] button p { color: inherit !important; font-weight: 600 !important; }
+section[data-testid="stSidebar"] { background-image: none !important; }
+:root { --mc-radio: 10px; --mc-borde: rgba(128,144,163,.25); --mc-superficie: rgba(128,144,163,.055); }
+[class*="st-key-indicador_"] { border: 1px solid var(--mc-borde); border-radius: var(--mc-radio); padding: 16px; min-height: 264px; box-sizing: border-box; height: 100%; background: var(--mc-superficie); }
+[class*="st-key-indicador_"] [data-testid="stMetric"] { border: 0; background: none; padding: 0; min-height: 124px; }
+[class*="st-key-indicador_"] .mc-dato-meta { margin: 0; padding-top: 8px; border-top: 1px solid var(--mc-borde); }
+.mc-intro, html[data-tema="claro"] .mc-intro { background: var(--mc-superficie); border: 1px solid var(--mc-borde); border-radius: var(--mc-radio); box-shadow: none; }
+.mc-como { margin-top: 8px; font-size: .9rem; line-height: 1.6; }
+.mc-como summary { cursor: pointer; font-weight: 600; padding-block: 8px; min-height: 44px; box-sizing: border-box; }
+.mc-como > div { padding: 8px 0; }
+html[data-intros="ocultas"] .mc-intro .mc-como { display: none; }
+.mc-intro .mc-intro-x::before, .mc-nota .t { font-family: inherit !important; font-style: normal !important; }
+.mc-fx, .mc-news { border-radius: var(--mc-radio); box-shadow: none !important; background-image: none !important; }
+[data-testid="stTab"][aria-selected="true"] { background-image: none !important; box-shadow: inset 0 -2px 0 #74ACDF !important; }
+[role="tablist"] [data-testid="stTab"]:first-of-type[aria-selected="true"] { background-color: #74ACDF !important; }
+.mc-pano .cab .tit { font-size: 1.35rem; font-weight: 650; }
+.mc-pano .fila { border-color: var(--mc-borde); }
+.mc-pano .txt { font-size: .95rem; }
+.mc-label, .mc-acl .et, .mc-foot .tit { letter-spacing: 0; }
+</style>""")

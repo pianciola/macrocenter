@@ -14,7 +14,7 @@ def mostrar(*, _var_pct, cargar_mercados, falla, grafico, rec, selector_categori
     mk = cargar_mercados()
     st.markdown(style.intro("Las principales bolsas del mundo y algunas materias primas que mueven a la Argentina.",
                             [("bien", "Sube"), ("mal", "Baja")],
-                            "Yahoo Finance (fuente no oficial, con demora). Se actualiza cada 5 minutos."), unsafe_allow_html=True)
+                            "Yahoo Finance (fuente no oficial, con demora). Se actualiza cada 5 minutos.", resumen='Bolsas y materias primas relevantes para la Argentina.'), unsafe_allow_html=True)
     tarjetas = []
     for simbolo, nombre, grupo, unidad in data.INDICES:
         df = mk.get(simbolo)

@@ -38,7 +38,7 @@ def mostrar(
             interactivo.pantalla_viaje(dp, fotos_presidentes())
         return
     st.markdown(style.intro("Cómo evolucionó la economía con cada presidente desde la vuelta de la democracia, y cómo se "
-               "comparan los mandatos entre sí. Los números se calculan con las series oficiales."), unsafe_allow_html=True)
+               "comparan los mandatos entre sí. Los números se calculan con las series oficiales.", resumen='La evolución de la economía argentina a través de sus gobiernos.'), unsafe_allow_html=True)
     try:
         dp, inds, faltan = historicos(DATOS, dol, ACTUALIZADO)
     except Exception:  # noqa: BLE001 — una falla de cálculo no debe romper el resto de la app

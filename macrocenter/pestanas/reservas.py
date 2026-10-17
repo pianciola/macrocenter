@@ -9,7 +9,7 @@ from macrocenter import charts, style
 
 def mostrar(*, HOY, bloque_cambiario, delta, grafico, kpi, rec, reservas, selector_periodo, ultimo) -> None:
     st.markdown(style.intro("Los dólares y el oro que tiene el **Banco Central** para pagar deuda e intervenir en el mercado cambiario.",
-                            [("bien", "Suben"), ("mal", "Bajan")]), unsafe_allow_html=True)
+                            [("bien", "Suben"), ("mal", "Bajan")], resumen='Reservas internacionales brutas del Banco Central.'), unsafe_allow_html=True)
     if reservas is not None:
         @st.fragment
         def bloque_reservas() -> None:

@@ -12,7 +12,7 @@ def mostrar(
     smvm, ult_y_ant,
 ) -> None:
     st.markdown(style.intro("Cuánto suben los sueldos y si le ganan a la inflación (**salario real**).",
-                            [("bien", "El poder de compra mejora"), ("mal", "Empeora")]), unsafe_allow_html=True)
+                            [("bien", "El poder de compra mejora"), ("mal", "Empeora")], resumen='Evolución de los salarios y de su poder de compra.'), unsafe_allow_html=True)
     sr_k = salario_real()
     k = st.columns(4)
     v, a_ = ult_y_ant(sal_ia)

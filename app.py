@@ -19,7 +19,7 @@ from pathlib import Path
 import pandas as pd
 import streamlit as st
 
-from macrocenter import (catalogo, estilos, carga, charts, data, datos_vista, glosario, interactivo, inversiones, legal, mapa, ministros, news, pestanas,
+from macrocenter import (diseno, catalogo, estilos, carga, charts, data, datos_vista, glosario, interactivo, inversiones, legal, mapa, ministros, news, pestanas,
                          presidentes, selector, series, style)
 from macrocenter.avisos import actualizando, falla
 from macrocenter.carga import (  # descarga, cachés y copia de respaldo
@@ -29,12 +29,13 @@ from macrocenter.carga import (  # descarga, cachés y copia de respaldo
 )
 
 # Módulos de presentación sin estado: recargarlos evita mezclar pantallas anteriores con la navegación nueva.
-for modulo in (catalogo, estilos, carga, data, datos_vista, series, style, charts, inversiones, interactivo,
+for modulo in (diseno, catalogo, estilos, carga, data, datos_vista, series, style, charts, inversiones, interactivo,
                *(getattr(pestanas, nombre) for nombre in pestanas.__all__)):
     importlib.reload(modulo)
 
 st.set_page_config(page_title="MacroCenter", page_icon=style.favicon(), layout="wide")
 st.session_state["_fallas"] = []  # fallas de datos de esta corrida (no se muestran; las lee el monitor)
+st.session_state["_n_kpi"] = 0
 st.session_state["_n_graf"] = 0  # numera los gráficos de esta corrida (claves de sus botones de descarga)
 
 # fecha argentina: el servidor publicado anda en UTC y desde las 21 h ya estaría en el día siguiente
@@ -418,20 +419,22 @@ def kpi(slot, label: str, valor: float | None, dec: int = 0, pre: str = "", suf:
     # (inflación, riesgo país, desocupación) pasan color="inverse".
     # una variación que redondeada da 0,0 no lleva flecha (una flecha para arriba con 0,0% confunde)
     plano = d is not None and abs(d) < 0.5 * 10 ** -d_dec
-    slot.metric(
-        f"[{label}]({ruta})" if ruta else label,
-        charts.num(valor, dec, suf, pre),
-        None if d is None else (f"sin cambios {d_txt}" if plano else f"{charts.num(d, d_dec, d_suf)} {d_txt}"),
-        delta_color="off" if plano else color,
-        delta_arrow="off" if plano else "auto",
-        help=help,
-        border=True,
-    )
+    numero = st.session_state["_n_kpi"] = st.session_state.get("_n_kpi", 0) + 1
+    with slot.container(key=f"indicador_{numero}"):
+        st.metric(
+            f"[{label}]({ruta})" if ruta else label,
+            charts.num(valor, dec, suf, pre),
+            None if d is None else (f"sin cambios {d_txt}" if plano else f"{charts.num(d, d_dec, d_suf)} {d_txt}"),
+            delta_color="off" if plano else color,
+            delta_arrow="off" if plano else "auto",
+            help=help,
+            border=False,
+        )
 
-    if fuente:
-        frecuencia, unidad, definicion = datos_vista.FICHAS.get(label, ("", "", help or ""))
-        slot.markdown(datos_vista.detalle(serie, fuente, max_dias=max_dias, nombre=label,
-                                       frecuencia=frecuencia, unidad=unidad, definicion=definicion), unsafe_allow_html=True)
+        if fuente:
+            frecuencia, unidad, definicion = datos_vista.FICHAS.get(label, ("", "", help or ""))
+            st.markdown(datos_vista.detalle(serie, fuente, max_dias=max_dias, nombre=label,
+                                           frecuencia=frecuencia, unidad=unidad, definicion=definicion), unsafe_allow_html=True)
 
 
 MAX_PUNTOS = 1000  # una línea de ~1.000 px de ancho no muestra más detalle que esto
@@ -466,7 +469,9 @@ def grafico(fig, key: str | None = None):
         # título del gráfico y, a la derecha, «CSV» para bajar sus datos (se arman recién al tocarlo)
         n = st.session_state["_n_graf"] = st.session_state.get("_n_graf", 0) + 1
         with st.container(key=f"gtit_{n}", horizontal=True, vertical_alignment="bottom", gap="small"):
-            st.markdown(style.titulo_grafico(titulo, bajada) if titulo else "", unsafe_allow_html=True)
+            pregunta = fig.layout.meta.get("pregunta") if isinstance(fig.layout.meta, dict) else None
+            subtitulo = " · ".join(t for t in (titulo, bajada) if t) if pregunta else bajada
+            st.markdown(style.titulo_grafico(pregunta or titulo, subtitulo) if titulo else "", unsafe_allow_html=True)
             if trazas:
                 nombre = style.slug(titulo or key or "grafico")[:60]
                 st.download_button("CSV", lambda t=trazas: charts.csv_de(t), file_name=f"macrocenter-{nombre}.csv",

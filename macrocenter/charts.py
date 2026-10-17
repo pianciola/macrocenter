@@ -7,6 +7,8 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 
+from macrocenter.diseno import FUENTE_GRAFICOS, PREGUNTAS
+
 PALETA = ["#2E86DE", "#B06CC4", "#A97713", "#4F9BAA", "#8067CB", "#697C91",
           "#C77436", "#5275A7", "#A16AA1", "#8B8542", "#4C8C83", "#9A7964", "#7171A8"]
 POS, NEG = "#10AC84", "#EE5253"
@@ -181,11 +183,13 @@ def _partir_titulo(titulo: str) -> tuple[str, str | None]:
 
 
 def _base(fig: go.Figure, titulo: str, yfmt: str | None, height: int) -> go.Figure:
+    if titulo in PREGUNTAS:
+        fig.update_layout(meta={**(fig.layout.meta if isinstance(fig.layout.meta, dict) else {}), "pregunta": PREGUNTAS[titulo]})
     titulo, bajada = _partir_titulo(titulo)
     if bajada:
         fig.update_layout(title_subtitle=dict(text=bajada, font=dict(size=12, color="rgba(128,128,128,1)")))
     fig.update_layout(
-        font=dict(family="Segoe UI Variable Text, Segoe UI, system-ui, -apple-system, Helvetica Neue, Roboto, Arial, sans-serif"),
+        font=dict(family=FUENTE_GRAFICOS),
         title=dict(text=titulo, font=dict(size=16)),
         height=height,
         margin=dict(l=10, r=10, t=50, b=45),
@@ -436,7 +440,7 @@ def presentar(fig: go.Figure) -> go.Figure:
     """Legibilidad común para figuras propias y comparativos, también en pantallas angostas."""
     fig.update_layout(
         autosize=True, separators=",.",
-        font=dict(family="Segoe UI, system-ui, Arial, sans-serif", size=12),
+        font=dict(family=FUENTE_GRAFICOS, size=12),
         hoverlabel=dict(font_size=13, namelength=-1),
         legend=dict(font_size=12, itemsizing="constant", maxheight=0.24),
     )

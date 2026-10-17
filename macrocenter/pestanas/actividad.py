@@ -9,7 +9,7 @@ from macrocenter import charts, series, style
 
 def mostrar(*, dif, emae, emae_sa, get, grafico, kpi, paro, paro_pct, pib, rec, ult_y_ant) -> None:
     st.markdown(style.intro("Cómo viene la producción: el **PBI** (trimestral, con unos tres meses de demora) y el **EMAE**, el indicador "
-                            "mensual del INDEC que lo anticipa.", [("bien", "La actividad mejora"), ("mal", "Empeora")]), unsafe_allow_html=True)
+                            "mensual del INDEC que lo anticipa.", [("bien", "La actividad mejora"), ("mal", "Empeora")], resumen='Actividad económica mensual y producto bruto interno.'), unsafe_allow_html=True)
     p = None
     if pib is not None:
         p = pib.copy()

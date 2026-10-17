@@ -1021,14 +1021,19 @@ def viaje(nombre: str, iniciales: str, periodo: str, hito: str, url: str | None,
             f'<div class="per">{esc(periodo)}</div><h3>{esc(nombre)}</h3><div class="hito">{esc(hito)}</div></div></div>')
 
 
-def intro(texto_md: str, leyenda: list[tuple[str, str]] | None = None, nota_md: str = "") -> str:
-    """Presentación de una pestaña: una tarjeta liviana con la frase principal y, debajo, qué significan los colores
-    (leyenda: [(«bien»|«mal»|«neutro», texto)]) y una nota opcional. Admite **negrita**."""
+def intro(texto_md: str, leyenda: list[tuple[str, str]] | None = None, nota_md: str = "", *, resumen: str = "") -> str:
+    """Una frase visible; explicación y supuestos completos disponibles al desplegar."""
+    breve = resumen or re.split(r"(?<=[.!?])\s+(?=[A-ZÁÉÍÓÚ¿¡])", texto_md, maxsplit=1)[0]
     ley = "".join(f'<span class="{html.escape(c)}">{html.escape(t)}</span>' for c, t in (leyenda or []))
-    pie = (f'<div class="ley">{ley}</div>' if ley else "") + (f'<div class="nota">{_md_a_html(nota_md)}</div>' if nota_md else "")
-    # botón para ocultarla (o volver a mostrarla): lo maneja JS_PESTANAS y la elección vale para todas las pestañas
-    boton = '<span class="mc-intro-x" role="button" tabindex="0" title="Ocultar o mostrar la presentación"></span>'
-    return f'<div class="mc-intro">{boton}<p>{_md_a_html(texto_md)}</p>{pie}</div>'
+    detalle = ""
+    if breve != texto_md or nota_md:
+        cuerpo = (f'<p>{_md_a_html(texto_md)}</p>' if breve != texto_md else "")
+        if nota_md:
+            cuerpo += f'<p>{_md_a_html(nota_md)}</p>'
+        detalle = f'<details class="mc-como"><summary>Cómo leerlo</summary><div>{cuerpo}</div></details>'
+    boton = '<button class="mc-intro-x" type="button" aria-label="Ocultar o mostrar las introducciones" title="Ocultar o mostrar la presentación"></button>'
+    return (f'<div class="mc-intro">{boton}<p>{_md_a_html(breve)}</p>'
+            + (f'<div class="ley">{ley}</div>' if ley else "") + detalle + '</div>')
 
 
 def aclaracion(*filas: tuple[str, str], leyenda: list[tuple[str, str]] | None = None) -> str:

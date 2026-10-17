@@ -18,7 +18,7 @@ def mostrar(*, actualizando, dif, falla, fiscal_anual, fiscal_df, grafico, grafi
         st.markdown(style.intro(
             "Las cuentas del **sector público nacional**: cuánto le sobra o le falta, como porcentaje del PBI (base caja). "
             "Positivo = superávit; negativo = déficit.", [("bien", "Mejora"), ("mal", "Empeora")],
-            f"Último dato: {ult_f['fecha']:%m/%Y}."), unsafe_allow_html=True)
+            f"Último dato: {ult_f['fecha']:%m/%Y}.", resumen='Resultado primario y financiero del sector público nacional.'), unsafe_allow_html=True)
         k = st.columns(4)
         for slot, (nombre, col, ayuda) in zip(k, [
                 ("Primario 12 meses", "primario_12m", "Suma de los últimos 12 meses sobre el PBI de ese período."),

@@ -17,10 +17,6 @@ def mostrar(
     restablecer_prefs, riesgo, sal_real_df, selector_categoria, selector_periodo, turno_de_visita, ultimo, uva,
 ) -> None:
     turno = turno_de_visita()
-    # Primero el contexto, después los indicadores personalizables y el detalle.
-    frases = panorama_inicio()
-    if frases:
-        st.html(style.panorama(frases, f"{HOY:%d/%m/%Y}"))
     # el estado de sesión puede traer claves viejas o inválidas: se filtra antes de dibujar el selector
     previos = st.session_state.get("kpis_sel")
     st.session_state["kpis_sel"] = [k for k in (previos if isinstance(previos, list) else [])
@@ -45,6 +41,13 @@ def mostrar(
             except Exception:  # noqa: BLE001
                 traceback.print_exc()
                 kpi(slot, CATALOGO[clave][1], None)
+
+    frases = panorama_inicio()
+    if frases:
+        st.html(style.panorama(frases[:3], f"{HOY:%d/%m/%Y}"))
+        if len(frases) > 3:
+            with st.expander("Ampliar el panorama económico"):
+                st.html(style.panorama(frases[3:], f"{HOY:%d/%m/%Y}"))
 
     # un solo gráfico a la vez, para que la portada no se llene; cada visita arranca con uno distinto
     st.markdown("#### Gráfico destacado")

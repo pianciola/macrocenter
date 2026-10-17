@@ -31,7 +31,7 @@ def mostrar(*, _ult_y_hace, cargar_bonos, dif, falla, grafico, grafico_periodo, 
         "Unidos: la **tasa de la Reserva Federal** y sus **bonos del Tesoro**, que marcan el costo del dinero en el mundo.",
         [("bien", "Sube"), ("mal", "Baja")],
         "Los colores de los bonos argentinos siguen a la cotización. Las tasas de EE. UU. van sin color: que suban no es "
-        "bueno ni malo en sí."), unsafe_allow_html=True)
+        "bueno ni malo en sí.", resumen='Precios de referencia y evolución de bonos argentinos en dólares.'), unsafe_allow_html=True)
     b = cargar_bonos()
     bonos_argentinos(b, falla, grafico_periodo, selector_categoria)
     st.divider()
