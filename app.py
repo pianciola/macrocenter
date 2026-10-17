@@ -949,18 +949,19 @@ if vista != "tablero":
     pie_pagina()
     st.stop()
 
-with st.popover("Todas las secciones", icon=":material/list:"):
-    for seccion in PESTANAS:
-        st.markdown(f'<a href="?ver=tablero/{style.slug(seccion)}" target="_self">{seccion}</a>', unsafe_allow_html=True)
+with st.container(key="navegacion_tablero"):
+    with st.container(key="menu_secciones"), st.popover("Secciones", icon=":material/grid_view:", help="Ver todas las secciones"):
+        for seccion in PESTANAS:
+            st.markdown(f'<a href="?ver=tablero/{style.slug(seccion)}" target="_self">{seccion}</a>', unsafe_allow_html=True)
 
-# Migrar la selección de sesiones abiertas antes de fusionar las pestañas.
-if st.session_state.get("pestana") in ("Inflación", "Dinero y crédito"):
-    st.session_state["pestana"] = "Inflación y dinero"
-t_res, t_dol, t_bol, t_cri, t_bonos, t_prec, t_tasas, t_act, t_res_i, t_sal, t_fis, t_com = st.tabs(
-    PESTANAS,
-    # cada pestaña se calcula y se manda recién al abrirla: la primera carga pesa una fracción (clave en el celular)
-    key="pestana", on_change="rerun",
-)
+    # Migrar la selección de sesiones abiertas antes de fusionar las pestañas.
+    if st.session_state.get("pestana") in ("Inflación", "Dinero y crédito"):
+        st.session_state["pestana"] = "Inflación y dinero"
+    t_res, t_dol, t_bol, t_cri, t_bonos, t_prec, t_tasas, t_act, t_res_i, t_sal, t_fis, t_com = st.tabs(
+        PESTANAS,
+        # cada pestaña se calcula y se manda recién al abrirla: la primera carga pesa una fracción (clave en el celular)
+        key="pestana", on_change="rerun",
+    )
 
 # ───────────────────────── indicadores personalizables ─────────────────────────
 PREFS_ARCHIVO = Path(__file__).parent / ".macrocenter_prefs.json"

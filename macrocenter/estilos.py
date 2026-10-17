@@ -1465,6 +1465,24 @@ h3 {{ font-weight: 700 !important; }}
         overflow-wrap: normal !important; word-break: normal !important; font-weight: 600;
     }}
 }}
+/* Acceso compacto a todas las secciones, en la misma fila que el carrusel. */
+.st-key-navegacion_tablero {{ position: relative; gap: 0 !important; }}
+.st-key-navegacion_tablero .st-key-pestana > div[data-orientation="horizontal"] {{ width: calc(100% - 52px) !important; }}
+.st-key-menu_secciones {{ position: absolute !important; right: 0; top: 9px; width: 40px !important; z-index: 5; }}
+.st-key-menu_secciones [data-testid="stPopoverButton"] {{
+    width: 40px; min-width: 40px; height: 40px; min-height: 40px; padding: 8px;
+    border: 0; border-radius: 10px; background: transparent; color: inherit;
+    opacity: .75; box-shadow: none;
+}}
+.st-key-menu_secciones [data-testid="stPopoverButton"]:is(:hover, [aria-expanded="true"]) {{
+    background: rgba(116,172,223,.14); opacity: 1;
+}}
+.st-key-menu_secciones button p {{
+    position: absolute; width: 1px; height: 1px; clip-path: inset(50%); overflow: hidden; white-space: nowrap;
+}}
+.st-key-menu_secciones button > div > div[aria-hidden="true"] {{ display: none; }}
+.st-key-menu_secciones button [data-testid="stIconMaterial"] {{ font-size: 21px; }}
+
 /* Fichas y navegación accesibles en ambos temas. */
 .mc-ficha {{ margin-top: 4px; }}
 .mc-ficha summary {{ cursor: pointer; padding: 6px 0; font-weight: 600; line-height: 1.5; }}
