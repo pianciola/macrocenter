@@ -554,6 +554,9 @@ JS_PESTANAS = """
       esconder(pieza(d, el => texto(el).startsWith('created by') && !!el.querySelector('img')));
       // el indicador de estado de Cloud (un iframe que se desliza desde el borde) tampoco va
       d.querySelectorAll('iframe').forEach(f => { if ((f.src || '').includes('statuspage')) f.style.setProperty('display', 'none', 'important'); });
+      // las versiones chicas de la insignia y del chip del creador (sin texto): se van por clase estable, que
+      // sobrevive al hash de Cloud («_viewerBadge_1j65n_23», «_profileContainer_gzau3_53»)
+      d.querySelectorAll('[class*="_viewerBadge_"], [class*="_profileContainer_"]').forEach(el => el.style.setProperty('display', 'none', 'important'));
     } catch (e) {}
   };
   const ocultar = () => {
