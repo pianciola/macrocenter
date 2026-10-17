@@ -1170,6 +1170,9 @@ html[data-tema="claro"] :is(.mc-min-card, .mc-viaje, .mc-nota, .mc-min-grupo, .m
 @keyframes mc-gira {{ to {{ transform: rotate(360deg); }} }}
 /* sin el ícono de enlace que Streamlit agrega al pasar por los títulos */
 [data-testid="stHeaderActionElements"] {{ display: none !important; }}
+/* barra superior de Cloud: «Share», favorito, editar y GitHub (o «Fork» para quien no inició sesión) — ruido afuera
+   de la app; el menú «⋮» se deja como está */
+[data-testid="stToolbarActions"] {{ display: none !important; }}
 /* títulos de sección con un poco más de aire arriba */
 [data-testid="stHeading"] h3 {{ padding-top: .9rem; }}
 /* sin barra deslizante: la fila se mueve sola al tocar un marcador (ver JS_PESTANAS), con las flechas o deslizando */
