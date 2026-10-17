@@ -1467,7 +1467,19 @@ h3 {{ font-weight: 700 !important; }}
 }}
 /* Acceso compacto a todas las secciones, en la misma fila que el carrusel. */
 .st-key-navegacion_tablero {{ position: relative; gap: 0 !important; }}
-.st-key-navegacion_tablero .st-key-pestana > div[data-orientation="horizontal"] {{ width: calc(100% - 52px) !important; }}
+.st-key-navegacion_tablero .st-key-pestana [role="tablist"] {{
+    width: calc(100% - 148px) !important; max-width: calc(100% - 148px); min-width: 0;
+}}
+@container principal (max-width: 560px) {{
+    .st-key-navegacion_tablero .st-key-pestana [role="tablist"] {{
+        width: calc(100% - 52px) !important; max-width: calc(100% - 52px);
+    }}
+}}
+@media (hover: none) {{
+    .st-key-navegacion_tablero .st-key-pestana [role="tablist"] {{
+        width: calc(100% - 52px) !important; max-width: calc(100% - 52px); margin-inline: 0 !important;
+    }}
+}}
 .st-key-navegacion_tablero [data-testid="stTabsScrollRight"] {{ right: 52px !important; }}
 .st-key-menu_secciones {{ position: absolute !important; right: 0; top: 9px; width: 40px !important; z-index: 5; }}
 .st-key-menu_secciones [data-testid="stPopoverButton"] {{
@@ -1483,6 +1495,63 @@ h3 {{ font-weight: 700 !important; }}
 }}
 .st-key-menu_secciones button > div > div[aria-hidden="true"] {{ display: none; }}
 .st-key-menu_secciones button [data-testid="stIconMaterial"] {{ font-size: 21px; }}
+
+/* Auditoría móvil: blancos táctiles y cifras completas en pantallas pequeñas o táctiles. */
+@media (max-width: 640px), (pointer: coarse) {{
+    .stApp button:not([role="switch"]):not([role="checkbox"]),
+    .stApp [role="radio"], .stApp input:not([type="checkbox"]):not([type="range"]) {{
+        min-height: 44px;
+    }}
+    .stApp summary {{ min-height: 44px; box-sizing: border-box; }}
+    .st-key-menu_secciones {{ width: 44px !important; top: 9px; }}
+    .st-key-menu_secciones [data-testid="stPopoverButton"] {{ width: 44px; min-width: 44px; min-height: 44px; }}
+    [data-testid="stExpandSidebarButton"], [data-testid="stSidebarCollapseButton"] button {{
+        width: 44px !important; height: 44px !important;
+    }}
+    .st-key-pie_datos button, .mc-pielinks a.bol {{ min-width: 44px !important; min-height: 44px !important; box-sizing: border-box; }}
+    .mc-pie-btn, html[data-tema="claro"] .mc-pie-btn {{
+        min-width: 44px; min-height: 44px; align-items: flex-end; padding-bottom: 4px;
+        background: transparent !important; border: 0 !important; box-shadow: none !important;
+    }}
+    .mc-pie-btn::before {{
+        content: ""; position: absolute; inset: 22px 0 0; z-index: -1;
+        border-radius: 10px 10px 0 0; border: 1px solid rgba(116,172,223,.6); border-bottom: 0;
+        background: #16263b;
+    }}
+    html[data-tema="claro"] .mc-pie-btn::before {{ background: #E9F1FA; }}
+    [data-testid="stTooltipIcon"] button {{ min-width: 32px; min-height: 32px; }}
+    [data-testid="stSlider"] {{ padding: 8px 16px; }}
+    [data-testid="stSlider"] [data-rac]:has(> div > input[type="range"]) {{
+        width: 44px; height: 44px; box-sizing: border-box;
+        border: 10px solid transparent; background-clip: padding-box;
+    }}
+    [data-testid="stMetricValue"] > div, [data-testid="stMetricValue"] p {{
+        white-space: normal !important; overflow: visible !important; text-overflow: clip !important;
+    }}
+    .mc-intro .mc-intro-x {{ min-width: 44px; min-height: 44px; top: 0; right: 0; }}
+}}
+@media (max-width: 360px) {{
+    .mc-pielinks .bol .s {{ display: none; }}
+    .mc-pielinks a.bol {{ justify-content: center; padding-inline: 10px; }}
+}}
+@container principal (max-width: 340px) {{
+    .stApp [data-testid="stHorizontalBlock"]:is(:has([data-testid="stMetric"]),
+        :has(> [data-testid="stColumn"]:nth-child(4):last-child [data-testid="stMetric"])) > [data-testid="stColumn"] {{
+        flex: 1 1 100% !important; min-width: 100% !important; width: 100% !important;
+    }}
+}}
+
+/* Lista de navegación táctil: todos los destinos siguen accesibles en horizontal. */
+[data-testid="stPopoverBody"]:has(.mc-menu-secciones) {{
+    max-height: min(560px, calc(100dvh - 96px)); overflow-y: auto; overscroll-behavior: contain;
+}}
+.mc-menu-secciones {{ display: flex; flex-direction: column; gap: 2px; min-width: min(240px, 70vw); }}
+.mc-menu-secciones a {{
+    display: flex; align-items: center; min-height: 44px; padding: 8px 12px; border-radius: 8px;
+    box-sizing: border-box; color: inherit; text-decoration: none; line-height: 1.4;
+}}
+.mc-menu-secciones a:is(:hover, [aria-current="page"]) {{ background: rgba(116,172,223,.15); }}
+.mc-menu-secciones a[aria-current="page"] {{ font-weight: 700; }}
 
 /* Fichas y navegación accesibles en ambos temas. */
 .mc-ficha {{ margin-top: 4px; }}

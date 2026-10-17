@@ -462,6 +462,11 @@ JS_PESTANAS = """
       } catch (e) {}
     }
     document.querySelectorAll('[data-testid="stIconMaterial"]:not([aria-hidden])').forEach((i) => i.setAttribute('aria-hidden', 'true'));
+    const abrirMenu = document.querySelector('[data-testid="stExpandSidebarButton"]');
+    const cerrarMenu = document.querySelector('[data-testid="stSidebarCollapseButton"] button');
+    if (abrirMenu && abrirMenu.getAttribute('aria-label') !== 'Abrir menú de navegación') abrirMenu.setAttribute('aria-label', 'Abrir menú de navegación');
+    if (cerrarMenu && cerrarMenu.getAttribute('aria-label') !== 'Cerrar menú de navegación') cerrarMenu.setAttribute('aria-label', 'Cerrar menú de navegación');
+
     // Los enlaces internos de las etiquetas Markdown comparten la misma pestaña del navegador.
     document.querySelectorAll('a[href^="?ver="]').forEach((a) => { if (a.target !== '_self') a.target = '_self'; });
     const barra = document.querySelector('.st-key-pie_datos');
@@ -957,6 +962,14 @@ def sparkline(valores: list, ancho: int = 92, alto: int = 30, color: str | None 
             f'stroke-linecap="round"/></svg>')
 
 
+def menu_secciones(secciones: list[str], actual: str) -> str:
+    enlaces = []
+    for nombre in secciones:
+        activa = ' aria-current="page"' if nombre == actual else ''
+        enlaces.append(f'<a href="?ver=tablero/{slug(nombre)}" target="_self"{activa}>{html.escape(nombre)}</a>')
+    return '<nav class="mc-menu-secciones" aria-label="Secciones del tablero">' + ''.join(enlaces) + '</nav>'
+
+
 def ticker(items: list[dict]) -> str:
     """Franja superior deslizante con datos clave. item: {n: nombre, v: valor, d: variación % o None, sentido: ...}."""
     esc = html.escape
@@ -1146,7 +1159,7 @@ def estado_datos(hora_dolar: str | None, oficiales: str) -> str:
 def pie_enlaces() -> str:
     """Enlaces fijos de la barra inferior: suscripción, términos y privacidad."""
     esc = html.escape
-    bol = (f'<a class="bol" href="{esc(BOLETIN, quote=True)}" target="_blank" rel="noopener noreferrer" title="Resumen semanal por mail"><span class="ic" aria-hidden="true">✉</span><span class="l">Resumen semanal</span>'
+    bol = (f'<a class="bol" href="{esc(BOLETIN, quote=True)}" target="_blank" rel="noopener noreferrer" title="Resumen semanal por mail" aria-label="Suscribirme al resumen semanal"><span class="ic" aria-hidden="true">✉</span><span class="l">Resumen semanal</span>'
            '<span class="s">Suscribirme</span></a>'
            if BOLETIN else '')
     return (f'<div class="mc-pielinks">{bol}<a href="?legal=terminos" target="_self">Términos</a>'

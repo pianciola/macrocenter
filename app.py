@@ -951,8 +951,7 @@ if vista != "tablero":
 
 with st.container(key="navegacion_tablero"):
     with st.container(key="menu_secciones"), st.popover("Secciones", icon=":material/grid_view:", help="Ver todas las secciones"):
-        for seccion in PESTANAS:
-            st.markdown(f'<a href="?ver=tablero/{style.slug(seccion)}" target="_self">{seccion}</a>', unsafe_allow_html=True)
+        st.markdown(style.menu_secciones(PESTANAS, st.session_state.get("pestana", "Resumen")), unsafe_allow_html=True)
 
     # Migrar la selección de sesiones abiertas antes de fusionar las pestañas.
     if st.session_state.get("pestana") in ("Inflación", "Dinero y crédito"):
