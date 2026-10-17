@@ -136,6 +136,24 @@ JS_PESTANAS = """
   }, true);
 })();
 (() => {
+  // Menú desplegable «Secciones» (grilla): los enlaces no recargan la página; tocan los botones ocultos de la
+  // barra lateral (uno por sección, ver puente_secciones en app.py) y cierran el pliegue. Con Ctrl, Mayús o la
+  // rueda del mouse sigue siendo un enlace común, para abrirlo en otra pestaña.
+  if (window.__mcSecciones) return;
+  window.__mcSecciones = true;
+  document.addEventListener('click', (e) => {
+    const a = e.target.closest && e.target.closest('a[data-btn]');
+    if (!a || e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
+    const b = document.querySelector('.st-key-' + a.dataset.btn + ' button');
+    if (!b) return;  // si no estuviera, el enlace funciona como siempre
+    e.preventDefault();
+    b.click();
+    // el pliegue del menú se cierra: se le toca el botón si quedó abierto
+    const g = document.querySelector('.st-key-menu_secciones [data-testid="stPopoverButton"][aria-expanded="true"]');
+    if (g) g.click();
+  }, true);
+})();
+(() => {
   // Celular: la barra lateral se abre deslizando el dedo hacia la derecha desde el borde izquierdo y se cierra
   // deslizándolo hacia la izquierda. Toca los mismos botones de Streamlit (flecha de abrir y de cerrar). Solo cuenta
   // un gesto claramente horizontal, para no confundirse con desplazar la página, una tabla o un gráfico.
@@ -245,7 +263,7 @@ JS_PESTANAS = """
     if (!c || c.scrollWidth <= c.clientWidth + 1) return null;
     const tabs = [...c.querySelectorAll('[role="tab"]')], i = tabs.indexOf(tab);
     if (i < 0) return null;
-    // Los dos primeros marcadores recuperan el inicio exacto, sin compensaciones de la píldora sticky.
+    // Los dos primeros marcadores recuperan el inicio exacto.
     if (i <= 1) return {c, left: 0};
     const r = c.getBoundingClientRect(), t = tab.getBoundingClientRect();
     const primero = tabs[0], fijo = getComputedStyle(primero).position === 'sticky';
@@ -423,25 +441,6 @@ JS_PESTANAS = """
   pasar();
 })();
 (() => {
-  // Presentaciones de las pestañas: se pueden ocultar con su flechita (y volver a abrir). La elección se recuerda en
-  // este navegador y vale para todas las pestañas.
-  if (window.__mcIntros) return;
-  window.__mcIntros = true;
-  const raiz = document.documentElement;
-  try { if (localStorage.getItem('mc_intros') === 'ocultas') raiz.dataset.intros = 'ocultas'; } catch (e) {}
-  const alternar = () => {
-    const ocultas = raiz.dataset.intros !== 'ocultas';
-    if (ocultas) raiz.dataset.intros = 'ocultas'; else delete raiz.dataset.intros;
-    try { localStorage.setItem('mc_intros', ocultas ? 'ocultas' : 'visibles'); } catch (e) {}
-  };
-  document.addEventListener('click', (e) => {
-    if (e.target.closest && e.target.closest('.mc-intro-x')) { e.preventDefault(); alternar(); }
-  });
-  document.addEventListener('keydown', (e) => {
-    if ((e.key === 'Enter' || e.key === ' ') && e.target.closest && e.target.closest('.mc-intro-x')) { e.preventDefault(); alternar(); }
-  });
-})();
-(() => {
   // Detalles del documento que Streamlit no deja configurar: idioma español (para los lectores de pantalla), color de
   // la barra del navegador en el celular según el tema, título de la pestaña sin «· Streamlit», íconos que no se leen
   // en voz alta y el alto real de la barra inferior (para apoyar encima la lengüeta ▼). Liviano: un repaso cada 2 s.
@@ -476,6 +475,56 @@ JS_PESTANAS = """
   setInterval(repasar, 2000);
   window.addEventListener('resize', () => setTimeout(repasar, 150), { passive: true });
   window.addEventListener('mc-tema', repasar);
+})();
+// Intercepta clics en los enlaces de los KPIs para cambiar de pestaña al instante
+  document.addEventListener('click', (e) => {
+    const a = e.target.closest('a');
+    if (!a || !a.closest('[data-testid="stMetricLabel"], .mc-pp-enl')) return;
+    const href = a.getAttribute('href') || '';
+    if (href.indexOf('tablero/') === -1) return;
+
+    const slug = href.split('tablero/')[1].replace(/[/?#].*$/, '');
+    const mapa = {
+      'tasas-y-riesgo-pais': 'tasas',
+      'inflacion-y-dinero': 'inflacion',
+      'actividad-y-pbi': 'actividad',
+      'salarios': 'salarios',
+      'reservas': 'reservas'
+    };
+    const clave = mapa[slug] || slug;
+
+    const tabs = Array.from(document.querySelectorAll('[data-testid="stTab"], [role="tab"]'));
+    const destino = tabs.find((t) => {
+      const texto = (t.textContent || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      return texto.indexOf(clave) !== -1;
+    });
+
+    if (destino) {
+      e.preventDefault();
+      destino.click();
+      window.history.replaceState(null, '', href);
+    }
+  });
+
+(() => {
+  // Los gráficos siguen el ancho del panel sin retardo: Streamlit pinta el ancho fijo en px al crearlos y se
+  // re-mide tarde; al plegar o desplegar la columna el dibujo quedaba desparejo un segundo. Este observador
+  // re-acopla cada gráfico a su envoltorio apenas el área útil cambia.
+  if (window.__mcGraficos) return;
+  window.__mcGraficos = true;
+  const ajustar = () => {
+    document.querySelectorAll('[data-testid="stPlotlyChart"]').forEach(el => {
+      if (el.style.width !== '100%') el.style.width = '100%';
+      const p = el.querySelector('.js-plotly-plot');
+      if (p && window.Plotly) { try { Plotly.Plots.resize(p); } catch (e) {} }
+    });
+  };
+  let t = null;
+  const encolar = () => { clearTimeout(t); t = setTimeout(ajustar, 60); };
+  window.addEventListener('resize', encolar, true);
+  const blanco = () => document.querySelector('[data-testid="stMain"]') || document.body;
+  const obs = new ResizeObserver(encolar);
+  obs.observe(blanco());
 })();
 </script>
 """
@@ -649,7 +698,7 @@ def marca() -> str:
         # partía la marca en pedazos
         f'<span class="mc-flag">{logo(46)}</span><span class="txt"><span class="mc-wm" role="heading" aria-level="1">'
         'Macro<span class="c">Center</span><span class="beta" title="Versión de prueba: puede haber detalles por '
-        'pulir">Beta</span></span><span class="sub">El pulso de la economía</span></span></a>'
+        'pulir">Beta</span></span></a>'
     )
 
 
@@ -723,25 +772,21 @@ def _md_a_html(texto: str) -> str:
     return re.sub(r":red\[(.+?)\]", r'<span class="neg">\1</span>', t)
 
 
-def panorama(items: list[dict], fecha: str) -> str:
-    """Informe «En pocas palabras»: contexto complementario, sin duplicar cifras de las tarjetas. Es neutral: describe qué pasó, sin
-    calificarlo como bueno o malo."""
+def panorama(items: list[dict], fecha: str = "") -> str:
+    """Guía de lectura: conceptos complementarios, sin duplicar indicadores."""
     esc = html.escape
     destinos = {"Dólar": "dolar", "Inflación": "inflacion-y-dinero", "Reservas": "reservas",
                 "Riesgo país": "tasas-y-riesgo-pais", "Salarios": "salarios", "Actividad": "actividad-y-pbi"}
-    def tema(i):
-        nombre = esc(i["tema"])
+    tarjetas = []
+    for i in items:
         destino = destinos.get(i["tema"])
-        return f'<a href="?ver=tablero/{destino}" target="_self">{nombre} ↗</a>' if destino else nombre
-    filas = "".join(
-        f'<div class="fila"><div class="izq"><div class="tema">{tema(i)}</div>'
-        '</div>'
-        f'<div class="txt">{_md_a_html(i["texto"])}</div></div>'
-        for i in items)
-    return (ESTILO_PANO + f'<div class="mc-pano"><div class="cab"><div class="tit" role="heading" aria-level="3">En pocas palabras</div>'
-            f'<div class="sub">Panorama económico · consulta del {esc(fecha)}</div></div>{filas}'
-            '<div class="pie">Resumen automático con el último dato publicado por cada fuente (algunos tienen semanas de '
-            'rezago).</div></div>')
+        enlace = (f'<a href="?ver=tablero/{destino}" target="_self">Explorar {esc(i["tema"].lower())} ↗</a>'
+                  if destino else "")
+        tarjetas.append(f'<article class="mc-contexto-tarjeta"><h4>{esc(i.get("titulo", i["tema"]))}</h4>'
+                        f'<p>{_md_a_html(i["texto"])}</p>{enlace}</article>')
+    return ('<section class="mc-contexto" aria-label="Más allá del dato">'
+            '<h3>Más allá del dato</h3><p class="mc-contexto-bajada">Tres claves para interpretar los indicadores en conjunto.</p>'
+            f'<div class="mc-contexto-grilla">{"".join(tarjetas)}</div></section>')
 
 
 def cargando(texto: str = "Cargando datos…", alto: str = "55vh") -> str:
@@ -966,7 +1011,9 @@ def menu_secciones(secciones: list[str], actual: str) -> str:
     enlaces = []
     for nombre in secciones:
         activa = ' aria-current="page"' if nombre == actual else ''
-        enlaces.append(f'<a href="?ver=tablero/{slug(nombre)}" target="_self"{activa}>{html.escape(nombre)}</a>')
+        # data-btn: el botón oculto de la barra lateral que ejecuta este enlace (JS_PESTANAS lo toca y así la página
+        # no se recarga); el href queda como respaldo (sirve sin JS y con Ctrl, Mayús o la rueda)
+        enlaces.append(f'<a href="?ver=tablero/{slug(nombre)}" target="_self" data-btn="sec_{slug(nombre)}"{activa}>{html.escape(nombre)}</a>')
     return '<nav class="mc-menu-secciones" aria-label="Secciones del tablero">' + ''.join(enlaces) + '</nav>'
 
 
@@ -987,7 +1034,7 @@ def ticker(items: list[dict]) -> str:
             # la franja muestra la variación del último día (los indicadores clave, la de 30 días): se aclara con «1 d»
             numero = f'{abs(d):.1f}'.replace(".", ",")
             var = (f'<span class="d {clase}" title="Variación: {periodo}">{flecha} '
-                   f'{numero}% · {periodo}</span>')
+                   f'{numero}{esc(it.get("dsuf", "%"))} · {periodo}</span>')
         celdas.append(f'<span class="tk"><span class="n">{esc(it["n"])}</span><span class="v">{esc(it["v"])}</span>{var}</span>')
     pista = "".join(celdas)
     return (f'<div class="mc-ticker" aria-label="Datos clave"><div class="pista">{pista}'
@@ -1021,19 +1068,50 @@ def viaje(nombre: str, iniciales: str, periodo: str, hito: str, url: str | None,
             f'<div class="per">{esc(periodo)}</div><h3>{esc(nombre)}</h3><div class="hito">{esc(hito)}</div></div></div>')
 
 
-def intro(texto_md: str, leyenda: list[tuple[str, str]] | None = None, nota_md: str = "", *, resumen: str = "") -> str:
-    """Una frase visible; explicación y supuestos completos disponibles al desplegar."""
-    breve = resumen or re.split(r"(?<=[.!?])\s+(?=[A-ZÁÉÍÓÚ¿¡])", texto_md, maxsplit=1)[0]
-    ley = "".join(f'<span class="{html.escape(c)}">{html.escape(t)}</span>' for c, t in (leyenda or []))
-    detalle = ""
-    if breve != texto_md or nota_md:
-        cuerpo = (f'<p>{_md_a_html(texto_md)}</p>' if breve != texto_md else "")
-        if nota_md:
-            cuerpo += f'<p>{_md_a_html(nota_md)}</p>'
-        detalle = f'<details class="mc-como"><summary>Cómo leerlo</summary><div>{cuerpo}</div></details>'
-    boton = '<button class="mc-intro-x" type="button" aria-label="Ocultar o mostrar las introducciones" title="Ocultar o mostrar la presentación"></button>'
-    return (f'<div class="mc-intro">{boton}<p>{_md_a_html(breve)}</p>'
-            + (f'<div class="ley">{ley}</div>' if ley else "") + detalle + '</div>')
+def intro(texto_md: str, leyenda: list[tuple[str, str]] | None = None, nota_md: str = "", *, resumen: str = "",
+          inicio: bool = False) -> str:
+    """Cuadros de leyenda de las pestañas: se sacaron de todas las páginas (los textos y la leyenda de colores
+    desaparecieron). La función sigue existiendo solo para la píldora «← Inicio» de las secciones del tablero;
+    con cualquier otro uso devuelve vacío."""
+    if not inicio:
+        return ""
+    return ('<div class="mc-intro-fila"><a class="mc-inicio" href="./?ver=tablero" target="_self" '
+            'data-btn="nav_resumen" title="Ir al Resumen"><span>←</span>Inicio</a></div>')
+
+
+def titulo(texto: str, cap: str = "", estado: str = "") -> str:
+    """Encabezado de las secciones de Inicio: barra celeste, título y (si hay) bajada — la misma pieza que abre
+    «En pocas palabras», de modo que todos los encabezados de la vista midan lo mismo. Con `estado`, a la derecha
+    queda el indicador de datos (píldora con puntito), alineado con el borde de las tarjetas."""
+    bajada = f'<p class="cap">{html.escape(cap)}</p>' if cap else ""
+    clase = "mc-tit-seccion con-estado" if estado else "mc-tit-seccion"
+    return (f'<div class="{clase}"><div class="tit"><h3 class="tt">{html.escape(texto)}</h3>{bajada}</div>'
+            + estado + '</div>')
+
+
+def pocas_titulo(cap: str) -> str:
+    """Encabezado de «En pocas palabras» (la bajada la pasa la vista)."""
+    return ('<div class="mc-pocas"><div class="tit"><div class="tt">En pocas palabras</div>'
+            f'<div class="cap">{html.escape(cap)}</div></div></div>')
+
+
+def pocas_items(filas: list[dict]) -> str:
+    """Ítems de «En pocas palabras» sin encabezado ni pie: la vista los reparte en columnas.
+    Cada fila: {num: '01', nombre: 'Dólar', href: enlace a la sección, texto: historia con <b>…</b>}.
+    El texto va armado arriba (los valores ya escapados adentro); acá solo se estructura."""
+    esc = html.escape
+    renglones = "".join(
+        f'<div class="fila"><span class="num">{esc(f["num"])}</span>'
+        f'<a class="enl" href="{esc(f["href"])}">{esc(f["nombre"])}<span class="fl" aria-hidden="true">↗</span></a>'
+        f'<p class="tx">{f["texto"]}</p></div>'
+        for f in filas)
+    return f'<div class="mc-pocas">{renglones}</div>' if renglones else ""
+
+
+def pocas_pie() -> str:
+    """Nota al pie de «En pocas palabras», a todo el ancho debajo de las columnas."""
+    return ('<div class="mc-pocas"><div class="pie">Resumen automático con el último dato publicado por cada fuente '
+            '(algunos tienen semanas de rezago).</div></div>')
 
 
 def aclaracion(*filas: tuple[str, str], leyenda: list[tuple[str, str]] | None = None) -> str:
@@ -1162,13 +1240,12 @@ def estado_datos(hora_dolar: str | None, oficiales: str) -> str:
 
 
 def pie_enlaces() -> str:
-    """Enlaces fijos de la barra inferior: suscripción, términos y privacidad."""
+    """Enlace del resumen semanal y el aviso de derechos en la barra inferior; los legales quedan en «Acerca de»."""
     esc = html.escape
     bol = (f'<a class="bol" href="{esc(BOLETIN, quote=True)}" target="_blank" rel="noopener noreferrer" title="Resumen semanal por mail" aria-label="Suscribirme al resumen semanal"><span class="ic" aria-hidden="true">✉</span><span class="l">Resumen semanal</span>'
            '<span class="s">Suscribirme</span></a>'
            if BOLETIN else '')
-    return (f'<div class="mc-pielinks">{bol}<a href="?legal=terminos" target="_self">Términos</a>'
-            '<a href="?legal=privacidad" target="_self">Privacidad</a><span class="c">© 2026 MacroCenter</span></div>')
+    return f'<div class="mc-pielinks">{bol}<span class="c">© 2026 MacroCenter</span></div>'
 
 
 def _mail_error() -> str:

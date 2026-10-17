@@ -11,7 +11,7 @@ from macrocenter import datos_vista, charts, style
 def mostrar(*, VIVO, base100, con_periodo, delta, dol, dol_rec, get, grafico, ultimo) -> None:
     st.markdown(style.intro("Todas las cotizaciones del dólar en la Argentina, del oficial a los financieros.",
                             [("bien", "Sube"), ("mal", "Baja")],
-                            "En cada tarjeta, **«vs oficial»** indica cuánto más caro está ese dólar que el oficial (por ejemplo, +2% significa que cuesta un 2% más).", resumen='Cotizaciones, brechas y evolución de los principales dólares.'), unsafe_allow_html=True)
+                            "En cada tarjeta, **«vs oficial»** indica cuánto más caro está ese dólar que el oficial (por ejemplo, +2% significa que cuesta un 2% más).", resumen='Cotizaciones, brechas y evolución de los principales dólares.', inicio=True), unsafe_allow_html=True)
     if dol is not None:
         TIPOS_DOLAR = [
             ("oficial", "Dólar oficial", "Banco Nación, venta minorista"),
@@ -75,24 +75,14 @@ def mostrar(*, VIVO, base100, con_periodo, delta, dol, dol_rec, get, grafico, ul
                                   "Cotizaciones del dólar — precio de venta ($)", height=460,
                                   ocultas=("Mayorista", "Cripto", "Tarjeta")))
             st.caption("Tocá un nombre en la leyenda para mostrar u ocultar cada dólar.")
-            with st.expander("Brecha cambiaria y evolución relativa"):
-                a, b = st.columns(2)
-                with a:
-                    grafico(charts.lineas(r, {"Blue vs oficial": "brecha_blue", "CCL vs oficial": "brecha_ccl"},
-                                          "Brecha cambiaria (%)", yfmt=",.0f"))
-                with b:
-                    base = base100(r, ["oficial", "blue"])
-                    grafico(charts.lineas(base, {"Oficial": "oficial", "Blue": "blue"},
-                                          "Evolución base 100 = inicio del período", yfmt=",.0f"))
+            st.markdown("#### Brecha cambiaria y evolución relativa")
+            a, b = st.columns(2)
+            with a:
+                grafico(charts.lineas(r, {"Blue vs oficial": "brecha_blue", "CCL vs oficial": "brecha_ccl"},
+                                      "Brecha cambiaria (%)", yfmt=",.0f"))
+            with b:
+                base = base100(r, ["oficial", "blue"])
+                grafico(charts.lineas(base, {"Oficial": "oficial", "Blue": "blue"},
+                                      "Evolución base 100 = inicio del período", yfmt=",.0f"))
 
         graficos_dolar()
-        with st.expander("Últimas cotizaciones (venta)"):
-            tabla = dol[["fecha", "oficial", "mayorista", "blue", "bolsa", "contadoconliqui", "cripto", "tarjeta",
-                         "brecha_blue", "brecha_ccl"]].tail(10).sort_values("fecha", ascending=False).rename(columns={
-                "fecha": "Fecha", "oficial": "Oficial", "blue": "Blue", "bolsa": "MEP",
-                "contadoconliqui": "CCL", "mayorista": "Mayorista", "cripto": "Cripto", "tarjeta": "Tarjeta",
-                "brecha_blue": "Brecha blue %", "brecha_ccl": "Brecha CCL %"})
-            filas = [[f"{r['Fecha']:%d/%m/%Y}"] + [charts.num(r[c], 1, suf="%") if c.startswith("Brecha")
-                                                   else charts.num(r[c], 0, pre="$") for c in tabla.columns[1:]]
-                     for _, r in tabla.iterrows()]
-            st.markdown(style.tabla(list(tabla.columns), filas), unsafe_allow_html=True)

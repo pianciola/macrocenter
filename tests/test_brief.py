@@ -29,15 +29,8 @@ def test_ticker_decorativo_y_periodos_distintos():
 
 
 def test_enlaces_de_resumen_y_escapado():
-    assert catalogo.ruta("paro", "Actividad") == "?ver=tablero/salarios"
-    assert catalogo.ruta("riesgo", "Sector externo") == "?ver=tablero/tasas-y-riesgo-pais"
+    assert catalogo.ruta("paro", "Actividad") == "?ver=tablero/empleo-y-salarios"
+    assert catalogo.ruta("riesgo", "Sector externo") == "?ver=tablero/bonos"
     html = style.panorama([dict(tema="Reservas", cifra="USD 1 M", detalle="brutas", texto="<script>")], "17/10/2026")
     assert 'href="?ver=tablero/reservas"' in html
     assert '&lt;script&gt;' in html and '<script>' not in html
-
-
-def test_tabla_de_grafico_formatea_fechas_sin_redondear_cripto_a_cero():
-    xs = pd.date_range("2026-01-01", periods=3)
-    assert charts.filas_accesibles(xs, [-20.123456, .00000025, None]) == [
-        ["01/01/2026", "-20,1235"], ["02/01/2026", "2,5e-07"], ["03/01/2026", "s/d"]]
-    assert charts.filas_accesibles(["Categoría"], [1000.]) == [["Categoría", "1.000"]]

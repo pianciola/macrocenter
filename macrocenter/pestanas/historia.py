@@ -1,4 +1,4 @@
-"""Historia económica: presidentes, ministros y viaje en el tiempo.
+"""Historia económica: presidentes, ministros, viaje en el tiempo y comparador de épocas.
 
 app.py la dibuja con `abrir` y le pasa, por nombre, los datos y las funciones de la página que usa (los
 parámetros de `mostrar` después del asterisco)."""
@@ -36,6 +36,18 @@ def mostrar(
             actualizando()
         else:
             interactivo.pantalla_viaje(dp, fotos_presidentes())
+        return
+    if seccion == "Comparador de épocas":
+        try:
+            dp, _, faltan = historicos(DATOS, dol, ACTUALIZADO)
+        except Exception:  # noqa: BLE001
+            traceback.print_exc()
+            dp, faltan = None, ["cálculo"]
+        if faltan:
+            falla("no se pudo armar el comparador de épocas: falta " + ", ".join(faltan))
+            actualizando()
+        else:
+            interactivo.pantalla_comparador(dp)
         return
     st.markdown(style.intro("Cómo evolucionó la economía con cada presidente desde la vuelta de la democracia, y cómo se "
                "comparan los mandatos entre sí. Los números se calculan con las series oficiales.", resumen='La evolución de la economía argentina a través de sus gobiernos.'), unsafe_allow_html=True)

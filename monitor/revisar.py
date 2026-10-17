@@ -131,17 +131,15 @@ def revisar_sitio() -> tuple[str, str]:
 
 def revisar_pantallas() -> list[str]:
     """Dibuja cada pantalla con AppTest y devuelve los problemas (excepciones o secciones que no se pudieron mostrar)."""
-    pestanas = ["Resumen", "Dólar", "Cripto", "Bolsas", "Reservas", "Actividad y PBI", "Salarios", "Inflación y dinero",
-                "Tasas y riesgo país", "Bonos", "Comercio exterior", "Resultado fiscal"]
+    pestanas = ["Resumen", "Dólar", "Bonos", "Cripto", "Bolsas", "Reservas", "Inflación y dinero", "Tasas",
+                "Actividad", "Empleo y salarios", "Resultado fiscal", "Comercio exterior"]
     vistas = [(f"Tablero · {p}", {"pestana": p}) for p in pestanas]
-    vistas += [(f"Resumen · análisis {i + 1}", {"pestana": "Resumen", "inicio_analisis": i}) for i in range(9)]
-    vistas += [(f"Ahorro e inversiones · {sec}", {"vista": "inversiones", "inv_seccion": sec}) for sec in
-               ["Tasas y plazos fijos", "Rendimientos pasados", "Glosario"]]
     vistas += [("Historia · Presidentes", {"vista": "historia"}),
                ("Historia · Ministros", {"vista": "historia", "hist_seccion": "Ministros de Economía"}),
-               ("Historia · Viaje en el tiempo", {"vista": "historia", "hist_seccion": "Viaje en el tiempo"})]
+               ("Historia · Viaje en el tiempo", {"vista": "historia", "hist_seccion": "Viaje en el tiempo"}),
+               ("Historia · Comparador de épocas", {"vista": "historia", "hist_seccion": "Comparador de épocas"})]
     vistas += [(f"Herramientas · {m}", {"vista": "juegos", "inter_modo": m}) for m in
-               ["¿Cuánto valían tus pesos?", "Ajuste de alquileres", "Comparador de épocas"]]
+               ["¿Cuánto valían tus pesos?", "Ajuste de alquileres", "Glosario financiero"]]
     problemas = _correr_vistas(vistas)
     if problemas:  # una falla de un momento (una API que tardó) no es motivo de alarma: se vuelve a mirar lo que falló
         time.sleep(REINTENTO_S)

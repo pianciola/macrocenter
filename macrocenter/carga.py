@@ -329,45 +329,6 @@ def con_riesgo_vivo(riesgo: pd.DataFrame | None, vivo) -> pd.DataFrame | None:
     return pd.concat([riesgo[riesgo["fecha"] != u["fecha"]], vivo[["fecha", "valor"]]]).sort_values("fecha").reset_index(drop=True)
 
 
-def cargar_inversiones() -> dict[str, pd.DataFrame | str]:
-    return al_dia("inversiones", _bajar_inversiones, ttl=1800)
-
-
-def _bajar_inversiones() -> dict[str, pd.DataFrame | str]:
-    """Tasas de plazo fijo por banco, rendimientos de plataformas, fondos money market (hoy y hace ~30 días, para
-    calcular cuánto rindieron) y bitcoin en dólares. Cada parte falla por separado. Dura 30 minutos."""
-    out: dict[str, pd.DataFrame | str] = {}
-    for clave, fn in (("bancos", data.plazo_fijo_bancos), ("rendimientos", data.rendimientos_plataformas),
-                      ("fci_hoy", data.fci), ("bitcoin", lambda: data.limpiar(data.indice("BTC-USD")))):
-        try:
-            out[clave] = fn()
-        except Exception as e:  # noqa: BLE001
-            out[clave] = error_corto(e)
-    out["fci_antes"] = "sin el dato de hoy"
-    hoy_f = out["fci_hoy"]
-    if isinstance(hoy_f, pd.DataFrame) and not hoy_f.empty:
-        base = hoy_f["fecha"].max() - pd.Timedelta(days=30)
-        # fines de semana y feriados no tienen datos, y algunos días la fuente trae pocos fondos o falla un momento:
-        # se juntan hasta tres días hábiles cercanos (el primero de cada fondo) para que casi todos tengan con qué compararse
-        dias, error = [], None
-        for atras in range(8):
-            f = base - pd.Timedelta(days=atras)
-            try:
-                antes = data.fci("mercadoDinero", f.strftime("%Y/%m/%d"))
-            except Exception as e:  # noqa: BLE001
-                error = error_corto(e)
-                continue
-            if not antes.empty:
-                dias.append(antes)
-                if len(dias) == 3 or len(antes) >= 150:
-                    break
-        if dias:
-            out["fci_antes"] = pd.concat(dias, ignore_index=True).drop_duplicates("fondo").reset_index(drop=True)
-        elif error:
-            out["fci_antes"] = error
-    return out
-
-
 def _bajar_noticias() -> dict[str, list[news.Noticia] | str]:
     """Cada fuente falla por separado: si una cambia su sitio, la otra se sigue mostrando."""
     out: dict[str, list[news.Noticia] | str] = {}

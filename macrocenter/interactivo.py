@@ -1,5 +1,5 @@
-"""Herramientas interactivas: ¿cuánto valían tus pesos?, ajuste de alquileres y comparador de épocas (el viaje en el
-tiempo se muestra en Historia económica).
+"""Herramientas interactivas: ¿cuánto valían tus pesos?, ajuste de alquileres, glosario financiero (el viaje en el
+tiempo se muestra en Archivo económico).
 
 Todo se calcula con las mismas series de la sección de historia económica (nada escrito a mano), y vale lo
 mismo que allí: el dólar solo desde 1992, el riesgo país desde 1999, la inflación 2007-2015 es la del INDEC
@@ -13,7 +13,7 @@ from datetime import date
 import pandas as pd
 import streamlit as st
 
-from macrocenter import charts, selector, style
+from macrocenter import charts, glosario, selector, style
 from macrocenter import presidentes as P
 
 HOY = P.hoy()  # se actualiza en cada visita (ver `mostrar`): el servidor queda prendido días seguidos
@@ -152,29 +152,6 @@ def factor_precios(inf: pd.DataFrame, f: pd.Timestamp) -> float:
     return float((1 + d["valor"] / 100).prod())
 
 
-def indices_base100(d: dict, f: pd.Timestamp, uva: pd.DataFrame | None) -> pd.DataFrame:
-    """Precios, dólar oficial y UVA en base 100 al fin del mes de `f`, mes a mes."""
-    inf = d["inflacion"].set_index("fecha")["valor"]
-    nivel = (1 + inf / 100).cumprod()
-    ini = f + pd.offsets.MonthEnd(0)
-    meses = [m for m in nivel.index if m >= ini]
-    out = pd.DataFrame({"fecha": meses, "Precios": [nivel[m] / nivel[ini] * 100 for m in meses]})
-    usd = serie_dolar(d).set_index("fecha")["valor"]
-    base_usd = usd[usd.index <= ini].iloc[-1] if (usd.index <= ini).any() else None
-    if base_usd:
-        out["Dólar oficial"] = [usd[usd.index <= m].iloc[-1] / base_usd * 100 for m in meses]
-    blue = d.get("dolar_blue")
-    if isinstance(blue, pd.DataFrame) and not blue.empty and ini >= blue["fecha"].min():
-        b = blue.set_index("fecha")["valor"]
-        base_b = b[b.index <= ini].iloc[-1]
-        out["Dólar blue"] = [b[b.index <= min(m, HOY)].iloc[-1] / base_b * 100 for m in meses]
-    if uva is not None and ini >= uva["fecha"].min():
-        u = uva.set_index("fecha")["valor"]
-        base_u = u[u.index <= ini].iloc[-1]
-        out["UVA"] = [u[u.index <= min(m, HOY)].iloc[-1] / base_u * 100 for m in meses]
-    return out
-
-
 def pantalla_pesos(d: dict, uva: pd.DataFrame | None) -> None:
     st.markdown("##### ¿Cuánto valían tus pesos?")
     st.markdown(style.intro("Poné un monto y una fecha: te mostramos qué fue de esa plata según la inflación, el dólar oficial y la UVA."), unsafe_allow_html=True)
@@ -221,11 +198,7 @@ def pantalla_pesos(d: dict, uva: pd.DataFrame | None) -> None:
                 f"{_n(opciones[mejor] / monto, 1)} veces el monto original. "
                 f"Dejar los pesos quietos hubiera sido perder **{_n((1 - 1 / fac) * 100, 0, suf='%')}** de poder de compra.")
 
-    graf = indices_base100(d, f, uva)
-    cols = {c: c for c in ("Precios", "Dólar oficial", "Dólar blue", "UVA") if c in graf}
-    _grafico(charts.lineas(graf, cols, "Cómo evolucionó cada cosa (base 100 = la fecha elegida)", yfmt=",.0f", height=340))
     st.markdown(style.aclaracion(
-        ("Cómo leerlo", "Valores mes a mes (aproximados). Es solo mirar el pasado, no una recomendación de inversión."),
         ("Dólar", "La fecha elegida cae en un período de cepo: al dólar oficial no se podía comprar libremente, así que "
                   "el cálculo usa el blue." if tipo0 == "blue" else "")), unsafe_allow_html=True)
 
@@ -481,11 +454,11 @@ def pantalla_viaje(d: dict, fotos: dict) -> None:
 
 
 # ───────────────────────── entrada ─────────────────────────
-MODOS = ["¿Cuánto valían tus pesos?", "Ajuste de alquileres", "Comparador de épocas"]
+MODOS = ["¿Cuánto valían tus pesos?", "Ajuste de alquileres", "Glosario financiero"]
 TARJETAS = {  # ícono (Material) y descripción corta de cada herramienta
     "¿Cuánto valían tus pesos?": (":material/savings:", "Qué fue de tu plata según la inflación, el dólar y la UVA."),
     "Ajuste de alquileres": (":material/home:", "Cuánto queda tu alquiler según ICL, IPC, CER o salarios."),
-    "Comparador de épocas": (":material/compare_arrows:", "Dos momentos de la economía, lado a lado."),
+    "Glosario financiero": (":material/menu_book:", "Las palabras del dinero, explicadas en dos líneas."),
 }
 
 
@@ -516,5 +489,40 @@ def mostrar(d: dict, inds: dict, fotos: dict, uva: pd.DataFrame | None, extra: d
         pantalla_pesos(d, uva)
     elif modo == "Ajuste de alquileres":
         pantalla_alquileres(d)
-    else:
-        pantalla_comparador(d)
+    elif modo == "Glosario financiero":
+        pantalla_glosario()
+
+
+# ───────────────────────── glosario financiero (trasladado de «Ahorro e inversiones») ─────────────────────────
+
+EXTRAS = {
+    "Cuenta remunerada": "Una cuenta (de banco o de billetera) que paga intereses por el saldo, día a día, y deja sacar "
+                         "la plata cuando quieras. Muchas billeteras invierten esos saldos en fondos money market.",
+    "Caución": "Un préstamo de muy corto plazo (desde un día) que se hace a través de la bolsa, con garantía de títulos. "
+               "Se opera desde una cuenta en un agente de bolsa y la tasa se conoce al momento de hacerla.",
+    "LECAP": "Letras del Tesoro en pesos, de corto plazo y tasa fija: se compran por menos de lo que pagan al vencimiento, "
+             "y esa diferencia es la ganancia. Se compran y venden en la bolsa.",
+    "Seguro de depósitos": "Cubre los plazos fijos y las cuentas en bancos, en pesos y en dólares, hasta un monto por "
+                           "persona y por banco que fija el BCRA. No cubre fondos comunes, acciones, bonos ni saldos en "
+                           "plataformas cripto.",
+    "Rendimiento pasado": "Lo que rindió algo antes no dice cuánto va a rendir después. Los períodos buenos y malos se "
+                          "alternan, y una racha puede cortarse en cualquier momento.",
+    "Perfil de inversor": "Cuánto riesgo puede y quiere asumir una persona según su edad, sus ingresos, sus objetivos y "
+                          "el plazo. Bancos y agentes de bolsa lo piden antes de dejar operar.",
+}
+GRUPOS = [
+    ("Tasas e intereses", ["TNA", "TEA", "Tasa real", "Interés compuesto", "Regla del 72", "CFT"]),
+    ("Dónde poner los pesos", ["Plazo fijo", "Plazo fijo UVA", "Cuenta remunerada", "Fondo común de inversión",
+                               "Money market", "Caución", "LECAP", "Bono CER"]),
+    ("Dólares y bolsa", ["Dólar MEP", "Bono", "Acción", "Dividendo", "CEDEAR", "Merval", "S&P 500", "Stablecoin"]),
+    ("Antes de invertir", ["Riesgo", "Volatilidad", "Liquidez", "Diversificación", "Fondo de emergencia",
+                           "Seguro de depósitos", "Rendimiento pasado", "Perfil de inversor"]),
+]
+
+
+def pantalla_glosario() -> None:
+    """Glosario de conceptos (era la sección «Glosario» de Ahorro e inversiones)."""
+    st.markdown(style.intro("Las palabras que aparecen cuando se habla de ahorro e inversiones, explicadas en dos líneas."), unsafe_allow_html=True)
+    defs = dict(glosario.TERMINOS) | EXTRAS
+    grupos = [(g, [(t, defs[t]) for t in terminos if t in defs]) for g, terminos in GRUPOS]
+    st.markdown(style.conceptos([(g, items) for g, items in grupos if items]), unsafe_allow_html=True)

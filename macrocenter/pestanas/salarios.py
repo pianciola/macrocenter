@@ -1,4 +1,4 @@
-"""Pestaña «Salarios» del tablero. app.py la dibuja cuando está abierta y le pasa, por nombre, los datos y las
+"""Pestaña «Empleo y salarios» del tablero. app.py la dibuja cuando está abierta y le pasa, por nombre, los datos y las
 funciones de la página que usa (los parámetros de `mostrar`)."""
 from __future__ import annotations
 
@@ -8,13 +8,15 @@ from macrocenter import charts, style
 
 
 def mostrar(
-    *, bloque_pobreza, dif, grafico, haber_min, kpi, pct, rec, ripte, sal, sal_ia, sal_priv, sal_pub, salario_real,
-    smvm, ult_y_ant,
+    *, bloque_pobreza, dif, grafico, haber_min, kpi, paro, paro_pct, pct, rec, ripte, sal, sal_ia, sal_priv,
+    sal_pub, salario_real, smvm, ult_y_ant,
 ) -> None:
-    st.markdown(style.intro("Cuánto suben los sueldos y si le ganan a la inflación (**salario real**).",
-                            [("bien", "El poder de compra mejora"), ("mal", "Empeora")], resumen='Evolución de los salarios y de su poder de compra.'), unsafe_allow_html=True)
+    st.markdown(style.intro("El mercado de trabajo y los sueldos: cómo evoluciona el **empleo** y la **desocupación**, cuánto "
+                            "suben los salarios y si le ganan a la inflación (**salario real**).",
+                            [("bien", "Baja la desocupación y mejora el poder de compra"), ("mal", "Empeora")],
+                            resumen='Empleo, desocupación, salarios y su poder de compra.', inicio=True), unsafe_allow_html=True)
     sr_k = salario_real()
-    k = st.columns(4)
+    k = st.columns(5)
     v, a_ = ult_y_ant(sal_ia)
     kpi(k[0], "Salarios · var. interanual", v, 1, suf="%", d=dif(v, a_), d_suf=" pp", d_txt="vs mes ant.", serie=sal_ia, fuente='INDEC')
     v, a_ = ult_y_ant(sr_k, "real")
@@ -24,6 +26,8 @@ def mostrar(
     kpi(k[2], "Salario mínimo", v, 0, pre="$", d=pct(v, a_), d_txt="vs mes ant.", serie=smvm, fuente='Secretaría de Trabajo · datos.gob.ar')
     v, a_ = ult_y_ant(haber_min)
     kpi(k[3], "Haber mínimo jubilatorio", v, 0, pre="$", d=pct(v, a_), d_txt="vs mes ant.", serie=haber_min, fuente='ANSES · datos.gob.ar')
+    v, a_ = ult_y_ant(paro_pct, meses=3)
+    kpi(k[4], "Desocupación (EPH)", v, 1, suf="%", d=dif(v, a_), d_suf=" pp", d_txt="vs trim. ant.", color="inverse", serie=paro_pct, fuente='INDEC · EPH')
     if sal is not None:
         st.markdown("#### Salarios e inflación")
         base = sal.rename(columns={"valor": "Total"})
@@ -57,7 +61,12 @@ def mostrar(
                 piso = piso.sort_values("fecha")
                 grafico(charts.lineas(rec(piso, 3), {c_: c_ for c_ in piso.columns if c_ != "fecha"},
                                       "Salario mínimo y haber mínimo jubilatorio ($ mensuales)", height=340))
+    if paro is not None:
+        st.markdown("#### Empleo")
+        grafico(charts.lineas(rec(paro.assign(valor=paro["valor"] * 100), 5), {"Desocupación": "valor"},
+                              "Tasa de desocupación (EPH, %)", yfmt=",.1f"))
     st.markdown(style.aclaracion(
-        ("Cómo se calcula", "El salario real es (1 + salario nominal) / (1 + inflación) − 1, interanual."),
-        ("Fuente", "Índice de salarios y RIPTE: INDEC / Secretaría de Seguridad Social, con unos dos meses de rezago.")), unsafe_allow_html=True)
+        ("Cómo se calcula", "El salario real es (1 + salario nominal) / (1 + inflación) − 1, interanual. La desocupación "
+                            "se mide con la Encuesta Permanente de Hogares en aglomerados urbanos, por trimestre."),
+        ("Fuente", "Índice de salarios, RIPTE y EPH: INDEC, con unos dos meses de rezago.")), unsafe_allow_html=True)
     bloque_pobreza()

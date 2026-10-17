@@ -30,6 +30,3 @@ def mostrar(*, _ult_y_hace, delta, dif, get, grafico, kpi, rec, ultimo) -> None:
         if m2 is not None:
             grafico(charts.lineas(rec(m2), {"M2 privado": "valor"},
                                   "M2 privado — var. interanual del promedio móvil 30 d (%)", yfmt=",.0f"))
-    if pr is not None:
-        grafico(charts.lineas(rec(pr.assign(valor=pr["valor"] / 1e6)), {"Préstamos al sector privado": "valor"},
-                              "Préstamos al sector privado (billones de $)", yfmt=",.1f"))

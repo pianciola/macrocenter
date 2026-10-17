@@ -34,14 +34,17 @@ def test_inicio_sin_errores_ni_secciones_caidas():
     ("tablero/dinero-y-credito", "pestana", "Inflación y dinero"),
     ("tablero/inflacion-y-dinero", "pestana", "Inflación y dinero"),
     ("herramientas/ajuste-de-alquileres", "inter_modo", "Ajuste de alquileres"),
-    ("inversiones/glosario", "inv_seccion", "Glosario"),
-    ("inversiones/conceptos", "inv_seccion", "Glosario"),  # enlaces viejos
-    ("inversiones/como-les-fue", "inv_seccion", "Rendimientos pasados"),  # enlaces viejos
-    ("inversiones/tasas-de-hoy", "inv_seccion", "Tasas y plazos fijos"),  # enlaces viejos
-    ("inversiones/plazo-fijo-vs-uva", "inv_seccion", "Tasas y plazos fijos"),  # enlaces viejos (se juntó con las tasas)
+    ("inversiones/glosario", "inter_modo", "Glosario financiero"),  # enlace viejo: el glosario vive en Herramientas
+    ("inversiones/conceptos", "inter_modo", "Glosario financiero"),  # enlace viejo
+    ("inversiones/tasas-de-hoy", "pestana", "Tasas"),  # enlace viejo: las tasas quedaron en el tablero
+    ("inversiones/como-les-fue", "vista", "tablero"),  # enlace viejo: el resto de la sección desapareció
+    ("tablero/salarios", "pestana", "Empleo y salarios"),  # enlace viejo: la pestaña cambia de nombre
+    ("tablero/actividad-y-pbi", "pestana", "Actividad"),  # enlace viejo: la pestaña cambia de nombre
+    ("tablero/tasas-y-riesgo-pais", "pestana", "Tasas"),  # enlace viejo: la pestaña cambia de nombre
     ("historia/ministros-de-economia", "hist_seccion", "Ministros de Economía"),
     ("historia/viaje-en-el-tiempo", "hist_seccion", "Viaje en el tiempo"),
     ("herramientas/viaje-en-el-tiempo", "hist_seccion", "Viaje en el tiempo"),  # enlaces viejos (estaba en Herramientas)
+    ("herramientas/comparador-de-epocas", "hist_seccion", "Comparador de épocas"),  # enlaces viejos (ídem)
 ])
 def test_los_enlaces_abren_la_seccion(ruta, clave, valor):
     at = _correr(ver=ruta)
@@ -54,26 +57,15 @@ def test_un_enlace_roto_cae_en_el_tablero(ruta):
     assert at.session_state["vista"] == "tablero"
 
 
-@pytest.mark.parametrize("i", range(9))
-def test_cada_analisis_destacado_se_dibuja(i):
-    from streamlit.testing.v1 import AppTest
-
-    at = AppTest.from_file(APP, default_timeout=300)
-    at.session_state["inicio_analisis"] = i
-    at.run()
-    assert not at.exception, [str(e.value)[:200] for e in at.exception]
-    assert list(dict.fromkeys(at.session_state["_fallas"])) == []
-
-
 def test_botones_de_navegacion():
     """Cada botón que cambia de pantalla (menú, atajos, «Volver al tablero») anda sin romper la página."""
-    at = _correr(ver="inversiones/tasas-y-plazos-fijos")
+    at = _correr(ver="historia/viaje-en-el-tiempo")
     at.button(key="volver_tablero").click().run()
     assert not at.exception, [str(e.value)[:200] for e in at.exception]
     assert at.session_state["vista"] == "tablero"
     at.button(key="atajo_tasas").click().run()
     assert not at.exception, [str(e.value)[:200] for e in at.exception]
-    assert at.session_state["vista"] == "inversiones" and at.session_state["inv_seccion"] == "Tasas y plazos fijos"
+    assert at.session_state["vista"] == "tablero" and at.session_state["pestana"] == "Tasas"
     at.button(key="nav_historia").click().run()
     assert not at.exception, [str(e.value)[:200] for e in at.exception]
     assert at.session_state["vista"] == "historia"
@@ -88,18 +80,6 @@ def test_pestana_bonos():
     assert "Ley Nueva York" in textos and "GD30" in textos
 
 
-def test_precios_mayoristas_se_bajan_y_se_calculan():
-    """IPIM e IPP (INDEC, API de datos.gob.ar): se descargan y de ellos salen las variaciones de la pestaña Inflación."""
-    from macrocenter import data
-    from macrocenter.pestanas.inflacion import _variaciones
-
-    for nombre in ("ipim", "ipp"):
-        d = data.serie(nombre)
-        assert not d.empty and {"fecha", "valor"} <= set(d.columns)
-        v = _variaciones(d)
-        assert v["mensual"].notna().all() and v["interanual"].dropna().size > 0
-
-
 def test_inflacion_y_dinero_en_una_sola_pestana():
     at = _correr(ver="tablero/inflacion-y-dinero")
     etiquetas = [t.label for t in at.tabs]
@@ -112,7 +92,8 @@ def test_inflacion_y_dinero_en_una_sola_pestana():
     assert list(dict.fromkeys(at.session_state["_fallas"])) == []
 
 
-def test_dolar_vs_inflacion_se_muestra_en_rendimientos_pasados():
-    at = _correr(ver="inversiones/rendimientos-pasados")
-    textos = [m.value for m in at.markdown]
-    assert any("¿El dólar le ganó a la inflación?" in t for t in textos)
+def test_atajo_tasas_abre_el_tablero_en_tasas():
+    """El atajo del lateral lleva a la pestaña «Tasas» del tablero (convivía con la pestaña vieja)."""
+    at = _correr(ver="tablero/empleo-y-salarios")
+    at.button(key="atajo_tasas").click().run()
+    assert at.session_state["vista"] == "tablero" and at.session_state["pestana"] == "Tasas"

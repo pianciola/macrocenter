@@ -6,16 +6,7 @@ from datetime import datetime
 import pandas as pd
 import pytest
 
-from macrocenter import carga, charts, inversiones
-
-
-def test_rendimientos_respetan_hoy_y_limite_inclusivo(monkeypatch):
-    monkeypatch.setattr(inversiones, "_hoy", lambda: pd.Timestamp("2026-10-15"))
-    fechas = ["2020-01-01", "2026-09-23", "2026-09-24", "2026-10-15", "2026-10-16"]
-    datos = pd.DataFrame({"fecha": pd.to_datetime(fechas), "moneda": "ARS", "apy": 25., "entidad": "belo"})
-    resultado = inversiones.tabla_plataformas(datos, inversiones.MONEDAS_PESOS)
-    assert set(resultado.fecha) == set(pd.to_datetime(["2026-09-24", "2026-10-15"]))
-    assert inversiones.tabla_plataformas(datos.iloc[:1], inversiones.MONEDAS_PESOS).empty
+from macrocenter import carga, charts
 
 
 @pytest.mark.parametrize("texto", ["=1+1", "+1+1", "-1+1", "@SUM(A1)", "  =1+1", "\ttexto", "\rtexto", "\ntexto"])

@@ -22,12 +22,28 @@ html[data-tema-cambio] *, html[data-tema-cambio] *::before, html[data-tema-cambi
 .stApp, .stApp *:not([data-testid="stIconMaterial"]):not([class*="material"]) {{ font-family: {FUENTE} !important; }}
 .stApp {{ font-feature-settings: "tnum" 1, "lnum" 1; -webkit-font-smoothing: antialiased; }}
 h1, h2, h3, h4 {{ letter-spacing: -.01em; }}
+/* encabezados de sección: la hairline tenue marca el arranque de cada título interno, en todas las pestañas */
+[data-testid="stMain"] .stMarkdownContainer > h2, [data-testid="stMain"] .stMarkdownContainer > h3,
+[data-testid="stMain"] h2[data-testid="stHeading"], [data-testid="stMain"] h3[data-testid="stHeading"] {{
+    border-top: 1px solid rgba(116,172,223,.22);
+    margin-top: 1.7rem !important; padding-top: .95rem !important;
+}}
+/* un ítem de la franja de arriba que quede sin período: no deja hueco ni riel a la derecha */
+.mc-ticker .d:empty {{ display: none; }}
 /* ── Barra lateral ── */
 section[data-testid="stSidebar"] > div:first-child {{
     background-image: linear-gradient(180deg, rgba(116,172,223,.25) 0%, rgba(116,172,223,0) 40%);
     border-right: 1px solid rgba(116,172,223,.25);
 }}
 section[data-testid="stSidebar"] .block-container, section[data-testid="stSidebarUserContent"] {{ padding-top: 1.2rem; }}
+/* despliegue y plegado del lateral: ancho y corrimiento con la misma curva suave; los botones de plegar y desplegar
+   nacen con un brote suave al montarse */
+section[data-testid="stSidebar"] {{
+    transition: width .32s cubic-bezier(.4, 0, .2, 1), transform .32s cubic-bezier(.4, 0, .2, 1),
+                margin-left .32s cubic-bezier(.4, 0, .2, 1), border-radius .32s cubic-bezier(.4, 0, .2, 1);
+}}
+@keyframes mc-brote {{ from {{ opacity: 0; transform: scale(.85); }} to {{ opacity: 1; transform: scale(1); }} }}
+[data-testid="stSidebarCollapseButton"], [data-testid="stExpandSidebarButton"] {{ animation: mc-brote .22s ease; }}
 
 .mc-brand {{
     background: linear-gradient(135deg, {CELESTE} 0%, #4A8FD4 100%);
@@ -66,19 +82,11 @@ section[data-testid="stSidebar"] .block-container, section[data-testid="stSideba
 .mc-footer b {{ color: {CELESTE}; }}
 .mc-footer .mc-made {{ font-size: .78rem; letter-spacing: .1em; text-transform: uppercase; opacity: .85; }}
 
-/* botón de noticias: dorado (Sol de Mayo), distinto del resto */
-[class*="st-key-btn_noticias"] button {{
-    position: relative; border: none; border-radius: 12px; padding: .75rem 1rem; margin-bottom: 4px;
-    background: linear-gradient(135deg, {SOL} 0%, #F79F1F 100%);
-    box-shadow: 0 6px 16px rgba(246,180,14,.32); transition: transform .15s ease, box-shadow .15s ease;
-}}
-[class*="st-key-btn_noticias"] button p {{ color: #3A2A00 !important; font-weight: 800; font-size: .92rem; }}
-[class*="st-key-btn_noticias"] button:hover {{
-    border: none; transform: translateY(-2px); box-shadow: 0 10px 22px rgba(246,180,14,.5);
-}}
-[class*="st-key-btn_noticias"] button:active {{ transform: translateY(0); }}
-.st-key-btn_noticias_nuevas button::after {{
-    content: ""; position: absolute; top: -5px; right: -5px; width: 13px; height: 13px; border-radius: 50%;
+/* puntito rojo pulsante en «Noticias» cuando hay novedades por leer; la píldora en sí es igual a las demás de
+   Explorar (comparte el estilo de las claves nav_ de app.py) */
+.st-key-nav_noticias_nuevas button {{ position: relative; }}
+.st-key-nav_noticias_nuevas button::after {{
+    content: ""; position: absolute; right: 12px; width: 13px; height: 13px; border-radius: 50%;
     background: #EE5253; border: 2px solid #fff; animation: mc-pulso 1.8s infinite;
 }}
 @keyframes mc-pulso {{
@@ -94,15 +102,10 @@ section[data-testid="stSidebar"] .stButton > button {{
 section[data-testid="stSidebar"] .stButton > button:hover {{ border-color: {CELESTE}; color: {CELESTE}; }}
 section[data-testid="stSidebar"] [data-testid="stPills"] button {{ border-radius: 999px; font-size: .8rem; }}
 
-/* ── Barra lateral rediseñada: marca compacta, menú de lista, noticias en contorno dorado ── */
+/* ── Barra lateral rediseñada: marca compacta, menú de lista ── */
 .mc-brand {{
     display: flex; align-items: center; gap: 13px; background: none; box-shadow: none; border-radius: 0;
-    padding: 6px 4px 18px; margin-bottom: 16px; color: inherit; position: relative;
-}}
-/* una línea fina que se desvanece (antes, una franja gruesa celeste y blanca) */
-.mc-brand::after {{
-    content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 1px;
-    background: linear-gradient(90deg, rgba(116,172,223,.75), rgba(116,172,223,.25) 60%, rgba(116,172,223,0));
+    padding: 18px 4px 20px; margin-bottom: 14px; color: inherit;
 }}
 /* toda la marca es un enlace al resumen */
 a.mc-brand, a.mc-brand:hover {{ text-decoration: none !important; color: inherit !important; cursor: pointer; }}
@@ -128,8 +131,6 @@ html[data-tema="claro"] .stApp section[data-testid="stSidebar"] .mc-brand .mc-wm
     margin-left: 7px; padding: 2px 7px; border-radius: 999px; font-size: .62rem !important; font-weight: 800 !important;
     letter-spacing: .08em; text-transform: uppercase; line-height: 1.3; color: #0E1A2B !important; background: {SOL};
     position: relative; top: -2px; }}
-.mc-brand .sub {{ display: block; margin: 6px 0 0; font-size: .78rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
-    line-height: 1.2; opacity: .85; }}
 
 /* ── Barra lateral: terminación propia ── */
 /* sin barra de desplazamiento (se veía la de Windows, gruesa y genérica): se sigue pudiendo deslizar, y el borde de
@@ -145,10 +146,10 @@ section[data-testid="stSidebar"] .mc-label {{ display: flex; align-items: center
 section[data-testid="stSidebar"] .mc-label::after {{ content: ""; flex: 1; height: 1px; background: rgba(116,172,223,.22); }}
 /* menú: cada opción con su ícono en celeste; la elegida, en una píldora con el ícono resaltado */
 section[data-testid="stSidebar"] [class*="st-key-nav_"] button {{ position: relative; border-left: none !important; border-radius: 12px !important;
-    padding: .55rem .8rem !important; gap: .7rem; }}
-section[data-testid="stSidebar"] [class*="st-key-nav_"] button:hover {{ padding-left: .8rem !important; background: rgba(116,172,223,.10); }}
+    padding: .62rem .85rem !important; gap: .7rem; }}
+section[data-testid="stSidebar"] [class*="st-key-nav_"] button:hover {{ padding-left: .85rem !important; background: rgba(116,172,223,.10); }}
 section[data-testid="stSidebar"] [class*="st-key-nav_"] button [data-testid="stIconMaterial"] {{
-    color: {CELESTE}; font-size: 1.2rem; opacity: .85; }}
+    color: {CELESTE}; font-size: 1.28rem; opacity: .85; }}
 section[data-testid="stSidebar"] [class*="st-key-nav_"] button[data-testid="stBaseButton-primary"] {{
     background: rgba(116,172,223,.16) !important; box-shadow: inset 0 0 0 1px rgba(116,172,223,.35); }}
 section[data-testid="stSidebar"] [class*="st-key-nav_"] button[data-testid="stBaseButton-primary"] [data-testid="stIconMaterial"] {{
@@ -170,34 +171,6 @@ section[data-testid="stSidebar"] [class*="st-key-atajo_"] button:hover::after {{
 section[data-testid="stSidebar"] .st-key-conv_caja {{ padding: 12px; border-radius: 14px; gap: .6rem;
     border: 1px solid rgba(116,172,223,.25); background: linear-gradient(180deg, rgba(116,172,223,.09), rgba(116,172,223,.03)); }}
 section[data-testid="stSidebar"] .st-key-conv_caja .mc-conv {{ border: none; background: none; padding: 0 2px; }}
-/* noticias: con ícono */
-[class*="st-key-btn_noticias"] button [data-testid="stIconMaterial"] {{ color: {SOL}; font-size: 1.1rem; }}
-
-[class*="st-key-btn_noticias"] button {{
-    background: transparent !important; border: 1.5px solid {SOL} !important; box-shadow: none !important;
-    border-radius: 999px; padding: .5rem 1rem; margin-bottom: 6px;
-}}
-[class*="st-key-btn_noticias"] button p {{ color: {SOL} !important; font-weight: 700; font-size: .88rem; }}
-[class*="st-key-btn_noticias"] button:hover {{
-    background: rgba(246,180,14,.14) !important; transform: translateY(-1px); box-shadow: 0 4px 14px rgba(246,180,14,.25) !important;
-}}
-/* con noticias sin leer: el botón se rellena de dorado (Sol de Mayo) y late suave, para que se note sin gritar */
-.st-key-btn_noticias_nuevas button {{
-    background: linear-gradient(135deg, {SOL} 0%, #F79F1F 100%) !important; border-color: {SOL} !important;
-    box-shadow: 0 0 0 0 rgba(246,180,14,.55) !important; animation: mc-latido 2.4s ease-out infinite;
-}}
-.st-key-btn_noticias_nuevas button p {{ color: #3A2A00 !important; font-weight: 800; }}
-.st-key-btn_noticias_nuevas button [data-testid="stIconMaterial"] {{ color: #3A2A00 !important; }}  /* el ícono, visible sobre el dorado */
-.st-key-btn_noticias_nuevas button:hover {{
-    background: linear-gradient(135deg, #FFC52E 0%, #F7A93A 100%) !important; box-shadow: 0 6px 18px rgba(246,180,14,.45) !important;
-}}
-@keyframes mc-latido {{
-    0% {{ box-shadow: 0 0 0 0 rgba(246,180,14,.55); }}
-    70% {{ box-shadow: 0 0 0 10px rgba(246,180,14,0); }}
-    100% {{ box-shadow: 0 0 0 0 rgba(246,180,14,0); }}
-}}
-@media (prefers-reduced-motion: reduce) {{ .st-key-btn_noticias_nuevas button {{ animation: none; }} }}
-
 /* ── Campos de formulario: letra más grande ── */
 [data-testid="stWidgetLabel"] p {{ font-size: 1rem !important; font-weight: 600; }}
 [data-testid="stTextInput"] input, [data-testid="stNumberInput"] input, [data-testid="stDateInput"] input,
@@ -205,7 +178,8 @@ section[data-testid="stSidebar"] .st-key-conv_caja .mc-conv {{ border: none; bac
 /* sin el aviso «Press Enter to apply»: los montos se aplican solos al dejar de escribir (ver JS_PESTANAS) */
 [data-testid="InputInstructions"] {{ display: none !important; }}
 
-/* ── Botón «Volver al tablero»: píldora celeste con flecha que se corre al pasar el cursor ── */
+/* ── Botón «Inicio» de Herramientas y el Archivo económico (antes «Volver al tablero»): píldora celeste con
+      flecha que se corre al pasar el cursor ── */
 .st-key-volver_tablero button {{
     border-radius: 999px !important; padding: .45rem 1.2rem .45rem .9rem !important; min-height: 0;
     background: rgba(116,172,223,.10) !important; border: 1px solid rgba(116,172,223,.45) !important;
@@ -299,7 +273,7 @@ section[data-testid="stSidebar"] [class*="st-key-nav_"] button > div,
 section[data-testid="stSidebar"] [class*="st-key-nav_"] button [data-testid="stMarkdownContainer"] {{
     justify-content: flex-start !important; width: 100%; text-align: left !important;
 }}
-section[data-testid="stSidebar"] [class*="st-key-nav_"] button p {{ font-weight: 600; font-size: .95rem; text-align: left; }}
+section[data-testid="stSidebar"] [class*="st-key-nav_"] button p {{ font-weight: 600; font-size: 1rem; text-align: left; }}
 section[data-testid="stSidebar"] [class*="st-key-nav_"] button:hover {{
     background: rgba(116,172,223,.12); border-left-color: rgba(116,172,223,.6); padding-left: 1.1rem; color: inherit;
 }}
@@ -329,6 +303,25 @@ section[data-testid="stSidebar"] .st-key-conv_sentido [data-baseweb="button-grou
 section[data-testid="stSidebar"] .st-key-conv_sentido [role="radiogroup"] {{ width: 100%; flex-wrap: nowrap; }}
 section[data-testid="stSidebar"] .st-key-conv_pesos input, section[data-testid="stSidebar"] .st-key-conv_usd input {{
     font-weight: 700; }}
+/* conversor de la barra lateral: el input se lee como interactivo (pedido del dueño). La pieza de Streamlit
+   cambió de nombre en las últimas versiones (react-aria): van las dos, la de baseweb y la actual */
+[data-testid="stSidebar"] [data-baseweb="input"] {{ background-color: rgba(255, 255, 255, 0.07); border: 1px solid rgba(255, 255, 255, 0.15) !important; border-radius: 6px; }}
+[data-testid="stSidebar"] [data-testid="stTextInputRootElement"] {{ background-color: rgba(255, 255, 255, 0.07); border: 1px solid rgba(255, 255, 255, 0.15) !important; border-radius: 6px; }}
+html[data-tema="claro"] [data-testid="stSidebar"] [data-baseweb="input"],
+html[data-tema="claro"] [data-testid="stSidebar"] [data-testid="stTextInputRootElement"] {{ background-color: rgba(14, 26, 43, 0.05); border-color: rgba(14, 26, 43, 0.18) !important; }}
+/* inputs del contenedor principal (las herramientas): el mismo aire interactivo, con acento celeste al enfocar */
+[data-testid="stMainBlockContainer"] [data-baseweb="input"],
+[data-testid="stMainBlockContainer"] [data-testid="stTextInputRootElement"],
+[data-testid="stMainBlockContainer"] [data-testid="stDateInput"] input {{ background-color: rgba(255, 255, 255, 0.07); border: 1px solid rgba(255, 255, 255, 0.15) !important; border-radius: 6px; }}
+/* la caja visible del campo de fecha es «DateInputField»: su <input> interno queda oculto fuera de pantalla */
+[data-testid="stMainBlockContainer"] [data-testid="stDateInputField"] {{ background-color: rgba(255, 255, 255, 0.07); border: 1px solid rgba(255, 255, 255, 0.15) !important; border-radius: 6px; }}
+[data-testid="stMainBlockContainer"] [data-testid="stTextInputRootElement"]:focus-within,
+[data-testid="stMainBlockContainer"] [data-testid="stDateInputField"]:focus-within,
+html[data-tema="claro"] [data-testid="stMainBlockContainer"] [data-testid="stTextInputRootElement"]:focus-within,
+html[data-tema="claro"] [data-testid="stMainBlockContainer"] [data-testid="stDateInputField"]:focus-within {{ border-color: rgba(116, 172, 223, 0.9) !important; box-shadow: 0 0 0 2px rgba(116, 172, 223, 0.18); }}
+html[data-tema="claro"] [data-testid="stMainBlockContainer"] [data-baseweb="input"],
+html[data-tema="claro"] [data-testid="stMainBlockContainer"] [data-testid="stTextInputRootElement"],
+html[data-tema="claro"] [data-testid="stMainBlockContainer"] [data-testid="stDateInputField"] {{ background-color: rgba(14, 26, 43, 0.05); border-color: rgba(14, 26, 43, 0.18) !important; }}
 .mc-termino {{ border-left: 3px solid {SOL}; }}
 .mc-termino-t {{ font-weight: 800; font-size: 1.05rem; margin-bottom: 4px; color: {SOL}; }}
 .mc-termino-d {{ font-size: .92rem; line-height: 1.5; opacity: .92; }}
@@ -344,32 +337,6 @@ section[data-testid="stSidebar"] [class*="st-key-atajo_"] button [data-testid="s
 section[data-testid="stSidebar"] [class*="st-key-atajo_"] button p {{ font-size: .95rem; font-weight: 600; }}
 section[data-testid="stSidebar"] [class*="st-key-atajo_"] button:hover {{ background: rgba(116,172,223,.12); }}
 section[data-testid="stSidebar"] [class*="st-key-atajo_"] {{ margin-top: -6px; }}
-/* botón «Personalizar» de Indicadores clave: píldora chica alineada a la derecha, con ícono de ajustes */
-.st-key-personalizar {{ align-items: flex-end; }}
-.st-key-personalizar [data-testid="stPopover"] > div > button, .st-key-personalizar [data-testid="stPopoverButton"] {{
-    min-height: 0 !important; padding: .32rem .85rem .32rem .7rem !important; border-radius: 999px !important;
-    border: 1px solid rgba(116,172,223,.45) !important; background: rgba(116,172,223,.08) !important;
-    transition: background-color .18s ease, border-color .18s ease, box-shadow .18s ease, transform .18s ease;
-}}
-.st-key-personalizar [data-testid="stPopoverButton"] p {{ font-size: .84rem !important; font-weight: 700; color: {CELESTE} !important; }}
-.st-key-personalizar [data-testid="stPopoverButton"] [data-testid="stIconMaterial"] {{ color: {CELESTE}; font-size: 1.05rem; }}
-.st-key-personalizar [data-testid="stPopoverButton"]:hover {{
-    background: rgba(116,172,223,.18) !important; border-color: {CELESTE} !important;
-    box-shadow: 0 4px 12px rgba(74,143,212,.2); transform: translateY(-1px);
-}}
-/* un solo criterio para los botones de acción que van a la derecha de un título (Personalizar, Ver otro análisis):
-   píldora celeste chica con ícono. Mismo diseño que «Refrescar datos» del pie. */
-.st-key-inicio_otro button {{
-    min-height: 0 !important; padding: .32rem .85rem .32rem .7rem !important; border-radius: 999px !important;
-    border: 1px solid rgba(116,172,223,.45) !important; background: rgba(116,172,223,.08) !important;
-    transition: background-color .18s ease, border-color .18s ease, box-shadow .18s ease, transform .18s ease;
-}}
-.st-key-inicio_otro button p {{ font-size: .84rem !important; font-weight: 700; color: {CELESTE} !important; white-space: nowrap !important; }}
-.st-key-inicio_otro button [data-testid="stIconMaterial"] {{ color: {CELESTE}; font-size: 1.05rem; }}
-.st-key-inicio_otro button:hover {{
-    background: rgba(116,172,223,.18) !important; border-color: {CELESTE} !important;
-    box-shadow: 0 4px 12px rgba(74,143,212,.2); transform: translateY(-1px);
-}}
 /* títulos de sección: mismo tamaño y el mismo aire arriba en todas las pestañas y vistas (antes había títulos de
    28, 24 y 20 px según la pestaña, y ninguno se separaba de lo anterior más que el espacio común entre bloques) */
 [data-testid="stMain"] [data-testid="stElementContainer"]:has([data-testid="stHeadingWithActionElements"]):not(:first-child) {{
@@ -510,6 +477,12 @@ html[data-pie="oculto"] [data-testid="stMainBlockContainer"] {{ padding-bottom: 
     overflow: hidden !important; opacity: 0 !important; pointer-events: none !important; }}
 [data-testid="stElementContainer"]:has(> .st-key-puente_leidas), [data-testid="stLayoutWrapper"]:has(> .st-key-puente_leidas) {{
     position: absolute !important; height: 0 !important; margin: 0 !important; overflow: hidden !important; }}
+/* contenedor oculto: un botón por sección del tablero, para que el menú desplegable «Secciones» cambie de pestaña
+   sin recargar la página (los toca JS_PESTANAS; no se ven ni ocupan lugar) */
+.st-key-puente_secciones {{ position: absolute !important; left: -9999px !important; width: 1px !important; height: 1px !important;
+    overflow: hidden !important; opacity: 0 !important; pointer-events: none !important; }}
+[data-testid="stElementContainer"]:has(> .st-key-puente_secciones), [data-testid="stLayoutWrapper"]:has(> .st-key-puente_secciones) {{
+    position: absolute !important; height: 0 !important; margin: 0 !important; overflow: hidden !important; }}
 /* fila del título de cada gráfico: el título ocupa lo que haya y «CSV» (bajar los datos) queda chico a la derecha */
 [class*="st-key-gtit_"] {{ flex-wrap: nowrap !important; gap: 6px !important; }}
 [class*="st-key-gtit_"] > div:first-child {{ flex: 1 1 auto !important; min-width: 0; }}
@@ -577,6 +550,23 @@ html[data-pie="oculto"] [data-testid="stMainBlockContainer"] {{ padding-bottom: 
     box-shadow: 0 8px 20px rgba(74,143,212,.35), inset 0 -3px 0 {SOL};
 }}
 :is(.st-key-hist_seccion, .st-key-inv_seccion) button[aria-checked="true"] p {{ color: #fff !important; }}
+/* sub-navegación de indicadores del Archivo económico (el selector «Gráfico»): chips compactos, claramente
+   subordinados a las pestañas grandes de arriba y sin contenedor pesado alrededor */
+.st-key-hist_grafico [data-testid="stButtonGroup"] [role="radiogroup"]:has(button[data-variant="segmented_control"]) {{
+    background: transparent; border: none; padding: 0; gap: 6px;
+}}
+.st-key-hist_grafico button[data-variant="segmented_control"] {{
+    border-radius: 999px !important; padding: 4px 12px !important; font-weight: 500;
+    background: rgba(116,172,223,.08) !important; border: 1px solid rgba(116,172,223,.25) !important;
+}}
+.st-key-hist_grafico button[data-variant="segmented_control"] p {{ font-size: .82rem; }}
+.st-key-hist_grafico button[data-variant="segmented_control"]:hover {{
+    background: rgba(116,172,223,.2) !important; transform: none; box-shadow: none;
+}}
+.st-key-hist_grafico button[data-variant="segmented_control"][aria-checked="true"] {{
+    background: rgba(116,172,223,.24) !important; border-color: {CELESTE} !important; box-shadow: none;
+}}
+.st-key-hist_grafico button[data-variant="segmented_control"][aria-checked="true"] p {{ color: {CELESTE} !important; }}
 
 /* selectores grandes de sección (Historia, Ahorro e inversiones) con poco ancho: letra algo menor y el texto puede bajar
    de renglón en vez de cortarse */
@@ -597,58 +587,87 @@ html[data-pie="oculto"] [data-testid="stMainBlockContainer"] {{ padding-bottom: 
 }}
 [class*="st-key-modo_"] button p {{ word-break: normal !important; overflow-wrap: normal !important; }}
 
-/* presentación de cada pestaña (style.intro): tarjeta liviana con la frase y la leyenda de colores */
-.mc-intro {{ margin: 2px 0 16px; padding: 12px 16px 12px 18px; border-radius: 12px; position: relative;
-    background: linear-gradient(90deg, rgba(116,172,223,.10), rgba(116,172,223,.03) 70%);
-    border: 1px solid rgba(116,172,223,.18); }}
-.mc-intro::before {{ content: ""; position: absolute; left: 0; top: 10px; bottom: 10px; width: 3px; border-radius: 3px;
-    background: {CELESTE}; }}
-.mc-intro p {{ margin: 0; font-size: 1rem; line-height: 1.55; }}
-.mc-intro b {{ color: {CELESTE}; font-weight: 700; }}
-.mc-intro .ley {{ display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 8px; font-size: .88rem; font-weight: 600; }}
-.mc-intro .ley span {{ display: inline-flex; align-items: center; gap: 8px; opacity: .92; }}
-.mc-intro .ley span::before {{ content: ""; width: 9px; height: 9px; border-radius: 50%; background: #8A9BB0; }}
-.mc-intro .ley .bien::before {{ background: #10AC84; box-shadow: 0 0 0 3px rgba(16,172,132,.18); }}
-.mc-intro .ley .mal::before {{ background: #EE5253; box-shadow: 0 0 0 3px rgba(238,82,83,.18); }}
-.mc-intro .nota {{ margin-top: 6px; font-size: .88rem; opacity: .9; }}
-html[data-tema="claro"] .mc-intro {{ background: linear-gradient(90deg, #EEF5FC, #F8FBFE 70%); border-color: #D6E5F4; }}
-html[data-tema="claro"] .mc-intro::before {{ background: #2E6DB4; }}
-html[data-tema="claro"] .mc-intro b {{ color: #2E6DB4; }}
-/* botón discreto para ocultarla: una flechita arriba a la derecha. Oculta, queda solo una píldora para volver a abrirla */
-.mc-intro {{ padding-right: 46px; }}
-.mc-intro .mc-intro-x {{ position: absolute; top: 8px; right: 10px; min-width: 28px; height: 28px; padding: 0 6px;
-    display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; cursor: pointer;
-    color: {CELESTE}; opacity: .55; font-size: .9rem; font-weight: 700; user-select: none;
-    transition: opacity .15s ease, background-color .15s ease; }}
-.mc-intro .mc-intro-x::after {{ content: "▴"; font-size: 1rem; line-height: 1; }}
-.mc-intro .mc-intro-x:hover, .mc-intro .mc-intro-x:focus-visible {{ opacity: 1; background: rgba(116,172,223,.16); outline: none; }}
-/* oculta, queda una píldora para volver a abrirla: círculo con la «i», texto y una flechita */
-html[data-intros="ocultas"] .mc-intro {{ display: inline-flex; padding: 0; margin: 0 0 14px; border-radius: 999px;
-    background: linear-gradient(135deg, rgba(116,172,223,.18), rgba(116,172,223,.06));
-    border: 1px solid rgba(116,172,223,.40); box-shadow: 0 2px 10px rgba(0,0,0,.18);
-    transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease; }}
-html[data-intros="ocultas"] .mc-intro:hover {{ transform: translateY(-1px); border-color: rgba(116,172,223,.75);
-    box-shadow: 0 6px 16px rgba(74,143,212,.25); }}
-html[data-intros="ocultas"] .mc-intro::before, html[data-intros="ocultas"] .mc-intro > p,
-html[data-intros="ocultas"] .mc-intro .ley, html[data-intros="ocultas"] .mc-intro .nota {{ display: none; }}
-html[data-intros="ocultas"] .mc-intro .mc-intro-x {{ position: static; height: 34px; padding: 0 14px 0 5px; gap: 9px;
-    opacity: 1; color: #E6EDF6; font-size: .88rem; font-weight: 700; background: none; }}
-html[data-intros="ocultas"] .mc-intro .mc-intro-x::before {{ content: "i"; display: inline-flex; align-items: center;
-    justify-content: center; width: 24px; height: 24px; border-radius: 50%; font-size: .82rem; font-weight: 800;
-    font-style: italic; font-family: Georgia, serif; color: #0E1A2B; background: linear-gradient(135deg, #9CC6EC, {CELESTE}); }}
-html[data-intros="ocultas"] .mc-intro .mc-intro-x::after {{ content: "Ver presentación  ▾"; font-size: .88rem; white-space: pre; }}
-html[data-tema="claro"] .mc-intro .mc-intro-x {{ color: #2E6DB4; }}
-html[data-tema="claro"][data-intros="ocultas"] .mc-intro {{ background: linear-gradient(135deg, #EAF2FB, #F7FAFE);
-    border-color: #BCD3EC; box-shadow: 0 2px 8px rgba(30,60,100,.10); }}
-html[data-tema="claro"][data-intros="ocultas"] .mc-intro .mc-intro-x {{ color: #1F3B5C; }}
-html[data-tema="claro"][data-intros="ocultas"] .mc-intro .mc-intro-x::before {{ color: #FFFFFF;
-    background: linear-gradient(135deg, #3A7BC0, #2563A8); }}
+/* las leyendas con colores de las pestañas (style.intro) se sacaron de todas las páginas; queda solo la píldora
+   «← Inicio» de las secciones y, en Inicio, el bloque «En pocas palabras» */
+/* «En pocas palabras» (Inicio, debajo de «Indicadores clave»): una fila por tarjeta, con el número, el enlace
+   a la sección y la historia; hairlines tenues separan los renglones (el usuario marca el metro visual) */
+.mc-pocas {{ margin: 18px 0 8px; }}
+.mc-pocas .tit, .mc-tit-seccion .tit {{ border-left: 4px solid {CELESTE}; padding: 2px 0 2px 12px; margin-bottom: 14px; }}
+.mc-pocas .tt, .mc-tit-seccion .tt {{ font-weight: 800; font-size: 1.25rem; letter-spacing: -.01em; color: #F2F7FD; }}
+.mc-pocas .cap, .mc-tit-seccion .cap {{ color: #B9C4D4; font-size: .92rem; margin-top: 3px; }}
+/* el encabezado con acompañante (el estado de los datos) va en fila: título a la izquierda, píldora a la derecha,
+   alineada con el borde de la última tarjeta (los dos bloques comparten el ancho del contenedor principal) */
+.mc-tit-seccion {{ display: flex; justify-content: space-between; align-items: center; gap: 16px; }}
+.mc-tit-seccion .tit {{ flex: 1 1 auto; margin-bottom: 0; }}
+.mc-tit-seccion .cap {{ margin-bottom: 14px; }}
+/* con la píldora de estado (Indicadores clave): aire antes de la fila de tarjetas para que no la invada */
+.mc-tit-seccion.con-estado {{ margin-bottom: 16px; }}
+/* píldora de estado de los datos: pastilla sutil, texto legible y puntito con pulso (verde rápido = mercado
+   abierto; rojo lento = reposo, para no leer error) */
+.mc-estado {{ display: inline-flex; align-items: center; gap: 8px; color: #c9d1d9; font-size: .9rem;
+    font-weight: 500; letter-spacing: .01em; white-space: nowrap; flex: 0 0 auto;
+    background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.1); border-radius: 999px;
+    padding: 5px 12px; }}
+.mc-status-dot {{ width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex: 0 0 auto;
+    animation: mc-pulse 1.2s ease-in-out infinite; }}
+.mc-status-dot.open {{ background: #2ea043; box-shadow: 0 0 6px #2ea043; }}
+.mc-status-dot.closed {{ background: #f85149; box-shadow: 0 0 6px #f85149; animation-duration: 3s; }}
+@keyframes mc-pulse {{
+    0%, 100% {{ opacity: 1; }}
+    50% {{ opacity: .25; }}
+}}
+html[data-tema="claro"] .mc-estado {{ color: #3D4A5C; background: rgba(14,26,43,.04); border-color: rgba(14,26,43,.12); }}
+@media (max-width: 640px) {{
+    .mc-tit-seccion {{ flex-wrap: wrap; }}
+    .mc-estado {{ font-size: .8rem; padding: 4px 10px; }}
+    .mc-status-dot {{ width: 7px; height: 7px; }}
+}}
+@media (prefers-reduced-motion: reduce) {{ .mc-status-dot {{ animation: none; }} }}
+.mc-pocas .fila {{ display: grid; grid-template-columns: 42px 190px 1fr; gap: 3px 24px; align-items: baseline;
+    padding: 16px 2px; border-top: 1px solid rgba(116,172,223,.22); }}
+.mc-pocas .num {{ color: {CELESTE}; font-weight: 700; font-size: .88rem; letter-spacing: .12em; }}
+.mc-pocas .enl {{ justify-self: start; color: #F2F7FD; font-weight: 600; font-size: 1.02rem; line-height: 1.3;
+    text-decoration: underline; text-decoration-color: rgba(255,255,255,.35); text-underline-offset: 3px; white-space: nowrap; }}
+.mc-pocas .enl .fl {{ font-size: .78em; margin-left: 3px; opacity: .85; }}
+.mc-pocas .enl:hover {{ color: {CELESTE}; text-decoration-color: {CELESTE}; }}
+.mc-pocas .tx {{ margin: 0; font-size: 1rem; line-height: 1.6; color: #C7D2E0; }}
+.mc-pocas .tx b {{ color: #F2F7FD; font-weight: 700; }}
+/* «En pocas palabras» en dos columnas: cada fila apila el enlace arriba y el texto abajo, con el número a la izq */
+[data-testid="stColumn"] .mc-pocas .fila {{ grid-template-columns: 34px 1fr; gap: 2px 12px; }}
+[data-testid="stColumn"] .mc-pocas .tx {{ grid-column: 2; }}
+.mc-pocas .pie {{ padding: 12px 2px 0; border-top: 1px solid rgba(116,172,223,.22); font-size: .88rem; color: #9AA7B8; }}
+html[data-tema="claro"] .mc-pocas .tt, html[data-tema="claro"] .mc-tit-seccion .tt {{ color: #16202E; }}
+html[data-tema="claro"] .mc-pocas .cap, html[data-tema="claro"] .mc-tit-seccion .cap {{ color: #5D6E85; }}
+html[data-tema="claro"] .mc-pocas .tit, html[data-tema="claro"] .mc-tit-seccion .tit {{ border-left-color: #2E6DB4; }}
+html[data-tema="claro"] .mc-pocas .fila, html[data-tema="claro"] .mc-pocas .pie {{ border-top-color: rgba(14,26,43,.14); }}
+html[data-tema="claro"] .mc-pocas .enl {{ color: #16202E; text-decoration-color: rgba(14,26,43,.35); }}
+html[data-tema="claro"] .mc-pocas .enl:hover {{ color: #2E6DB4; text-decoration-color: #2E6DB4; }}
+html[data-tema="claro"] .mc-pocas .tx {{ color: #374A62; }}
+html[data-tema="claro"] .mc-pocas .tx b {{ color: #0E1A2B; }}
+html[data-tema="claro"] .mc-pocas .pie {{ color: #6E7D93; }}
+@media (max-width: 640px) {{
+    .mc-pocas .fila {{ grid-template-columns: 28px 108px 1fr; gap: 2px 12px; }}
+    .mc-pocas .enl {{ font-size: .86rem; }}
+}}
+/* ── Renglón de la introducción en las secciones del tablero: la píldora «← Inicio» queda a la izquierda,
+      en el flujo del documento, así no tapa nada ── */
+.mc-intro-fila {{ display: flex; align-items: center; margin: 2px 0 16px; }}
+.mc-inicio {{ display: inline-flex; align-items: center; gap: 7px; flex-shrink: 0; padding: .5rem 1.1rem .5rem .95rem;
+    border-radius: 999px; border: 1px solid rgba(116,172,223,.45); background: rgba(116,172,223,.10);
+    color: {CELESTE}; font-weight: 700; font-size: .95rem; line-height: 1.25; text-decoration: none !important;
+    white-space: nowrap; transition: background-color .18s ease, border-color .18s ease, box-shadow .18s ease; }}
+.mc-inicio span {{ transition: transform .18s ease; }}
+.mc-inicio:hover, .mc-inicio:focus-visible {{ background: rgba(116,172,223,.2); border-color: {CELESTE};
+    box-shadow: 0 4px 14px rgba(74,143,212,.25); }}
+.mc-inicio:hover span, .mc-inicio:focus-visible span {{ transform: translateX(-3px); }}
+html[data-tema="claro"] .mc-inicio {{ color: #2E6DB4; border-color: rgba(46,109,180,.5); background: rgba(46,109,180,.08); }}
+html[data-tema="claro"] .mc-inicio:hover {{ background: rgba(46,109,180,.15); box-shadow: 0 4px 14px rgba(46,109,180,.18); }}
 /* selectores de una sola opción: la elegida no se puede volver a tocar. Streamlit la desmarcaba al instante y recién
    la volvía a marcar al responder el servidor (selector.uno), así que se veía un rato sin nada elegido */
 [data-testid="stButtonGroup"] button[role="radio"][aria-checked="true"] {{ pointer-events: none; cursor: default; }}
-/* aclaraciones al pie (style.aclaracion): misma tarjeta chica en toda la página, cada fila con su rótulo */
-.mc-acl {{ margin: 8px 0 22px; padding: 10px 14px; border-radius: 10px; font-size: .86rem; line-height: 1.55;
-    background: rgba(128,128,128,.06); border: 1px solid rgba(128,128,128,.18); }}
+/* aclaraciones al pie (style.aclaracion): nota técnica subordinada, con fondo sutil y acento a la izquierda */
+.mc-acl {{ margin: 8px 0 22px; padding: 10px 14px; border-radius: 0 8px 8px 0; font-size: .85rem; line-height: 1.55;
+    background: rgba(255,255,255,.02); border: none; border-left: 3px solid #3b82f6; color: #B7C3D3; }}
 .mc-acl .f {{ display: grid; grid-template-columns: 6.4rem 1fr; gap: 12px; align-items: baseline; }}
 .mc-acl .f + .f {{ margin-top: 6px; padding-top: 6px; border-top: 1px dashed rgba(128,128,128,.2); }}
 .mc-acl .et {{ font-size: .72rem; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; color: {CELESTE}; }}
@@ -660,11 +679,11 @@ html[data-tema="claro"][data-intros="ocultas"] .mc-intro .mc-intro-x::before {{ 
     transform: translateY(-1px); }}
 .mc-acl .ley .bien::before {{ background: #10AC84; }}
 .mc-acl .ley .mal::before {{ background: #EE5253; }}
-html[data-tema="claro"] .mc-acl {{ background: #F6F9FC; border-color: #DCE6F0; }}
+html[data-tema="claro"] .mc-acl {{ background: rgba(14,26,43,.03); color: #55606E; }}
 @container principal (max-width: 560px) {{
     .mc-acl .f {{ grid-template-columns: 1fr; gap: 2px; }}
 }}
-/* ── Ahorro e inversiones ── */
+/* ── Glosario financiero (trasladado desde Ahorro e inversiones) ── */
 .mc-aviso {{ display: flex; gap: 14px; align-items: flex-start; margin: 6px 0 22px; padding: 14px 18px 14px 16px;
     border-radius: 12px; border: 1px solid rgba(246,180,14,.28); border-left: 4px solid {SOL};
     background: linear-gradient(90deg, rgba(246,180,14,.12), rgba(246,180,14,.03) 60%); font-size: .95rem; line-height: 1.55; }}
@@ -856,12 +875,17 @@ html[data-tema="claro"] .mc-aviso .ic {{ background: #FBE7B5; color: #8A5A00; }}
 .st-key-pie_datos [data-testid="stMarkdownContainer"] {{ margin-bottom: 0 !important; }}
 .st-key-pie_datos [data-testid="stMarkdown"], .st-key-pie_datos [data-testid="stMarkdown"] > div {{ height: auto !important; }}
 /* overflow-clip-margin: el halo animado del punto «En vivo» sobresale ~8 px y antes quedaba cortado */
-.st-key-pie_datos > :first-child {{ flex: 1 1 auto; min-width: 0; overflow-x: clip; overflow-y: visible;
-    overflow-clip-margin: 12px; }}
+/* la caja del estado se estira y su contenido se apoya en el borde derecho (antes quedaba pegado a «Refrescar datos»
+   y dejaba un hueco muerto al final de la barra): la barra queda identidad | acciones …… estado */
+.st-key-pie_datos > :first-child {{ flex: 1 1 auto; min-width: 0; display: flex; justify-content: flex-end;
+    overflow-x: clip; overflow-y: visible; overflow-clip-margin: 12px; }}
+.st-key-pie_datos > :first-child [data-testid="stVerticalBlock"] {{ align-items: flex-end; }}
 .st-key-pie_datos .mc-vivo {{ padding-left: 4px; justify-content: flex-end; }}
 /* botones a la izquierda y el estado en vivo a la derecha: la esquina inferior derecha la tapa el botón «Manage app»
    que Streamlit Cloud le muestra al dueño de la app (no se puede mover desde acá) */
 .st-key-pie_datos {{ justify-content: flex-start !important; }}
+/* las acciones (Acerca de, Refrescar) forman su propio grupo, aparte del boletín y el © */
+.st-key-pie_datos > :nth-child(3) {{ margin-left: 8px; }}
 .st-key-pie_datos > :first-child {{ order: 9; }}
 .st-key-pie_datos > :nth-child(2) {{ order: 1; }}
 .st-key-pie_datos > :nth-child(3) {{ order: 2; }}
@@ -879,12 +903,17 @@ html[data-tema="claro"] .mc-aviso .ic {{ background: #FBE7B5; color: #8A5A00; }}
 .mc-pielinks a.bol .ic {{ font-size: .95em; line-height: 1; }}
 .mc-pielinks .c {{ opacity: .85; }}
 .st-key-pie_datos [data-testid="stPopover"] button {{ white-space: nowrap; }}
+/* «Acerca de» es informativo: botón fantasma, sin borde ni relleno, para no competir con «Refrescar datos» */
+.st-key-pie_datos [data-testid="stPopover"] button {{
+    background: transparent !important; border-color: transparent !important; box-shadow: none !important;
+    opacity: .75; font-weight: 500; transition: background-color .18s ease, opacity .18s ease;
+}}
+.st-key-pie_datos [data-testid="stPopover"] button:hover {{ background: rgba(128,128,128,.14) !important; opacity: 1; }}
 .mc-vivo, .mc-vivo span {{ white-space: nowrap; }}
 /* lo que entra depende del ancho real de la barra (con la barra lateral abierta es bastante menos que la ventana):
-   se va ocultando lo secundario, nunca los botones. Términos y privacidad siguen en «Acerca de» */
+   se oculta lo secundario; los enlaces legales ya no van acá, solo dentro de «Acerca de» */
 .st-key-pie_datos {{ container-type: inline-size; container-name: pie; }}
 @container pie (max-width: 1380px) {{ .mc-pielinks .c, .mc-vivo .sec {{ display: none; }} }}
-@container pie (max-width: 1040px) {{ .mc-pielinks a:not(.bol) {{ display: none; }} }}
 @container pie (max-width: 840px) {{ .mc-vivo span:not(.en) {{ display: none; }} }}
 /* angosto (celular): la suscripción sigue a la vista con un texto corto, y los otros dos botones quedan solo con su
    ícono (el texto sigue ahí para los lectores de pantalla) */
@@ -1022,7 +1051,7 @@ html[data-tema="claro"] .mc-conc .c {{ background: #F4F8FD; border: 1px solid #D
 
 /* ── Franja superior deslizante (inspirada en los tableros de cotizaciones) ── */
 .mc-ticker {{
-    overflow: hidden; white-space: nowrap; border-radius: 12px; padding: 9px 0; margin: 0 0 6px;
+    overflow: hidden; white-space: nowrap; border-radius: 12px; padding: 9px 0; margin: -2px 0 10px;
     background: rgba(128,128,128,.07); border: 1px solid rgba(116,172,223,.28);
     -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 3%, #000 97%, transparent 100%);
             mask-image: linear-gradient(90deg, transparent 0, #000 3%, #000 97%, transparent 100%);
@@ -1123,8 +1152,14 @@ html[data-tema="claro"] :is(.mc-min-card, .mc-viaje, .mc-nota, .mc-min-grupo, .m
     > [data-testid="stVerticalBlock"],
 [data-testid="stElementContainer"]:only-child:has(> [data-testid="stMetric"]),
 [data-testid="stElementContainer"]:only-child > [data-testid="stMetric"] {{ height: 100%; }}
-/* menos aire muerto arriba: el contenido arranca justo debajo de la barra superior */
-[data-testid="stMainBlockContainer"] {{ padding-top: 3.6rem; }}
+/* aire del techo: el stVerticalBlock mete dos gaps fantasma de 16px sobre el primer contenido (los bloques CSS
+   invisibles de app.py). En el celular alcanza con algo más que el header fijo (60px); en escritorio se recupera
+   el aire completo (bloque @media de abajo: 57.6 + 32 − 2 ≈ 88px = 60px de header + 28px de aire) */
+[data-testid="stMainBlockContainer"] {{ padding-top: 2.4rem; }}
+@media (min-width: 768px) {{
+    [data-testid="stMainBlockContainer"] {{ padding-top: 3.6rem; }}
+    .mc-ticker {{ margin: -2px 0 20px; }}
+}}
 /* al abrir una pestaña o tocar un control, Streamlit atenúa toda la página (opacidad .33) mientras recalcula: se veía
    como un parpadeo. El contenido queda como está hasta que llega el nuevo */
 [data-stale="true"] {{ opacity: 1 !important; transition: none !important; }}
@@ -1157,10 +1192,6 @@ html[data-tema="claro"] :is(.mc-min-card, .mc-viaje, .mc-nota, .mc-min-grupo, .m
     [data-testid="stTabsScrollLeft"], [data-testid="stTabsScrollRight"] {{ display: none !important; }}
     [role="tablist"] {{ width: 100% !important; margin-inline: 0 !important; }}
 }}
-/* En filas angostas, la píldora fija dejaba sin espacio a los demás marcadores. */
-@container principal (max-width: 600px) {{
-    [role="tablist"] [data-testid="stTab"]:first-of-type {{ position: relative !important; left: auto !important; }}
-}}
 [data-testid="stTabsScrollLeft"] svg, [data-testid="stTabsScrollRight"] svg {{
     width: 32px !important; height: 32px !important; padding: 5px; box-sizing: border-box; border-radius: 50%;
     color: {CELESTE}; border: 1px solid rgba(116,172,223,.55);
@@ -1185,7 +1216,7 @@ html[data-tema="claro"] [data-testid="stTabsScrollLeft"] svg, html[data-tema="cl
 }}
 [data-testid="stTab"] [data-testid="stMarkdownContainer"] {{ margin: 0; padding: 0; }}
 [data-testid="stTab"] p {{
-    margin: 0; padding: 0; font-size: 1.15rem; font-weight: 600; line-height: 1.25;
+    margin: 0; padding: 0; font-size: 1.22rem; font-weight: 600; line-height: 1.25;
     text-align: center; white-space: nowrap;
 }}
 /* animación sutil al pasar el cursor por un marcador */
@@ -1204,33 +1235,13 @@ html[data-tema="claro"] [data-testid="stTabsScrollLeft"] svg, html[data-tema="cl
     [data-testid="stTab"], [data-testid="stTab"] p {{ transition: none; }}
     [data-testid="stTab"]:hover {{ transform: none; }}
 }}
-/* "Inicio" (primer marcador): la casa de la app. Píldora celeste con el Sol de Mayo, como la bandera; se rellena
-   cuando está elegida y queda separada del resto por una línea vertical */
-/* fija a la izquierda de la fila: al desplazar las pestañas, «Inicio» queda siempre a mano. (left = su margen
-   izquierdo: un valor mayor la corría sobre «Dólar» con la fila sin desplazar) */
-[role="tablist"] [data-testid="stTab"]:first-of-type {{
-    position: sticky; left: 1.1rem; z-index: 3; height: 2.8rem; margin: .3rem 1.25rem .3rem 1.1rem; padding: 0 1.15rem 0 2.45rem;
-    border-radius: 999px; border: 1px solid rgba(116,172,223,.55);
-    /* fondo opaco y sombras del color de la página a los costados: tapan las pestañas que pasan por debajo */
-    --mc-fondo: #0E1420;
-    --mc-tapa: -14px 0 0 7px var(--mc-fondo), 16px 0 0 7px var(--mc-fondo);
-    background: linear-gradient(135deg, rgba(116,172,223,.20), rgba(116,172,223,.07)), var(--mc-fondo);
-    box-shadow: inset 0 1px 0 rgba(255,255,255,.08), var(--mc-tapa);
-}}
-html[data-tema="claro"] [role="tablist"] [data-testid="stTab"]:first-of-type {{ --mc-fondo: #FFFFFF; }}
-[role="tablist"] [data-testid="stTab"]:first-of-type p {{ color: {CELESTE} !important; }}
-[role="tablist"] [data-testid="stTab"]:first-of-type:hover {{
-    border-color: {CELESTE};
-    background: linear-gradient(135deg, rgba(116,172,223,.32), rgba(116,172,223,.12)), var(--mc-fondo);
-    box-shadow: 0 3px 11px rgba(116,172,223,.25), var(--mc-tapa);
-}}
-[role="tablist"] [data-testid="stTab"]:first-of-type[aria-selected="true"] {{
-    border-color: transparent; background: linear-gradient(135deg, {CELESTE} 0%, #4A8FD4 100%);
-    box-shadow: 0 3px 12px rgba(74,143,212,.45), inset 0 1px 0 rgba(255,255,255,.35), var(--mc-tapa);
-}}
-[role="tablist"] [data-testid="stTab"]:first-of-type[aria-selected="true"] p {{ color: #0B1A2E !important; }}
-/* la píldora ya marca la selección: sin la rayita de abajo */
-[role="tablist"] [data-testid="stTab"]:first-of-type .react-aria-SelectionIndicator {{ display: none; }}
+/* ── Dos sistemas independientes: el botón «Resumen» de la barra lateral (aparte) y el carrusel de pestañas ── */
+/* «Resumen» no va en el carrusel: es el primer botón de Explorar, en la barra lateral. Adentro del carrusel queda
+   igual, escondida (ver navegación del tablero en app.py): la clave «pestana» siempre guarda el nombre de una
+   pestaña de la lista y ningún clic se pierde. Al ver el Resumen el carrusel no muestra ningún marcador elegido a
+   la vista: el panel de «Resumen» (vacío) se oculta y su pantalla se dibuja debajo de la fila, fuera del carrusel. */
+.st-key-pestana [data-testid="stTab"]:first-of-type {{ display: none !important; }}
+.st-key-navegacion_tablero:has([role="tablist"] [data-testid="stTab"]:first-of-type[aria-selected="true"]) [data-testid="stTabPanel"] {{ display: none !important; }}
 /* la rayita no viaja desde la pestaña anterior (saliendo de «Inicio» cruzaba toda la fila como una línea saltando):
    aparece en su lugar, creciendo desde el centro */
 [role="tablist"] .react-aria-SelectionIndicator {{
@@ -1238,21 +1249,6 @@ html[data-tema="claro"] [role="tablist"] [data-testid="stTab"]:first-of-type {{ 
 }}
 @keyframes mc-raya {{ from {{ transform: scaleX(0); opacity: 0; }} to {{ transform: scaleX(1); opacity: 1; }} }}
 @media (prefers-reduced-motion: reduce) {{ [role="tablist"] .react-aria-SelectionIndicator {{ animation: none; }} }}
-[role="tablist"] [data-testid="stTab"]:first-of-type::before {{
-    content: ""; position: absolute; left: .75rem; top: 50%; width: 1.3rem; height: 1.3rem; transform: translateY(-50%);
-    background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><g stroke='%23F6B40E' stroke-width='1.6' stroke-linecap='round'><path d='M12 1.5v3M12 19.5v3M1.5 12h3M19.5 12h3M4.6 4.6l2.1 2.1M17.3 17.3l2.1 2.1M4.6 19.4l2.1-2.1M17.3 6.7l2.1-2.1'/></g><circle cx='12' cy='12' r='5' fill='%23F6B40E'/></svg>") center / contain no-repeat;
-    transition: transform .6s ease;
-}}
-[role="tablist"] [data-testid="stTab"]:first-of-type:hover::before {{ transform: translateY(-50%) rotate(90deg); }}
-[role="tablist"] [data-testid="stTab"]:first-of-type[aria-selected="true"]::before {{
-    filter: drop-shadow(0 0 4px rgba(246,180,14,.9));
-}}
-[role="tablist"] [data-testid="stTab"]:first-of-type p {{ font-weight: 800; letter-spacing: .02em; }}
-/* línea divisoria: centrada entre «Resumen» y la primera pestaña (con «Inicio», más corta, quedaba bien más cerca) */
-[role="tablist"] [data-testid="stTab"]:first-of-type::after {{
-    content: ""; position: absolute; right: -22px; top: 15%; height: 70%; width: 1px;
-    background: rgba(128,128,128,.45);
-}}
 /* pestaña recién tocada (se arma en el servidor): esqueleto de tarjetas y gráfico con un brillo que pasa, en lugar de
    un hueco vacío con el pie de página subiendo */
 [data-testid="stTabPanel"] > [data-testid="stVerticalBlock"]:empty {{
@@ -1296,12 +1292,13 @@ html[data-tema="claro"] [role="tablist"] [data-testid="stTab"]:first-of-type {{ 
 [data-testid="stSidebarContent"]::-webkit-scrollbar-thumb:hover, [data-testid="stMain"]::-webkit-scrollbar-thumb:hover {{
     background-color: rgba(116,172,223,.6);
 }}
-/* botón para plegar y desplegar la barra lateral: redondo y celeste, con una flecha simple como las de las pestañas */
+/* botón para plegar y desplegar la barra lateral: disco oscuro con un aro celeste fino y flecha celeste; al pasar el
+   mouse se llena de celeste, la flecha pasa a oscura y alrededor queda un aro grueso del color del fondo */
 [data-testid="stSidebarCollapseButton"] button, [data-testid="stExpandSidebarButton"] {{
-    width: 32px !important; height: 32px !important; min-height: 0 !important; padding: 0 !important; border-radius: 50% !important;
+    width: 36px !important; height: 36px !important; min-height: 0 !important; padding: 0 !important; border-radius: 50% !important;
     display: inline-flex !important; align-items: center; justify-content: center;
-    background: rgba(116,172,223,.16) !important; border: 1px solid rgba(116,172,223,.55) !important;
-    box-shadow: 0 2px 10px rgba(0,0,0,.18); transition: background-color .18s ease, transform .18s ease, box-shadow .18s ease;
+    background: #0D1523 !important; border: 1px solid rgba(116,172,223,.65) !important;
+    box-shadow: 0 2px 10px rgba(0,0,0,.25); transition: background-color .18s ease, box-shadow .18s ease;
 }}
 [data-testid="stSidebarCollapseButton"] button [data-testid="stIconMaterial"],
 [data-testid="stExpandSidebarButton"] [data-testid="stIconMaterial"] {{
@@ -1311,7 +1308,7 @@ html[data-tema="claro"] [role="tablist"] [data-testid="stTab"]:first-of-type {{ 
 }}
 [data-testid="stExpandSidebarButton"] [data-testid="stIconMaterial"] {{ transform: rotate(180deg); }}
 [data-testid="stSidebarCollapseButton"] button:hover, [data-testid="stExpandSidebarButton"]:hover {{
-    background: {CELESTE} !important; transform: scale(1.08); box-shadow: 0 0 0 4px rgba(116,172,223,.22);
+    background: {CELESTE} !important; box-shadow: 0 0 0 5px #0E1420;
 }}
 [data-testid="stSidebarCollapseButton"] button:hover [data-testid="stIconMaterial"],
 [data-testid="stExpandSidebarButton"]:hover [data-testid="stIconMaterial"] {{ background: #0E1420; }}
@@ -1352,19 +1349,10 @@ h3 {{ font-weight: 700 !important; }}
         flex: 0 1 calc(50% - .3rem) !important; min-width: calc(50% - .3rem) !important; width: auto !important;
     }}  /* (sin crecer: el quinto indicador, solo en su fila, se estiraba a todo el ancho con la cifra enorme) */
 }}
-/* encabezado de Inicio: el título y el botón «Personalizar» van en una fila; el botón nunca se aplasta */
-[data-testid="stHorizontalBlock"]:is(:has(.st-key-personalizar), :has(.st-key-inicio_otro)) {{
-    flex-wrap: nowrap !important; gap: .75rem !important; }}
-[data-testid="stHorizontalBlock"]:is(:has(.st-key-personalizar), :has(.st-key-inicio_otro)) > [data-testid="stColumn"]:first-child {{
-    flex: 1 1 0 !important; min-width: 0 !important; width: auto !important; }}
-[data-testid="stHorizontalBlock"]:is(:has(.st-key-personalizar), :has(.st-key-inicio_otro)) > [data-testid="stColumn"]:last-child {{
-    flex: 0 0 auto !important; width: auto !important; min-width: max-content !important; }}
-.st-key-personalizar button, .st-key-personalizar p {{ white-space: nowrap !important; }}
-
-/* ── Celular y pantallas angostas: más aire, indicadores de a dos y todo legible ── */
+/* ── Celular y pantallas angostas: techo compacto, indicadores de a dos y todo legible ── */
 @media (max-width: 640px) {{
     :root {{ --mc-pad: .85rem; }}
-    .block-container {{ padding: 3.2rem .85rem 0 !important; }}
+    .block-container {{ padding: 2.4rem .85rem 0 !important; }}
     h1 {{ font-size: 1.6rem !important; }}
     h2, [data-testid="stHeading"] h2 {{ font-size: 1.3rem !important; }}
     h3 {{ font-size: 1.15rem !important; }}
@@ -1374,7 +1362,7 @@ h3 {{ font-weight: 700 !important; }}
     [data-testid="stMetricDelta"], [data-testid="stMetricDelta"] p {{ font-size: .85rem !important; }}
     /* pestañas y botones más cómodos al tacto */
     [data-testid="stTab"] {{ height: 3rem; padding: 0 .85rem; }}
-    [data-testid="stTab"] p {{ font-size: 1rem; }}
+    [data-testid="stTab"] p {{ font-size: 1.05rem; }}
     button[data-variant="segmented_control"] {{ padding: .5rem .85rem; }}
     /* tablas anchas: se deslizan de costado en lugar de apretarse */
     [data-testid="stTable"], [data-testid="stDataFrame"] {{ overflow-x: auto; }}
@@ -1390,15 +1378,11 @@ h3 {{ font-weight: 700 !important; }}
 }}
 [data-testid="stTab"] p {{ font-weight: 600; }}
 [data-testid="stTab"]:hover {{ box-shadow: inset 0 -2px 0 rgba(116,172,223,.5); }}
-[role="tablist"] [data-testid="stTab"]:first-of-type[aria-selected="true"] {{
-    box-shadow: inset 0 1px 0 rgba(255,255,255,.22), var(--mc-tapa);
-}}
-[role="tablist"] [data-testid="stTab"]:first-of-type:hover::before {{ transform: translateY(-50%); }}
 .mc-label, .mc-acl .et, .mc-nota .t, .mc-foot .tit {{
     text-transform: none; letter-spacing: .025em; font-weight: 600;
 }}
 .mc-acl .et {{ font-size: .8rem; }}
-.mc-intro b, .mc-panorama b {{ font-weight: 600; }}
+.mc-panorama b {{ font-weight: 600; }}
 [data-testid="stMain"] h3 {{ font-size: 1.35rem; font-weight: 650 !important; }}
 [data-testid="stMain"] h4 {{ font-size: 1.12rem; font-weight: 600; }}
 .mc-fx, [data-testid="stMetric"] {{ border-radius: 12px; padding: 1rem; }}
@@ -1407,6 +1391,13 @@ h3 {{ font-weight: 700 !important; }}
 [data-testid="stMetricLabel"] {{ min-height: 2.5em; align-items: flex-start; }}
 [data-testid="stMetric"] {{ min-height: 132px; }}
 [data-testid="stMetric"] > div {{ padding: 0 !important; }}
+/* las tarjetas de Inicio quedaron sin el pie de datos: suelto la reserva de alto y quedan del tamaño de su contenido
+   (el estiramiento de la fila mantiene las cinco a la misma altura; las de las otras secciones conservan la pieza) */
+.st-key-tarjetas_resumen [class*="st-key-indicador_"] {{ min-height: 0 !important; }}
+.st-key-tarjetas_resumen [data-testid="stMetric"] {{ min-height: 0 !important; }}
+/* el estiramiento de la fila debe llegar hasta la tarjeta: sin esto, las cajas quedan con bordes desalineados */
+.st-key-tarjetas_resumen [data-testid="stColumn"] [data-testid="stLayoutWrapper"] {{ height: 100% !important; }}
+.st-key-tarjetas_resumen [data-testid="stColumn"] [class*="st-key-indicador_"] {{ height: 100% !important; min-height: 0 !important; }}
 .mc-dato-meta {{ display: flex; flex-direction: column; gap: 2px; font-size: .78rem;
     line-height: 1.4; opacity: .85; overflow-wrap: anywhere; margin: -4px 2px 12px; }}
 .mc-dato-atrasado {{ color: #F6B40E; font-weight: 600; }}
@@ -1414,26 +1405,22 @@ h3 {{ font-weight: 700 !important; }}
 [data-testid="stColumn"] > [data-testid="stVerticalBlock"]:has(.mc-dato-meta) {{ gap: .75rem; }}
 .mc-vivo .en {{ text-transform: none; letter-spacing: 0; font-weight: 600; color: inherit; }}
 .mc-vivo .en::before {{ animation: none; box-shadow: none; background: #8A9BB0; }}
-.mc-intro .ley .bien::before, .mc-intro .ley .mal::before {{ box-shadow: none; }}
 .mc-ticker .pista {{ animation-duration: 85s; }}
 @container principal (max-width: 560px) {{
-    [data-testid="stHorizontalBlock"]:is(:has(.st-key-personalizar), :has(.st-key-inicio_otro)) {{ flex-wrap: wrap !important; }}
-    [data-testid="stHorizontalBlock"]:is(:has(.st-key-personalizar), :has(.st-key-inicio_otro)) > [data-testid="stColumn"]:first-child {{
+    [data-testid="stHorizontalBlock"]:has(.st-key-personalizar) {{ flex-wrap: wrap !important; }}
+    [data-testid="stHorizontalBlock"]:has(.st-key-personalizar) > [data-testid="stColumn"]:first-child {{
         flex-basis: 100% !important;
     }}
     [role="tablist"] {{ width: 100% !important; margin-inline: 0 !important; scroll-padding-inline: 8px; }}
     [data-testid="stTabsScrollLeft"], [data-testid="stTabsScrollRight"] {{ display: none !important; }}
-    [data-testid="stTab"], [role="tablist"] [data-testid="stTab"]:first-of-type {{
+    [data-testid="stTab"] {{
         height: 2.8rem; margin-block: .3rem; min-height: 44px;
     }}
-    [role="tablist"] [data-testid="stTab"]:first-of-type {{ margin-left: .35rem; margin-right: .65rem; }}
-    [role="tablist"] [data-testid="stTab"]:first-of-type::after {{ display: none; }}
     [data-testid="stTab"] {{ padding-inline: .85rem; }}
-    [data-testid="stTab"] p {{ font-size: 1rem; }}
+    [data-testid="stTab"] p {{ font-size: 1.05rem; }}
     .mc-dato-meta {{ font-size: .76rem; }}
     .mc-fx .n {{ overflow-wrap: anywhere; }}
     .mc-acl .f {{ grid-template-columns: 1fr; gap: 4px; }}
-    .mc-intro {{ padding-left: 14px; }}
     [data-testid="stMain"] h3 {{ font-size: 1.2rem; }}
 }}
 @media (max-width: 380px) {{
@@ -1463,10 +1450,20 @@ h3 {{ font-weight: 700 !important; }}
         overflow-wrap: normal !important; word-break: normal !important; font-weight: 600;
     }}
 }}
-/* Acceso compacto a todas las secciones, en la misma fila que el carrusel. */
+/* El carrusel arranca en el borde izquierdo de la fila (ya no hay píldora de «Resumen» a su izquierda): solo
+   reserva de las flechas; el menú desplegable «Secciones» sigue anclado a la derecha (su contenedor queda fuera
+   del flujo, de ancho cero). La rayita de abajo la pinta el contenedor del carrusel, por afuera de la fila que
+   scrollea: queda fija aunque los marcadores se desplacen y llega de punta a punta (el riel nativo es ::after
+   del propio tablist, vive adentro del contenido y se corría con el scroll; además no cruzaba la zona reservada). */
 .st-key-navegacion_tablero {{ position: relative; gap: 0 !important; }}
+.st-key-navegacion_tablero::before {{
+    content: ""; position: absolute; left: 0; right: 0; top: 60px; height: 2px; pointer-events: none;
+    background: rgba(116,172,223,.45); }}
+html[data-tema="claro"] .st-key-navegacion_tablero::before {{ background: rgba(14,26,43,.22); }}
+.st-key-navegacion_tablero [role="tablist"]::after {{ content: none !important; }}
+.st-key-navegacion_tablero > [data-testid="stLayoutWrapper"]:has(> .st-key-menu_secciones) {{ flex: 0 0 0 !important; width: 0 !important; min-width: 0 !important; }}
 .st-key-navegacion_tablero .st-key-pestana [role="tablist"] {{
-    width: calc(100% - 148px) !important; max-width: calc(100% - 148px); min-width: 0;
+    margin-left: 0 !important;
 }}
 @container principal (max-width: 560px) {{
     .st-key-navegacion_tablero .st-key-pestana [role="tablist"] {{
@@ -1526,7 +1523,6 @@ h3 {{ font-weight: 700 !important; }}
     [data-testid="stMetricValue"] > div, [data-testid="stMetricValue"] p {{
         white-space: normal !important; overflow: visible !important; text-overflow: clip !important;
     }}
-    .mc-intro .mc-intro-x {{ min-width: 44px; min-height: 44px; top: 0; right: 0; }}
 }}
 @media (max-width: 360px) {{
     .mc-pielinks .bol .s {{ display: none; }}
@@ -1678,8 +1674,6 @@ CSS = CSS.replace("</style>", (
     'html[data-tema="claro"] section[data-testid="stSidebar"] .mc-label{opacity:1}'
     'html[data-tema="claro"] [class*="st-key-per_"] button[data-variant="pills"][aria-checked="true"] p{color:#7A4F00 !important}'
     'html[data-tema="claro"] [class*="st-key-gtit_"] [data-testid="stDownloadButton"] button{opacity:.8}'
-    # «Resumen» elegida: texto oscuro sobre la píldora celeste (la regla automática lo pasaba a azul y no se leía)
-    'html[data-tema="claro"] [role="tablist"] [data-testid="stTab"]:first-of-type[aria-selected="true"] p{color:#0B1A2E !important}'
     # variaciones de los indicadores (colores de Streamlit): un poco más oscuras sobre blanco
     'html[data-tema="claro"] [data-testid="stMetricDelta"]{filter:brightness(.72) saturate(1.15)}'
     # barra inferior y su lengüeta: claras en el tema claro (antes quedaban azul oscuro)
@@ -1690,24 +1684,60 @@ CSS = CSS.replace("</style>", (
 
 # Reglas comunes de presentación: conservar tamaños táctiles y colores semánticos.
 CSS = CSS.replace("</style>", """
-[class*="st-key-btn_noticias"] button { background: rgba(116,172,223,.12) !important; border: 1px solid rgba(116,172,223,.35) !important; box-shadow: none !important; }
-[class*="st-key-btn_noticias"] button p { color: inherit !important; font-weight: 600 !important; }
 section[data-testid="stSidebar"] { background-image: none !important; }
 :root { --mc-radio: 10px; --mc-borde: rgba(128,144,163,.25); --mc-superficie: rgba(128,144,163,.055); }
 [class*="st-key-indicador_"] { border: 1px solid var(--mc-borde); border-radius: var(--mc-radio); padding: 16px; min-height: 264px; box-sizing: border-box; height: 100%; background: var(--mc-superficie); }
 [class*="st-key-indicador_"] [data-testid="stMetric"] { border: 0; background: none; padding: 0; min-height: 124px; }
 [class*="st-key-indicador_"] .mc-dato-meta { margin: 0; padding-top: 8px; border-top: 1px solid var(--mc-borde); }
 .mc-intro, html[data-tema="claro"] .mc-intro { background: var(--mc-superficie); border: 1px solid var(--mc-borde); border-radius: var(--mc-radio); box-shadow: none; }
-.mc-como { margin-top: 8px; font-size: .9rem; line-height: 1.6; }
-.mc-como summary { cursor: pointer; font-weight: 600; padding-block: 8px; min-height: 44px; box-sizing: border-box; }
-.mc-como > div { padding: 8px 0; }
-html[data-intros="ocultas"] .mc-intro .mc-como { display: none; }
-.mc-intro .mc-intro-x::before, .mc-nota .t { font-family: inherit !important; font-style: normal !important; }
+.mc-nota .t { font-family: inherit !important; font-style: normal !important; }
 .mc-fx, .mc-news { border-radius: var(--mc-radio); box-shadow: none !important; background-image: none !important; }
 [data-testid="stTab"][aria-selected="true"] { background-image: none !important; box-shadow: inset 0 -2px 0 #74ACDF !important; }
-[role="tablist"] [data-testid="stTab"]:first-of-type[aria-selected="true"] { background-color: #74ACDF !important; }
 .mc-pano .cab .tit { font-size: 1.35rem; font-weight: 650; }
 .mc-pano .fila { border-color: var(--mc-borde); }
 .mc-pano .txt { font-size: .95rem; }
 .mc-label, .mc-acl .et, .mc-foot .tit { letter-spacing: 0; }
+</style>""")
+
+CSS = CSS.replace("</style>", """
+.mc-contexto { margin: 28px 0 32px; }
+.mc-contexto > h3 { margin-bottom: 8px; }
+.mc-contexto-bajada { font-size: 1rem; line-height: 1.6; margin: 0 0 20px; opacity: .85; }
+.mc-contexto-grilla { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 18px; }
+.mc-contexto-tarjeta { display: flex; flex-direction: column; padding: 24px; border: 1px solid var(--mc-borde); border-radius: var(--mc-radio); background: var(--mc-superficie); }
+.mc-contexto-tarjeta h4 { margin: 0 0 16px; font-size: 1.15rem; line-height: 1.4; }
+.mc-contexto-tarjeta p { margin: 0 0 20px; font-size: 1.05rem; line-height: 1.75; }
+.mc-contexto-tarjeta a { margin-top: auto; display: inline-flex; align-items: center; min-height: 44px; font-size: .95rem; }
+@container principal (max-width: 960px) { .mc-contexto-grilla { grid-template-columns: 1fr; } }
+@container principal (max-width: 560px) { .mc-contexto-tarjeta { padding: 20px; } }
+
+/* Enlaces limpios en los títulos de los KPIs */
+[data-testid="stMetricLabel"] a {
+  color: #e2e8f0 !important;
+  text-decoration: none !important;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  border-bottom: 1px dotted rgba(226, 232, 240, 0.4);
+  padding-bottom: 1px;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+[data-testid="stMetricLabel"] a:hover {
+  color: #74ACDF !important;
+  border-bottom: 1px solid #74ACDF !important;
+}
+
+[data-testid="stMetricLabel"] a::after {
+  content: " ↗";
+  font-size: 0.75rem;
+  opacity: 0.6;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+[data-testid="stMetricLabel"] a:hover::after {
+  opacity: 1;
+  transform: translate(1px, -1px);
+}
 </style>""")

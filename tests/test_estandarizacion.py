@@ -3,11 +3,14 @@ from macrocenter.diseno import FUENTE_GRAFICOS
 import pandas as pd
 
 
-def test_intro_conserva_explicacion_y_nota():
-    html = style.intro("Explicación completa.", nota_md="Supuesto necesario.", resumen="Síntesis.")
-    assert "Síntesis." in html
-    assert "Explicación completa." in html and "Supuesto necesario." in html
-    assert '<details class="mc-como">' in html
+def test_intro_dejo_de_dibujar_leyendas():
+    # las leyendas de colores y los textos de introducción ya no se dibujan en ninguna página
+    assert style.intro("Explicación completa.", nota_md="Supuesto necesario.", resumen="Síntesis.") == ""
+    # y en las secciones del tablero la función solo conserva la píldora «← Inicio»
+    html = style.intro("Explicación completa.", inicio=True)
+    assert 'class="mc-inicio"' in html and 'data-btn="nav_resumen"' in html
+    assert "mc-intro" not in html.replace("mc-intro-fila", "").replace('class="mc-inicio"', "")
+    assert "Explicación completa." not in html and "Supuesto necesario." not in html
 
 
 def test_pregunta_conserva_unidad_y_datos():

@@ -33,32 +33,22 @@ de `macrocenter/pestanas/`.
 | Bonos | Bonos argentinos en dólares por vencimiento, ley Nueva York (GD) y ley local (AL/AE), con su historia (data912); tasa de la Fed y bonos del Tesoro de EE. UU. a 3 meses, 2, 10 y 30 años (FRED) |
 | Comercio exterior | Exportaciones, importaciones, saldo comercial |
 
-## Navegación: Tablero, Ahorro e inversiones, Herramientas e Historia económica
+## Navegación: Inicio, Noticias, Herramientas y Archivo económico
 
-La barra lateral tiene una sección **Explorar** que cambia la pantalla principal entre el **Tablero** (con sus pestañas),
-**Ahorro e inversiones**, las **Herramientas** y la **Historia económica**. Las tres últimas no ocupan pestañas; se
-vuelve con *← Volver al tablero*.
-
-## Ahorro e inversiones
-
-Sección informativa (`macrocenter/inversiones.py`), sin recomendaciones: las listas van por orden alfabético y cada
-pantalla aclara sus supuestos.
-
-- **Tasas y plazos fijos**: plazo fijo a 30 días por banco, fondos money market (rendimiento de los últimos 30 días) y
-  rendimientos que informan billeteras y plataformas, contra la inflación esperada (REM del BCRA), y al final una calculadora de plazo fijo tradicional vs. UVA con la
-  inflación de empate entre los dos. Datos de ArgentinaDatos.
-- **Rendimientos pasados**: cuánto valdría hoy un monto invertido hace 1 mes a 5 años en plazo fijo, UVA, dólar MEP, Merval,
-  S&P 500 y bitcoin, contra la inflación (CER). Incluye el gráfico interanual de dólar oficial y blue frente a la inflación.
-- **Glosario**: los términos básicos, tomados del glosario de la app.
+La barra lateral tiene una sección **Explorar** con **Inicio** (que abre el tablero en Resumen), las **Noticias del
+día**, las **Herramientas** y el **Archivo económico**. Las dos últimas no ocupan pestañas; se vuelve con
+*← Inicio* (la misma píldora está al principio de cada sección del tablero).
 
 ## Historia económica (línea de tiempo)
 
-La sección **Historia económica** (barra lateral → *Explorar*) tiene tres partes: **Presidentes** (cómo evolucionó la
-economía con cada uno desde Alfonsín y cómo se comparan los mandatos: inflación, PBI, desocupación, dólar y reservas),
-**Ministros de Economía** y **Viaje en el tiempo** (un deslizador de fecha, de 1984 a hoy, que muestra quién gobernaba
-y cómo estaba el país, con botón para reproducirlo hasta hoy). Todo se calcula con las series oficiales
-(`macrocenter/presidentes.py`); las fotos se piden en el momento a Wikipedia / Wikimedia Commons. La pestaña explica
-los criterios y límites (por ejemplo, la inflación 2007-2015 es la del INDEC intervenido).
+La sección **Archivo económico** de la barra lateral (antes se llamaba *Historia económica*; los enlaces viejos
+siguen funcionando) tiene cuatro partes: **Presidentes** (cómo evolucionó la economía con cada uno desde Alfonsín y
+cómo se comparan los mandatos: inflación, PBI, desocupación, dólar y reservas), **Ministros de Economía**,
+**Comparador de épocas** (dos momentos del país, lado a lado) y **Viaje en el tiempo** (un deslizador de fecha, de
+1984 a hoy, que muestra quién gobernaba y cómo estaba el país, con botón para reproducirlo hasta hoy). Todo se
+calcula con las series oficiales (`macrocenter/presidentes.py`); las fotos se piden en el momento a Wikipedia /
+Wikimedia Commons. La pestaña explica los criterios y límites (por ejemplo, la inflación 2007-2015 es la del INDEC
+intervenido).
 
 ## Interactivo
 
@@ -66,9 +56,10 @@ La sección **Herramientas** (barra lateral → *Explorar*; `macrocenter/interac
 
 - **¿Cuánto valían tus pesos?** — un monto y una fecha (desde 1992): qué fue de esa plata según la inflación, el dólar
   oficial y la UVA.
-- **Comparador de épocas** — dos momentos cualesquiera (asunciones, hoy u otra fecha) lado a lado.
 - **Ajuste de alquileres** — monto inicial, fecha de inicio y frecuencia: cronograma de ajustes y alquiler actual según
   ICL, IPC nacional, IPC GBA, CER o salarios, y el mismo contrato comparado con cada índice.
+- **Glosario financiero** — las palabras que aparecen cuando se habla de dinero e inversiones, explicadas en dos
+  líneas (era la sección «Glosario» de Ahorro e inversiones).
 
 ## Período de los gráficos y descargas
 
@@ -77,8 +68,9 @@ Cada gráfico tiene al lado del título un botón **CSV** que baja sus datos par
 
 ## Enlaces para compartir
 
-La dirección sigue a lo que se mira: `?ver=tablero/dolar`, `?ver=herramientas/ajuste-de-alquileres`,
-`?ver=inversiones/glosario`, etc. Copiarla y mandarla abre la misma pantalla. Un enlace inválido abre el tablero.
+La dirección sigue a lo que se mira: `?ver=tablero/dolar`, `?ver=herramientas/glosario-financiero`, etc. Copiarla y
+mandarla abre la misma pantalla. Un enlace inválido abre el tablero; los enlaces viejos (de pestañas o secciones que
+cambiaron de nombre, como `?ver=inversiones/glosario`) se redirigen a su destino nuevo.
 
 ## Indicadores personalizables
 

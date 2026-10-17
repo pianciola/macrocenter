@@ -12,6 +12,8 @@ from macrocenter.diseno import FUENTE_GRAFICOS, PREGUNTAS
 PALETA = ["#2E86DE", "#B06CC4", "#A97713", "#4F9BAA", "#8067CB", "#697C91",
           "#C77436", "#5275A7", "#A16AA1", "#8B8542", "#4C8C83", "#9A7964", "#7171A8"]
 POS, NEG = "#10AC84", "#EE5253"
+MESES = {1: "ene", 2: "feb", 3: "mar", 4: "abr", 5: "may", 6: "jun",
+         7: "jul", 8: "ago", 9: "sep", 10: "oct", 11: "nov", 12: "dic"}  # rótulos del tooltip, en español
 
 
 def num(x: float | None, dec: int = 0, suf: str = "", pre: str = "") -> str:
@@ -94,27 +96,6 @@ def trazas_de(fig: go.Figure) -> list[tuple]:
     largo = max((len(e) for _, e, _ in out), default=0)
     # marcas sueltas (el último punto, un promedio) no van: un punto solo, o dos al lado de series largas
     return [t for t in out if largo <= 1 or (len(t[1]) > 1 and (len(t[1]) > 2 or largo <= 10))]
-
-
-def filas_accesibles(eje, valores, limite: int = 30) -> list[list[str]]:
-    """Vista legible de la tabla; la descarga conserva toda la precisión original."""
-    xs, ys = list(eje)[-limite:], list(valores)[-limite:]
-    fechas = _fechas_cortas(xs)
-    filas = []
-    for x, y in zip(xs, ys):
-        etiqueta = str(x)
-        if fechas is not None and not pd.isna(x):
-            fecha = pd.Timestamp(x)
-            etiqueta = fecha.strftime("%d/%m/%Y" if fecha == fecha.normalize() else "%d/%m/%Y %H:%M")
-        if y is None or pd.isna(y):
-            valor = "s/d"
-        elif isinstance(y, (int, float, np.number)):
-            valor = (f"{y:.4g}".replace(".", ",") if 0 < abs(y) < .0001
-                     else num(float(y), 4).rstrip("0").rstrip(","))
-        else:
-            valor = str(y)
-        filas.append([etiqueta, valor])
-    return filas
 
 
 def _texto_csv_seguro(valor):
@@ -261,11 +242,28 @@ def barras(
     x: str = "fecha",
     color_signo: bool = False,
     nombre: str | None = None,
+    etiquetas: bool = False,
+    sufijo_hover: str = "",
 ) -> go.Figure:
+    """`etiquetas`: pone el número de cada barra sobre la barra (el número de decimales sale de `yfmt`)."""
     d = df[[x, col]].dropna()
     colores = [POS if v >= 0 else NEG for v in d[col]] if color_signo else PALETA[0]
-    fig = go.Figure(go.Bar(x=d[x], y=d[col], marker_color=colores, name=nombre or col))
-    return _base(fig, titulo, yfmt, height)
+    try:
+        dec = int((yfmt or ",.1f").split(".")[-1].rstrip("f").lstrip("_"))
+    except ValueError:
+        dec = 1
+    # tooltip: solo el período y el valor exacto («sep 2026: 1,9%»); el <extra> oculto evita el nombre interno
+    # de la traza («valor», «var_m») que Plotly muestra en la caja secundaria
+    periodo = ([f"{MESES[t.month]} {t.year}" for t in d[x]] if pd.api.types.is_datetime64_any_dtype(d[x])
+               else [str(v) for v in d[x]])
+    barra = go.Bar(x=d[x], y=d[col], marker_color=colores, name=nombre or col,
+                   customdata=[[p, num(v, dec)] for p, v in zip(periodo, d[col])],
+                   hovertemplate="%{customdata[0]}: %{customdata[1]}" + sufijo_hover + "<extra></extra>")
+    if etiquetas:
+        barra.update(text=[num(v, dec) for v in d[col]], textposition="outside", cliponaxis=False, textfont_size=11)
+    fig = _base(go.Figure(barra), titulo, yfmt, height)
+    fig.update_layout(hovermode="closest")  # caja limpia sobre el punto: «x unified» dejaría el tooltip partido en dos
+    return fig
 
 
 def _rgba(hex_color: str, alpha: float) -> str:
@@ -445,7 +443,7 @@ def presentar(fig: go.Figure) -> go.Figure:
         legend=dict(font_size=12, itemsizing="constant", maxheight=0.24),
     )
     fig.update_xaxes(automargin=True, tickfont_size=12)
-    fig.update_yaxes(automargin=True, tickfont_size=12)
+    fig.update_yaxes(automargin=True, tickfont_size=13)
     if _eje_x_fechas(fig):
         fig.update_xaxes(hoverformat="%d/%m/%Y")
     return fig

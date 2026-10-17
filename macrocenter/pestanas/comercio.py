@@ -9,7 +9,7 @@ from macrocenter import charts, style
 
 def mostrar(*, comercio, dif, grafico, kpi, pct, rec, ult_y_ant) -> None:
     st.markdown(style.intro("Lo que la Argentina le vende al mundo (**exportaciones**) y le compra (**importaciones**), en dólares. "
-                            "El saldo positivo trae dólares al país.", [("bien", "El saldo mejora"), ("mal", "Empeora")], resumen='Exportaciones, importaciones y saldo comercial de bienes.'), unsafe_allow_html=True)
+                            "El saldo positivo trae dólares al país.", [("bien", "El saldo mejora"), ("mal", "Empeora")], resumen='Exportaciones, importaciones y saldo comercial de bienes.', inicio=True), unsafe_allow_html=True)
     if comercio is not None:
         c = comercio
         k = st.columns(4)

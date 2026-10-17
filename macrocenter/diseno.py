@@ -9,7 +9,6 @@ FUENTE_GRAFICOS = FUENTE
 PREGUNTAS = {
     "Cotizaciones del dólar — precio de venta ($)": "¿Cómo evolucionan las cotizaciones del dólar?",
     "Brecha cambiaria (%)": "¿Cuánto se separan los tipos de cambio?",
-    "Evolución de las bolsas — base 100 = inicio del período": "¿Cómo se comparan las bolsas desde el inicio del período?",
     "Exportaciones e importaciones (USD millones)": "¿Cómo evolucionan las ventas y compras al exterior?",
     "Saldo comercial mensual (USD millones)": "¿Cuánto exporta el país por encima de lo que importa?",
     "Saldo comercial acumulado 12 meses (USD millones)": "¿Qué saldo comercial acumulan los últimos doce meses?",
@@ -20,10 +19,7 @@ PREGUNTAS = {
     "PBI — variación interanual (%)": "¿Cuánto cambió la producción respecto de un año antes?",
     "EMAE — variación mensual desestacionalizada (%)": "¿Cómo cambia la actividad de un mes a otro?",
     "Tasa de desocupación (EPH, %)": "¿Cómo evoluciona la desocupación?",
-    "Inflación interanual vs. expectativas del REM (%)": "¿Cómo se comparan la inflación observada y la esperada?",
-    "Precios mayoristas: variación mensual (%)": "¿Cómo cambian los precios mayoristas cada mes?",
     "Base monetaria (billones de $)": "¿Cómo evoluciona la base monetaria nominal?",
-    "Préstamos al sector privado (billones de $)": "¿Cómo evoluciona el crédito nominal al sector privado?",
     "Tasas de interés en pesos (TNA, %)": "¿Cómo se comparan las tasas de interés en pesos?",
     "Riesgo país — EMBI (pb)": "¿Cómo evoluciona el riesgo país?",
     "Resultado acumulado de 12 meses (% del PBI)": "¿Cómo evolucionan los resultados fiscales de los últimos doce meses?",

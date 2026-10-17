@@ -1,11 +1,10 @@
-"""Regresiones de la fila de pestañas y de la comparación trasladada."""
+"""Regresiones de la fila de pestañas."""
 import shutil
 import subprocess
 
-import pandas as pd
 import pytest
 
-from macrocenter import inversiones, style
+from macrocenter import style
 
 
 def test_desplazamiento_recupera_inicio_y_respeta_area_libre():
@@ -38,20 +37,3 @@ assert.equal(destinoPara(tabs[0]),null);
 '''
     resultado = subprocess.run([node, "-"], input=codigo, capture_output=True, text=True, timeout=15)
     assert resultado.returncode == 0, resultado.stderr
-
-
-def test_comparacion_trasladada_conserva_variacion_interanual(monkeypatch):
-    monkeypatch.setattr(inversiones, "_hoy", lambda: pd.Timestamp("2026-10-16"))
-    monkeypatch.setattr(inversiones.st, "markdown", lambda *a, **kw: None)
-    fechas = pd.date_range("2024-01-31", periods=33, freq="ME")
-    dolares = pd.DataFrame({"fecha": fechas, "oficial": [100 * 1.02**i for i in range(33)],
-                            "blue": [120 * 1.03**i for i in range(33)]})
-    infl = pd.DataFrame({"fecha": fechas, "valor": 30.})
-    dibujos = []
-    def grafico(clave, datos, crear, **kw):
-        dibujos.append((clave, datos, crear(datos)))
-    inversiones.comparar_dolar_inflacion({"dolares": dolares, "infl_ia": infl}, grafico)
-    clave, datos, figura = dibujos[0]
-    assert clave == "inv_dolar_infl"
-    assert datos["oficial"].dropna().iloc[-1] == pytest.approx((1.02**12 - 1) * 100)
-    assert len(figura.data) >= 3

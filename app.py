@@ -10,7 +10,6 @@ import importlib
 import json
 import os
 import re
-import threading
 import time
 import traceback
 from datetime import datetime
@@ -19,21 +18,54 @@ from pathlib import Path
 import pandas as pd
 import streamlit as st
 
-from macrocenter import (diseno, catalogo, estilos, carga, charts, data, datos_vista, glosario, interactivo, inversiones, legal, mapa, ministros, news, pestanas,
+from macrocenter import (diseno, catalogo, estilos, carga, charts, data, datos_vista, glosario, interactivo, legal, mapa, ministros, news, pestanas,
                          presidentes, selector, series, style)
 from macrocenter.avisos import actualizando, falla
 from macrocenter.carga import (  # descarga, cachés y copia de respaldo
     _estado_actualizar, _memoria, _precalentar, _ultima_carga, _va_a_demorar, cargar_bonos, cargar_cripto, cargar_fotos,
-    cargar_inversiones, cargar_mercados, cargar_noticias, cargar_todo, cargar_vivo, con_dolar_vivo, con_riesgo_vivo,
+    cargar_mercados, cargar_noticias, cargar_todo, cargar_vivo, con_dolar_vivo, con_riesgo_vivo,
     envejecer_disco, protegido, reintentar_si_fallo,
 )
 
 # Módulos de presentación sin estado: recargarlos evita mezclar pantallas anteriores con la navegación nueva.
-for modulo in (diseno, catalogo, estilos, carga, data, datos_vista, series, style, charts, inversiones, interactivo,
+for modulo in (diseno, catalogo, estilos, carga, data, datos_vista, series, style, charts, interactivo,
                *(getattr(pestanas, nombre) for nombre in pestanas.__all__)):
     importlib.reload(modulo)
 
 st.set_page_config(page_title="MacroCenter", page_icon=style.favicon(), layout="wide")
+st.markdown("""
+    <style>
+    /* 1. Ocultar menús, footer y botones flotantes nativos de Streamlit. Ni el header ni su toolbar se esconden
+       completos: ahí dentro vive el botón redondo que reabre la barra lateral; los adornos de Streamlit se
+       tapan uno por uno acá abajo */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    .stDeployButton {display: none !important;}
+    .viewerBadge_container {display: none !important;}
+    [data-testid="manage-app-button"] {display: none !important;}
+
+    /* 2. Contenedor de pestañas en posición relativa */
+    [data-baseweb="tab-list"] {
+        position: relative !important;
+        -webkit-mask-image: none !important;
+        mask-image: none !important;
+    }
+
+    /* 3. Escudo sólido absoluto a la izquierda: tapa por completo el hueco 
+          y bloquea cualquier clic fantasma sobre los marcadores que pasen por atrás */
+    [data-baseweb="tab-list"]::before {
+        content: "" !important;
+        position: absolute !important;
+        left: 0px !important;
+        top: 0px !important;
+        bottom: 0px !important;
+        width: 45px !important;
+        background-color: #0b0f19 !important;
+        z-index: 25 !important;
+        pointer-events: auto !important;
+    }
+    </style>
+""", unsafe_allow_html=True)
 st.session_state["_fallas"] = []  # fallas de datos de esta corrida (no se muestran; las lee el monitor)
 st.session_state["_n_kpi"] = 0
 st.session_state["_n_graf"] = 0  # numera los gráficos de esta corrida (claves de sus botones de descarga)
@@ -147,14 +179,20 @@ def script_guardar_leidas() -> str:
 
 
 def marcar_leidas() -> None:
-    """Marca como leídas todas las notas que se ven hoy."""
+    """Marca como leídas todas las notas que se ven hoy: cierra el diálogo y apaga el aviso del lateral."""
     vistas = {_id_nota(x.url) for items in cargar_noticias().values() if isinstance(items, list) for x in items}
     st.session_state["noticias_leidas"] = vistas | set(leidas())
+    # el clic dentro del diálogo solo redibuja el diálogo: sin un rerun completo, la píldora de la barra lateral
+    # seguiría marcando novedades hasta la próxima interacción y el navegador quedaría con el registro viejo
+    st.session_state["guardar_leidas"] = True
+    st.rerun()
 
 
 def marcar_leida(url: str) -> None:
-    """Marca como leída una sola nota."""
+    """Marca como leída una sola nota. El aviso del lateral refresca (rerun completo) y el diálogo se reabre."""
     st.session_state["noticias_leidas"] = {_id_nota(url)} | set(leidas())
+    st.session_state["reabrir_noticias"] = True
+    st.rerun()
 
 
 def md_seguro(texto: str) -> str:
@@ -197,7 +235,7 @@ def ver_noticias() -> None:
     filtro = selector.uno(c_filtro.segmented_control, "Fuente", ["Todas", *fuentes.values()], "news_filtro",
                           label_visibility="collapsed")
     if hay_sin_leer:
-        # al tocarlo se marca todo y el diálogo se redibuja solo: el botón pasa a verde
+        # al tocarlo se marca todo y el diálogo se cierra: el aviso del lateral se apaga en el mismo redibujado
         c_boton.button("Marcar todas como leídas", key="btn_marcar_leidas", icon=":material/done_all:", on_click=marcar_leidas,
                        width="stretch",
                        help="Apaga el aviso del botón de noticias hasta que haya novedades.")
@@ -216,7 +254,7 @@ def ver_noticias() -> None:
         item = style.lista_noticias([dict(titulo=n.titulo, url=n.url, fecha=n.fecha, resumen=n.resumen,
                                           fuente=fuentes[k], clase=k, nueva=es_nueva(n))], MESES_ES)
         if es_nueva(n):
-            # cada nota nueva trae su propio botón: al tocarlo solo esa pasa a leída y el diálogo se redibuja
+            # cada nota nueva trae su propio botón: al tocarlo pasa a leída y el diálogo se reabre con el aviso al día
             c_nota, c_leer = st.columns([6, 1.3], vertical_alignment="center", gap="small")
             c_nota.markdown(item, unsafe_allow_html=True)
             c_leer.button("Leída", icon=":material/check:", key=f"leer_{hashlib.sha1(n.url.encode()).hexdigest()[:12]}", on_click=marcar_leida,
@@ -233,19 +271,24 @@ style.aplicar()
 
 
 def ir_a(destino: str) -> None:
-    """Cambia la vista principal: 'tablero' (pestañas), 'inversiones', 'historia' o 'juegos'."""
+    """Cambia la vista principal: 'tablero' (pestañas), 'historia' o 'juegos'.
+    Al entrar a Archivo económico se arranca en «Presidentes»: así la sección por defecto queda siempre marcada,
+    sin depender de lo último que se haya mirado. Los enlaces profundos ?ver=historia/... siguen abriendo su
+    sección: de eso se encarga `abrir_ruta`."""
     st.session_state["vista"] = destino
+    if destino == "historia":
+        st.session_state["hist_seccion"] = HIST_SECCIONES[0]
 
 
-VISTAS = ("tablero", "inversiones", "historia", "juegos")
+VISTAS = ("tablero", "juegos", "historia")
 # primero el ala financiera (lo que más se usa): dólar, bolsas, cripto, tasas y dinero; después precios, actividad,
 # sector externo, ingresos y cuentas públicas
-PESTANAS = ["Resumen", "Dólar", "Bolsas", "Cripto", "Bonos", "Inflación y dinero", "Tasas y riesgo país",
-            "Actividad y PBI", "Reservas", "Salarios", "Resultado fiscal", "Comercio exterior"]
-HIST_SECCIONES = ["Presidentes", "Ministros de Economía", "Viaje en el tiempo"]
+PESTANAS = ["Resumen", "Dólar", "Bonos", "Cripto", "Bolsas", "Reservas", "Inflación y dinero", "Tasas",
+            "Actividad", "Empleo y salarios", "Resultado fiscal", "Comercio exterior"]
+HIST_SECCIONES = ["Presidentes", "Ministros de Economía", "Viaje en el tiempo", "Comparador de épocas"]
 # Enlaces para compartir: ?ver=tablero/dolar, ?ver=herramientas/ajuste-de-alquileres, etc. (la misma ruta que cuenta
 # las visitas, ver seccion_actual). Se lee una sola vez por visita; después la dirección sigue a lo que se mira.
-RUTAS = {"tablero": ("tablero", "pestana", PESTANAS), "inversiones": ("inversiones", "inv_seccion", inversiones.SECCIONES),
+RUTAS = {"tablero": ("tablero", "pestana", PESTANAS),
          "historia": ("historia", "hist_seccion", HIST_SECCIONES),
          "herramientas": ("juegos", "inter_modo", interactivo.MODOS)}
 
@@ -255,16 +298,24 @@ def abrir_ruta(ruta) -> None:
     if not isinstance(ruta, str) or len(ruta) > 80:
         return
     base, _, sub = ruta.strip("/").partition("/")
-    if base == "herramientas" and sub == "viaje-en-el-tiempo":  # enlace viejo: el viaje pasó a Historia económica
-        base = "historia"
+    if base == "herramientas" and sub in ("viaje-en-el-tiempo", "comparador-de-epocas"):
+        base = "historia"  # enlace viejo: esas herramientas pasaron a Archivo económico
+    if base in ("inversiones", "ahorro"):  # enlace viejo de la sección de inversión (borrada)
+        if sub in ("glosario", "conceptos"):
+            base, sub = "herramientas", "glosario-financiero"  # el glosario vive en Herramientas
+        elif sub.startswith("tasas"):
+            base, sub = "tablero", "tasas"
+        else:  # el resto de la sección desapareció: a la portada del tablero
+            base, sub = "tablero", "resumen"
     if base not in RUTAS:
         return
     vista_, clave, opciones = RUTAS[base]
     st.session_state["vista"] = vista_
     # enlaces viejos: secciones que cambiaron de nombre o se juntaron con otra
-    sub = {"conceptos": "glosario", "como-les-fue": "rendimientos-pasados", "inicio": "resumen",
-           "tasas-de-hoy": "tasas-y-plazos-fijos", "plazo-fijo-vs-uva": "tasas-y-plazos-fijos",
-           "inflacion": "inflacion-y-dinero", "dinero-y-credito": "inflacion-y-dinero"}.get(sub, sub)
+    sub = {"conceptos": "glosario", "inicio": "resumen",
+           "salarios": "empleo-y-salarios", "actividad-y-pbi": "actividad", "tasas-y-riesgo-pais": "tasas",
+           "inflacion": "inflacion-y-dinero", "dinero": "inflacion-y-dinero",
+           "dinero-y-credito": "inflacion-y-dinero"}.get(sub, sub)
     elegida = next((o for o in opciones if style.slug(o) == sub), None)
     if elegida:
         st.session_state[clave] = elegida
@@ -290,6 +341,12 @@ def ir_al_resumen() -> None:
     st.session_state["pestana"] = "Resumen"
 
 
+def ir_a_pestana(nombre: str) -> None:
+    """Los botones ocultos que toca el menú «Secciones» (con JS, sin recargar la página): abren una pestaña."""
+    st.session_state["vista"] = "tablero"
+    st.session_state["pestana"] = nombre
+
+
 with st.sidebar:
     st.markdown(style.marca(), unsafe_allow_html=True)
     # contenedor oculto: el campo por el que el navegador le pasa a la app las noticias que ya marcó como leídas (ver
@@ -297,24 +354,34 @@ with st.sidebar:
     with st.container(key="puente_leidas"):
         st.text_input("Noticias leídas", key="leidas_cli", label_visibility="collapsed", max_chars=1400)
         st.button("Ir al resumen", key="ir_resumen", on_click=ir_al_resumen)
-    nuevas = noticias_recientes()
-    if nuevas:
-        etiqueta_noticias = f"Noticias · {nuevas} {'nueva' if nuevas == 1 else 'nuevas'}"
-    else:
-        etiqueta_noticias = "Noticias"
-    # la clave distinta cuando hay novedades activa el puntito rojo pulsante (ver style.py)
-    if st.button(etiqueta_noticias, width="stretch", key="btn_noticias_nuevas" if nuevas else "btn_noticias",
-                 icon=":material/newspaper:",
-                 help="Últimas novedades del BCRA y del Ministerio de Economía"
-                      + (f" ({nuevas} publicadas hoy o ayer, sin leer)" if nuevas else "")):
-        ver_noticias()
+    # contenedor oculto: un botón por sección del tablero; el menú desplegable «Secciones» los toca para cambiar de
+    # pestaña sin recargar la página (ver JS_PESTANAS)
+    with st.container(key="puente_secciones"):
+        for p in PESTANAS:
+            st.button(p, key=f"sec_{style.slug(p)}", on_click=ir_a_pestana, args=(p,))
+    guardar_leidas = st.session_state.pop("guardar_leidas", False)
+    if guardar_leidas:  # se acaban de marcar novedades: deja el registro final en este navegador ya, no al reabrir
+        st.html(script_guardar_leidas(), unsafe_allow_javascript=True)
+    nuevas = noticias_recientes()  # solo ilumina el puntito rojo; sin contadores en el texto
     st.markdown(style.etiqueta("Explorar"), unsafe_allow_html=True)
-    for clave_vista, texto, icono_v in (("tablero", "Tablero", ":material/dashboard:"),
-                                        ("inversiones", "Ahorro e inversiones", ":material/account_balance_wallet:"),
-                                        ("juegos", "Herramientas", ":material/handyman:"),
-                                        ("historia", "Historia económica", ":material/history_edu:")):
+    # «Inicio» (la vista Resumen, fuera del carrusel) es el primer botón de Explorar; enciende solo mirando el
+    # Resumen: al elegir cualquier marcador del carrusel el botón queda apagado (el marcador activo es el que
+    # marca la vista). Noticias y las demás vistas usan los mismos botones.
+    st.button("Inicio", width="stretch", key="nav_resumen", icon=":material/overview:", on_click=ir_al_resumen,
+              type="primary" if vista == "tablero" and st.session_state.get("pestana", "Resumen") == "Resumen"
+              else "secondary")
+    for clave_vista, texto, icono_v in (("juegos", "Herramientas", ":material/handyman:"),
+                                        ("historia", "Archivo económico", ":material/history_edu:")):
         st.button(texto, width="stretch", key=f"nav_{clave_vista}", icon=icono_v, on_click=ir_a, args=(clave_vista,),
                   type="primary" if vista == clave_vista else "secondary")
+    # la clave distinta (con novedades sin leer) activa el puntito rojo pulsante (ver estilos.py); con el prefijo
+    # nav_ comparte la estética de las demás píldoras de Explorar. «Noticias» va al cuarto lugar del grupo
+    if st.button("Noticias", width="stretch", key="nav_noticias_nuevas" if nuevas else "nav_noticias",
+                 icon=":material/newspaper:"):
+        st.session_state["news_filtro"] = "Todas"  # cada entrada al cuadro arranca con «Todas» en el filtro
+        ver_noticias()
+    if st.session_state.pop("reabrir_noticias", False):  # marcar una nota cierra el diálogo en el rerun completo: se reabre
+        ver_noticias()
 
 def rec(df: pd.DataFrame, min_anios: int = 0, periodo: str = "2 años") -> pd.DataFrame:
     """Recorta al `periodo` (por defecto 2 años) y a fechas ya ocurridas (UVA/CER/ICL traen días futuros).
@@ -480,15 +547,6 @@ def grafico(fig, key: str | None = None):
     aligerar(fig)
     charts.compactar(fig)
     st.plotly_chart(fig, width="stretch", config={"displayModeBar": False, "scrollZoom": False}, key=key)
-    if trazas:
-        with st.expander(f"Ver tabla de datos: {titulo or 'gráfico'}"):
-            st.caption("Hasta 30 observaciones finales por serie, en el orden del gráfico. El CSV contiene todos los datos del período seleccionado.")
-            # HTML semántico: también legible con teclado y lectores de pantalla.
-            for nombre_serie, eje, valores in trazas:
-                st.markdown(style.tabla_simple(
-                    ["Fecha / categoría", "Valor" if nombre_serie in ("real", "valor") else str(nombre_serie)],
-                    charts.filas_accesibles(eje, valores)),
-                    unsafe_allow_html=True)
 
 
 # ───────────────────────── carga de series ─────────────────────────
@@ -666,7 +724,7 @@ def ir_a_seccion(vista_: str, clave: str, valor: str) -> None:
 
 # lo más buscado de la página, sin repetir lo que ya está a la vista (cotizaciones, menú): pocos y a mano
 ATAJOS = (
-    ("tasas", "Tasas de plazo fijo hoy", ":material/percent:", ("inversiones", "inv_seccion", "Tasas y plazos fijos")),
+    ("tasas", "Tasas de plazo fijo hoy", ":material/percent:", ("tablero", "pestana", "Tasas")),
     ("alquiler", "Ajuste de alquileres", ":material/home:", ("juegos", "inter_modo", "Ajuste de alquileres")),
     ("pesos", "¿Cuánto valían tus pesos?", ":material/savings:", ("juegos", "inter_modo", "¿Cuánto valían tus pesos?")),
     ("mapa", "Inflación por provincia", ":material/map:", ("tablero", "pestana", "Inflación y dinero")),
@@ -711,7 +769,7 @@ def historicos(_datos: dict, _dol: pd.DataFrame | None, descarga: datetime):
     return dp, {m.clave: presidentes.indicadores(m, dp) for m in presidentes.MANDATOS}, []
 
 
-# ── Historia económica (línea de tiempo de presidentes) ──
+# ── Archivo económico (línea de tiempo de presidentes) ──
 def pantalla_historia() -> None:
     abrir(pestanas.historia)
 
@@ -723,23 +781,6 @@ def seccion_ministros(dp: dict | None) -> None:
 
 
 # ── Interactivo ──
-def pantalla_inversiones() -> None:
-    espera = st.empty()
-    espera.html(style.cargando("Buscando las tasas de hoy…", alto="40vh"))
-    inv = cargar_inversiones()
-    merc = cargar_mercados()
-    espera.empty()
-
-    def tabla(x):
-        return x if isinstance(x, pd.DataFrame) else None
-
-    d = {"bancos": inv.get("bancos"), "rendimientos": inv.get("rendimientos"), "fci_hoy": tabla(inv.get("fci_hoy")),
-         "fci_antes": tabla(inv.get("fci_antes")), "bitcoin": tabla(inv.get("bitcoin")),
-         "merval": tabla(merc.get("^MERV")), "sp500": tabla(merc.get("^GSPC")), "dolares": dol, "rem": rem,
-         "cer": get("bcra:cer"), "uva": uva, "depositos_30d": get("bcra:depositos_30d"), "infl_ia": infl_ia}
-    inversiones.mostrar(d, grafico, _grafico_periodo)
-
-
 def pantalla_juegos() -> None:
     try:
         dp_i, inds_i, faltan_i = historicos(DATOS, dol, ACTUALIZADO)
@@ -792,7 +833,6 @@ def _var_pct(df: pd.DataFrame, dias: int | None = None) -> float | None:
     return None if ref == 0 else (float(ult["valor"]) / ref - 1) * 100
 
 
-@st.fragment  # sus selectores redibujan solo esta pestaña
 def pantalla_bolsas() -> None:
     abrir(pestanas.bolsas)
 
@@ -807,8 +847,9 @@ def construir_ticker() -> list[dict]:
     """Datos clave para la franja de arriba. Cada pieza es opcional: lo que falte simplemente no aparece."""
     items: list[dict] = []
 
-    def poner(nombre: str, valor: str, d: float | None = None, sentido: str = "neutro", periodo: str = "1 d") -> None:
-        items.append(dict(n=nombre, v=valor, d=d, sentido=sentido, periodo=periodo))
+    def poner(nombre: str, valor: str, d: float | None = None, sentido: str = "neutro", periodo: str = "1 d",
+              dsuf: str = "%") -> None:
+        items.append(dict(n=nombre, v=valor, d=d, sentido=sentido, periodo=periodo, dsuf=dsuf))
 
     if dol is not None:
         for clave, nombre in (("oficial", "Dólar oficial"), ("blue", "Blue"), ("bolsa", "MEP"),
@@ -821,14 +862,9 @@ def construir_ticker() -> list[dict]:
         d_ = DATOS.get(clave)
         if isinstance(d_, pd.DataFrame) and not d_.empty:
             poner(nombre, charts.num(ultimo(d_), 0, pre="$"), delta(d_, dias=1), "alto")
-    if riesgo is not None:
-        poner("Riesgo país", charts.num(ultimo(riesgo), 0, suf=" pb"), delta(riesgo, dias=1), "bajo")
-    if reservas is not None:
-        poner("Reservas", charts.num(ultimo(reservas), 0, pre="USD ", suf=" M"), delta(reservas, dias=1), "alto")
-    if infl_m is not None:
-        poner("Inflación mensual", charts.num(ultimo(infl_m), 1, suf="%"), periodo="Mensual")
-    if badlar is not None:
-        poner("BADLAR", charts.num(ultimo(badlar), 1, suf="%"), periodo="TNA · último dato")
+    # la franja quedó solo para cotizaciones cambiarias y contexto internacional: «Riesgo país» y «Reservas» ya
+    # están en las tarjetas de «Indicadores clave» (justo abajo), y «Inflación mensual» (duplicaba su tarjeta) y
+    # BADLAR se quitaron por el mismo motivo
     cr = cargar_cripto()
     m = cr.get("mercado")
     if isinstance(m, pd.DataFrame) and not m.empty:
@@ -854,10 +890,7 @@ def seccion_actual() -> tuple[str, str]:
     v = st.session_state.get("vista", "tablero")
     if v == "historia":
         sub = st.session_state.get("hist_seccion") or "Presidentes"
-        return f"/historia/{style.slug(sub)}", f"Historia económica · {sub}"
-    if v == "inversiones":
-        sub = st.session_state.get("inv_seccion") or inversiones.SECCIONES[0]
-        return f"/inversiones/{style.slug(sub)}", f"Ahorro e inversiones · {sub}"
+        return f"/historia/{style.slug(sub)}", f"Archivo económico · {sub}"
     if v == "juegos":
         sub = st.session_state.get("inter_modo") or interactivo.MODOS[0]
         return f"/herramientas/{style.slug(sub)}", f"Herramientas · {sub}"
@@ -938,16 +971,16 @@ except Exception:  # noqa: BLE001 — la franja es un adorno: si falla, la pági
 pagina_legal = st.query_params.get("legal")
 if isinstance(pagina_legal, str) and pagina_legal in legal.PAGINAS:
     # Términos y condiciones / política de privacidad (se llega desde los enlaces del pie de página)
-    st.markdown('<a href="./" target="_self">← Volver al tablero</a>', unsafe_allow_html=True)
+    st.markdown('<a href="./" target="_self">← Inicio</a>', unsafe_allow_html=True)
     st.markdown(style.legal_pagina(legal.PAGINAS[pagina_legal], legal.ACTUALIZACION), unsafe_allow_html=True)
     pie_pagina()
     st.stop()
 
 if vista != "tablero":
-    # Vistas aparte (Historia económica, Herramientas): reemplazan al tablero y no ocupan una pestaña.
-    titulos = {"inversiones": "Ahorro e inversiones", "historia": "Historia económica", "juegos": "Herramientas"}
-    pantallas = {"inversiones": pantalla_inversiones, "historia": pantalla_historia, "juegos": pantalla_juegos}
-    st.button("Volver al tablero", key="volver_tablero", icon=":material/arrow_back:", on_click=ir_a, args=("tablero",))
+    # Vistas aparte (Archivo económico, Herramientas): reemplazan al tablero y no ocupan una pestaña.
+    titulos = {"historia": "Archivo económico", "juegos": "Herramientas"}
+    pantallas = {"historia": pantalla_historia, "juegos": pantalla_juegos}
+    st.button("Inicio", key="volver_tablero", icon=":material/arrow_back:", on_click=ir_a, args=("tablero",))
     st.subheader(titulos[vista])
     with protegido(titulos[vista]):
         pantallas[vista]()
@@ -956,12 +989,16 @@ if vista != "tablero":
 
 with st.container(key="navegacion_tablero"):
     with st.container(key="menu_secciones"), st.popover("Secciones", icon=":material/grid_view:", help="Ver todas las secciones"):
-        st.markdown(style.menu_secciones(PESTANAS, st.session_state.get("pestana", "Resumen")), unsafe_allow_html=True)
+        # el desplegable lista las pestañas del carrusel, sin Resumen: la vista de inicio está aparte, en «Inicio»
+        st.markdown(style.menu_secciones(PESTANAS[1:], st.session_state.get("pestana", "Resumen")), unsafe_allow_html=True)
 
     # Migrar la selección de sesiones abiertas antes de fusionar las pestañas.
     if st.session_state.get("pestana") in ("Inflación", "Dinero y crédito"):
         st.session_state["pestana"] = "Inflación y dinero"
-    t_res, t_dol, t_bol, t_cri, t_bonos, t_prec, t_tasas, t_act, t_res_i, t_sal, t_fis, t_com = st.tabs(
+    # «Resumen» no es un marcador del carrusel: es el primer botón de Explorar, en la barra lateral. Queda igual en
+    # la lista de pestañas (escondida con CSS): así la clave «pestana» siempre guarda el nombre de una pestaña,
+    # ningún clic se queda sin efecto y, al ver el Resumen, el carrusel no muestra ningún marcador elegido a la vista.
+    t_res, t_dol, t_bonos, t_cri, t_bol, t_reservas, t_infl, t_tasas, t_act, t_sal, t_fis, t_com = st.tabs(
         PESTANAS,
         # cada pestaña se calcula y se manda recién al abrirla: la primera carga pesa una fracción (clave en el celular)
         key="pestana", on_change="rerun",
@@ -1000,8 +1037,38 @@ def _kpi(df: pd.DataFrame | None, col: str = "valor", dias: int = 30, modo: str 
 
 _MES = dict(dias=25, modo="abs", d_suf=" pp", d_txt="vs mes ant.")
 
+# Textos de contexto para inyectar en las fichas de los KPIs
+txt_brecha = "Esta brecha compara precios de venta; no incluye impuestos ni comisiones."
+if dol is not None and "oficial" in dol and "blue" in dol:
+    of, bl = ultimo(dol, "oficial"), ultimo(dol, "blue")
+    if of and bl:
+        br = (bl / of - 1) * 100
+        relacion = f"cotiza {charts.num(abs(br), 1, '%')} por encima" if br > 0 else f"cotiza {charts.num(abs(br), 1, '%')} por debajo" if br < 0 else "cotiza igual"
+        txt_brecha = f"El blue {relacion} del oficial. {txt_brecha}"
+
+txt_rem = "Compara una expectativa para los próximos 12 meses con inflación ya observada."
+if infl_ia is not None and rem is not None:
+    obs, esp = ultimo(infl_ia), ultimo(rem)
+    if obs is not None and esp is not None:
+        diferencia = "menos" if esp < obs - 1 else "más" if esp > obs + 1 else "casi la misma"
+        txt_rem = f"El REM anticipa {diferencia} inflación que en los últimos 12 meses. {txt_rem}"
+
+txt_salario = "La comparación descuenta la inflación y corresponde al índice general."
+if sal_real_df is not None and not sal_real_df.empty:
+    u_sal = sal_real_df.dropna(subset=["real"]).iloc[-1]
+    val_sal, mes_sal = float(u_sal["real"]), MESES_ES[u_sal["fecha"].month - 1]
+    comparacion = "compraba lo mismo" if abs(val_sal) < 0.5 else f"compraba {charts.num(abs(val_sal), 1, '%')} {'más' if val_sal > 0 else 'menos'}"
+    txt_salario = f"En {mes_sal}, el salario promedio {comparacion} que un año antes. {txt_salario}"
+
 # clave -> (grupo, nombre, función). El orden de este diccionario es el orden del selector.
-CATALOGO = catalogo.construir(_MES=_MES, _kpi=_kpi, badlar=badlar, brecha_df=brecha_df, dol_s=dol_s, emae_ia=emae_ia, emae_m=emae_m, haber_min=haber_min, infl_ia=infl_ia, infl_m=infl_m, paro_pct=paro_pct, pases=pases, rem=rem, reservas=reservas, riesgo=riesgo, ripte=ripte, sal_ia=sal_ia, sal_real_df=sal_real_df, smvm=smvm, uva=uva)
+CATALOGO = catalogo.construir(
+    _MES=_MES, _kpi=_kpi, badlar=badlar, brecha_df=brecha_df, dol_s=dol_s,
+    emae_ia=emae_ia, emae_m=emae_m, haber_min=haber_min, infl_ia=infl_ia,
+    infl_m=infl_m, paro_pct=paro_pct, pases=pases, rem=rem, reservas=reservas,
+    riesgo=riesgo, ripte=ripte, sal_ia=sal_ia, sal_real_df=sal_real_df,
+    smvm=smvm, uva=uva,
+    txt_brecha=txt_brecha, txt_rem=txt_rem, txt_salario=txt_salario
+)
 
 
 def cargar_prefs() -> list[str]:
@@ -1126,22 +1193,6 @@ def panel_plazo_fijo(clave: str = "res_real", subtitulo: bool = True) -> None:
 
 
 # ───────────────────────── Inicio: rotación y panorama ─────────────────────────
-@st.cache_resource
-def _contador_visitas() -> dict:
-    return {"n": 0, "lock": threading.Lock()}
-
-
-def turno_de_visita() -> int:
-    """Número de esta visita (una por sesión: cada vez que alguien entra o recarga la página avanza uno). Sirve para que
-    la portada no muestre siempre lo mismo: el gráfico y el análisis destacados van rotando."""
-    if "turno_inicio" not in st.session_state:
-        c = _contador_visitas()
-        with c["lock"]:
-            st.session_state["turno_inicio"] = c["n"]
-            c["n"] += 1
-    return st.session_state["turno_inicio"]
-
-
 def _ult_y_hace(df: pd.DataFrame | None, col: str = "valor", dias: int = 30) -> tuple[float | None, float | None]:
     """Último dato y el de hace `dias` días (el último publicado hasta esa fecha)."""
     if df is None or col not in df:
@@ -1167,14 +1218,12 @@ def semestre_pobreza(fecha: pd.Timestamp) -> str:
     return f"{'1.er' if f.month <= 6 else '2.º'} sem. {f.year}"
 
 
-def bloque_pobreza(titulo: bool = True) -> None:
-    """Pobreza (EPH, por semestre) y canastas básicas del INDEC, al pie de la pestaña Salarios. En el Resumen va sin
-    título propio (`titulo=False`): ahí ya lo encabeza la pregunta del análisis."""
+def bloque_pobreza() -> None:
+    """Pobreza (EPH, por semestre) y canastas básicas del INDEC, al pie de la pestaña Salarios."""
     pob, lp, li = get("serie:pobreza"), get("serie:linea_pobreza"), get("serie:linea_indigencia")
     if pob is None and lp is None:
         return
-    if titulo:
-        st.markdown("#### Pobreza y canasta básica")
+    st.markdown("#### Pobreza y canasta básica")
     k = st.columns(3)
     pp = pob.assign(valor=pob["valor"] * 100) if pob is not None else None
     if pp is not None:
@@ -1254,197 +1303,10 @@ def bloque_cambiario() -> None:
                                   "Bienes, servicios y compra de dólares (USD millones)"), key="graf_cambiario_partes")
 
 
-def panorama_inicio() -> list[dict]:
-    """Lecturas complementarias: relaciones y contexto, sin repetir las tarjetas."""
-    frases = []
-    try:
-        of, _ = _ult_y_hace(dol, "oficial") if dol is not None else (None, None)
-        bl, _ = _ult_y_hace(dol, "blue") if dol is not None else (None, None)
-        if of is not None and of > 0 and bl is not None:
-            brecha = (bl / of - 1) * 100
-            relacion = "por encima" if brecha >= 0 else "por debajo"
-            frases.append(dict(tema="Dólar", texto=(
-                f"El blue cotiza **{charts.num(abs(brecha), 1, '%')} {relacion} del oficial**. "
-                "Esta brecha compara precios de venta; no incluye impuestos ni comisiones.")))
-    except Exception:  # noqa: BLE001
-        traceback.print_exc()
-    try:
-        observada = ultimo(infl_ia) if infl_ia is not None else None
-        esperada = ultimo(rem) if rem is not None else None
-        if observada is not None and esperada is not None:
-            diferencia = float(esperada - observada)
-            comparacion = ("una inflación similar a la de" if abs(diferencia) < .05 else
-                           "menos inflación que en" if diferencia < 0 else "más inflación que en")
-            frases.append(dict(tema="Inflación", texto=(
-                f"El REM anticipa **{comparacion} los últimos 12 meses**. "
-                "Compara una expectativa para los próximos 12 meses con inflación ya observada; "
-                "no es un resultado confirmado.")))
-    except Exception:  # noqa: BLE001
-        traceback.print_exc()
-    try:
-        if sal_real_df is not None and not sal_real_df.empty:
-            u = sal_real_df.dropna(subset=["real"]).iloc[-1]
-            r = float(u["real"])
-            cambio = "más" if r > 0 else "menos"
-            lectura = ("el poder de compra promedio se mantuvo frente a un año antes" if abs(r) < .05 else
-                       f"el salario promedio compraba **{charts.num(abs(r), 1, '%')} {cambio} que un año antes**")
-            frases.append(dict(tema="Salarios", texto=(
-                f"En {_mes(u['fecha'])}, {lectura}. "
-                "La comparación descuenta la inflación y corresponde al índice general, no a cada trabajador.")))
-    except Exception:  # noqa: BLE001
-        traceback.print_exc()
-    return frases
-
-
-# Gráficos que rotan arriba: (nombre, por qué importa). El dibujo de cada uno está en grafico_inicio.
-GRAFICOS_INICIO = {
-    "Dólar": "El **oficial** es el que regula el Banco Central y el **blue**, el del mercado informal. Cuando se separan "
-             "mucho suele haber tensión cambiaria.",
-    "Inflación": "Barras: cuánto subieron los precios cada mes. Línea: la suba acumulada en 12 meses. Es lo que más pesa "
-                 "en el poder de compra.",
-    "Reservas": "Los dólares del Banco Central para pagar deuda e intervenir en el mercado. Más reservas, más margen para "
-                "evitar saltos del dólar.",
-    "Riesgo país": "Cuánto más que EE. UU. paga la Argentina para endeudarse (100 puntos = 1 punto porcentual). Más bajo "
-                   "es mejor: abarata el crédito para el Estado y las empresas.",
-    "Brecha": "Cuánto más caros están el blue y el contado con liquidación que el oficial. Una brecha alta suele reflejar "
-              "desconfianza o trabas para comprar dólares.",
-    "Actividad": "El EMAE del INDEC mide mes a mes cuánto produce la economía (es el anticipo del PBI). Si sube, la "
-                 "economía crece.",
-    "Salario real": "Cuánto más o menos compran los sueldos que un año antes. Barras verdes: le ganaron a la inflación; "
-                    "rojas: perdieron.",
-}
-
-
-def bloque_salarios() -> None:
-    sr = sal_real_df
-    if sr is None or sr.empty:
-        falla("no se pudieron cargar los salarios")
-        return
-    _grafico_periodo("ini_sal", sr, lambda d: charts.lineas(d, {"Salarios": "salario", "Inflación": "inflacion"},
-                                                            "Salarios vs inflación — variación interanual (%)",
-                                                            yfmt=",.0f", height=340), defecto="5 años", mensual=True)
-    u = sr.dropna(subset=["real"]).iloc[-1]
-    st.markdown(style.aclaracion(
-        ("Último dato", f"En {_mes(u['fecha'])} de {u['fecha'].year} los salarios subían "
-                        f"{charts.num(u['salario'], 1, '%')} interanual y los precios, {charts.num(u['inflacion'], 1, '%')}."),
-        ("Cómo leerlo", "Cuando la línea de salarios va por encima de la de inflación, el sueldo alcanza para más."),
-        ("Fuente", "Índice de salarios del INDEC (registrados y no registrados), con unos dos meses de rezago.")), unsafe_allow_html=True)
-
-
-def bloque_expectativas() -> None:
-    """Inflación interanual observada contra lo que espera el mercado a 12 meses (REM del BCRA)."""
-    if infl_m is None or infl_ia is None or rem is None:
-        falla("no se pudieron cargar las expectativas de inflación")
-        return
-    m = infl_m.merge(infl_ia, on="fecha", suffixes=("_m", "_ia"))[["fecha", "valor_ia"]]
-    m = m.rename(columns={"valor_ia": "Inflación interanual observada"})
-    y = rem.rename(columns={"valor": "Expectativa a 12 meses (REM)"})
-    df = m.merge(y, on="fecha", how="outer").sort_values("fecha")
-    _grafico_periodo("ini_rem", df, lambda d: charts.lineas(
-        d, {"Interanual observada": "Inflación interanual observada", "Expectativa 12 m (REM)": "Expectativa a 12 meses (REM)"},
-        "Inflación observada y expectativa del mercado (%)", yfmt=",.0f", height=340), defecto="5 años", mensual=True)
-    obs, esp = ultimo(infl_ia), ultimo(rem)
-    if obs is not None and esp is not None:
-        st.markdown(style.aclaracion(
-            ("Último dato", f"La inflación de los últimos 12 meses fue {charts.num(obs, 1, '%')}; los analistas esperan "
-                            f"{charts.num(esp, 1, '%')} para los próximos 12 (mediana del REM del BCRA)."),
-            ("Nota", "Las expectativas son una referencia y pueden cambiar mes a mes.")), unsafe_allow_html=True)
-
-
-def bloque_dolar_precios() -> None:
-    """Dólar oficial y blue contra los precios, con base 100 al inicio del período elegido."""
-    if dol is None or infl_m is None:
-        falla("no se pudo armar la comparación del dólar con los precios")
-        return
-    d_ = dol.set_index("fecha")[["oficial", "blue"]].resample("MS").last().dropna(how="all").reset_index()
-    pr = infl_m.dropna(subset=["valor"]).sort_values("fecha").copy()
-    pr["mes"] = pr["fecha"].dt.to_period("M").dt.to_timestamp()
-    pr["Precios (IPC)"] = (1 + pr["valor"] / 100).cumprod()
-    d_["mes"] = d_["fecha"].dt.to_period("M").dt.to_timestamp()
-    df = d_.merge(pr[["mes", "Precios (IPC)"]], on="mes", how="inner").drop(columns="mes")
-    df = df.rename(columns={"oficial": "Dólar oficial", "blue": "Dólar blue"})
-
-    def armar(d: pd.DataFrame):
-        d = d.copy()
-        for c in ("Dólar oficial", "Dólar blue", "Precios (IPC)"):
-            base = d[c].dropna()
-            d[c] = d[c] / base.iloc[0] * 100 if not base.empty else d[c]
-        return charts.lineas(d, {c: c for c in ("Dólar oficial", "Dólar blue", "Precios (IPC)")},
-                             "Dólar y precios — base 100 al inicio del período", yfmt=",.0f", height=340,
-                             colores=("#74ACDF", "#F6B40E", "#697C91"))  # sin verde ni rojo: acá no hay bueno ni malo
-
-    _grafico_periodo("ini_dolprecios", df, armar, defecto="2 años", mensual=True)
-    st.markdown(style.aclaracion(
-        ("Cómo leerlo", "Todas las líneas parten de 100 al comienzo del período elegido. Si la de un dólar queda por "
-                        "encima de la de precios, subió más que la inflación en ese período; si queda por debajo, subió menos.")), unsafe_allow_html=True)
-
-
-def bloque_comercio_inicio() -> None:
-    """Exportaciones e importaciones acumuladas de 12 meses (INDEC)."""
-    if comercio is None:
-        falla("no se pudo cargar el comercio exterior")
-        return
-    c = comercio.sort_values("fecha").copy()
-    c["exp_12m"], c["imp_12m"] = c["exp"].rolling(12).sum(), c["imp"].rolling(12).sum()
-    c = c.dropna(subset=["exp_12m", "imp_12m"])
-    if c.empty:
-        falla("no se pudo cargar el comercio exterior")
-        return
-    _grafico_periodo("ini_comercio", c, lambda d: charts.lineas(
-        d, {"Exportaciones": "exp_12m", "Importaciones": "imp_12m"},
-        "Comercio exterior — acumulado de 12 meses (USD millones)", yfmt=",.0f", height=340), defecto="5 años", mensual=True)
-    u = c.iloc[-1]
-    st.markdown(style.aclaracion(
-        ("Último dato", f"En los 12 meses hasta {_mes(u['fecha'])} de {u['fecha'].year}, la Argentina exportó USD "
-                        f"{charts.num(u['exp_12m'], 0)} millones e importó USD {charts.num(u['imp_12m'], 0)} millones: saldo "
-                        f"de USD {charts.num(u['exp_12m'] - u['imp_12m'], 0)} millones."),
-        ("Fuente", "INDEC.")), unsafe_allow_html=True)
-
-
-def bloque_reservas_riesgo() -> None:
-    """Reservas del BCRA y riesgo país, lado a lado (últimos dos años)."""
-    if reservas is None and riesgo is None:
-        falla("no se pudieron cargar las reservas ni el riesgo país")
-        return
-    a, b = st.columns(2)
-    if reservas is not None:
-        with a:
-            grafico(charts.lineas(rec(reservas), {"Reservas brutas": "valor"}, "Reservas del BCRA (USD millones)", yfmt=",.0f",
-                                  height=320), key="graf_ini_rr_res")
-    if riesgo is not None:
-        with b:
-            grafico(charts.lineas(rec(riesgo), {"Riesgo país": "valor"}, "Riesgo país (pb)", yfmt=",.0f",
-                                  height=320), key="graf_ini_rr_riesgo")
-    st.markdown(style.aclaracion(
-        ("Qué mide", "Las reservas son los dólares y el oro que tiene el Banco Central. El riesgo país mide cuánto más "
-                     "que EE. UU. paga la Argentina para endeudarse (100 puntos = 1 punto porcentual)."),
-        ("Período", "Últimos dos años.")), unsafe_allow_html=True)
-
-
-def bloque_fiscal() -> None:
-    f = fiscal_df()
-    cols = {n: c for n, c in (("Primario", "primario_12m"), ("Financiero", "financiero_12m")) if c in f}
-    if f.empty or not cols:
-        falla("no se pudieron cargar las cuentas públicas")
-        return
-    f12 = f.dropna(subset=list(cols.values()), how="all")
-
-    def fig12(d):
-        fig = charts.lineas(d, cols, "Resultado fiscal acumulado de 12 meses (% del PBI)", yfmt=",.1f", height=340)
-        fig.add_hline(y=0, line_width=1, line_dash="dot", line_color="rgba(128,128,128,.7)")
-        return fig
-
-    _grafico_periodo("ini_fis", f12, fig12, defecto="5 años", mensual=True)
-    st.markdown(style.aclaracion(
-        ("Cómo leerlo", "Arriba de la línea punteada, el Estado nacional gasta menos de lo que recauda (superávit); "
-                        "abajo, más (déficit)."),
-        ("Qué mide", "El **primario** no cuenta los intereses de la deuda; el **financiero** sí. Más detalle en la "
-                     "pestaña Resultado fiscal.")), unsafe_allow_html=True)
-
-
-# ── Inicio ──
-with t_res, protegido("Resumen"):
-    if t_res.open:  # solo la pestaña abierta se calcula y se manda al navegador
+# ── Inicio ── (el botón «Resumen» de la barra lateral es aparte del carrusel: su pantalla va debajo de la fila de
+# navegación; el panel de «Resumen» queda vacío y escondido, ver estilos.py)
+if st.session_state.get("pestana", "Resumen") == "Resumen":
+    with st.container(key="panel_resumen"), protegido("Resumen"):
         abrir(pestanas.inicio)
 
 # ── Criptomonedas ──
@@ -1463,30 +1325,30 @@ with t_dol, protegido("Dólar"):
         abrir(pestanas.dolar)
 
 # ── Reservas ──
-with t_res_i, protegido("Reservas"):
-    if t_res_i.open:  # solo la pestaña abierta se calcula y se manda al navegador
+with t_reservas, protegido("Reservas"):
+    if t_reservas.open:  # solo la pestaña abierta se calcula y se manda al navegador
         abrir(pestanas.reservas)
 
-# ── Actividad y PBI ──
-with t_act, protegido("Actividad y PBI"):
+# ── Actividad ──
+with t_act, protegido("Actividad"):
     if t_act.open:  # solo la pestaña abierta se calcula y se manda al navegador
         abrir(pestanas.actividad)
 
-# ── Salarios ──
-with t_sal, protegido("Salarios"):
+# ── Empleo y salarios ──
+with t_sal, protegido("Empleo y salarios"):
     if t_sal.open:  # solo la pestaña abierta se calcula y se manda al navegador
         abrir(pestanas.salarios)
 
 # ── Inflación ──
-with t_prec, protegido("Inflación y dinero"):
-    if t_prec.open:  # solo la pestaña abierta se calcula y se manda al navegador
+with t_infl, protegido("Inflación y dinero"):
+    if t_infl.open:  # solo la pestaña abierta se calcula y se manda al navegador
         abrir(pestanas.inflacion)
         st.divider()
         st.markdown("### Dinero y crédito")
         abrir(pestanas.dinero)
 
-# ── Tasas y riesgo país ──
-with t_tasas, protegido("Tasas y riesgo país"):
+# ── Tasas ──
+with t_tasas, protegido("Tasas"):
     if t_tasas.open:  # solo la pestaña abierta se calcula y se manda al navegador
         abrir(pestanas.tasas)
 

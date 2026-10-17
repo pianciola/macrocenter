@@ -38,10 +38,9 @@ TERMINOS = {
           "ningún otro tipo, ni una oferta, invitación o recomendación para comprar, vender o mantener activos, divisas, valores "
           "negociables o criptoactivos, en los términos de la Ley N.º 26.831 de Mercado de Capitales y las normas de la Comisión "
           "Nacional de Valores.",
-          "En particular, la sección **Ahorro e inversiones** muestra tasas informadas por terceros, rendimientos pasados y "
-          "simulaciones con supuestos que elige el propio usuario. Las listas se ordenan alfabéticamente y no implican una "
-          "preferencia ni una valoración de las entidades mencionadas. **Los rendimientos pasados no garantizan rendimientos "
-          "futuros**, y los resultados de una simulación no son una promesa ni una estimación de lo que va a ocurrir.",
+          "En particular, las **Herramientas** del Sitio muestran comparaciones históricas y simulaciones con supuestos que elige "
+          "el propio usuario. **Los rendimientos pasados no garantizan rendimientos futuros**, y los resultados de una "
+          "simulación no son una promesa ni una estimación de lo que va a ocurrir.",
           "El usuario es el único responsable de las decisiones que adopte con base en la información del Sitio y deberá consultar "
           "con profesionales matriculados antes de tomar decisiones económicas."]),
         ("3. Fuentes, exactitud y actualización de los datos",

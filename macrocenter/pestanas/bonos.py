@@ -25,17 +25,23 @@ def _pct(v: float | None, dec: int = 1, signo: bool = True) -> str:
     return (f"{v:+.{dec}f}%" if signo else f"{v:.{dec}f}%").replace(".", ",")
 
 
-def mostrar(*, _ult_y_hace, cargar_bonos, dif, falla, grafico, grafico_periodo, kpi, selector_categoria) -> None:
+def mostrar(*, _ult_y_hace, cargar_bonos, dif, falla, grafico, grafico_periodo, kpi, riesgo, selector_categoria) -> None:
     st.markdown(style.intro(
         "Los bonos del Tesoro argentino en dólares, de **ley Nueva York** y de **ley local**, y lo que paga Estados "
         "Unidos: la **tasa de la Reserva Federal** y sus **bonos del Tesoro**, que marcan el costo del dinero en el mundo.",
         [("bien", "Sube"), ("mal", "Baja")],
         "Los colores de los bonos argentinos siguen a la cotización. Las tasas de EE. UU. van sin color: que suban no es "
-        "bueno ni malo en sí.", resumen='Precios de referencia y evolución de bonos argentinos en dólares.'), unsafe_allow_html=True)
-    b = cargar_bonos()
-    bonos_argentinos(b, falla, grafico_periodo, selector_categoria)
-    st.divider()
-    tasas_eeuu(b, _ult_y_hace, dif, falla, grafico_periodo, kpi)
+        "bueno ni malo en sí.", resumen='Precios de referencia y evolución de bonos argentinos en dólares.', inicio=True), unsafe_allow_html=True)
+    with st.spinner("Cargando cotizaciones de bonos..."):
+        b = cargar_bonos()
+        bonos_argentinos(b, falla, grafico_periodo, selector_categoria)
+        st.divider()
+        tasas_eeuu(b, _ult_y_hace, dif, falla, grafico_periodo, kpi)
+        if riesgo is not None:
+            st.divider()
+            st.subheader("Riesgo país")
+            grafico_periodo("bonos_riesgo", riesgo, lambda d: charts.lineas(d, {"Riesgo país": "valor"},
+                                                                           "Riesgo país — EMBI (pb)", height=380))
 
 
 def bonos_argentinos(b: dict, falla, grafico_periodo, selector_categoria) -> None:

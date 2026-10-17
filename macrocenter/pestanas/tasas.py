@@ -1,4 +1,4 @@
-"""Pestaña «Tasas y riesgo país» del tablero. app.py la dibuja cuando está abierta y le pasa, por nombre, los datos y las
+"""Pestaña «Tasas» del tablero. app.py la dibuja cuando está abierta y le pasa, por nombre, los datos y las
 funciones de la página que usa (los parámetros de `mostrar`)."""
 from __future__ import annotations
 
@@ -8,16 +8,12 @@ from macrocenter import charts, style
 
 
 def mostrar(
-    *, _ult_y_hace, dif, get, grafico, grafico_periodo, kpi, panel_plazo_fijo, pases, rec, riesgo, tpm,
+    *, _ult_y_hace, dif, get, grafico, kpi, panel_plazo_fijo, pases, rec, tpm,
 ) -> None:
-    st.markdown(style.intro("Cuánto cuesta el dinero en pesos (**tasas de interés**) y cuánto le cuesta a la Argentina endeudarse "
-                            "(**riesgo país**).", [("bien", "El riesgo país baja"), ("mal", "Sube")],
-                            "TNA: tasa nominal anual, sin capitalización. No representa el costo total de un crédito.", resumen='Tasas de interés en pesos y riesgo país.'), unsafe_allow_html=True)
-    k = st.columns(4)
-    v, a_ = _ult_y_hace(riesgo)
-    kpi(k[0], "Riesgo país", v, 0, suf=" pb", d=dif(v, a_), d_suf=" pb", d_dec=0, color="inverse",
-        help="Puntos básicos sobre los bonos de EE. UU. (100 pb = 1 punto porcentual). Variación contra 30 días atrás.", serie=riesgo, fuente='ArgentinaDatos · EMBI')
-    for slot, (clave_t, nombre_t, ayuda_t) in zip(k[1:], (
+    st.markdown(style.intro("Cuánto cuesta el dinero en pesos (**tasas de interés**).", None,
+                            "TNA: tasa nominal anual, sin capitalización. No representa el costo total de un crédito.", resumen='Tasas de interés en pesos.', inicio=True), unsafe_allow_html=True)
+    k = st.columns(3)
+    for slot, (clave_t, nombre_t, ayuda_t) in zip(k, (
             ("bcra:badlar", "Tasa BADLAR", "Plazos fijos de más de $1 millón en bancos privados (TNA)."),
             ("bcra:depositos_30d", "Plazo fijo a 30 días", "Tasa promedio de plazos fijos a 30 días (TNA)."),
             ("bcra:prestamos_personales", "Préstamos personales", "Tasa promedio de préstamos personales (TNA)."))):
@@ -53,9 +49,5 @@ def mostrar(
         pp = get("bcra:prestamos_personales")
         if pp is not None:
             grafico(charts.lineas(rec(pp), {"Préstamos personales": "valor"}, "Tasa de préstamos personales (TNA, %)", yfmt=",.0f"))
-    if riesgo is not None:
-        st.subheader("Riesgo país")
-        grafico_periodo("tasas_riesgo", riesgo, lambda d: charts.lineas(d, {"Riesgo país": "valor"},
-                                                                          "Riesgo país — EMBI (pb)", height=380))
     st.divider()
     panel_plazo_fijo()
