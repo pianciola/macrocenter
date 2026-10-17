@@ -1468,6 +1468,7 @@ h3 {{ font-weight: 700 !important; }}
 /* Acceso compacto a todas las secciones, en la misma fila que el carrusel. */
 .st-key-navegacion_tablero {{ position: relative; gap: 0 !important; }}
 .st-key-navegacion_tablero .st-key-pestana > div[data-orientation="horizontal"] {{ width: calc(100% - 52px) !important; }}
+.st-key-navegacion_tablero [data-testid="stTabsScrollRight"] {{ right: 52px !important; }}
 .st-key-menu_secciones {{ position: absolute !important; right: 0; top: 9px; width: 40px !important; z-index: 5; }}
 .st-key-menu_secciones [data-testid="stPopoverButton"] {{
     width: 40px; min-width: 40px; height: 40px; min-height: 40px; padding: 8px;
