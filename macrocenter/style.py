@@ -527,26 +527,35 @@ JS_PESTANAS = """
   obs.observe(blanco());
 })();
 (() => {
-  // Cloud (share.streamlit.io) agrega su insignia «Hosted with Streamlit» y el chip «Created by …» en el documento que
-  // envuelve a la app —afuera del iframe—: no se pueden sacar por CSS desde acá. El iframe es del mismo origen, así que
-  // esas dos piezas se buscan por su texto en el documento de arriba y se esconden. En local (sin envoltorio) no hace nada.
+  // Cloud (share.streamlit.io) agrega piezas propias —la insignia «Hosted with Streamlit», el chip «Created by …» y,
+  // para el dueño, el botón «Manage app»— fuera de la app (en el documento que la envuelve) o inyectadas adentro: no
+  // se pueden sacar por CSS desde acá. Como el iframe es del mismo origen, se buscan por su texto (en el documento de
+  // arriba y en el propio) y se esconden. En local no hace nada.
   if (window.__mcCloud) return;
   window.__mcCloud = true;
   const texto = (el) => ((el && el.textContent) || '').replace(/\\s+/g, ' ').trim().toLowerCase();
-  const ocultar = () => {
+  const sinIframe = (el) => !el.querySelector('iframe');
+  const visible = (el) => el.style.display !== 'none';
+  const esconder = (el) => { if (el) el.style.setProperty('display', 'none', 'important'); };
+  const pieza = (d, coincide) => {
+    const todos = [...d.querySelectorAll('a, div, button')].filter(el => sinIframe(el) && visible(el) && coincide(el));
+    if (!todos.length) return null;
+    let el = todos.sort((a, b) => texto(a).length - texto(b).length)[0];
+    // el botón puede traer el chevron como texto: se sube hasta el envoltorio cuyo texto sigue siendo el mismo
+    for (let i = 0; i < 3 && el.parentElement && el.parentElement !== d.body && coincide(el.parentElement)
+         && sinIframe(el.parentElement) && (texto(el.parentElement).length - texto(el).length) <= 10; i++) el = el.parentElement;
+    return el;
+  };
+  const limpiar = (d) => {
     try {
-      if (window.parent === window) return;
-      const doc = window.parent.document;
-      const marca = [...doc.querySelectorAll('a, div')]
-        .filter(el => texto(el).includes('hosted with streamlit') && !el.querySelector('iframe'))
-        .sort((a, b) => texto(a).length - texto(b).length)[0];
-      if (!marca) return;  // no es el envoltorio de Cloud (o ya está limpio)
-      marca.style.setProperty('display', 'none', 'important');
-      const credito = [...doc.querySelectorAll('div')]
-        .filter(el => texto(el).includes('created by') && !el.querySelector('iframe') && el.querySelector('img'))
-        .sort((a, b) => texto(a).length - texto(b).length)[0];
-      if (credito) credito.style.setProperty('display', 'none', 'important');
-    } catch (e) {}  // envoltorio de otro origen: no se puede tocar
+      esconder(pieza(d, el => texto(el).startsWith('hosted with streamlit')));
+      esconder(pieza(d, el => texto(el).includes('manage app')));
+      esconder(pieza(d, el => texto(el).startsWith('created by') && !!el.querySelector('img')));
+    } catch (e) {}
+  };
+  const ocultar = () => {
+    try { if (window.parent !== window) limpiar(window.parent.document); } catch (e) {}  // envoltorio de otro origen: no se toca
+    limpiar(document);  // por si Cloud inyecta el botón adentro de la app
   };
   ocultar();
   setInterval(ocultar, 1500);
