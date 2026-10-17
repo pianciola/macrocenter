@@ -1,4 +1,4 @@
-"""MacroCenter — tablero de datos macroeconómicos de Argentina.
+"""MacroCenter — tablero de datos económicos de Argentina.
 
 Ejecutar:  streamlit run app.py
 """
