@@ -724,7 +724,7 @@ def _md_a_html(texto: str) -> str:
 
 
 def panorama(items: list[dict], fecha: str) -> str:
-    """Informe «En pocas palabras»: una fila por tema con su cifra clave y el resumen. Es neutral: describe qué pasó, sin
+    """Informe «En pocas palabras»: contexto complementario, sin duplicar cifras de las tarjetas. Es neutral: describe qué pasó, sin
     calificarlo como bueno o malo."""
     esc = html.escape
     destinos = {"Dólar": "dolar", "Inflación": "inflacion-y-dinero", "Reservas": "reservas",
@@ -735,7 +735,7 @@ def panorama(items: list[dict], fecha: str) -> str:
         return f'<a href="?ver=tablero/{destino}" target="_self">{nombre} ↗</a>' if destino else nombre
     filas = "".join(
         f'<div class="fila"><div class="izq"><div class="tema">{tema(i)}</div>'
-        f'<div class="cifra">{esc(i["cifra"])}</div><div class="det">{esc(i["detalle"])}</div></div>'
+        '</div>'
         f'<div class="txt">{_md_a_html(i["texto"])}</div></div>'
         for i in items)
     return (ESTILO_PANO + f'<div class="mc-pano"><div class="cab"><div class="tit" role="heading" aria-level="3">En pocas palabras</div>'

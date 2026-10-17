@@ -1255,142 +1255,45 @@ def bloque_cambiario() -> None:
 
 
 def panorama_inicio() -> list[dict]:
-    """La coyuntura, tema por tema, con los últimos datos publicados: {tema, cifra, detalle, texto}. Cada tema
-    se omite si falta su dato."""
+    """Lecturas complementarias: relaciones y contexto, sin repetir las tarjetas."""
     frases = []
     try:
-        of, of_a = _ult_y_hace(dol_rec, "oficial") if dol is not None else (None, None)
+        of, _ = _ult_y_hace(dol, "oficial") if dol is not None else (None, None)
         bl, _ = _ult_y_hace(dol, "blue") if dol is not None else (None, None)
-        if of is not None:
-            f = f"El **dólar oficial** está en **{charts.num(of, 0, pre='$')}**"
-            v = pct(of, of_a)
-            if v is not None:
-                f += (" (sin cambios en 30 días)" if abs(v) < 0.05 else
-                      f" ({(('subió ' if v > 0 else 'bajó ') + charts.num(abs(v), 1, '%'))} en 30 días)")
-            if bl is not None:
-                br = (bl / of - 1) * 100
-                f += f" y el **blue**, en **{charts.num(bl, 0, pre='$')}**: una brecha de **{charts.num(br, 1, '%')}**"
-                if abs(br) < 5:
-                    f += ", prácticamente sin diferencia entre los dos"
-            frases.append(dict(tema="Dólar", cifra=charts.num(of, 0, pre="$"), detalle="oficial", texto=f + "."))
+        if of is not None and of > 0 and bl is not None:
+            brecha = (bl / of - 1) * 100
+            relacion = "por encima" if brecha >= 0 else "por debajo"
+            frases.append(dict(tema="Dólar", texto=(
+                f"El blue cotiza **{charts.num(abs(brecha), 1, '%')} {relacion} del oficial**. "
+                "Esta brecha compara precios de venta; no incluye impuestos ni comisiones.")))
     except Exception:  # noqa: BLE001
         traceback.print_exc()
     try:
-        if infl_m is not None:
-            d = infl_m[infl_m["fecha"] <= HOY].dropna(subset=["valor"])
-            if len(d) >= 2:
-                u, a = d.iloc[-1], d.iloc[-2]
-                f = f"La **inflación** de {_mes(u['fecha'])} fue **{charts.num(u['valor'], 1, '%')}**"
-                dd = float(u["valor"] - a["valor"])
-                if abs(dd) < 0.05:
-                    f += f", igual que en {_mes(a['fecha'])}"
-                else:
-                    f += (f", {('más baja' if dd < 0 else 'más alta')} que en {_mes(a['fecha'])} "
-                          f"({charts.num(a['valor'], 1, '%')})")
-                ia = ultimo(infl_ia) if infl_ia is not None else None
-                if ia is not None:
-                    f += f". En los últimos 12 meses los precios subieron **{charts.num(ia, 1, '%')}**"
-                esp = ultimo(rem) if rem is not None else None
-                if esp is not None:
-                    f += f" y las consultoras esperan **{charts.num(esp, 1, '%')}** para los próximos 12 (REM del BCRA)"
-                frases.append(dict(tema="Inflación", cifra=charts.num(u["valor"], 1, "%"), detalle=f"mensual · {_mes(u['fecha'])}",
-                                   texto=f + "."))
-    except Exception:  # noqa: BLE001
-        traceback.print_exc()
-    try:
-        rs, rs_a = _ult_y_hace(reservas)
-        rp, rp_a = _ult_y_hace(riesgo)
-        partes = []
-        if rs is not None:
-            t_ = f"las **reservas** del Banco Central suman **USD {charts.num(rs, 0)} millones**"
-            v = pct(rs, rs_a)
-            if v is not None and abs(v) >= 0.05:
-                t_ += f" ({(('subieron ' if v > 0 else 'bajaron ') + charts.num(abs(v), 1, '%'))} en 30 días)"
-            partes.append(t_)
-        if rp is not None:
-            t_ = f"el **riesgo país** está en **{charts.num(rp, 0)} puntos**"
-            v = dif(rp, rp_a)
-            if v is not None and abs(v) >= 1:
-                t_ += f" ({(('subió ' if v > 0 else 'bajó ') + charts.num(abs(v), 0) + ' puntos')} en 30 días)"
-            partes.append(t_)
-        if partes:
-            f = " y ".join(partes)
-            if rs is not None:
-                frases.append(dict(tema="Reservas", cifra=f"USD {charts.num(rs, 0)} M", detalle="reservas brutas",
-                                   texto=partes[0][0].upper() + partes[0][1:] + "."))
-            if rp is not None:
-                texto_riesgo = partes[-1]
-                frases.append(dict(tema="Riesgo país", cifra=f"{charts.num(rp, 0)} pb", detalle="diferencial soberano",
-                                   texto=texto_riesgo[0].upper() + texto_riesgo[1:] + "."))
+        observada = ultimo(infl_ia) if infl_ia is not None else None
+        esperada = ultimo(rem) if rem is not None else None
+        if observada is not None and esperada is not None:
+            diferencia = float(esperada - observada)
+            comparacion = ("una inflación similar a la de" if abs(diferencia) < .05 else
+                           "menos inflación que en" if diferencia < 0 else "más inflación que en")
+            frases.append(dict(tema="Inflación", texto=(
+                f"El REM anticipa **{comparacion} los últimos 12 meses**. "
+                "Compara una expectativa para los próximos 12 meses con inflación ya observada; "
+                "no es un resultado confirmado.")))
     except Exception:  # noqa: BLE001
         traceback.print_exc()
     try:
         if sal_real_df is not None and not sal_real_df.empty:
             u = sal_real_df.dropna(subset=["real"]).iloc[-1]
             r = float(u["real"])
-            gana = r >= 0
-            f = (f"Los **salarios** {('le ganan' if gana else 'le pierden')} a la inflación: en "
-                 f"{_mes(u['fecha'])} compraban **{charts.num(abs(r), 1, '%')} {'más' if gana else 'menos'}** "
-                 "que un año antes")
-            # contra el mes inmediatamente anterior: suba del salario del mes descontada la inflación de ese mes
-            if sal is not None and infl_m is not None:
-                s_ = sal[sal["fecha"] <= u["fecha"]].dropna(subset=["valor"]).tail(2)
-                i_ = infl_m[infl_m["fecha"].dt.to_period("M") == u["fecha"].to_period("M")]
-                if len(s_) == 2 and not i_.empty and s_["valor"].iloc[0]:
-                    m_ = ((s_["valor"].iloc[1] / s_["valor"].iloc[0]) / (1 + float(i_["valor"].iloc[0]) / 100) - 1) * 100
-                    if abs(m_) < 0.05:
-                        f += f" y lo mismo que en {_mes(s_['fecha'].iloc[0])}"
-                    else:
-                        f += (f" y {(charts.num(abs(m_), 1, '%') + (' más' if m_ > 0 else ' menos'))} "
-                              f"que en {_mes(s_['fecha'].iloc[0])}")
-            frases.append(dict(tema="Salarios", cifra=f"{'+' if r > 0 else ''}{charts.num(r, 1, '%')}",
-                               detalle=f"real interanual · {_mes(u['fecha'])}", texto=f + "."))
-    except Exception:  # noqa: BLE001
-        traceback.print_exc()
-    try:
-        if emae is not None:
-            e = emae.assign(ia=emae["valor"].pct_change(12) * 100).dropna(subset=["ia"])
-            e = e[e["fecha"] <= HOY]
-            if not e.empty:
-                u = e.iloc[-1]
-                v = float(u["ia"])
-                f = (f"La **actividad económica** (EMAE) de {_mes(u['fecha'])} quedó "
-                     f"**{charts.num(abs(v), 1, '%')}** "
-                     f"{('por encima' if v >= 0 else 'por debajo')} de un año antes")
-                # contra el mes inmediatamente anterior, con la serie sin estacionalidad (la original no se compara así)
-                if emae_sa is not None:
-                    e_ = emae_sa[emae_sa["fecha"] <= u["fecha"]].dropna(subset=["valor"]).tail(2)
-                    if len(e_) == 2 and e_["fecha"].iloc[1] == u["fecha"] and e_["valor"].iloc[0]:
-                        m_ = (e_["valor"].iloc[1] / e_["valor"].iloc[0] - 1) * 100
-                        if abs(m_) < 0.05:
-                            f += f" y quedó igual que en {_mes(e_['fecha'].iloc[0])}"
-                        else:
-                            f += (f" y {(('creció ' if m_ > 0 else 'cayó ') + charts.num(abs(m_), 1, '%'))} "
-                                  f"frente a {_mes(e_['fecha'].iloc[0])} (sin estacionalidad)")
-                frases.append(dict(tema="Actividad", cifra=f"{'+' if v > 0 else ''}{charts.num(v, 1, '%')}",
-                                   detalle=f"EMAE interanual · {_mes(u['fecha'])}", texto=f + "."))
+            cambio = "más" if r > 0 else "menos"
+            lectura = ("el poder de compra promedio se mantuvo frente a un año antes" if abs(r) < .05 else
+                       f"el salario promedio compraba **{charts.num(abs(r), 1, '%')} {cambio} que un año antes**")
+            frases.append(dict(tema="Salarios", texto=(
+                f"En {_mes(u['fecha'])}, {lectura}. "
+                "La comparación descuenta la inflación y corresponde al índice general, no a cada trabajador.")))
     except Exception:  # noqa: BLE001
         traceback.print_exc()
     return frases
-
-
-# Gráficos que rotan arriba: (nombre, por qué importa). El dibujo de cada uno está en grafico_inicio.
-GRAFICOS_INICIO = {
-    "Dólar": "El **oficial** es el que regula el Banco Central y el **blue**, el del mercado informal. Cuando se separan "
-             "mucho suele haber tensión cambiaria.",
-    "Inflación": "Barras: cuánto subieron los precios cada mes. Línea: la suba acumulada en 12 meses. Es lo que más pesa "
-                 "en el poder de compra.",
-    "Reservas": "Los dólares del Banco Central para pagar deuda e intervenir en el mercado. Más reservas, más margen para "
-                "evitar saltos del dólar.",
-    "Riesgo país": "Cuánto más que EE. UU. paga la Argentina para endeudarse (100 puntos = 1 punto porcentual). Más bajo "
-                   "es mejor: abarata el crédito para el Estado y las empresas.",
-    "Brecha": "Cuánto más caros están el blue y el contado con liquidación que el oficial. Una brecha alta suele reflejar "
-              "desconfianza o trabas para comprar dólares.",
-    "Actividad": "El EMAE del INDEC mide mes a mes cuánto produce la economía (es el anticipo del PBI). Si sube, la "
-                 "economía crece.",
-    "Salario real": "Cuánto más o menos compran los sueldos que un año antes. Barras verdes: le ganaron a la inflación; "
-                    "rojas: perdieron.",
-}
 
 
 def bloque_salarios() -> None:

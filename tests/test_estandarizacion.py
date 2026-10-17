@@ -19,3 +19,12 @@ def test_pregunta_conserva_unidad_y_datos():
     assert list(fig.data[0].y) == [10, 20]
     assert fig.layout.font.family == FUENTE_GRAFICOS
 
+
+
+def test_panorama_presenta_contexto_sin_otra_tarjeta_numerica():
+    html = style.panorama([{"tema": "Dólar", "texto": "La brecha compara dos cotizaciones.",
+                            "cifra": "$1.535", "detalle": "oficial"}], "17/10/2026")
+    assert "La brecha compara dos cotizaciones." in html
+    assert '$1.535' not in html
+    assert '<div class="cifra">' not in html
+    assert '?ver=tablero/dolar' in html
