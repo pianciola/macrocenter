@@ -132,7 +132,8 @@ def _arrancar_con_semilla() -> tuple[dict, datetime] | None:
 
 def _refrescar_en_segundo_plano() -> None:
     """Descarga todo sin bloquear la página; al terminar deja el disco al día y suelta el caché de memoria."""
-    if not _refrescando.acquire(blocking=False):
+    bloqueo = _refrescando  # conservar el mismo lock aunque Streamlit recargue el módulo
+    if not bloqueo.acquire(blocking=False):
         return
 
     def tarea():
@@ -142,7 +143,7 @@ def _refrescar_en_segundo_plano() -> None:
         except Exception:  # noqa: BLE001
             pass
         finally:
-            _refrescando.release()
+            bloqueo.release()
 
     threading.Thread(target=tarea, daemon=True).start()
 

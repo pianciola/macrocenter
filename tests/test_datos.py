@@ -83,3 +83,37 @@ def test_semilla_rechaza_archivos_rotos(crudo):
 def test_semilla_rechaza_archivos_enormes(monkeypatch):
     monkeypatch.setattr(semilla, "MAX_BYTES", 100)
     assert semilla.de_bytes(semilla.a_bytes(_datos(), datetime(2026, 1, 1))) is None
+
+
+def test_bancos_ignora_fila_vacia_de_la_api(monkeypatch):
+    from types import SimpleNamespace
+    monkeypatch.setattr(data, "_get", lambda *a, **k: SimpleNamespace(json=lambda: [
+        {"entidad": "Banco A", "tnaClientes": .2}, [],
+        {"entidad": "Banco B", "tnaNoClientes": .25},
+    ]))
+    tabla = data.plazo_fijo_bancos()
+    assert tabla.entidad.tolist() == ["Banco A", "Banco B"]
+    assert tabla.tna_clientes.tolist() == [20, 0]
+    assert tabla.tna_no_clientes.tolist() == [0, 25]
+
+
+def test_refresco_libera_el_bloqueo_original_si_se_recarga(monkeypatch):
+    import threading
+    from macrocenter import carga
+    original, nuevo = threading.Lock(), threading.Lock()
+    tareas = []
+    class Hilo:
+        def __init__(self, target, **kwargs):
+            tareas.append(target)
+        def start(self):
+            pass
+    monkeypatch.setattr(carga, "_refrescando", original)
+    monkeypatch.setattr(carga.threading, "Thread", Hilo)
+    monkeypatch.setattr(carga, "_descargar_todo", lambda: None)
+    monkeypatch.setattr(carga, "_completar_con_disco", lambda x: x)
+    monkeypatch.setattr(carga, "_guardar_disco", lambda x: None)
+    carga._refrescar_en_segundo_plano()
+    assert original.locked()
+    monkeypatch.setattr(carga, "_refrescando", nuevo)
+    tareas[0]()
+    assert not original.locked() and not nuevo.locked()

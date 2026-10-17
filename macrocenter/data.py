@@ -455,7 +455,7 @@ def plazo_fijo_bancos() -> pd.DataFrame:
     filas = [{"entidad": str(e.get("entidad") or "").strip(),
               "tna_clientes": float(e.get("tnaClientes") or 0) * 100,
               "tna_no_clientes": float(e.get("tnaNoClientes") or 0) * 100}
-             for e in _get(f"{ARGDATOS_URL}/finanzas/tasas/plazoFijo").json()]
+             for e in _get(f"{ARGDATOS_URL}/finanzas/tasas/plazoFijo").json() if isinstance(e, dict)]
     df = pd.DataFrame(filas, columns=["entidad", "tna_clientes", "tna_no_clientes"])
     return df[(df["entidad"] != "") & ((df["tna_clientes"] > 0) | (df["tna_no_clientes"] > 0))].reset_index(drop=True)
 
