@@ -1,6 +1,6 @@
 ﻿# MacroCenter
 
-Tablero de datos macroeconómicos de Argentina hecho con Streamlit + Plotly.
+Tablero de datos económicos de Argentina hecho con Streamlit + Plotly.
 
 ## Cómo correrlo
 
