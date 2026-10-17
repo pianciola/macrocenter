@@ -7,7 +7,7 @@ import traceback
 import pandas as pd
 import streamlit as st
 
-from macrocenter import charts, style
+from macrocenter import catalogo, charts, style
 
 
 def mostrar(
@@ -17,6 +17,10 @@ def mostrar(
     restablecer_prefs, riesgo, sal_real_df, selector_categoria, selector_periodo, turno_de_visita, ultimo, uva,
 ) -> None:
     turno = turno_de_visita()
+    # Primero el contexto, después los indicadores personalizables y el detalle.
+    frases = panorama_inicio()
+    if frases:
+        st.html(style.panorama(frases, f"{HOY:%d/%m/%Y}"))
     # el estado de sesión puede traer claves viejas o inválidas: se filtra antes de dibujar el selector
     previos = st.session_state.get("kpis_sel")
     st.session_state["kpis_sel"] = [k for k in (previos if isinstance(previos, list) else [])
@@ -37,15 +41,10 @@ def mostrar(
     for i in range(0, len(elegidos), 5):
         for slot, clave in zip(st.columns(5), elegidos[i:i + 5]):
             try:
-                kpi(slot, CATALOGO[clave][1], **CATALOGO[clave][2]())
+                kpi(slot, CATALOGO[clave][1], ruta=catalogo.ruta(clave, CATALOGO[clave][0]), **CATALOGO[clave][2]())
             except Exception:  # noqa: BLE001
                 traceback.print_exc()
                 kpi(slot, CATALOGO[clave][1], None)
-
-    # Panorama en texto: la coyuntura en cuatro o cinco frases, armadas con los últimos datos
-    frases = panorama_inicio()
-    if frases:
-        st.html(style.panorama(frases, f"{HOY:%d/%m/%Y}"))
 
     # un solo gráfico a la vez, para que la portada no se llene; cada visita arranca con uno distinto
     st.markdown("#### Gráfico destacado")
@@ -79,7 +78,7 @@ def mostrar(
                 yfmt=",.0f", height=340), defecto="5 años", mensual=True)
         elif elegido_i == "Salario real" and sal_real_df is not None and not sal_real_df.empty:
             _grafico_periodo("ini_salreal", sal_real_df, lambda d: charts.barras(
-                d, "real", "Salario real — variación interanual (%)", yfmt=",.1f", height=340),
+                d, "real", "Salario real — variación interanual (%)", yfmt=",.1f", height=340, color_signo=True),
                 defecto="5 años", mensual=True)
         else:
             falla(f"no se pudo cargar el gráfico destacado «{elegido_i}»")

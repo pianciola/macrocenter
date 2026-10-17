@@ -19,7 +19,7 @@ from pathlib import Path
 import pandas as pd
 import streamlit as st
 
-from macrocenter import (carga, charts, data, datos_vista, glosario, interactivo, inversiones, legal, mapa, ministros, news, pestanas,
+from macrocenter import (catalogo, estilos, carga, charts, data, datos_vista, glosario, interactivo, inversiones, legal, mapa, ministros, news, pestanas,
                          presidentes, selector, series, style)
 from macrocenter.avisos import actualizando, falla
 from macrocenter.carga import (  # descarga, cachés y copia de respaldo
@@ -29,7 +29,7 @@ from macrocenter.carga import (  # descarga, cachés y copia de respaldo
 )
 
 # Módulos de presentación sin estado: recargarlos evita mezclar pantallas anteriores con la navegación nueva.
-for modulo in (carga, data, datos_vista, series, style, charts, inversiones, interactivo,
+for modulo in (catalogo, estilos, carga, data, datos_vista, series, style, charts, inversiones, interactivo,
                *(getattr(pestanas, nombre) for nombre in pestanas.__all__)):
     importlib.reload(modulo)
 
@@ -380,7 +380,7 @@ def graficos_fiscales(f: pd.DataFrame) -> None:
                             (b, "financiero", "Resultado financiero mensual (% del PBI)")):
         if c in f:
             with slot:
-                grafico(charts.barras(rec(f, 0, per), c, titulo, yfmt=",.1f", height=320), key=f"graf_fis_{c}")
+                grafico(charts.barras(rec(f, 0, per), c, titulo, yfmt=",.1f", height=320, color_signo=True), key=f"graf_fis_{c}")
 
 
 def ultimo(df: pd.DataFrame, col: str = "valor") -> float | None:
@@ -413,13 +413,13 @@ def base100(df: pd.DataFrame, cols: list[str]) -> pd.DataFrame:
 
 def kpi(slot, label: str, valor: float | None, dec: int = 0, pre: str = "", suf: str = "",
         d: float | None = None, d_suf: str = "%", d_txt: str = "vs 30 d", color: str = "normal", help: str | None = None,
-        d_dec: int = 1, serie=None, fuente: str = "", max_dias: int | None = None):
+        d_dec: int = 1, serie=None, fuente: str = "", max_dias: int | None = None, ruta: str = ""):
     # color por defecto: verde si sube, rojo si baja (precios). Los indicadores donde subir es malo
     # (inflación, riesgo país, desocupación) pasan color="inverse".
     # una variación que redondeada da 0,0 no lleva flecha (una flecha para arriba con 0,0% confunde)
     plano = d is not None and abs(d) < 0.5 * 10 ** -d_dec
     slot.metric(
-        label,
+        f"[{label}]({ruta})" if ruta else label,
         charts.num(valor, dec, suf, pre),
         None if d is None else (f"sin cambios {d_txt}" if plano else f"{charts.num(d, d_dec, d_suf)} {d_txt}"),
         delta_color="off" if plano else color,
@@ -429,7 +429,9 @@ def kpi(slot, label: str, valor: float | None, dec: int = 0, pre: str = "", suf:
     )
 
     if fuente:
-        slot.markdown(datos_vista.detalle(serie, fuente, max_dias=max_dias), unsafe_allow_html=True)
+        frecuencia, unidad, definicion = datos_vista.FICHAS.get(label, ("", "", help or ""))
+        slot.markdown(datos_vista.detalle(serie, fuente, max_dias=max_dias, nombre=label,
+                                       frecuencia=frecuencia, unidad=unidad, definicion=definicion), unsafe_allow_html=True)
 
 
 MAX_PUNTOS = 1000  # una línea de ~1.000 px de ancho no muestra más detalle que esto
@@ -473,6 +475,16 @@ def grafico(fig, key: str | None = None):
     aligerar(fig)
     charts.compactar(fig)
     st.plotly_chart(fig, width="stretch", config={"displayModeBar": False, "scrollZoom": False}, key=key)
+    if trazas:
+        with st.expander(f"Ver tabla de datos: {titulo or 'gráfico'}"):
+            st.caption("Hasta 30 observaciones finales por serie, en el orden del gráfico. El CSV contiene todos los datos del período seleccionado.")
+            # HTML semántico: también legible con teclado y lectores de pantalla.
+            for nombre_serie, eje, valores in trazas:
+                filas = list(zip(eje[-30:], valores[-30:]))
+                st.markdown(style.tabla_simple(
+                    ["Fecha / categoría", str(nombre_serie)],
+                    [[str(x), ("s/d" if pd.isna(y) else f"{y:.10g}".replace(".", ",")) if isinstance(y, (int, float)) or y is None else str(y)] for x, y in filas]),
+                    unsafe_allow_html=True)
 
 
 # ───────────────────────── carga de series ─────────────────────────
@@ -651,7 +663,7 @@ def ir_a_seccion(vista_: str, clave: str, valor: str) -> None:
 # lo más buscado de la página, sin repetir lo que ya está a la vista (cotizaciones, menú): pocos y a mano
 ATAJOS = (
     ("tasas", "Tasas de plazo fijo hoy", ":material/percent:", ("inversiones", "inv_seccion", "Tasas y plazos fijos")),
-    ("alquiler", "Ajustar un alquiler", ":material/home:", ("juegos", "inter_modo", "Ajuste de alquileres")),
+    ("alquiler", "Ajuste de alquileres", ":material/home:", ("juegos", "inter_modo", "Ajuste de alquileres")),
     ("pesos", "¿Cuánto valían tus pesos?", ":material/savings:", ("juegos", "inter_modo", "¿Cuánto valían tus pesos?")),
     ("mapa", "Inflación por provincia", ":material/map:", ("tablero", "pestana", "Inflación y dinero")),
     ("presidentes", "Economía por presidente", ":material/account_balance:", ("historia", "hist_seccion", "Presidentes")),
@@ -791,8 +803,8 @@ def construir_ticker() -> list[dict]:
     """Datos clave para la franja de arriba. Cada pieza es opcional: lo que falte simplemente no aparece."""
     items: list[dict] = []
 
-    def poner(nombre: str, valor: str, d: float | None = None, sentido: str = "neutro") -> None:
-        items.append(dict(n=nombre, v=valor, d=d, sentido=sentido))
+    def poner(nombre: str, valor: str, d: float | None = None, sentido: str = "neutro", periodo: str = "1 d") -> None:
+        items.append(dict(n=nombre, v=valor, d=d, sentido=sentido, periodo=periodo))
 
     if dol is not None:
         for clave, nombre in (("oficial", "Dólar oficial"), ("blue", "Blue"), ("bolsa", "MEP"),
@@ -810,16 +822,16 @@ def construir_ticker() -> list[dict]:
     if reservas is not None:
         poner("Reservas", charts.num(ultimo(reservas), 0, pre="USD ", suf=" M"), delta(reservas, dias=1), "alto")
     if infl_m is not None:
-        poner("Inflación mensual", charts.num(ultimo(infl_m), 1, suf="%"))
+        poner("Inflación mensual", charts.num(ultimo(infl_m), 1, suf="%"), periodo="Mensual")
     if badlar is not None:
-        poner("BADLAR", charts.num(ultimo(badlar), 1, suf="%"))
+        poner("BADLAR", charts.num(ultimo(badlar), 1, suf="%"), periodo="TNA · último dato")
     cr = cargar_cripto()
     m = cr.get("mercado")
     if isinstance(m, pd.DataFrame) and not m.empty:
         for sim in ("BTC", "ETH"):
             f = m[m["simbolo"] == sim]
             if not f.empty:
-                poner(sim, _usd_cripto(f.iloc[0]["usd"]), f.iloc[0]["cambio_24h"], "alto")
+                poner(sim, _usd_cripto(f.iloc[0]["usd"]), f.iloc[0]["cambio_24h"], "alto", periodo="24 h")
     mk = cargar_mercados()
     for simbolo, nombre, sentido in (("^MERV", "Merval", "alto"), ("^GSPC", "S&P 500", "alto"), ("^DJI", "Dow Jones", "alto"),
                                      ("GC=F", "Oro", "alto"), ("CL=F", "Petróleo", "alto"), ("ZS=F", "Soja", "alto")):
@@ -938,6 +950,10 @@ if vista != "tablero":
     pie_pagina()
     st.stop()
 
+with st.popover("Todas las secciones", icon=":material/list:"):
+    for seccion in PESTANAS:
+        st.markdown(f'<a href="?ver=tablero/{style.slug(seccion)}" target="_self">{seccion}</a>', unsafe_allow_html=True)
+
 # Migrar la selección de sesiones abiertas antes de fusionar las pestañas.
 if st.session_state.get("pestana") in ("Inflación", "Dinero y crédito"):
     st.session_state["pestana"] = "Inflación y dinero"
@@ -981,36 +997,7 @@ def _kpi(df: pd.DataFrame | None, col: str = "valor", dias: int = 30, modo: str 
 _MES = dict(dias=25, modo="abs", d_suf=" pp", d_txt="vs mes ant.")
 
 # clave -> (grupo, nombre, función). El orden de este diccionario es el orden del selector.
-CATALOGO = {
-    "oficial": ("Dólar", "Dólar oficial", _kpi(dol_s.get("oficial"), dec=0, pre="$", help="Precio de venta", fuente='DolarApi / ArgentinaDatos')),
-    "blue": ("Dólar", "Dólar blue", _kpi(dol_s.get("blue"), dec=0, pre="$", help="Precio de venta", fuente='DolarApi / ArgentinaDatos')),
-    "mep": ("Dólar", "Dólar MEP", _kpi(dol_s.get("bolsa"), dec=0, pre="$", help="Precio de venta", fuente='CriptoYa / ArgentinaDatos')),
-    "ccl": ("Dólar", "Dólar CCL", _kpi(dol_s.get("contadoconliqui"), dec=0, pre="$", help="Precio de venta", fuente='CriptoYa / ArgentinaDatos')),
-    "brecha": ("Dólar", "Brecha blue / oficial", _kpi(brecha_df, "brecha_blue", modo="abs", dec=1, suf="%", d_suf=" pp", color="inverse", fuente='ArgentinaDatos · cálculo propio')),
-    "reservas": ("Sector externo", "Reservas (USD M)", _kpi(reservas, dec=0, color="normal", fuente='BCRA')),
-    "riesgo": ("Sector externo", "Riesgo país (pb)", _kpi(riesgo, modo="abs", dec=0, d_suf=" pb", color="inverse", d_dec=0, fuente='ArgentinaDatos · EMBI')),
-    "badlar": ("Tasas", "BADLAR (TNA)", _kpi(badlar, modo="abs", dec=1, suf="%", d_suf=" pp", color="off", fuente='BCRA')),
-    "pases": ("Tasas", "Pases 1 día (TNA)", _kpi(pases, modo="abs", dec=1, suf="%", d_suf=" pp", color="off",
-                                                 help="Tasa de pases a un día del BCRA. Consultá la fecha del dato: "
-                                                      "la serie puede haber dejado de publicarse.", fuente='BCRA')),
-    "uva": ("Tasas", "UVA", _kpi(uva, dec=2, pre="$", color="off", fuente='BCRA')),
-    "infl_m": ("Precios", "Inflación mensual", _kpi(infl_m, dec=1, suf="%", color="inverse", **_MES, fuente='INDEC · vía BCRA')),
-    "infl_ia": ("Precios", "Inflación interanual", _kpi(infl_ia, dec=1, suf="%", color="inverse", **_MES, fuente='INDEC · vía BCRA')),
-    "rem": ("Precios", "Inflación esperada 12 m", _kpi(rem, dec=1, suf="%", color="inverse", **_MES, fuente='BCRA')),
-    "emae_m": ("Actividad", "Actividad mensual", _kpi(emae_m, dec=1, suf="%", color="normal",
-                                                    help="EMAE desestacionalizado, variación contra el mes anterior", **_MES, fuente='INDEC · cálculo propio')),
-    "emae": ("Actividad", "EMAE interanual", _kpi(emae_ia, dec=1, suf="%", color="normal", **_MES, fuente='INDEC')),
-    "paro": ("Actividad", "Desocupación (EPH)", _kpi(paro_pct, dec=1, suf="%", color="inverse", dias=80, modo="abs",
-                                                      d_suf=" pp", d_txt="vs trim. ant.", fuente='INDEC · EPH')),
-    "sal_nom": ("Ingresos", "Salarios interanual", _kpi(sal_ia, dec=1, suf="%", color="normal",
-                                                        help="Índice de salarios INDEC, total", **_MES, fuente='INDEC')),
-    "salario_real": ("Ingresos", "Salario real interanual", _kpi(sal_real_df, "real", dec=1, suf="%", color="normal",
-                                                                 help="Salarios nominales descontada la inflación", **_MES, fuente='INDEC · cálculo propio')),
-    "ripte": ("Ingresos", "RIPTE", _kpi(ripte, dias=25, dec=0, pre="$", color="normal", d_txt="vs mes ant.", fuente='Secretaría de Trabajo · datos.gob.ar')),
-    "smvm": ("Ingresos", "Salario mínimo", _kpi(smvm, dias=25, dec=0, pre="$", color="normal", d_txt="vs mes ant.", fuente='Secretaría de Trabajo · datos.gob.ar')),
-    "haber": ("Ingresos", "Haber mínimo jubilatorio", _kpi(haber_min, dias=25, dec=0, pre="$", color="normal",
-                                                           d_txt="vs mes ant.", fuente='ANSES · datos.gob.ar')),
-}
+CATALOGO = catalogo.construir(_MES=_MES, _kpi=_kpi, badlar=badlar, brecha_df=brecha_df, dol_s=dol_s, emae_ia=emae_ia, emae_m=emae_m, haber_min=haber_min, infl_ia=infl_ia, infl_m=infl_m, paro_pct=paro_pct, pases=pases, rem=rem, reservas=reservas, riesgo=riesgo, ripte=ripte, sal_ia=sal_ia, sal_real_df=sal_real_df, smvm=smvm, uva=uva)
 
 
 def cargar_prefs() -> list[str]:
@@ -1125,7 +1112,7 @@ def panel_plazo_fijo(clave: str = "res_real", subtitulo: bool = True) -> None:
             kpi(k[2], "Rendimiento real del mes", float(ult["real"]), 1, suf="%", color="normal",
                 help="Positivo: la tasa le ganó a la inflación. Negativo: el ahorro perdió poder de compra.")
             grafico_periodo(clave, real, lambda d: charts.barras(
-                d, "real", "Rendimiento real mensual de un plazo fijo (%)", yfmt=",.1f", height=300), mensual=True)
+                d, "real", "Rendimiento real mensual de un plazo fijo (%)", yfmt=",.1f", height=300, color_signo=True), mensual=True)
             st.markdown(style.aclaracion(
                 ("Supuestos", "El plazo fijo se aproxima con la tasa BADLAR (depósitos a plazo de bancos privados), promedio del "
                               "mes, contra la inflación de ese mes."),
@@ -1250,7 +1237,7 @@ def bloque_cambiario() -> None:
     if cc is not None:
         with a:
             grafico(charts.barras(rec(cc, 0, per), "valor", "Cuenta corriente cambiaria (USD millones)", yfmt=",.0f",
-                                  nombre="Cuenta corriente"), key="graf_cambiario_cc")
+                                  nombre="Cuenta corriente", color_signo=True), key="graf_cambiario_cc")
     partes = None
     for df_, nombre in ((bienes, "Bienes"), (serv, "Servicios"), (compras, "Compra neta de dólares")):
         if df_ is not None:
@@ -1324,9 +1311,13 @@ def panorama_inicio() -> list[dict]:
             partes.append(t_)
         if partes:
             f = " y ".join(partes)
-            frases.append(dict(tema="Reservas y riesgo", cifra=f"{charts.num(rp, 0)} pb" if rp is not None else
-                               f"USD {charts.num(rs / 1000, 1)} mil M", detalle="riesgo país" if rp is not None else "reservas",
-                               texto=f[0].upper() + f[1:] + "."))
+            if rs is not None:
+                frases.append(dict(tema="Reservas", cifra=f"USD {charts.num(rs, 0)} M", detalle="reservas brutas",
+                                   texto=partes[0][0].upper() + partes[0][1:] + "."))
+            if rp is not None:
+                texto_riesgo = partes[-1]
+                frases.append(dict(tema="Riesgo país", cifra=f"{charts.num(rp, 0)} pb", detalle="diferencial soberano",
+                                   texto=texto_riesgo[0].upper() + texto_riesgo[1:] + "."))
     except Exception:  # noqa: BLE001
         traceback.print_exc()
     try:
@@ -1454,7 +1445,7 @@ def bloque_dolar_precios() -> None:
             d[c] = d[c] / base.iloc[0] * 100 if not base.empty else d[c]
         return charts.lineas(d, {c: c for c in ("Dólar oficial", "Dólar blue", "Precios (IPC)")},
                              "Dólar y precios — base 100 al inicio del período", yfmt=",.0f", height=340,
-                             colores=("#74ACDF", "#F6B40E", "#B8C4D6"))  # sin verde ni rojo: acá no hay bueno ni malo
+                             colores=("#74ACDF", "#F6B40E", "#697C91"))  # sin verde ni rojo: acá no hay bueno ni malo
 
     _grafico_periodo("ini_dolprecios", df, armar, defecto="2 años", mensual=True)
     st.markdown(style.aclaracion(
@@ -1496,7 +1487,7 @@ def bloque_reservas_riesgo() -> None:
                                   height=320), key="graf_ini_rr_res")
     if riesgo is not None:
         with b:
-            grafico(charts.lineas(rec(riesgo), {"Riesgo país": "valor"}, "Riesgo país (puntos básicos)", yfmt=",.0f",
+            grafico(charts.lineas(rec(riesgo), {"Riesgo país": "valor"}, "Riesgo país (pb)", yfmt=",.0f",
                                   height=320), key="graf_ini_rr_riesgo")
     st.markdown(style.aclaracion(
         ("Qué mide", "Las reservas son los dólares y el oro que tiene el Banco Central. El riesgo país mide cuánto más "

@@ -44,5 +44,5 @@ def mostrar(*, HOY, bloque_cambiario, delta, grafico, kpi, rec, reservas, select
                     "no existe una serie oficial pública con la que calcularlas.")), unsafe_allow_html=True)
         with st.expander("Variación mensual"):
             rm = reservas.set_index("fecha")["valor"].resample("ME").last().diff().rename("var").reset_index()
-            grafico(charts.barras(rec(rm.dropna(), 2), "var", "Variación mensual de reservas (USD millones)", yfmt=",.0f"))
+            grafico(charts.barras(rec(rm.dropna(), 2), "var", "Variación mensual de reservas (USD millones)", yfmt=",.0f", color_signo=True))
     bloque_cambiario()

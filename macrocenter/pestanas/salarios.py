@@ -44,7 +44,7 @@ def mostrar(
             a, b = st.columns(2)
             with a:
                 if sr is not None:
-                    grafico(charts.barras(rec(sr, 3), "real", "Salario real — variación interanual (%)"))
+                    grafico(charts.barras(rec(sr, 3), "real", "Salario real — variación interanual (%)", color_signo=True))
             with b:
                 if ripte is not None:
                     grafico(charts.lineas(rec(ripte, 3), {"RIPTE": "valor"}, "RIPTE — remuneración imponible promedio ($)"))

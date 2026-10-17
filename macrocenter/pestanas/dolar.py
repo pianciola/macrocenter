@@ -30,7 +30,8 @@ def mostrar(*, VIVO, base100, con_periodo, delta, dol, dol_rec, get, grafico, ul
                 continue
             venta, compra = float(s.iloc[-1][clave]), s.iloc[-1][f"{clave}_compra"]
             tarjetas_usd.append(dict(
-                meta=datos_vista.detalle(s, "ArgentinaDatos / DolarApi / CriptoYa"),
+                meta=datos_vista.detalle(s, "ArgentinaDatos / DolarApi / CriptoYa", nombre=nombre,
+                                        frecuencia="Diaria; consultas intradiarias", unidad="ARS por USD", definicion=desc),
                 nombre=nombre, desc=desc, valor=charts.num(venta, 0, pre="$"),
                 detalle=f"Compra {charts.num(float(compra), 0, pre='$')} · Venta {charts.num(venta, 0, pre='$')}",
                 var=delta(s.rename(columns={clave: "valor"})), sentido="alto",  # cotización: verde si sube
@@ -52,7 +53,8 @@ def mostrar(*, VIVO, base100, con_periodo, delta, dol, dol_rec, get, grafico, ul
             if df_ is not None:
                 u = df_.iloc[-1]
                 tarjetas_fx.append(dict(
-                    meta=datos_vista.detalle(df_, "BCRA"),
+                    meta=datos_vista.detalle(df_, "BCRA", nombre=nombre, frecuencia="Diaria",
+                                            unidad=f"ARS por {simbolo}", definicion="Cotización de referencia del BCRA."),
                     nombre=nombre, desc="Cotización de referencia del BCRA",
                     valor=charts.num(float(u["valor"]), 0, pre="$"),
                     detalle=f"1 {simbolo} = US$ {charts.num(float(u['pase']), 2)}",

@@ -75,7 +75,7 @@ def mostrar(series: dict, clave: str = "mapa_infl") -> None:
     elegida = _provincia_elegida(clave)
     fig = go.Figure(go.Choropleth(
         geojson=geo, locations=provincias, z=[ia[p] for p in provincias], featureidkey="id",
-        customdata=[REGION[p] for p in provincias], colorscale=ESCALA, marker_line_color="#ffffff", marker_line_width=0.6,
+        customdata=[REGION[p] for p in provincias], colorscale=ESCALA, marker_line_color="rgba(105,124,145,0.8)", marker_line_width=0.6,
         # el resaltado de la elegida lo hace Plotly en el navegador (el dibujo no cambia al tocar): si el gráfico
         # cambiara con cada toque, Streamlit lo volvería a armar y el mapa parpadearía
         selected=dict(marker=dict(opacity=1)), unselected=dict(marker=dict(opacity=0.5)),

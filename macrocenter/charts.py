@@ -7,7 +7,8 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 
-PALETA = ["#2E86DE", "#EE5253", "#10AC84", "#F79F1F", "#8E44AD", "#8A9BB0"]
+PALETA = ["#2E86DE", "#B06CC4", "#A97713", "#4F9BAA", "#8067CB", "#697C91",
+          "#C77436", "#5275A7", "#A16AA1", "#8B8542", "#4C8C83", "#9A7964", "#7171A8"]
 POS, NEG = "#10AC84", "#EE5253"
 
 
@@ -212,7 +213,7 @@ def lineas(
     colores: tuple[str, ...] | None = None,
 ) -> go.Figure:
     """Líneas. `series` mapea nombre visible -> columna de df. Las de `ocultas` arrancan apagadas
-    (se prenden tocando la leyenda). `colores`: uno por serie, si no conviene la paleta (que usa verde y rojo)."""
+    (se prenden tocando la leyenda). `colores`: uno por serie, si no conviene la paleta neutra."""
     fig = go.Figure()
     for i, (nombre, col) in enumerate(series.items()):
         d = df[[x, col]].dropna()
@@ -233,7 +234,7 @@ def barras(
     yfmt: str | None = ",.1f",
     height: int = 380,
     x: str = "fecha",
-    color_signo: bool = True,
+    color_signo: bool = False,
     nombre: str | None = None,
 ) -> go.Figure:
     d = df[[x, col]].dropna()
@@ -347,7 +348,7 @@ def evolucion_montos(df: pd.DataFrame, series: dict[str, str], referencia: str |
         fig.add_trace(go.Scatter(x=d["fecha"], y=d[referencia], name="Inflación (lo que hacía falta para no perder)",
                                  mode="lines", line=dict(color="#F6B40E", width=2.5, dash="dash")))
     # colores propios: ni dorado (la inflación) ni verde/rojo (que en la página significan mejor/peor)
-    colores = ["#2E86DE", "#A55EEA", "#00CEC9", "#FD79A8", "#8395A7", "#CD853F"]
+    colores = ["#2E86DE", "#A55EEA", "#00CEC9", "#FD79A8", "#687B90", "#CD853F"]
     for i, (nombre, col) in enumerate(series.items()):
         d = df[["fecha", col]].dropna()
         fig.add_trace(go.Scatter(x=d["fecha"], y=d[col], name=nombre, mode="lines",
@@ -394,6 +395,7 @@ def barras_y_linea(
     df: pd.DataFrame, col_barra: str, col_linea: str, titulo: str,
     nombre_barra: str, nombre_linea: str, yfmt: str = ",.1f", height: int = 380, x: str = "fecha",
 ) -> go.Figure:
+    # Doble eje reservado al IPC mensual/interanual: otras aplicaciones requieren justificación explícita.
     d = df[[x, col_barra, col_linea]]
     fig = go.Figure()
     fig.add_trace(go.Bar(x=d[x], y=d[col_barra], name=nombre_barra, marker_color=PALETA[0], opacity=0.55))
@@ -417,8 +419,8 @@ def presentar(fig: go.Figure) -> go.Figure:
         hoverlabel=dict(font_size=13, namelength=-1),
         legend=dict(font_size=12, itemsizing="constant", maxheight=0.24),
     )
-    fig.update_xaxes(automargin=True, tickfont_size=11)
-    fig.update_yaxes(automargin=True, tickfont_size=11)
+    fig.update_xaxes(automargin=True, tickfont_size=12)
+    fig.update_yaxes(automargin=True, tickfont_size=12)
     if _eje_x_fechas(fig):
         fig.update_xaxes(hoverformat="%d/%m/%Y")
     return fig

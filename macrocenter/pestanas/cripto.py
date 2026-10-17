@@ -25,7 +25,9 @@ def mostrar(
         tarjetas = []
         for _, c in mercado.iterrows():
             tarjetas.append(dict(
-                meta=datos_vista.detalle(pd.DataFrame({"fecha": [c.get("actualizado")]}), "CoinGecko · consulta cada 5 min", max_dias=1),
+                meta=datos_vista.detalle(pd.DataFrame({"fecha": [c.get("actualizado")]}), "CoinGecko · consulta cada 5 min", max_dias=1,
+                                        nombre=str(c["nombre"]), frecuencia="Intradiaria; consulta cada 5 minutos", unidad="USD por moneda",
+                                        definicion="Precio de referencia agregado de mercados. La variación compara con 24 horas atrás; puede diferir del precio de un exchange."),
                 nombre=c["nombre"], desc=c["simbolo"], valor=_usd_cripto(c["usd"]),
                 detalle=f"≈ {charts.num(c['ars'], 0, pre='$')}" if c["ars"] == c["ars"] else "en pesos: s/d",
                 var=c["cambio_24h"], var_txt="24 h", extras=[("7 d", c["cambio_7d"])], sentido="alto",

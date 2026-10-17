@@ -22,7 +22,9 @@ def mostrar(*, _var_pct, cargar_mercados, falla, grafico, rec, selector_categori
             continue
         ult = float(df.iloc[-1]["valor"])
         tarjetas.append(dict(
-            meta=datos_vista.detalle(df.dropna(subset=["valor"]), "Yahoo Finance · con demora"),
+            meta=datos_vista.detalle(df.dropna(subset=["valor"]), "Yahoo Finance · con demora", nombre=nombre,
+                                    frecuencia="Diaria; consulta cada 5 minutos", unidad=unidad,
+                                    definicion=f"Cotización histórica de {nombre}. La disponibilidad depende de las sesiones del mercado."),
             nombre=nombre, desc=grupo, valor=charts.num(ult, 0 if ult >= 1000 else 2), detalle=unidad,
             var=_var_pct(df), var_txt="1 d", extras=[("30 d", _var_pct(df, 30))],
             sentido="alto", spark=list(df.tail(30)["valor"])))  # cotización: verde si sube, rojo si baja

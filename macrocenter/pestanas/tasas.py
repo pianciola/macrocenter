@@ -56,6 +56,6 @@ def mostrar(
     if riesgo is not None:
         st.subheader("Riesgo país")
         grafico_periodo("tasas_riesgo", riesgo, lambda d: charts.lineas(d, {"Riesgo país": "valor"},
-                                                                          "Riesgo país — EMBI (puntos básicos)", height=380))
+                                                                          "Riesgo país — EMBI (pb)", height=380))
     st.divider()
     panel_plazo_fijo()

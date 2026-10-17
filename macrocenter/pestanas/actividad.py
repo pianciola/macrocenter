@@ -37,7 +37,7 @@ def mostrar(*, dif, emae, emae_sa, get, grafico, kpi, paro, paro_pct, pib, rec, 
             grafico(charts.lineas(rec(p, 5), {"PBI real": "valor"}, "PBI trimestral a precios constantes de 2004 (millones de $)"))
         with b:
             grafico(charts.barras(rec(p.dropna(subset=["interanual"]), 5), "interanual",
-                                  "PBI — variación interanual (%)"))
+                                  "PBI — variación interanual (%)", color_signo=True))
         st.markdown(style.aclaracion(
             ("Qué mide", "Serie trimestral sin desestacionalizar de Cuentas Nacionales."),
             ("Último dato", f"{p['fecha'].iloc[-1]:%m/%Y} (inicio de trimestre)."),
@@ -50,13 +50,13 @@ def mostrar(*, dif, emae, emae_sa, get, grafico, kpi, paro, paro_pct, pib, rec, 
                                   "EMAE desestacionalizado (base 2004 = 100)", yfmt=",.0f"))
         with b:
             if mom is not None:
-                grafico(charts.barras(rec(mom, 3), "valor", "EMAE — variación mensual desestacionalizada (%)", yfmt=",.1f"))
+                grafico(charts.barras(rec(mom, 3), "valor", "EMAE — variación mensual desestacionalizada (%)", yfmt=",.1f", color_signo=True))
     if emae is not None:
         with st.expander("EMAE interanual y desocupación"):
             e = emae.assign(interanual=series.cambio_periodico(emae)["valor"]).dropna()
             a, b = st.columns(2)
             with a:
-                grafico(charts.barras(rec(e, 3), "interanual", "EMAE — variación interanual (%)"))
+                grafico(charts.barras(rec(e, 3), "interanual", "EMAE — variación interanual (%)", color_signo=True))
             with b:
                 if paro is not None:
                     grafico(charts.lineas(rec(paro.assign(valor=paro["valor"] * 100), 5), {"Desocupación": "valor"},

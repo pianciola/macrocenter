@@ -30,6 +30,6 @@ def mostrar(*, comercio, dif, grafico, kpi, pct, rec, ult_y_ant) -> None:
             grafico(charts.lineas(rec(c, 3), {"Exportaciones": "exp", "Importaciones": "imp"},
                                   "Exportaciones e importaciones (USD millones)"))
         with b:
-            grafico(charts.barras(rec(c, 3), "saldo", "Saldo comercial mensual (USD millones)", yfmt=",.0f"))
+            grafico(charts.barras(rec(c, 3), "saldo", "Saldo comercial mensual (USD millones)", yfmt=",.0f", color_signo=True))
         grafico(charts.lineas(rec(c.dropna(subset=["saldo_12m"]), 3), {"Saldo acumulado 12 m": "saldo_12m"},
                               "Saldo comercial acumulado 12 meses (USD millones)", yfmt=",.0f", height=320))

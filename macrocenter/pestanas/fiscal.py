@@ -54,7 +54,7 @@ def mostrar(*, actualizando, dif, falla, fiscal_anual, fiscal_df, grafico, grafi
                                     (b, "financiero", "Resultado financiero anual (% del PBI)")):
                 if c in fa and fa[c].notna().any():
                     with col_:
-                        fig_a = charts.barras(fa.dropna(subset=[c]), c, titulo, yfmt=",.1f", height=320, x="etiqueta")
+                        fig_a = charts.barras(fa.dropna(subset=[c]), c, titulo, yfmt=",.1f", height=320, x="etiqueta", color_signo=True)
                         fig_a.update_traces(text=[charts.num(v, 1, "%") for v in fa.dropna(subset=[c])[c]],
                                             textposition="outside", cliponaxis=False)
                         fig_a.update_xaxes(type="category")

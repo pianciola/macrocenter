@@ -16,14 +16,14 @@ Tablero de la economía argentina hecho con Streamlit + Plotly, de Juan Manuel P
 - `macrocenter/pestanas/`: una pestaña o pantalla por archivo.
 - `macrocenter/carga.py`: descarga, cachés compartidos, disco y copia de respaldo.
 - `macrocenter/data.py`: fuentes y series (`BCRA_IDS`, `SERIES_IDS`, `tareas_principales`).
-- `macrocenter/style.py`: todo el CSS/HTML; `charts.py`: gráficos; `semilla.py` / `alertas.py`: respaldo y alertas.
+- `macrocenter/style.py`: builders HTML y scripts; `estilos.py`: CSS y adaptación al tema; `catalogo.py`: indicadores y destinos; `charts.py`: gráficos.
 - `monitor/`: scripts de GitHub Actions. `tests/`: pruebas. `.github/workflows/`: Pruebas, Monitor, Semilla, Alertas, Boletín, Despertar.
 
 ## Cómo trabajar
 - Para agregar un indicador: ver README («Agregar un indicador»).
 - Después de cambiar `macrocenter/*.py`, reiniciar el servidor local; Streamlit no recarga módulos.
 - Probar: `python -m pytest tests` (sin red); con `MACROCENTER_RED=1` también la app entera.
-- Publicar: `gh` ya está logueado como pianciola. Clonar el repo en un directorio temporal, copiar los cambios, commit y `git push origin main`.
+- Esta carpeta es el repositorio de trabajo y conserva su historial. Publicar desde aquí: revisar `git diff`, agregar solo los archivos del cambio, commit y `git push origin main`; no crear clones dentro de `.pytest_cache`.
 - **Después de cada push hay que reiniciar la app** en share.streamlit.io (⋮ → Reboot); si no, queda con módulos viejos y falla. Verificar el sitio en vivo.
 
 ## Criterios de diseño (mantenerlos parejos)

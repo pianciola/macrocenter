@@ -8,3 +8,5 @@ boletin_vista_previa.html
 *.tmp
 .claude/
 MacroCenter_Entrega.pdf
+
+.pytest_cache/

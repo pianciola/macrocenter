@@ -32,3 +32,22 @@ def test_presentar_no_cambia_colores_valores_ni_unidades():
 def test_fecha_con_zona_respeta_el_dia_argentino():
     df = pd.DataFrame({"fecha": ["2026-10-16T01:00:00Z"]})
     assert "15/10/2026" in datos_vista.detalle(df, "CoinGecko", hoy="2026-10-16")
+
+
+def test_ficha_mantiene_metadatos_sin_serie_y_escapa_contenido():
+    html = datos_vista.detalle(None, "BCRA", frecuencia="Mensual", unidad="%",
+                               definicion="<script>dato</script>", nombre="IPC <nacional>")
+    assert '<details class="mc-ficha">' in html and '<summary>' in html
+    assert "Fecha no disponible" in html and "Mensual" in html
+    assert "&lt;script&gt;" in html and "<script>" not in html
+    assert "IPC &lt;nacional&gt;" in html
+
+
+def test_catalogo_de_fichas_cubre_indicadores_del_resumen():
+    import inspect
+    from macrocenter import catalogo
+    parametros = {k: None for k in inspect.signature(catalogo.construir).parameters}
+    parametros.update(dol_s={}, _MES={}, _kpi=lambda *a, **kw: lambda: kw)
+    indicadores = catalogo.construir(**parametros)
+    assert {v[1] for v in indicadores.values()} <= datos_vista.FICHAS.keys()
+    assert all(all(campos) for campos in datos_vista.FICHAS.values())
