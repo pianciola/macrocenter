@@ -94,6 +94,27 @@ def trazas_de(fig: go.Figure) -> list[tuple]:
     return [t for t in out if largo <= 1 or (len(t[1]) > 1 and (len(t[1]) > 2 or largo <= 10))]
 
 
+def filas_accesibles(eje, valores, limite: int = 30) -> list[list[str]]:
+    """Vista legible de la tabla; la descarga conserva toda la precisión original."""
+    xs, ys = list(eje)[-limite:], list(valores)[-limite:]
+    fechas = _fechas_cortas(xs)
+    filas = []
+    for x, y in zip(xs, ys):
+        etiqueta = str(x)
+        if fechas is not None and not pd.isna(x):
+            fecha = pd.Timestamp(x)
+            etiqueta = fecha.strftime("%d/%m/%Y" if fecha == fecha.normalize() else "%d/%m/%Y %H:%M")
+        if y is None or pd.isna(y):
+            valor = "s/d"
+        elif isinstance(y, (int, float, np.number)):
+            valor = (f"{y:.4g}".replace(".", ",") if 0 < abs(y) < .0001
+                     else num(float(y), 4).rstrip("0").rstrip(","))
+        else:
+            valor = str(y)
+        filas.append([etiqueta, valor])
+    return filas
+
+
 def _texto_csv_seguro(valor):
     """Impide que una etiqueta se interprete como fórmula; conserva los valores numéricos."""
     if isinstance(valor, str) and (valor.startswith(("\t", "\r", "\n"))

@@ -480,10 +480,9 @@ def grafico(fig, key: str | None = None):
             st.caption("Hasta 30 observaciones finales por serie, en el orden del gráfico. El CSV contiene todos los datos del período seleccionado.")
             # HTML semántico: también legible con teclado y lectores de pantalla.
             for nombre_serie, eje, valores in trazas:
-                filas = list(zip(eje[-30:], valores[-30:]))
                 st.markdown(style.tabla_simple(
-                    ["Fecha / categoría", str(nombre_serie)],
-                    [[str(x), ("s/d" if pd.isna(y) else f"{y:.10g}".replace(".", ",")) if isinstance(y, (int, float)) or y is None else str(y)] for x, y in filas]),
+                    ["Fecha / categoría", "Valor" if nombre_serie in ("real", "valor") else str(nombre_serie)],
+                    charts.filas_accesibles(eje, valores)),
                     unsafe_allow_html=True)
 
 
