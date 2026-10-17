@@ -1282,19 +1282,23 @@ html[data-tema="claro"] [data-testid="stTabsScrollLeft"] svg, html[data-tema="cl
         background-position: 0 6px, 0 36px, 100% 36px, 0 144px, 100% 144px, 0 256px, 0 300px;
     }}
 }}
-/* barras de desplazamiento (barra lateral y página): finas, celestes y redondeadas, más visibles al pasar el mouse */
-[data-testid="stSidebarContent"], [data-testid="stMain"] {{
+/* barra de desplazamiento de la página: fina, celeste y redondeada, más visible al pasar el mouse */
+[data-testid="stMain"] {{
     scrollbar-width: thin; scrollbar-color: rgba(116,172,223,.28) transparent;
 }}
-[data-testid="stSidebarContent"]:hover, [data-testid="stMain"]:hover {{ scrollbar-color: rgba(116,172,223,.55) transparent; }}
-[data-testid="stSidebarContent"]::-webkit-scrollbar, [data-testid="stMain"]::-webkit-scrollbar {{ width: 8px; }}
-[data-testid="stSidebarContent"]::-webkit-scrollbar-track, [data-testid="stMain"]::-webkit-scrollbar-track {{ background: transparent; }}
-[data-testid="stSidebarContent"]::-webkit-scrollbar-thumb, [data-testid="stMain"]::-webkit-scrollbar-thumb {{
+[data-testid="stMain"]:hover {{ scrollbar-color: rgba(116,172,223,.55) transparent; }}
+[data-testid="stMain"]::-webkit-scrollbar {{ width: 8px; }}
+[data-testid="stMain"]::-webkit-scrollbar-track {{ background: transparent; }}
+[data-testid="stMain"]::-webkit-scrollbar-thumb {{
     background: rgba(116,172,223,.28); border-radius: 999px; border: 2px solid transparent; background-clip: padding-box;
 }}
-[data-testid="stSidebarContent"]::-webkit-scrollbar-thumb:hover, [data-testid="stMain"]::-webkit-scrollbar-thumb:hover {{
+[data-testid="stMain"]::-webkit-scrollbar-thumb:hover {{
     background-color: rgba(116,172,223,.6);
 }}
+/* la barra lateral se sigue desplazando igual, pero sin dibujar su pulgar: corría pegado al botón de plegar y asomaba
+   como un marcador suelto debajo de la flecha */
+[data-testid="stSidebarContent"] {{ scrollbar-width: none; }}
+[data-testid="stSidebarContent"]::-webkit-scrollbar {{ display: none; }}
 /* botón para plegar y desplegar la barra lateral: disco oscuro con un aro celeste fino y flecha celeste; al pasar el
    mouse se llena de celeste, la flecha pasa a oscura y alrededor queda un aro grueso del color del fondo */
 [data-testid="stSidebarCollapseButton"] button, [data-testid="stExpandSidebarButton"] {{

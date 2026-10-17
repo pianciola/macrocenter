@@ -548,9 +548,12 @@ JS_PESTANAS = """
   };
   const limpiar = (d) => {
     try {
+      const etiqueta = (el) => texto(el) + ' ' + (el.getAttribute('aria-label') || '') + ' ' + (el.getAttribute('title') || '');
       esconder(pieza(d, el => texto(el).startsWith('hosted with streamlit')));
-      esconder(pieza(d, el => texto(el).includes('manage app')));
+      esconder(pieza(d, el => etiqueta(el).toLowerCase().includes('manage app')));
       esconder(pieza(d, el => texto(el).startsWith('created by') && !!el.querySelector('img')));
+      // el indicador de estado de Cloud (un iframe que se desliza desde el borde) tampoco va
+      d.querySelectorAll('iframe').forEach(f => { if ((f.src || '').includes('statuspage')) f.style.setProperty('display', 'none', 'important'); });
     } catch (e) {}
   };
   const ocultar = () => {
