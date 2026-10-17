@@ -1296,6 +1296,25 @@ def panorama_inicio() -> list[dict]:
     return frases
 
 
+# Gráficos que rotan arriba: (nombre, por qué importa). El dibujo de cada uno está en grafico_inicio.
+GRAFICOS_INICIO = {
+    "Dólar": "El **oficial** es el que regula el Banco Central y el **blue**, el del mercado informal. Cuando se separan "
+             "mucho suele haber tensión cambiaria.",
+    "Inflación": "Barras: cuánto subieron los precios cada mes. Línea: la suba acumulada en 12 meses. Es lo que más pesa "
+                 "en el poder de compra.",
+    "Reservas": "Los dólares del Banco Central para pagar deuda e intervenir en el mercado. Más reservas, más margen para "
+                "evitar saltos del dólar.",
+    "Riesgo país": "Cuánto más que EE. UU. paga la Argentina para endeudarse (100 puntos = 1 punto porcentual). Más bajo "
+                   "es mejor: abarata el crédito para el Estado y las empresas.",
+    "Brecha": "Cuánto más caros están el blue y el contado con liquidación que el oficial. Una brecha alta suele reflejar "
+              "desconfianza o trabas para comprar dólares.",
+    "Actividad": "El EMAE del INDEC mide mes a mes cuánto produce la economía (es el anticipo del PBI). Si sube, la "
+                 "economía crece.",
+    "Salario real": "Cuánto más o menos compran los sueldos que un año antes. Barras verdes: le ganaron a la inflación; "
+                    "rojas: perdieron.",
+}
+
+
 def bloque_salarios() -> None:
     sr = sal_real_df
     if sr is None or sr.empty:
