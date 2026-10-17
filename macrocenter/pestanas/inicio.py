@@ -257,7 +257,11 @@ def mostrar(
             )
         except Exception:
             pass
-            
+
+        # eje de valores: un poco más de marcas que el automático (que deja 4 o 5) para leer el nivel de un vistazo;
+        # en los de línea (Riesgo, Reservas), con rangos largos, hace falta pedir más para que Plotly no salte de a 200
+        fig.update_yaxes(nticks=10 if (fig.data and fig.data[0].type == 'scatter') else 8)
+
         return fig
     # 1. Riesgo país
     with fila1_izq:
