@@ -526,6 +526,31 @@ JS_PESTANAS = """
   const obs = new ResizeObserver(encolar);
   obs.observe(blanco());
 })();
+(() => {
+  // Cloud (share.streamlit.io) agrega su insignia «Hosted with Streamlit» y el chip «Created by …» en el documento que
+  // envuelve a la app —afuera del iframe—: no se pueden sacar por CSS desde acá. El iframe es del mismo origen, así que
+  // esas dos piezas se buscan por su texto en el documento de arriba y se esconden. En local (sin envoltorio) no hace nada.
+  if (window.__mcCloud) return;
+  window.__mcCloud = true;
+  const texto = (el) => ((el && el.textContent) || '').replace(/\\s+/g, ' ').trim().toLowerCase();
+  const ocultar = () => {
+    try {
+      if (window.parent === window) return;
+      const doc = window.parent.document;
+      const marca = [...doc.querySelectorAll('a, div')]
+        .filter(el => texto(el).includes('hosted with streamlit') && !el.querySelector('iframe'))
+        .sort((a, b) => texto(a).length - texto(b).length)[0];
+      if (!marca) return;  // no es el envoltorio de Cloud (o ya está limpio)
+      marca.style.setProperty('display', 'none', 'important');
+      const credito = [...doc.querySelectorAll('div')]
+        .filter(el => texto(el).includes('created by') && !el.querySelector('iframe') && el.querySelector('img'))
+        .sort((a, b) => texto(a).length - texto(b).length)[0];
+      if (credito) credito.style.setProperty('display', 'none', 'important');
+    } catch (e) {}  // envoltorio de otro origen: no se puede tocar
+  };
+  ocultar();
+  setInterval(ocultar, 1500);
+})();
 </script>
 """
 
