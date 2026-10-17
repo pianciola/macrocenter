@@ -27,6 +27,12 @@ _ICONO_LINKEDIN = ('<svg width="15" height="15" viewBox="0 0 24 24" aria-hidden=
 JS_PESTANAS = """
 <script>
 (() => {
+  // idioma de la página, en español: Streamlit sirve su HTML con lang="en" y Chrome ofrecía traducirla al entrar.
+  // En el deploy, el documento que envuelve a la app (mismo origen) también queda declarado en español.
+  try { document.documentElement.lang = 'es'; } catch (e) {}
+  try { if (window.parent !== window) window.parent.document.documentElement.lang = 'es'; } catch (e) {}  // otro origen: no se toca
+})();
+(() => {
   // Íconos: se muestran recién cuando cargó su fuente (ver el CSS de stIconMaterial)
   const raiz = document.documentElement;
   if (raiz.dataset.iconos) return;
